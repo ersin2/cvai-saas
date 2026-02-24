@@ -29,15 +29,14 @@ services:
         value: "http://127.0.0.1:8001"   # ← replace with Render internal URL
 
   # ── FastAPI AI worker ─────────────────────────────────────────────────────
-  # Uncomment and deploy as a separate Render service, then update AI_SERVICE_URL above.
-   - type: web
-     name: ai-worker
-     runtime: python
-     rootDir: ai_service
-     buildCommand: "pip install -r requirements-ai.txt"
-     startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT"
-     envVars:
-       - key: GROQ_API_KEY
-         sync: false
-       - key: ANTHROPIC_API_KEY
-         sync: false
+  - type: web
+    name: ai-worker
+    runtime: python
+    rootDir: ai_service
+    buildCommand: "pip install -r requirements-ai.txt"
+    startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
