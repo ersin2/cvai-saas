@@ -603,54 +603,168 @@
             color: #10b981;
         }
 
-        /* LOADING SPINNER */
+        /* ══ PREMIUM FULL-SCREEN LOADING OVERLAY ══ */
         .loading-overlay {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(10, 14, 23, 0.85);
-            backdrop-filter: blur(6px);
-            z-index: 9999;
-            flex-direction: column;
+            inset: 0;
+            z-index: 99999;
+            background: rgba(7, 10, 20, 0.75);
+            backdrop-filter: blur(18px) saturate(180%);
+            -webkit-backdrop-filter: blur(18px) saturate(180%);
             align-items: center;
             justify-content: center;
         }
+        .loading-overlay.active { display: flex; }
 
-        .loading-overlay.active {
-            display: flex;
+        .loading-modal {
+            background: rgba(16, 22, 40, 0.92);
+            border: 1px solid rgba(76, 201, 240, 0.2);
+            border-radius: 28px;
+            padding: 48px 56px;
+            text-align: center;
+            width: min(480px, 90vw);
+            position: relative;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04);
+            animation: modal-in 0.35s cubic-bezier(0.34,1.56,0.64,1) both;
         }
+        @keyframes modal-in {
+            from { opacity:0; transform: translateY(20px) scale(0.96); }
+            to   { opacity:1; transform: translateY(0)   scale(1);    }
+        }
+        .loading-modal::before {
+            content:'';
+            position:absolute;
+            inset:0;
+            border-radius:28px;
+            background: radial-gradient(ellipse at 50% 0%, rgba(76,201,240,0.08) 0%, transparent 60%);
+            pointer-events:none;
+        }
+        .loading-modal-bar-top {
+            position:absolute;
+            top:0; left:0; right:0;
+            height:2px;
+            background: linear-gradient(90deg, #4361ee, #4cc9f0, #f72585, #4cc9f0, #4361ee);
+            background-size: 300% 100%;
+            border-radius: 28px 28px 0 0;
+            animation: bar-slide 2.5s linear infinite;
+        }
+        @keyframes bar-slide { to { background-position: -300% 0; } }
 
-        .spinner-ring {
-            width: 60px;
-            height: 60px;
-            border: 3px solid rgba(76, 201, 240, 0.15);
+        /* dual concentric rings */
+        .rings-wrap {
+            position:relative;
+            width:80px; height:80px;
+            margin: 0 auto 28px;
+        }
+        .ring-outer {
+            position:absolute; inset:0;
+            border-radius:50%;
+            border: 3px solid rgba(76,201,240,0.12);
             border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-bottom: 20px;
+            animation: spin 1s linear infinite;
+        }
+        .ring-inner {
+            position:absolute; inset:12px;
+            border-radius:50%;
+            border: 2px solid rgba(247,37,133,0.12);
+            border-top-color: var(--secondary);
+            animation: spin 0.65s linear infinite reverse;
+        }
+        .ring-dot {
+            position:absolute; inset:0;
+            display:flex; align-items:center; justify-content:center;
+        }
+        .ring-dot::after {
+            content:''; width:10px; height:10px; border-radius:50%;
+            background:var(--primary);
+            box-shadow: 0 0 12px var(--primary);
+            animation: pulse-dot 1s ease-in-out infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes pulse-dot {
+            0%,100% { transform:scale(1); opacity:1; }
+            50%      { transform:scale(0.6); opacity:0.4; }
         }
 
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
+        .loading-step-text {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #e2e8f0;
+            margin-bottom: 6px;
+            min-height: 1.4em;
+            transition: opacity 0.3s;
         }
-
-        .loading-text {
-            color: #94a3b8;
-            font-size: 0.95rem;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-
-        .loading-subtext {
+        .loading-sub-text {
             color: #475569;
-            font-size: 0.8rem;
-            margin-top: 6px;
+            font-size: 0.82rem;
+            margin-bottom: 24px;
         }
+        .loading-progress-wrap {
+            background: rgba(255,255,255,0.05);
+            border-radius: 99px;
+            height: 6px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        .loading-progress-bar {
+            height:100%;
+            width:0%;
+            background: linear-gradient(90deg, #4361ee, #4cc9f0, #f72585);
+            background-size: 200% 100%;
+            border-radius: 99px;
+            transition: width 0.5s ease;
+            animation: bar-color 3s linear infinite;
+        }
+        @keyframes bar-color { to { background-position: -200% 0; } }
+        .loading-percent {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem;
+            color: #4cc9f0;
+            text-align:right;
+        }
+        /* PDF template carousel */
+        .template-carousel {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(76,201,240,0.3) transparent;
+        }
+        .template-carousel::-webkit-scrollbar { height: 4px; }
+        .template-carousel::-webkit-scrollbar-track { background: transparent; }
+        .template-carousel::-webkit-scrollbar-thumb { background: rgba(76,201,240,0.3); border-radius:4px; }
+        .tmpl-card {
+            flex-shrink: 0;
+            width: 130px;
+            background: rgba(0,0,0,0.3);
+            border: 1.5px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            padding: 14px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+        .tmpl-card:hover {
+            border-color: rgba(76,201,240,0.4);
+            background: rgba(76,201,240,0.05);
+            transform: translateY(-2px);
+        }
+        .tmpl-card.selected {
+            border-color: var(--primary);
+            background: rgba(76,201,240,0.1);
+            box-shadow: 0 0 16px rgba(76,201,240,0.25);
+        }
+        .tmpl-card.locked {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+        .tmpl-card.locked:hover { transform: none; border-color: rgba(255,255,255,0.08); }
+        .tmpl-emoji { font-size: 1.7rem; margin-bottom: 8px; }
+        .tmpl-name { font-size: 0.78rem; font-weight: 700; color: #e2e8f0; margin-bottom: 4px; }
+        .tmpl-desc { font-size: 0.68rem; color: #64748b; line-height: 1.3; }
+        .tmpl-lock { font-size: 0.7rem; color: #fcd34d; margin-top: 4px; }
 
         /* SECTION DIVIDER */
         .section-header {
@@ -740,11 +854,25 @@
 
 <body>
 
-    <!-- LOADING OVERLAY -->
+    <!-- PREMIUM FULL-SCREEN LOADING OVERLAY -->
     <div class="loading-overlay" id="loadingOverlay">
-        <div class="spinner-ring"></div>
-        <div class="loading-text">AI is writing your letter...</div>
-        <div class="loading-subtext">This usually takes 5–15 seconds</div>
+        <div class="loading-modal">
+            <div class="loading-modal-bar-top"></div>
+
+            <div class="rings-wrap">
+                <div class="ring-outer"></div>
+                <div class="ring-inner"></div>
+                <div class="ring-dot"></div>
+            </div>
+
+            <div class="loading-step-text" id="loadingStep">Analyzing your resume...</div>
+            <div class="loading-sub-text">Elite AI — usually 5–15 seconds</div>
+
+            <div class="loading-progress-wrap">
+                <div class="loading-progress-bar" id="loadingBar"></div>
+            </div>
+            <div class="loading-percent" id="loadingPercent">0%</div>
+        </div>
     </div>
 
     <!-- STICKY NAVBAR -->
@@ -893,6 +1021,16 @@
 
                             <div class="row g-3 mb-3">
                                 <div class="col-md-6">
+                                    <label class="form-label">First Name</label>
+                                    <input type="text" name="first_name" class="form-control"
+                                        placeholder="John">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Last Name</label>
+                                    <input type="text" name="last_name" class="form-control"
+                                        placeholder="Smith">
+                                </div>
+                                <div class="col-md-6">
                                     <label class="form-label">Target Company</label>
                                     <input type="text" name="company_name" class="form-control"
                                         placeholder="Google, Amazon, etc.">
@@ -958,32 +1096,10 @@
                                         placeholder="Paste the job description here..."></textarea>
                                 </div>
                                 <div class="col-12">
-                                    <button type="submit" class="btn btn-custom btn-ai w-100" id="generateBtn"
-                                        onclick="showLoading()">
+                                    <button type="button" class="btn btn-custom btn-ai w-100" id="generateBtn"
+                                        onclick="submitForm()">
                                         <i class="fas fa-sparkles me-2"></i>Generate Elite Letter
                                     </button>
-                                    <!-- LOADING OVERLAY -->
-                                    <div id="loadingOverlay" style="display:none;" class="mt-3">
-                                        <div
-                                            style="background: rgba(0,0,0,0.3); border: 1px solid rgba(76,201,240,0.15); border-radius: 16px; padding: 28px; text-align: center;">
-                                            <div class="mb-3">
-                                                <div class="spinner-border text-info"
-                                                    style="width: 2.5rem; height: 2.5rem;" role="status"></div>
-                                            </div>
-                                            <div id="loadingStep"
-                                                style="font-weight: 700; color: #4cc9f0; font-size: 0.95rem; margin-bottom: 12px;">
-                                                Analyzing your resume...</div>
-                                            <div
-                                                style="background: rgba(255,255,255,0.06); border-radius: 10px; height: 8px; overflow: hidden; max-width: 320px; margin: 0 auto;">
-                                                <div id="loadingBar"
-                                                    style="height: 100%; width: 0%; background: linear-gradient(90deg, #4361ee, #4cc9f0); border-radius: 10px; transition: width 0.5s ease;">
-                                                </div>
-                                            </div>
-                                            <div id="loadingPercent"
-                                                style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #475569; margin-top: 8px;">
-                                                0%</div>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
 
@@ -1184,6 +1300,29 @@
                                         placeholder="Available on request">
                                 </div>
 
+                                <!-- PDF TEMPLATE SELECTOR CAROUSEL -->
+                                <div class="col-12 mt-3">
+                                    <label class="form-label mb-2"><i class="fas fa-palette me-2" style="color:var(--primary);"></i>Choose PDF Template</label>
+                                    <div class="template-carousel" id="templateCarousel">
+                                        {% with plan=user.profile.plan limit=user.profile.get_pdf_template_limit %}
+                                        {% for t in pdf_templates %}
+                                        <div class="tmpl-card {% if forloop.counter0 < limit %}{% if forloop.first %}selected{% endif %}{% else %}locked{% endif %}"
+                                             data-slug="{{ t.slug }}"
+                                             data-locked="{% if forloop.counter0 >= limit %}1{% else %}0{% endif %}"
+                                             onclick="selectTemplate(this)">
+                                            <div class="tmpl-emoji">{{ t.preview }}</div>
+                                            <div class="tmpl-name">{{ t.name }}</div>
+                                            <div class="tmpl-desc">{{ t.desc }}</div>
+                                            {% if forloop.counter0 >= limit %}
+                                            <div class="tmpl-lock">🔒 {% if plan == 'free' %}Pro+{% else %}Elite{% endif %}</div>
+                                            {% endif %}
+                                        </div>
+                                        {% endfor %}
+                                        {% endwith %}
+                                    </div>
+                                    <input type="hidden" name="template_name" id="templateNameInput" value="classic_navy">
+                                </div>
+
                                 <div class="col-12 mt-2">
                                     <button type="submit" class="btn btn-custom btn-pdf w-100"
                                         onclick="collectSkills()">
@@ -1218,13 +1357,21 @@
         });
         {% endif %}
 
-        // LOADING OVERLAY
-        function showLoading() {
-            const resume = document.querySelector('textarea[name="resume"]').value.trim();
-            if (resume) {
-                document.getElementById('loadingOverlay').classList.add('active');
+        // PDF TEMPLATE SELECTOR
+        function selectTemplate(card) {
+            if (card.dataset.locked === '1') {
+                showToast('Upgrade to unlock this template! 🔒', 'warning');
+                return;
             }
+            document.querySelectorAll('.tmpl-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            document.getElementById('templateNameInput').value = card.dataset.slug;
         }
+        // Init first non-locked card
+        document.addEventListener('DOMContentLoaded', function() {
+            const first = document.querySelector('.tmpl-card:not(.locked)');
+            if (first) selectTemplate(first);
+        });
 
         // FILE LABEL UPDATE
         function updateFileLabel(input) {
@@ -1424,37 +1571,80 @@
     </style>
 
     <script>
-        function showLoading() {
-            const btn = document.getElementById('generateBtn');
+        // ── Form submission via fetch() ─────────────────────────────────────
+        async function submitForm() {
+            const form    = document.getElementById('aiForm');
+            const btn     = document.getElementById('generateBtn');
             const overlay = document.getElementById('loadingOverlay');
-            const bar = document.getElementById('loadingBar');
-            const pct = document.getElementById('loadingPercent');
-            const step = document.getElementById('loadingStep');
+            const bar     = document.getElementById('loadingBar');
+            const pct     = document.getElementById('loadingPercent');
+            const step    = document.getElementById('loadingStep');
 
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
             btn.style.opacity = '0.6';
-            overlay.style.display = 'block';
+            overlay.classList.add('active');
 
             const steps = [
-                { at: 10, msg: 'Analyzing your resume...' },
-                { at: 30, msg: 'Matching keywords to job description...' },
-                { at: 55, msg: 'Writing your cover letter...' },
-                { at: 75, msg: 'Generating alternative versions...' },
-                { at: 88, msg: 'Running ATS compatibility check...' }
+                { at: 8,  msg: 'Analyzing your resume...' },
+                { at: 25, msg: 'Matching keywords to job...' },
+                { at: 48, msg: 'Crafting your cover letter...' },
+                { at: 68, msg: 'Writing alternate versions...' },
+                { at: 82, msg: 'Running ATS analysis...' },
+                { at: 90, msg: 'Checking red flags...' },
             ];
-
             let progress = 0;
             const interval = setInterval(() => {
-                progress += Math.random() * 3 + 0.5;
-                if (progress >= 90) { progress = 90; clearInterval(interval); }
+                progress += Math.random() * 2.5 + 0.3;
+                if (progress >= 92) { progress = 92; clearInterval(interval); }
                 bar.style.width = progress + '%';
                 pct.textContent = Math.floor(progress) + '%';
                 for (let i = steps.length - 1; i >= 0; i--) {
-                    if (progress >= steps[i].at) { step.textContent = steps[i].msg; break; }
+                    if (progress >= steps[i].at) {
+                        if (step.textContent !== steps[i].msg) {
+                            step.style.opacity = '0';
+                            setTimeout(() => { step.textContent = steps[i].msg; step.style.opacity = '1'; }, 200);
+                        }
+                        break;
+                    }
                 }
-            }, 300);
+            }, 280);
+
+            try {
+                const resp = await fetch(form.action, {
+                    method: 'POST',
+                    body: new FormData(form),
+                });
+                clearInterval(interval);
+                if (resp.ok || resp.redirected) {
+                    const html = await resp.text();
+                    document.open(); document.write(html); document.close();
+                } else {
+                    hideLoading(btn, overlay);
+                    showToast('Server error (' + resp.status + '). Please try again.', 'danger');
+                }
+            } catch (err) {
+                clearInterval(interval);
+                hideLoading(btn, overlay);
+                showToast('Connection failed. Is the AI service running?', 'danger');
+            }
         }
+
+        function hideLoading(btn, overlay) {
+            overlay.classList.remove('active');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sparkles me-2"></i>Generate Elite Letter';
+            btn.style.opacity = '1';
+        }
+
+        function showToast(msg, type) {
+            const t = document.createElement('div');
+            t.className = 'toast-notification toast-' + (type || 'danger');
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 5000);
+        }
+
 
         function downloadResultPdf() {
             const mainText = document.getElementById('main-text');

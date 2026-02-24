@@ -5,211 +5,417 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pricing | CVAI</title>
+    <title>Pricing | CVAI — Choose Your Plan</title>
+    <meta name="description"
+        content="Unlock the full power of AI cover letter generation. Choose from Free, Pro, or Elite plans and land your dream job faster.">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
-
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
     <style>
+        :root {
+            --primary:   #4cc9f0;
+            --secondary: #f72585;
+            --accent:    #7c3aed;
+            --gold:      #f59e0b;
+            --dark-bg:   #0a0e17;
+            --border:    rgba(255,255,255,0.08);
+        }
+        * { box-sizing: border-box; }
         body {
-            background-color: #0f0c29;
-            font-family: 'Montserrat', sans-serif;
-            color: white;
+            background-color: var(--dark-bg);
+            font-family: 'Outfit', sans-serif;
+            color: #e2e8f0;
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 50px 0;
+            background-image:
+                radial-gradient(ellipse at 15% 10%, rgba(76,201,240,0.13) 0%, transparent 45%),
+                radial-gradient(ellipse at 85% 85%, rgba(124,58,237,0.13) 0%, transparent 45%),
+                radial-gradient(ellipse at 50% 50%, rgba(247,37,133,0.05) 0%, transparent 60%);
         }
 
-        .orb {
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(90px);
-            z-index: -1;
-        }
-
-        .orb-1 {
-            width: 400px;
-            height: 400px;
-            background: #7209b7;
-            top: 0;
-            left: 0;
-        }
-
-        .orb-2 {
-            width: 400px;
-            height: 400px;
-            background: #4cc9f0;
-            bottom: 0;
-            right: 0;
-        }
-
-        .pricing-card {
-            background: rgba(255, 255, 255, 0.05);
+        /* ── NAVBAR ── */
+        .navbar-custom {
+            padding: 18px 24px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(10,14,23,0.88);
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            padding: 40px;
-            transition: 0.3s;
-            height: 100%;
-            position: relative;
+        }
+        .logo-text {
+            font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 1.4rem;
+            background: linear-gradient(90deg, #fff, var(--primary));
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent; text-decoration: none;
+        }
+        .nav-link-item {
+            color: #94a3b8; text-decoration: none; font-size: 0.9rem; font-weight: 600;
+            padding: 6px 14px; border-radius: 8px; transition: 0.2s;
+        }
+        .nav-link-item:hover { color: #fff; background: rgba(255,255,255,0.05); }
+
+        /* ── HERO ── */
+        .pricing-hero {
+            text-align: center; padding: 80px 16px 48px;
+        }
+        .pricing-hero .eyebrow {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
+            letter-spacing: 3px; text-transform: uppercase; color: var(--primary); margin-bottom: 16px;
+        }
+        .pricing-hero h1 {
+            font-size: clamp(2.2rem, 5vw, 3.8rem); font-weight: 800; line-height: 1.1; margin-bottom: 16px;
+        }
+        .pricing-hero h1 span {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .pricing-hero p { color: #64748b; font-size: 1.05rem; max-width: 520px; margin: 0 auto; }
+
+        /* ── GRID ── */
+        .pricing-grid {
+            display: flex; gap: 24px; justify-content: center; flex-wrap: wrap;
+            padding: 0 20px 80px; align-items: flex-start;
         }
 
-        .pricing-card:hover {
-            transform: translateY(-10px);
+        /* ── BASE CARD ── */
+        .pricing-card {
+            background: rgba(16,22,40,0.78); border: 1.5px solid var(--border);
+            border-radius: 28px; padding: 40px 36px 44px;
+            width: min(340px, 100%); position: relative;
+            display: flex; flex-direction: column;
+            transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+            backdrop-filter: blur(14px);
+        }
+        .pricing-card:hover { transform: translateY(-6px); box-shadow: 0 24px 64px rgba(0,0,0,0.4); }
+
+        /* Free */
+        .card-free { border-color: rgba(76,201,240,0.18); }
+        .card-free::before {
+            content: ''; position: absolute; inset: 0; border-radius: 28px;
+            background: radial-gradient(ellipse at 50% 0%, rgba(76,201,240,0.06), transparent 60%);
+            pointer-events: none;
+        }
+        /* Pro — featured */
+        .card-pro {
+            border-color: var(--gold);
+            box-shadow: 0 0 0 1px rgba(245,158,11,0.3), 0 20px 60px rgba(245,158,11,0.12);
+            transform: scale(1.03);
+        }
+        .card-pro:hover {
+            transform: scale(1.03) translateY(-6px);
+            box-shadow: 0 0 0 1px rgba(245,158,11,0.5), 0 28px 80px rgba(245,158,11,0.18);
+        }
+        .card-pro::before {
+            content: ''; position: absolute; inset: 0; border-radius: 28px;
+            background: radial-gradient(ellipse at 50% 0%, rgba(245,158,11,0.08), transparent 60%);
+            pointer-events: none;
+        }
+        /* Elite */
+        .card-elite {
+            border-color: rgba(124,58,237,0.35);
+            box-shadow: 0 0 0 1px rgba(124,58,237,0.2), 0 20px 60px rgba(124,58,237,0.1);
+        }
+        .card-elite:hover {
+            border-color: rgba(124,58,237,0.6);
+            box-shadow: 0 0 0 1px rgba(124,58,237,0.4), 0 28px 80px rgba(124,58,237,0.18);
+        }
+        .card-elite::before {
+            content: ''; position: absolute; inset: 0; border-radius: 28px;
+            background: radial-gradient(ellipse at 50% 0%, rgba(124,58,237,0.08), transparent 60%);
+            pointer-events: none;
         }
 
-        .card-premium {
-            background: rgba(0, 0, 0, 0.3);
-            border: 2px solid #ffd700;
-            box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+        /* Badge */
+        .plan-badge {
+            position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+            font-size: 0.72rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
+            padding: 5px 18px; border-radius: 99px; white-space: nowrap;
+        }
+        .badge-pro   { background: linear-gradient(90deg,#f59e0b,#fbbf24); color: #0a0e17; }
+        .badge-elite { background: linear-gradient(90deg,#7c3aed,#a855f7); color: #fff; }
+
+        /* Label */
+        .plan-label { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+            letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px; font-weight: 700; }
+        .plan-label.free  { color: var(--primary); }
+        .plan-label.pro   { color: var(--gold); }
+        .plan-label.elite { color: #a855f7; }
+
+        /* Price */
+        .plan-price { font-size: 3.2rem; font-weight: 800; line-height: 1; margin-bottom: 6px; }
+        .plan-price sup { font-size: 1.2rem; vertical-align: super; margin-right: 2px; }
+        .plan-price .period { font-size: 0.9rem; font-weight: 400; color: #64748b; }
+        .plan-tagline { font-size: 0.82rem; color: #475569; margin-bottom: 28px; }
+
+        .plan-divider { border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 20px 0; }
+
+        /* Features */
+        .plan-features { list-style: none; padding: 0; margin: 0 0 32px; flex-grow: 1; }
+        .plan-features li {
+            display: flex; align-items: flex-start; gap: 10px;
+            font-size: 0.91rem; color: #94a3b8;
+            padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .plan-features li:last-child { border-bottom: none; }
+        .plan-features li .fi { width: 18px; flex-shrink: 0; margin-top: 2px; }
+        .fi-check { color: #10b981; }
+        .fi-cross  { color: #374151; }
+        .feat-dim  { opacity: 0.42; }
+
+        /* CTA */
+        .btn-plan {
+            display: block; width: 100%; padding: 15px 0; border-radius: 14px;
+            font-weight: 700; font-size: 0.95rem; text-align: center;
+            text-decoration: none; border: none; cursor: pointer;
+            transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s; letter-spacing: 0.3px;
+        }
+        .btn-plan:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+        .btn-plan:disabled, .btn-plan.current {
+            opacity: 0.5; cursor: default; transform: none !important;
+        }
+        .btn-free  { background: rgba(76,201,240,0.1); color: var(--primary); border: 1.5px solid rgba(76,201,240,0.3); }
+        .btn-free:hover:not(:disabled) { background: rgba(76,201,240,0.18); }
+        .btn-pro   { background: linear-gradient(135deg,#f59e0b,#fbbf24); color: #0a0e17;
+            box-shadow: 0 8px 24px rgba(245,158,11,0.35); }
+        .btn-pro:hover:not(:disabled) { box-shadow: 0 12px 32px rgba(245,158,11,0.5); }
+        .btn-elite { background: linear-gradient(135deg,#7c3aed,#a855f7); color: #fff;
+            box-shadow: 0 8px 24px rgba(124,58,237,0.35); }
+        .btn-elite:hover:not(:disabled) { box-shadow: 0 12px 32px rgba(124,58,237,0.5); }
+        .btn-downgrade {
+            background: rgba(255,255,255,0.05); color: #64748b;
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
-        .card-premium:hover {
-            box-shadow: 0 0 50px rgba(255, 215, 0, 0.4);
+        /* Note + Hamburger */
+        .pricing-note { text-align: center; color: #334155; font-size: 0.82rem; padding-bottom: 40px; }
+        .pricing-note a { color: var(--primary); text-decoration: none; }
+        .hamburger-btn { display: none; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
+        @media (max-width: 768px) {
+            .nav-links-desktop { display: none !important; }
+            .hamburger-btn { display: block; }
+            .card-pro { transform: scale(1); }
+            .card-pro:hover { transform: translateY(-6px); }
         }
-
-        .price {
-            font-size: 3rem;
-            font-weight: bold;
-            margin: 20px 0;
+        .mobile-drawer {
+            position: fixed; top: 0; right: -300px; width: 280px; height: 100vh;
+            background: rgba(10,14,23,0.98); backdrop-filter: blur(20px);
+            z-index: 9999; transition: right 0.35s ease; padding: 32px 24px;
+            border-left: 1px solid rgba(255,255,255,0.06);
         }
-
-        .features {
-            list-style: none;
-            padding: 0;
-            margin: 30px 0;
-            text-align: left;
+        .mobile-drawer.open { right: 0; }
+        .mobile-backdrop {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9998;
         }
-
-        .features li {
-            margin-bottom: 15px;
-            font-size: 1.1rem;
+        .mobile-backdrop.open { display: block; }
+        .drawer-link {
+            display: block; color: #e2e8f0; text-decoration: none;
+            font-size: 1rem; font-weight: 600; padding: 13px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
-
-        .features i {
-            margin-right: 10px;
-        }
-
-        .btn-free {
-            border: 1px solid white;
-            color: white;
-            width: 100%;
-            padding: 12px;
-            border-radius: 12px;
-            text-decoration: none;
-            display: block;
-            text-align: center;
-            transition: 0.3s;
-        }
-
-        .btn-free:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-        }
-
-        .btn-gold {
-            background: linear-gradient(45deg, #ffd700, #ffaa00);
-            border: none;
-            color: black;
-            font-weight: bold;
-            width: 100%;
-            padding: 15px;
-            border-radius: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4);
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .btn-gold:hover {
-            transform: scale(1.05);
-            color: black;
-            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.6);
-        }
-
-        .popular-badge {
-            position: absolute;
-            top: -15px;
-            right: 20px;
-            background: #ff3b30;
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 0.9rem;
-            box-shadow: 0 5px 15px rgba(255, 59, 48, 0.4);
-        }
-
-        .alert {
-            border-radius: 12px;
-            border: none;
-            font-size: 0.9rem;
-        }
+        .drawer-link:hover { color: var(--primary); }
     </style>
 </head>
 
 <body>
 
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-
-    <div class="container text-center">
-        <h1 class="fw-bold mb-5 display-4">Invest in Your Career 🚀</h1>
-
-        {% if messages %}
-        <div class="mb-4" style="max-width: 600px; margin: 0 auto;">
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} bg-{{ message.tags }} bg-opacity-25 text-white">
-                {{ message }}
-            </div>
-            {% endfor %}
+    <!-- Mobile Drawer -->
+    <div class="mobile-backdrop" id="mobileBackdrop" onclick="toggleMobileNav()"></div>
+    <div class="mobile-drawer" id="mobileDrawer">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <span class="logo-text">CV<span style="color:var(--primary);">AI</span></span>
+            <button onclick="toggleMobileNav()" style="background:none;border:none;color:#94a3b8;font-size:1.4rem;cursor:pointer;">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
+        {% if user.is_authenticated %}
+        <a href="{% url 'home' %}"      class="drawer-link"><i class="fas fa-magic me-2"></i>Generator</a>
+        <a href="{% url 'dashboard' %}" class="drawer-link"><i class="fas fa-chart-bar me-2"></i>Dashboard</a>
+        <a href="{% url 'history' %}"   class="drawer-link"><i class="fas fa-clock me-2"></i>History</a>
+        <a href="{% url 'pricing' %}"   class="drawer-link" style="color:var(--primary);"><i class="fas fa-crown me-2"></i>Pricing</a>
+        <a href="{% url 'profile' %}"   class="drawer-link"><i class="fas fa-user me-2"></i>Profile</a>
+        <a href="{% url 'logout' %}"    class="drawer-link" style="color:var(--secondary);"><i class="fas fa-sign-out-alt me-2"></i>Logout</a>
+        {% else %}
+        <a href="{% url 'login' %}"    class="drawer-link">Login</a>
+        <a href="{% url 'register' %}" class="drawer-link">Sign Up</a>
         {% endif %}
-
-        <div class="row justify-content-center align-items-center g-4">
-
-            <div class="col-md-5 col-lg-4">
-                <div class="pricing-card">
-                    <h3 class="text-white-50">Starter</h3>
-                    <div class="price">$0</div>
-                    <ul class="features">
-                        <li><i class="fas fa-check text-success"></i> 3 Generations</li>
-                        <li><i class="fas fa-check text-success"></i> Basic Llama 3 Model</li>
-                        <li class="text-white-50"><i class="fas fa-times text-secondary"></i> No History Saving</li>
-                        <li class="text-white-50"><i class="fas fa-times text-secondary"></i> No Priority Support</li>
-                    </ul>
-                    <a href="{% url 'home' %}" class="btn-free">Current Plan</a>
-                </div>
-            </div>
-
-            <div class="col-md-5 col-lg-4">
-                <div class="pricing-card card-premium">
-                    <div class="popular-badge">BEST SELLER 🔥</div>
-                    <h3 class="text-warning"><i class="fas fa-crown me-2"></i>PRO</h3>
-                    <div class="price text-warning">$9 <span class="fs-6 text-white">/ mo</span></div>
-                    <ul class="features">
-                        <li><i class="fas fa-infinity text-warning"></i> <strong>Unlimited</strong> Generations</li>
-                        <li><i class="fas fa-star text-warning"></i> Priority Speed</li>
-                        <li><i class="fas fa-check text-warning"></i> Access to New Models</li>
-                        <li><i class="fas fa-heart text-warning"></i> Support the Dev</li>
-                    </ul>
-                    <form action="{% url 'buy_premium' %}" method="post">
-                        {% csrf_token %}
-                        <button type="submit" class="btn-gold">Get Pro Access 💎</button>
-                    </form>
-                </div>
-            </div>
-
-        </div>
-
-        <div class="mt-5">
-            <a href="{% url 'home' %}" class="text-white-50 text-decoration-none">← Back to Generator</a>
-        </div>
     </div>
 
-</body>
+    <!-- NAVBAR -->
+    <nav class="navbar-custom">
+        <a href="{% url 'landing' %}" class="logo-text">CV<span style="-webkit-text-fill-color:var(--primary);">AI</span></a>
+        <div class="d-flex align-items-center gap-2 nav-links-desktop">
+            {% if user.is_authenticated %}
+            <a href="{% url 'home' %}"      class="nav-link-item">Generator</a>
+            <a href="{% url 'dashboard' %}" class="nav-link-item">Dashboard</a>
+            <a href="{% url 'history' %}"   class="nav-link-item">History</a>
+            <a href="{% url 'pricing' %}"   class="nav-link-item" style="color:var(--primary);">Pricing</a>
+            <a href="{% url 'profile' %}"   class="nav-link-item"><i class="fas fa-user-circle me-1"></i>{{ user.username }}</a>
+            {% else %}
+            <a href="{% url 'login' %}"    class="nav-link-item">Login</a>
+            <a href="{% url 'register' %}" class="nav-link-item">Sign Up Free</a>
+            {% endif %}
+        </div>
+        <button class="hamburger-btn" onclick="toggleMobileNav()"><i class="fas fa-bars"></i></button>
+    </nav>
 
+    <!-- HERO -->
+    <section class="pricing-hero">
+        <div class="eyebrow">Transparent Pricing</div>
+        <h1>Simple plans,<br><span>powerful results</span></h1>
+        <p>Start free, upgrade when you're ready. All plans include AI cover letters, ATS analysis &amp; risk feedback.</p>
+    </section>
+
+    {% if user.is_authenticated %}{% with plan=user.profile.plan %}
+    <!-- PRICING CARDS -->
+    <div class="pricing-grid">
+
+        <!-- ══ FREE ══ -->
+        <div class="pricing-card card-free">
+            <div class="plan-label free">Free</div>
+            <div class="plan-price">$0 <span class="period">/ forever</span></div>
+            <div class="plan-tagline">Get started — no credit card needed</div>
+            <hr class="plan-divider">
+            <ul class="plan-features">
+                <li><i class="fas fa-check fi fi-check"></i> 3 AI cover letter generations</li>
+                <li><i class="fas fa-check fi fi-check"></i> Main letter + 2 alternative versions</li>
+                <li><i class="fas fa-check fi fi-check"></i> Recruiter risk analysis</li>
+                <li><i class="fas fa-check fi fi-check"></i> 1 Standard PDF template (Classic Navy)</li>
+                <li><i class="fas fa-check fi fi-check"></i> Basic AI model</li>
+                <li class="feat-dim"><i class="fas fa-times fi fi-cross"></i> ATS Score analysis</li>
+                <li class="feat-dim"><i class="fas fa-times fi fi-cross"></i> History saving</li>
+                <li class="feat-dim"><i class="fas fa-times fi fi-cross"></i> Premium PDF templates</li>
+            </ul>
+            {% if plan == 'free' %}
+            <button class="btn-plan btn-free current" disabled>✓ Current Plan</button>
+            {% else %}
+            <a href="{% url 'pricing' %}" class="btn-plan btn-downgrade">Downgrade to Free</a>
+            {% endif %}
+        </div>
+
+        <!-- ══ PRO ══ -->
+        <div class="pricing-card card-pro">
+            <div class="plan-badge badge-pro">🔥 Most Popular</div>
+            <div class="plan-label pro">Pro</div>
+            <div class="plan-price"><sup>$</sup>5 <span class="period">/ month</span></div>
+            <div class="plan-tagline">Unlimited power for active job seekers</div>
+            <hr class="plan-divider">
+            <ul class="plan-features">
+                <li><i class="fas fa-check fi fi-check"></i> <strong>50 generations / month</strong></li>
+                <li><i class="fas fa-check fi fi-check"></i> Main letter + 2 alternative versions</li>
+                <li><i class="fas fa-check fi fi-check"></i> <strong>ATS Score &amp; keyword analysis</strong></li>
+                <li><i class="fas fa-check fi fi-check"></i> Recruiter risk analysis</li>
+                <li><i class="fas fa-check fi fi-check"></i> <strong>5 Premium PDF templates</strong></li>
+                <li><i class="fas fa-check fi fi-check"></i> <strong>Full history saving</strong></li>
+                <li><i class="fas fa-check fi fi-check"></i> <strong>Priority AI model</strong></li>
+                <li class="feat-dim"><i class="fas fa-times fi fi-cross"></i> AI Interview Prep &amp; Follow-up</li>
+            </ul>
+            {% if plan == 'pro' %}
+            <button class="btn-plan btn-pro current" disabled>✓ Current Plan</button>
+            {% elif plan == 'elite' %}
+            <a href="{% url 'pricing' %}" class="btn-plan btn-downgrade">Downgrade to Pro</a>
+            {% else %}
+            <a href="{% url 'buy_premium' plan='pro' %}" class="btn-plan btn-pro">Upgrade to Pro →</a>
+            {% endif %}
+        </div>
+
+        <!-- ══ ELITE ══ -->
+        <div class="pricing-card card-elite">
+            <div class="plan-badge badge-elite">✦ Elite</div>
+            <div class="plan-label elite">Elite</div>
+            <div class="plan-price"><sup>$</sup>10 <span class="period">/ month</span></div>
+            <div class="plan-tagline">Maximum edge — built for top-tier roles</div>
+            <hr class="plan-divider">
+            <ul class="plan-features">
+                <li><i class="fas fa-check fi fi-check"></i> <strong>Unlimited generations</strong></li>
+                <li><i class="fas fa-check fi fi-check"></i> Main letter + 2 alternative versions</li>
+                <li><i class="fas fa-check fi fi-check"></i> <strong>ATS Score &amp; keyword analysis</strong></li>
+                <li><i class="fas fa-check fi fi-check"></i> Recruiter risk analysis</li>
+                <li><i class="fas fa-check fi fi-check"></i> <strong>ALL 20+ PDF templates</strong></li>
+                <li><i class="fas fa-check fi fi-check"></i> Full history saving</li>
+                <li><i class="fas fa-check fi fi-check"></i> <strong>Max AI speed (Claude 3.5 Sonnet)</strong></li>
+                <li><i class="fas fa-check fi fi-check"></i> <strong>AI Interview Prep &amp; Follow-up</strong></li>
+            </ul>
+            {% if plan == 'elite' %}
+            <button class="btn-plan btn-elite current" disabled>✓ Current Plan</button>
+            {% else %}
+            <a href="{% url 'buy_premium' plan='elite' %}" class="btn-plan btn-elite">Upgrade to Elite →</a>
+            {% endif %}
+        </div>
+
+    </div>
+    {% endwith %}{% else %}
+
+    <!-- NOT LOGGED IN — static cards with Sign Up CTAs -->
+    <div class="pricing-grid">
+        <div class="pricing-card card-free">
+            <div class="plan-label free">Free</div>
+            <div class="plan-price">$0 <span class="period">/ forever</span></div>
+            <div class="plan-tagline">Get started — no credit card needed</div>
+            <hr class="plan-divider">
+            <ul class="plan-features">
+                <li><i class="fas fa-check fi fi-check"></i> 3 AI cover letter generations</li>
+                <li><i class="fas fa-check fi fi-check"></i> Main letter + 2 alternative versions</li>
+                <li><i class="fas fa-check fi fi-check"></i> Recruiter risk analysis</li>
+                <li><i class="fas fa-check fi fi-check"></i> 1 Standard PDF template</li>
+                <li><i class="fas fa-check fi fi-check"></i> Basic AI model</li>
+                <li class="feat-dim"><i class="fas fa-times fi fi-cross"></i> ATS Score analysis</li>
+                <li class="feat-dim"><i class="fas fa-times fi fi-cross"></i> History saving</li>
+                <li class="feat-dim"><i class="fas fa-times fi fi-cross"></i> Premium PDF templates</li>
+            </ul>
+            <a href="{% url 'register' %}" class="btn-plan btn-free">Sign Up Free →</a>
+        </div>
+        <div class="pricing-card card-pro">
+            <div class="plan-badge badge-pro">🔥 Most Popular</div>
+            <div class="plan-label pro">Pro</div>
+            <div class="plan-price"><sup>$</sup>5 <span class="period">/ month</span></div>
+            <div class="plan-tagline">Unlimited power for active job seekers</div>
+            <hr class="plan-divider">
+            <ul class="plan-features">
+                <li><i class="fas fa-check fi fi-check"></i> <strong>50 generations / month</strong></li>
+                <li><i class="fas fa-check fi fi-check"></i> Main letter + 2 alternative versions</li>
+                <li><i class="fas fa-check fi fi-check"></i> <strong>ATS Score &amp; keyword analysis</strong></li>
+                <li><i class="fas fa-check fi fi-check"></i> Recruiter risk analysis</li>
+                <li><i class="fas fa-check fi fi-check"></i> <strong>5 Premium PDF templates</strong></li>
+                <li><i class="fas fa-check fi fi-check"></i> <strong>Full history saving</strong></li>
+                <li><i class="fas fa-check fi fi-check"></i> <strong>Priority AI model</strong></li>
+                <li class="feat-dim"><i class="fas fa-times fi fi-cross"></i> AI Interview Prep</li>
+            </ul>
+            <a href="{% url 'register' %}" class="btn-plan btn-pro">Get Pro Access →</a>
+        </div>
+        <div class="pricing-card card-elite">
+            <div class="plan-badge badge-elite">✦ Elite</div>
+            <div class="plan-label elite">Elite</div>
+            <div class="plan-price"><sup>$</sup>10 <span class="period">/ month</span></div>
+            <div class="plan-tagline">Maximum edge — built for top-tier roles</div>
+            <hr class="plan-divider">
+            <ul class="plan-features">
+                <li><i class="fas fa-check fi fi-check"></i> <strong>Unlimited generations</strong></li>
+                <li><i class="fas fa-check fi fi-check"></i> Main letter + 2 alternative versions</li>
+                <li><i class="fas fa-check fi fi-check"></i> <strong>ATS Score &amp; keyword analysis</strong></li>
+                <li><i class="fas fa-check fi fi-check"></i> Recruiter risk analysis</li>
+                <li><i class="fas fa-check fi fi-check"></i> <strong>ALL 20+ PDF templates</strong></li>
+                <li><i class="fas fa-check fi fi-check"></i> Full history saving</li>
+                <li><i class="fas fa-check fi fi-check"></i> <strong>Max AI speed (Claude 3.5 Sonnet)</strong></li>
+                <li><i class="fas fa-check fi fi-check"></i> <strong>AI Interview Prep &amp; Follow-up</strong></li>
+            </ul>
+            <a href="{% url 'register' %}" class="btn-plan btn-elite">Get Elite Access →</a>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="pricing-note">
+        All prices in USD · Cancel anytime &nbsp;·&nbsp;
+        <a href="{% url 'terms' %}">Terms</a> &nbsp;·&nbsp;
+        <a href="{% url 'privacy' %}">Privacy</a>
+    </div>
+
+    <script>
+        function toggleMobileNav() {
+            document.getElementById('mobileDrawer').classList.toggle('open');
+            document.getElementById('mobileBackdrop').classList.toggle('open');
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
 </html>

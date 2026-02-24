@@ -139,13 +139,23 @@ LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'login'
 LOGIN_URL = 'login'
 
-# Stripe configuration
-STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
+# ── Stripe Configuration ────────────────────────────────────────────────────
+STRIPE_SECRET_KEY      = os.environ.get('STRIPE_SECRET_KEY', '')
 STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
-STRIPE_PRICE_ID = os.environ.get('STRIPE_PRICE_ID', '')
-STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+STRIPE_WEBHOOK_SECRET  = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+
+# Per-plan Price IDs  (create recurring prices in your Stripe Dashboard)
+# Set these in your .env / Render/Railway env vars:
+#   STRIPE_PRICE_ID_PRO   = price_xxxxxxxxxxxxxxxx   ($5/mo)
+#   STRIPE_PRICE_ID_ELITE = price_yyyyyyyyyyyyyyyy   ($10/mo)
+STRIPE_PRICE_ID_PRO   = os.environ.get('STRIPE_PRICE_ID_PRO',   '')
+STRIPE_PRICE_ID_ELITE = os.environ.get('STRIPE_PRICE_ID_ELITE', '')
+
+# Legacy alias — kept for any code still referencing STRIPE_PRICE_ID
+STRIPE_PRICE_ID = STRIPE_PRICE_ID_PRO
 
 # AI Microservice — internal FastAPI worker URL
 # Local: http://127.0.0.1:8001  |  Docker: http://ai_worker:8001  |  Render: set via env var
 AI_SERVICE_URL = os.environ.get('AI_SERVICE_URL', 'http://127.0.0.1:8001')
+
 

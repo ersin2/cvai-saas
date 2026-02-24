@@ -6,7 +6,7 @@ import tempfile
 import logging
 from pathlib import Path
 
-from asgiref.sync import sync_to_async          # wrap sync ORM methods for use in async views
+from asgiref.sync import sync_to_async          # wrap sync ORM/render calls for use in async views
 from django.conf import settings                # reads AI_SERVICE_URL
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import FileResponse, JsonResponse
@@ -16,102 +16,59 @@ from django.contrib import messages
 from pdfminer.high_level import extract_text as pdf_extract_text
 from users.models import Profile
 from .models import Generation, JobApplication, AIResult
-
-# ReportLab (PDF)
-from reportlab.lib.pagesizes import A4
-from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import (
-    BaseDocTemplate, PageTemplate, Frame, Paragraph,
-    Spacer, Image as RLImage, FrameBreak, Flowable
-)
-from reportlab.graphics.shapes import Drawing, Line
-from reportlab.lib.units import mm
-from PIL import Image, ImageOps, ImageDraw
+from .pdf_engine import build_pdf, get_templates_for_plan, TEMPLATES
 
 logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
 # ASYNC AI MICROSERVICE CLIENT
-# Django is a thin client here — it builds prompts and delegates ALL LLM logic
-# to the FastAPI ai_service running on AI_SERVICE_URL.
+# Django forwards prompts to the FastAPI ai_worker service.
+# Uses httpx.AsyncClient so the Django async event loop is never blocked.
 # ---------------------------------------------------------------------------
 async def _call_ai_service(
     system_prompt: str,
     user_prompt: str,
-    provider: str = "groq",
     temperature: float = 0.7,
 ):
     """
-    Async handoff to the FastAPI AI microservice.
-
-    Django yields its worker thread here (via httpx.AsyncClient) while
-    the FastAPI service handles the blocking LLM network call on its own
-    async event loop.  Returns (result_text | None, error_message | None).
+    Async POST to the FastAPI /generate endpoint.
+    Returns (result_text | None, error_message | None).
     """
-    ai_url = getattr(settings, "AI_SERVICE_URL", "http://127.0.0.1:8001")
+    ai_url = getattr(settings, "AI_SERVICE_URL", "http://127.0.0.1:8001").rstrip("/")
+    payload = {
+        "system_prompt": system_prompt,
+        "user_prompt": user_prompt,
+        "provider": "groq",
+        "temperature": temperature,
+    }
     try:
         async with httpx.AsyncClient(timeout=90.0) as client:
-            resp = await client.post(
-                f"{ai_url}/generate",
-                json={
-                    "system_prompt": system_prompt,
-                    "user_prompt": user_prompt,
-                    "provider": provider,
-                    "temperature": temperature,
-                },
-            )
+            resp = await client.post(f"{ai_url}/generate", json=payload)
             resp.raise_for_status()
             data = resp.json()
-            # FastAPI returns {"result": "...", "error": null} or {"result": null, "error": "..."}
-            return data.get("result"), data.get("error")
+            if data.get("error"):
+                return None, data["error"]
+            return data.get("result"), None
 
     except httpx.ConnectError:
-        logger.error(
-            "Cannot reach AI service at %s — is ai_worker running?", ai_url
-        )
-        return None, "AI service is temporarily unavailable. Please try again later."
+        logger.error("Cannot reach AI service at %s — is ai_worker running?", ai_url)
+        return None, "AI service is unavailable. Please start the ai_worker and try again."
     except httpx.TimeoutException:
         return None, "AI took too long to respond. Please try again."
+    except httpx.HTTPStatusError as exc:
+        logger.error("AI service HTTP error %s: %s", exc.response.status_code, exc.response.text[:200])
+        return None, f"AI service error ({exc.response.status_code}). Please try again."
     except Exception as exc:
         logger.exception("AI service unexpected error: %s", exc)
         return None, "Something went wrong with AI generation."
 
 
-# --- SKILL BAR FLOWABLE (PDF) ---
-class ProSkillBar(Flowable):
-    def __init__(self, name, level_percent, width=150, height=14):
-        Flowable.__init__(self)
-        self.name = name
-        self.level = level_percent / 100.0
-        self.width = width
-        self.height = height
 
-        if self.level >= 0.9:
-            self.txt = "EXPERT"
-        elif self.level >= 0.70:
-            self.txt = "SENIOR"
-        elif self.level >= 0.40:
-            self.txt = "MIDDLE"
-        else:
-            self.txt = "JUNIOR"
-
-    def draw(self):
-        c = self.canv
-        c.setFont("Helvetica-Bold", 10)
-        c.setFillColor(colors.white)
-        c.drawString(0, 7, self.name)
-
-        c.setFont("Helvetica", 8)
-        c.setFillColor(colors.HexColor("#bdc3c7"))
-        c.drawRightString(self.width, 7, self.txt)
-
-        c.setFillColor(colors.HexColor("#34495e"))
-        c.roundRect(0, 0, self.width, 4, 2, fill=1, stroke=0)
-
-        c.setFillColor(colors.HexColor("#4cc9f0"))
-        c.roundRect(0, 0, self.width * self.level, 4, 2, fill=1, stroke=0)
+# Async-safe render — wraps Django's sync render() for use inside async views.
+# Template rendering hits the DB via lazy FK access (e.g. user.profile);
+# calling it without this wrapper raises SynchronousOnlyOperation.
+arender = sync_to_async(render)
 
 
 # === LANDING PAGE (unauthenticated) ===
@@ -121,17 +78,32 @@ def landing(request):
     return render(request, 'generator/landing.html')
 
 
+# === PRICING PAGE — needs full request context for dynamic plan buttons ===
+def pricing(request):
+    return render(request, 'generator/pricing.html')
+
+
+# === STATIC LEGAL PAGES ===
+def terms(request):
+    return render(request, 'terms.html')
+
+
+def privacy(request):
+    return render(request, 'privacy.html')
+
+
+
+
 # === HOME PAGE (authenticated dashboard) ===
 @login_required
 def home(request):
-    result = None
-    error_message = None
-    # Profile is guaranteed by post_save signal in users/signals.py
     return render(request, 'generator/home.html', {
-        'result': result,
-        'error_message': error_message,
+        'result': None,
+        'error_message': None,
         'resume_text': '',
+        'pdf_templates': TEMPLATES,   # all 5 — plan-gating is in the template
     })
+
 
 
 # === AI COVER LETTER GENERATION ===
@@ -147,46 +119,80 @@ async def generate_letter(request):
     # Async profile fetch — guaranteed to exist via post_save signal
     profile = await Profile.objects.aget(user=request.user)
 
-    resume_text = request.POST.get('resume', '')
-    job_desc = request.POST.get('job_description', '')
+    resume_text  = request.POST.get('resume', '')
+    job_desc     = request.POST.get('job_description', '')
     company_name = request.POST.get('company_name', 'Target Company')
-    job_title = request.POST.get('job_title_ai', 'Professional')
-    tone = request.POST.get('tone', 'Professional')
-    language = request.POST.get('language', 'English')
+    job_title    = request.POST.get('job_title_ai', 'Professional')
+    tone         = request.POST.get('tone', 'Professional')
+    language     = request.POST.get('language', 'English')
+    first_name   = request.POST.get('first_name', '').strip()
+    last_name    = request.POST.get('last_name', '').strip()
+    full_name    = f"{first_name} {last_name}".strip() or "the candidate"
 
     if not profile.has_generations_left():
         error_message = "You've used all free generations! Upgrade to Pro for more."
     else:
-        system_prompt = """
-You are an elite career strategist, senior recruiter, ATS optimization expert,
-and professional cover letter writer with experience hiring for top global
-companies (FAANG, startups, enterprise, and tech firms).
+        # ── CRITICAL LANGUAGE LOCK ──────────────────────────────────────────
+        # Every sentence of the output MUST be in the requested language.
+        # We use tagged section markers so the parser works regardless of language.
+        system_prompt = f"""
+You are an elite career strategist, senior recruiter, ATS expert, and professional
+cover letter writer with experience at top global companies (FAANG, startups, enterprise).
 
-Your goal is NOT to simply write a cover letter.
-Your goal is to maximize the candidate's chances of getting an interview.
+⚠️  ABSOLUTE LANGUAGE RULE ⚠️
+The user has selected the output language: {language}.
+YOU MUST WRITE EVERY SINGLE WORD OF YOUR RESPONSE IN {language}.
+This includes ALL section headers, ALL bullet points, ALL analysis, ALL advice.
+DO NOT write even one word in English if {language} is not English.
+DO NOT translate only the cover letter. Translate EVERYTHING.
+If you fail to write the full response in {language}, you have failed the task.
 
-STRUCTURE YOUR RESPONSE EXACTLY LIKE THIS:
-1. MAIN COVER LETTER
-2. VERSION A (Corporate/Traditional)
-3. VERSION B (Bold/Impact)
-4. ATS ANALYSIS (Score 0-100 & Tips)
-5. RECRUITER RISK ANALYSIS (3 risks & fixes)
+OUTPUT STRUCTURE — use these EXACT section tags (the tags themselves stay in English,
+but ALL content between tags must be in {language}):
 
-Do not include any conversational filler before or after.
+[SECTION: MAIN_LETTER]
+... full main cover letter in {language} signed by {full_name} ...
+[END_SECTION]
+
+[SECTION: VERSION_A]
+... Version A (Corporate/Traditional) in {language} signed by {full_name} ...
+[END_SECTION]
+
+[SECTION: VERSION_B]
+... Version B (Bold/Impact) in {language} signed by {full_name} ...
+[END_SECTION]
+
+[SECTION: ATS_ANALYSIS]
+... ATS score 0-100 and detailed tips — all in {language} ...
+[END_SECTION]
+
+[SECTION: RISK_ANALYSIS]
+... 3 recruiter red flags and concrete fixes — all in {language} ...
+[END_SECTION]
+
+Do not write anything outside these tags.
 """
 
         user_prompt = f"""
-========================
-INPUT DATA
-========================
-Candidate CV: {resume_text}
-Job Description: {job_desc}
+========================================
+CANDIDATE DATA
+========================================
+Full Name: {full_name}
+Candidate CV:
+{resume_text}
+
+Job Description:
+{job_desc}
+
 Target Company: {company_name}
 Job Title: {job_title}
 Preferred Tone: {tone}
-Language: {language}
+Output Language: {language}
 
-Generate the elite response now.
+⚠️  REMINDER: Every word of your entire response must be in {language}.
+Sign every cover letter version with the candidate's full name: {full_name}.
+
+Generate the elite career response now.
 """
         # Async handoff — Django yields its thread here
         result, error_message = await _call_ai_service(system_prompt, user_prompt)
@@ -206,10 +212,13 @@ Generate the elite response now.
             # use_generation() calls self.save() — wrap with sync_to_async
             await sync_to_async(profile.use_generation)()
 
-    return render(request, 'generator/home.html', {
+    # arender wraps Django's sync render() — required in async views to avoid
+    # SynchronousOnlyOperation when the template evaluates user.profile lazily.
+    return await arender(request, 'generator/home.html', {
         'result': result,
         'error_message': error_message,
         'resume_text': resume_text,
+        'pdf_templates': TEMPLATES,
     })
 
 
@@ -222,182 +231,42 @@ def history(request):
     })
 
 
-# === PDF GENERATOR (NAVY PRO STYLE) ===
+# === DELETE GENERATION (AJAX) ===
+@login_required
+@require_POST
+async def delete_generation(request, pk):
+    """
+    Async AJAX view to delete a single generation.
+    Returns JSON {"ok": true} on success, {"error": "..."} on failure.
+    Ownership is enforced — users can only delete their own records.
+    """
+    gen = await sync_to_async(get_object_or_404)(
+        Generation, pk=pk, user=request.user
+    )
+    await gen.adelete()
+    return JsonResponse({'ok': True})
+
+
+# === PDF GENERATOR (multi-template via pdf_engine.py) ===
 @login_required
 @require_POST
 def generate_pdf(request):
-    buffer = io.BytesIO()
-    doc = BaseDocTemplate(
-        buffer, pagesize=A4,
-        rightMargin=0, leftMargin=0, topMargin=0, bottomMargin=0
-    )
+    """
+    Routes the request to the correct ReportLab template via pdf_engine.build_pdf().
+    Validates the requested template against the user's plan limits.
+    """
+    profile = request.user.profile
+    template_slug = request.POST.get('template_name', 'classic_navy')
+    allowed_limit = profile.get_pdf_template_limit()
+    allowed_slugs = [t['slug'] for t in TEMPLATES[:allowed_limit]]
 
-    # COLORS
-    C_SIDEBAR = colors.HexColor("#2c3e50")
-    C_ACCENT = colors.HexColor("#4cc9f0")
-    C_TEXT = colors.HexColor("#2c3e50")
-    C_GREY = colors.HexColor("#7f8c8d")
+    if template_slug not in allowed_slugs:
+        # Silently fall back to the first allowed template
+        template_slug = allowed_slugs[0]
 
-    def draw_bg(canvas, doc):
-        canvas.saveState()
-        canvas.setFillColor(C_SIDEBAR)
-        canvas.rect(0, 0, 80 * mm, 297 * mm, fill=1, stroke=0)
-        canvas.restoreState()
-
-    frame_sb = Frame(
-        0, 0, 80 * mm, 297 * mm, id='sb',
-        leftPadding=20, rightPadding=20, topPadding=30, bottomPadding=30
-    )
-    frame_main = Frame(
-        80 * mm, 0, 130 * mm, 297 * mm, id='main',
-        leftPadding=25, rightPadding=25, topPadding=30, bottomPadding=30
-    )
-    doc.addPageTemplates([
-        PageTemplate(id='Layout', frames=[frame_sb, frame_main], onPage=draw_bg)
-    ])
-
-    styles = getSampleStyleSheet()
-
-    # Sidebar styles
-    s_sb_h = ParagraphStyle(
-        'SB_H', fontName='Helvetica-Bold', fontSize=12,
-        textColor=C_ACCENT, spaceBefore=20, spaceAfter=8, textTransform='uppercase'
-    )
-    s_sb_t = ParagraphStyle(
-        'SB_T', fontName='Helvetica', fontSize=9.5,
-        textColor=colors.white, leading=14
-    )
-    s_sb_l = ParagraphStyle(
-        'SB_L', fontName='Helvetica-Bold', fontSize=8,
-        textColor=colors.HexColor("#bdc3c7"), spaceBefore=6
-    )
-
-    # Main styles
-    s_name = ParagraphStyle(
-        'Name', fontName='Helvetica-Bold', fontSize=32,
-        textColor=C_TEXT, leading=34, spaceAfter=5
-    )
-    s_role = ParagraphStyle(
-        'Role', fontName='Helvetica-Bold', fontSize=14,
-        textColor=C_ACCENT, textTransform='uppercase', spaceAfter=20
-    )
-    s_h2 = ParagraphStyle(
-        'H2', fontName='Helvetica-Bold', fontSize=13,
-        textColor=C_TEXT, spaceBefore=18, spaceAfter=8, textTransform='uppercase'
-    )
-    s_body = ParagraphStyle(
-        'Body', fontName='Helvetica', fontSize=10.5,
-        textColor=colors.HexColor("#34495e"), leading=16, spaceAfter=8
-    )
-
-    story = []
-    tmp_file_path = None
-
-    # --- 1. SIDEBAR ---
-    photo = request.FILES.get('photo')
-    if photo:
-        try:
-            img = Image.open(photo).convert("RGB")
-            mask = Image.new('L', (500, 500), 0)
-            draw = ImageDraw.Draw(mask)
-            draw.ellipse((0, 0, 500, 500), fill=255)
-            output = ImageOps.fit(img, (500, 500), centering=(0.5, 0.5))
-            output.putalpha(mask)
-
-            tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
-            tmp_file_path = tmp.name
-            output.save(tmp, format='PNG')
-            tmp.close()
-            story.append(RLImage(tmp_file_path, width=50 * mm, height=50 * mm))
-            story.append(Spacer(1, 20))
-        except Exception as e:
-            logger.warning(f"Failed to process profile photo: {e}")
-
-    story.append(Paragraph("CONTACTS", s_sb_h))
-
-    contacts = [
-        ("LOCATION", request.POST.get('location')),
-        ("EMAIL", request.POST.get('email')),
-        ("PHONE", request.POST.get('phone')),
-        ("LINKEDIN", request.POST.get('linkedin')),
-    ]
-
-    for lbl, val in contacts:
-        if val:
-            story.append(Paragraph(lbl, s_sb_l))
-            story.append(Paragraph(val, s_sb_t))
-            story.append(Spacer(1, 2))
-
-    # Skills
-    skills_str = request.POST.get('skills_list', '')
-    if skills_str:
-        story.append(Paragraph("SKILLS", s_sb_h))
-        for item in skills_str.split(','):
-            parts = item.split('-')
-            name = parts[0].strip()
-            try:
-                lvl = float(parts[1])
-            except (IndexError, ValueError):
-                lvl = 50
-            story.append(ProSkillBar(name, lvl, width=65 * mm))
-            story.append(Spacer(1, 10))
-
-    # Languages
-    langs = request.POST.get('languages')
-    if langs:
-        story.append(Paragraph("LANGUAGES", s_sb_h))
-        story.append(Paragraph(langs, s_sb_t))
-
-    story.append(FrameBreak())
-
-    # --- 2. MAIN CONTENT ---
-    story.append(Paragraph(request.POST.get('full_name', 'Your Name'), s_name))
-    story.append(Paragraph(request.POST.get('target_role', 'Professional'), s_role))
-
-    line = Drawing(400, 2)
-    line.add(Line(0, 0, 130 * mm, 0, strokeColor=colors.HexColor("#ecf0f1"), strokeWidth=2))
-    story.append(line)
-
-    # Summary
-    about = request.POST.get('about_me')
-    if about:
-        story.append(Paragraph("PROFILE", s_h2))
-        story.append(Paragraph(about, s_body))
-
-    # Experience
-    exp = request.POST.get('experience_text')
-    if not exp:
-        exp = request.POST.get('resume', '')
-
-    if exp:
-        story.append(Paragraph("WORK EXPERIENCE", s_h2))
-        for text_line in exp.split('\n'):
-            text_line = text_line.strip()
-            if text_line:
-                if len(text_line) < 80 and any(c.isdigit() for c in text_line):
-                    story.append(Paragraph(f"<b>{text_line}</b>", s_body))
-                else:
-                    story.append(Paragraph(text_line, s_body))
-
-    # References
-    refs = request.POST.get('references')
-    if refs:
-        story.append(Paragraph("REFERENCES", s_h2))
-        story.append(Paragraph(refs, s_body))
-
-    # ЗАДАЧА 3: try/finally гарантирует удаление временного файла
-    # даже если doc.build() выбросит исключение
-    try:
-        doc.build(story)
-    finally:
-        if tmp_file_path:
-            try:
-                os.unlink(tmp_file_path)
-            except OSError:
-                pass
-
-    buffer.seek(0)
-    return FileResponse(buffer, as_attachment=True, filename='CV_Elite.pdf')
+    buffer = build_pdf(template_slug, request)
+    filename = f'CVAI_{template_slug}.pdf'
+    return FileResponse(buffer, as_attachment=True, filename=filename)
 
 
 # =====================================================
@@ -517,7 +386,7 @@ async def interview_prep(request):
         recent_results = await sync_to_async(list)(
             AIResult.objects.filter(user=request.user)[:10]
         )
-        return render(request, 'generator/tools.html', {
+        return await arender(request, 'generator/tools.html', {
             'results': recent_results,
             'active_tool': 'interview',
             'tool_error': "You've used all free generations! Upgrade to Pro for unlimited AI tools.",
@@ -559,7 +428,7 @@ Be specific to the role and company. No generic questions."""
     recent_results = await sync_to_async(list)(
         AIResult.objects.filter(user=request.user)[:10]
     )
-    return render(request, 'generator/tools.html', {
+    return await arender(request, 'generator/tools.html', {
         'results': recent_results,
         'active_tool': 'interview',
         'tool_result': result,
@@ -577,7 +446,7 @@ async def followup_email(request):
         recent_results = await sync_to_async(list)(
             AIResult.objects.filter(user=request.user)[:10]
         )
-        return render(request, 'generator/tools.html', {
+        return await arender(request, 'generator/tools.html', {
             'results': recent_results,
             'active_tool': 'followup',
             'tool_error': "You've used all free generations! Upgrade to Pro for unlimited AI tools.",
@@ -618,7 +487,7 @@ Do NOT be generic — reference the specific role and company."""
     recent_results = await sync_to_async(list)(
         AIResult.objects.filter(user=request.user)[:10]
     )
-    return render(request, 'generator/tools.html', {
+    return await arender(request, 'generator/tools.html', {
         'results': recent_results,
         'active_tool': 'followup',
         'tool_result': result,
@@ -636,7 +505,7 @@ async def ats_score(request):
         recent_results = await sync_to_async(list)(
             AIResult.objects.filter(user=request.user)[:10]
         )
-        return render(request, 'generator/tools.html', {
+        return await arender(request, 'generator/tools.html', {
             'results': recent_results,
             'active_tool': 'ats',
             'tool_error': "You've used all free generations! Upgrade to Pro for unlimited AI tools.",
@@ -688,7 +557,7 @@ Be brutally honest. Give specific keyword suggestions. Start with the score on t
     recent_results = await sync_to_async(list)(
         AIResult.objects.filter(user=request.user)[:10]
     )
-    return render(request, 'generator/tools.html', {
+    return await arender(request, 'generator/tools.html', {
         'results': recent_results,
         'active_tool': 'ats',
         'tool_result': result,

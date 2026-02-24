@@ -155,6 +155,24 @@
             opacity: 0.3;
         }
 
+        .btn-del-hist {
+            background: rgba(247, 37, 133, 0.08);
+            border: 1px solid rgba(247, 37, 133, 0.2);
+            color: #f72585;
+            border-radius: 8px;
+            padding: 4px 9px;
+            font-size: 0.75rem;
+            line-height: 1;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+            cursor: pointer;
+        }
+        .btn-del-hist:hover {
+            background: rgba(247, 37, 133, 0.22);
+            border-color: #f72585;
+            color: #ff6bae;
+        }
+
+
         /* HAMBURGER MENU */
         .hamburger-btn {
             display: none;
@@ -304,15 +322,21 @@
 
                     {% if generations %}
                     {% for gen in generations %}
-                    <div class="history-item" onclick="this.querySelector('.history-full').classList.toggle('d-none')">
+                    <div class="history-item" id="hist-{{ gen.id }}"
+                         onclick="this.querySelector('.history-full').classList.toggle('d-none')">
                         <div class="d-flex align-items-center justify-content-between mb-2">
                             <div>
                                 <span class="history-company">{{ gen.company_name|default:"Unknown Company" }}</span>
-                                <span class="history-title ms-2">· {{ gen.job_title|default:"Position" }}</span>
+                                <span class="history-title ms-2">&middot; {{ gen.job_title|default:"Position" }}</span>
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 <span class="badge-tone">{{ gen.tone }}</span>
                                 <span class="history-meta">{{ gen.created_at|date:"M d, Y H:i" }}</span>
+                                <button class="btn btn-del-hist"
+                                        title="Delete"
+                                        onclick="event.stopPropagation(); deleteGeneration({{ gen.id }})">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
                             </div>
                         </div>
                         <div class="history-preview">{{ gen.result|truncatechars:200 }}</div>
@@ -339,6 +363,35 @@
     </div>
 
     <script>
+        const CSRF = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+
+        async function deleteGeneration(pk) {
+            if (!confirm('Delete this generation? This cannot be undone.')) return;
+            try {
+                const resp = await fetch(`/history/${pk}/delete/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': CSRF,
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                });
+                const data = await resp.json();
+                if (data.ok) {
+                    const card = document.getElementById('hist-' + pk);
+                    card.style.transition = 'opacity 0.4s ease, max-height 0.4s ease, margin 0.4s ease';
+                    card.style.overflow = 'hidden';
+                    card.style.opacity = '0';
+                    card.style.maxHeight = '0';
+                    card.style.marginBottom = '0';
+                    setTimeout(() => card.remove(), 420);
+                } else {
+                    alert('Could not delete: ' + (data.error || 'Unknown error'));
+                }
+            } catch (e) {
+                alert('Network error. Please try again.');
+            }
+        }
+
         function toggleMobileNav() {
             document.getElementById('mobileDrawer').classList.toggle('open');
             document.getElementById('mobileBackdrop').classList.toggle('open');

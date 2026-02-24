@@ -7,6 +7,7 @@ urlpatterns = [
     path('generate/', views.generate_letter, name='generate_letter'),
     path('download-pdf/', views.generate_pdf, name='download_pdf'),
     path('history/', views.history, name='history'),
+    path('history/<int:pk>/delete/', views.delete_generation, name='delete_generation'),
 
     # New features
     path('scrape-job/', views.scrape_job_url, name='scrape_job'),

@@ -8,11 +8,41 @@ register = template.Library()
 
 @register.filter(name='parse_sections')
 def parse_sections(text):
-    if not text: return {}
+    """
+    Parse the AI output into its 5 sections.
+
+    Strategy (in priority order):
+    1. Try the new structured [SECTION: TAG] ... [END_SECTION] format first.
+       This is language-agnostic and 100% reliable.
+    2. Fall back to the legacy numbered-header regex approach for older records.
+    """
+    if not text:
+        return {}
 
     sections = {'main': '', 'ver_a': '', 'ver_b': '', 'ats': '', 'risks': ''}
 
-    # --- УМНЫЕ РЕГУЛЯРКИ (Ищут заголовки в любом стиле: 2. Version A, **Version A**, VERSION A) ---
+    # ── Strategy 1: structured tag format ────────────────────────────────────
+    TAG_MAP = {
+        'MAIN_LETTER': 'main',
+        'VERSION_A':   'ver_a',
+        'VERSION_B':   'ver_b',
+        'ATS_ANALYSIS': 'ats',
+        'RISK_ANALYSIS': 'risks',
+    }
+
+    tag_pattern = re.compile(
+        r'\[SECTION:\s*([A-Z_]+)\](.*?)\[END_SECTION\]',
+        re.DOTALL | re.IGNORECASE
+    )
+    matches = tag_pattern.findall(text)
+    if matches:
+        for tag, content in matches:
+            key = TAG_MAP.get(tag.strip().upper())
+            if key:
+                sections[key] = content.strip()
+        return sections
+
+    # ── Strategy 2: legacy numbered-header regex ──────────────────────────────
     patterns = {
         'ver_a': r'(?i)(?:\n|^)\s*(?:2\.?|\*+|#+)\s*(?:VERSION|OPTION|VARIANT)\s*A[:\.\-\s]*',
         'ver_b': r'(?i)(?:\n|^)\s*(?:3\.?|\*+|#+)\s*(?:VERSION|OPTION|VARIANT)\s*B[:\.\-\s]*',
@@ -54,13 +84,10 @@ def parse_sections(text):
 @register.filter(name='markdown_to_html')
 def markdown_to_html(text):
     """
-    ЗАДАЧА 4: Конвертирует сырой Markdown от LLM в безопасный HTML.
-    - Заменяет текстовые символы \\r\\n и \\n (буквальные, не настоящие переносы)
-    - Использует расширения 'extra' и 'nl2br' для корректного форматирования
+    Converts raw Markdown from LLM to safe HTML.
     """
     if not text:
         return ''
-    # Заменяем литеральные escape-последовательности, которые иногда возвращает LLM
     text = text.replace('\\r\\n', '\n').replace('\\n', '\n')
     html = md.markdown(text, extensions=['extra', 'nl2br'])
     return mark_safe(html)
