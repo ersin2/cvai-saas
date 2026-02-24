@@ -1,0 +1,43 @@
+databases:
+  - name: mysitedb
+    databaseName: mysite
+    user: mysite
+    plan: free
+
+services:
+  # ── Django web (ASGI) ─────────────────────────────────────────────────────
+  - type: web
+    name: mysite
+    runtime: python
+    buildCommand: "./build.sh"
+    # ASGI worker — required for async Django views to be truly non-blocking
+    startCommand: "gunicorn aigen.asgi:application -k uvicorn.workers.UvicornWorker --workers 4 --bind 0.0.0.0:$PORT"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mysitedb
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: WEB_CONCURRENCY
+        value: 4
+      - key: ALLOWED_HOSTS
+        value: "*"
+      # Point Django at the FastAPI AI service deployed on Render
+      # Set this to the actual URL of your ai_worker service after deploying it
+      - key: AI_SERVICE_URL
+        value: "http://127.0.0.1:8001"   # ← replace with Render internal URL
+
+  # ── FastAPI AI worker ─────────────────────────────────────────────────────
+  # Uncomment and deploy as a separate Render service, then update AI_SERVICE_URL above.
+   - type: web
+     name: ai-worker
+     runtime: python
+     rootDir: ai_service
+     buildCommand: "pip install -r requirements-ai.txt"
+     startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT"
+     envVars:
+       - key: GROQ_API_KEY
+         sync: false
+       - key: ANTHROPIC_API_KEY
+         sync: false

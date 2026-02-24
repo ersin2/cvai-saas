@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms of Service | CVAI</title>
+    <meta name="description"
+        content="Terms of Service for CVAI AI Cover Letter Generator. Read our terms before using the platform.">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4cc9f0;
+            --secondary: #f72585;
+            --dark-bg: #0a0e17;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            font-family: 'Outfit', sans-serif;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        .legal-container {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 60px 20px 80px;
+        }
+
+        .logo {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.4rem;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 40px;
+        }
+
+        .logo-cv {
+            color: white;
+        }
+
+        .logo-ai {
+            color: var(--secondary);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 40px;
+        }
+
+        h2 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 32px 0 12px;
+        }
+
+        p,
+        li {
+            color: #94a3b8;
+            line-height: 1.8;
+            font-size: 0.92rem;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        .back-link {
+            display: block;
+            margin-top: 40px;
+            text-align: center;
+        }
+
+        .back-link a {
+            color: #475569;
+            text-decoration: none;
+            font-size: 0.88rem;
+            transition: 0.2s;
+        }
+
+        .back-link a:hover {
+            color: var(--primary);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="legal-container">
+        <a href="{% url 'landing' %}" class="logo"><i class="fas fa-cube text-info me-2"></i><span
+                class="logo-cv">CV</span><span class="logo-ai">AI</span></a>
+
+        <h1>Terms of Service</h1>
+        <p class="subtitle">Last updated: February 2026</p>
+
+        <h2>1. Acceptance of Terms</h2>
+        <p>By accessing or using CVAI ("the Service"), you agree to be bound by these Terms of Service. If you do not
+            agree to these terms, please do not use the Service.</p>
+
+        <h2>2. Description of Service</h2>
+        <p>CVAI is an AI-powered cover letter generator that provides automated writing assistance, ATS scoring, and PDF
+            CV building tools. The Service is provided "as-is" and we reserve the right to modify or discontinue
+            features at any time.</p>
+
+        <h2>3. User Accounts</h2>
+        <ul>
+            <li>You must provide accurate registration information</li>
+            <li>You are responsible for maintaining the security of your account</li>
+            <li>You must not share your account credentials</li>
+            <li>You must be at least 16 years of age to use the Service</li>
+        </ul>
+
+        <h2>4. Free and Paid Plans</h2>
+        <p>Free users receive a limited number of AI generations. Paid plans (Pro, Elite) provide additional features
+            and higher or unlimited usage. Subscription payments are processed through Stripe and are non-refundable,
+            except where required by law.</p>
+
+        <h2>5. Content and Intellectual Property</h2>
+        <ul>
+            <li>You retain ownership of any content you input (resumes, job descriptions)</li>
+            <li>AI-generated cover letters are provided for your personal and professional use</li>
+            <li>CVAI does not claim ownership of your generated content</li>
+            <li>The CVAI brand, design, and technology remain our intellectual property</li>
+        </ul>
+
+        <h2>6. Prohibited Use</h2>
+        <p>You agree not to:</p>
+        <ul>
+            <li>Use the Service for any unlawful purpose</li>
+            <li>Attempt to reverse-engineer or extract the underlying AI models</li>
+            <li>Abuse the API or generate content at scale for resale</li>
+            <li>Impersonate another person or misrepresent your identity</li>
+        </ul>
+
+        <h2>7. Limitation of Liability</h2>
+        <p>CVAI is not responsible for hiring decisions made by employers. AI-generated content is provided as-is
+            without guarantees of accuracy or employment outcomes. Use the generated content at your own discretion.</p>
+
+        <h2>8. Changes to Terms</h2>
+        <p>We may update these Terms from time to time. We will notify users of significant changes via the platform.
+            Continued use of the Service after such changes constitutes acceptance.</p>
+
+        <h2>9. Contact</h2>
+        <p>For questions about these Terms, contact us at <strong>support@cvai.app</strong>.</p>
+
+        <div class="back-link">
+            <a href="{% url 'landing' %}"><i class="fas fa-arrow-left me-1"></i> Back to homepage</a>
+        </div>
+    </div>
+</body>
+
+</html>

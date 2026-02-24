@@ -1,0 +1,83 @@
+# docker-compose.local.yml — Local development with hot-reload for both services
+#
+# Usage:
+#   docker-compose -f docker-compose.local.yml up --build
+#
+# Services:
+#   web       → Django on http://localhost:8000
+#   ai_worker → FastAPI on http://localhost:8001  (also reachable as http://ai_worker:8001 from web)
+
+version: "3.9"
+
+services:
+
+  # ── Django web application ─────────────────────────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web   # create a simple Dockerfile for Django (see below)
+    command: >
+      gunicorn aigen.asgi:application
+      -k uvicorn.workers.UvicornWorker
+      --workers 2
+      --bind 0.0.0.0:8000
+      --reload
+    volumes:
+      - .:/app                     # live reload — changes to Django code are reflected immediately
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      # Override AI_SERVICE_URL so Django talks to the ai_worker container by name
+      AI_SERVICE_URL: "http://ai_worker:8001"
+      DEBUG: "True"
+    depends_on:
+      ai_worker:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  # ── FastAPI AI microservice ────────────────────────────────────────────────
+  ai_worker:
+    build:
+      context: ./ai_service
+      dockerfile: Dockerfile.ai    # simple Dockerfile for FastAPI (see below)
+    command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+    volumes:
+      - ./ai_service:/app          # live reload for FastAPI code too
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env                       # shares the same .env (GROQ_API_KEY, ANTHROPIC_API_KEY)
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8001/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Minimal Dockerfiles (create these alongside docker-compose.local.yml)
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# Dockerfile.web  (Django)
+# ─────────────────
+# FROM python:3.12-slim
+# WORKDIR /app
+# COPY requirements.txt .
+# RUN pip install --no-cache-dir -r requirements.txt
+# COPY . .
+#
+# Dockerfile.ai  (FastAPI AI worker)
+# ────────────────────────────────────
+# FROM python:3.12-slim
+# WORKDIR /app
+# COPY requirements-ai.txt .
+# RUN pip install --no-cache-dir -r requirements-ai.txt
+# COPY . .
