@@ -8,6 +8,7 @@ services:
   # ── Django web (ASGI) ─────────────────────────────────────────────────────
   - type: web
     name: mysite
+    plan: free
     runtime: python
     buildCommand: "./build.sh"
     # ASGI worker — required for async Django views to be truly non-blocking
@@ -31,6 +32,7 @@ services:
   # ── FastAPI AI worker ─────────────────────────────────────────────────────
   - type: web
     name: ai-worker
+    plan: free
     runtime: python
     rootDir: ai_service
     buildCommand: "pip install -r requirements-ai.txt"
