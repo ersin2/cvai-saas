@@ -11,8 +11,8 @@ services:
     plan: free
     runtime: python
     buildCommand: "./build.sh"
-    # ASGI worker — required for async Django views to be truly non-blocking
-    startCommand: "gunicorn aigen.asgi:application -k uvicorn.workers.UvicornWorker --workers 4 --bind 0.0.0.0:$PORT"
+    # ASGI worker — migrate first (DB is only reachable at runtime, not during build)
+    startCommand: "python manage.py migrate --no-input && gunicorn aigen.asgi:application -k uvicorn.workers.UvicornWorker --workers 4 --bind 0.0.0.0:$PORT"
     envVars:
       - key: DATABASE_URL
         fromDatabase:
