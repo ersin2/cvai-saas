@@ -201,6 +201,10 @@ def stripe_webhook(request):
                 if target_rank >= current_rank:
                     user_profile.plan       = target_plan
                     user_profile.is_premium = True
+                    # Persist Stripe customer ID — required for subscription.deleted lookup
+                    customer_id = session.get('customer')
+                    if customer_id:
+                        user_profile.stripe_customer_id = customer_id
                     # Reset generation counter for upgraded free users
                     if target_plan in ('pro', 'elite'):
                         user_profile.generations_count = 9999

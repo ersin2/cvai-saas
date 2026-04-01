@@ -21,6 +21,20 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# ── Sentry Error Tracking (optional — reads from SENTRY_DSN env var) ──────
+_SENTRY_DSN = os.getenv("SENTRY_DSN", "")
+if _SENTRY_DSN:
+    try:
+        import sentry_sdk
+        sentry_sdk.init(
+            dsn=_SENTRY_DSN,
+            traces_sample_rate=0.1,
+            send_default_pii=False,
+            environment=os.getenv("SENTRY_ENVIRONMENT", "production"),
+        )
+    except ImportError:
+        pass  # sentry-sdk not installed — skip silently
+
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------

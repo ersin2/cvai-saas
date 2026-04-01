@@ -15,6 +15,11 @@ from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
 
+try:
+    import sentry_sdk
+except ImportError:
+    sentry_sdk = None
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -28,7 +33,12 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-local-dev-only-change
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 # SECURITY: Restrict allowed hosts
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+# Render sets RENDER_EXTERNAL_HOSTNAME automatically (e.g. mysite.onrender.com)
+_allowed = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+_render_host = os.environ.get('RENDER_EXTERNAL_HOSTNAME', '')
+if _render_host:
+    _allowed.append(_render_host)
+ALLOWED_HOSTS = [h.strip() for h in _allowed if h.strip()]
 
 
 # Application definition
@@ -158,4 +168,77 @@ STRIPE_PRICE_ID = STRIPE_PRICE_ID_PRO
 # Local: http://127.0.0.1:8001  |  Docker: http://ai_worker:8001  |  Render: set via env var
 AI_SERVICE_URL = os.environ.get('AI_SERVICE_URL', 'http://127.0.0.1:8001')
 
+
+# ── CSRF Trusted Origins ────────────────────────────────────────────────────
+# Required for POST requests from the production domain (Stripe webhooks, forms).
+# Render sets RENDER_EXTERNAL_HOSTNAME; APP_URL covers custom domains.
+_csrf_origins = []
+if _render_host:
+    _csrf_origins.append(f'https://{_render_host}')
+_app_url = os.environ.get('APP_URL', '')  # e.g. https://cvai.io
+if _app_url:
+    _csrf_origins.append(_app_url.rstrip('/'))
+if _csrf_origins:
+    CSRF_TRUSTED_ORIGINS = _csrf_origins
+
+
+# ── Production Security (only when DEBUG=False) ─────────────────────────────
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31_536_000       # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+
+
+# ── Structured Logging ──────────────────────────────────────────────────────
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{asctime} [{levelname}] {name}: {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'stripe': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
+
+
+# ── Sentry Error Tracking ───────────────────────────────────────────────────
+# Set SENTRY_DSN in your environment (Render dashboard / .env).
+# Left empty = Sentry silently disabled — safe for local dev.
+SENTRY_DSN = os.environ.get('SENTRY_DSN', '')
+if SENTRY_DSN and sentry_sdk:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        traces_sample_rate=0.1,           # 10% of requests traced (tune for cost)
+        send_default_pii=False,           # GDPR: don't send user IPs/emails to Sentry
+        environment='production' if not DEBUG else 'development',
+    )
 

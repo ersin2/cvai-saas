@@ -17,3 +17,6 @@ anthropic>=0.40.0
 
 # Environment variables
 python-dotenv
+
+# Error tracking (optional — reads SENTRY_DSN env var)
+sentry-sdk[fastapi]>=2.0.0

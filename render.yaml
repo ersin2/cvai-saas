@@ -28,6 +28,23 @@ services:
       # Set this to the actual URL of your ai_worker service after deploying it
       - key: AI_SERVICE_URL
         value: "http://127.0.0.1:8001"   # ← replace with Render internal URL
+      # Stripe (set manually in Render dashboard)
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_ID_PRO
+        sync: false
+      - key: STRIPE_PRICE_ID_ELITE
+        sync: false
+      # Sentry (set manually in Render dashboard)
+      - key: SENTRY_DSN
+        sync: false
+      # Custom domain fallback for CSRF_TRUSTED_ORIGINS (optional)
+      - key: APP_URL
+        sync: false
 
   # ── FastAPI AI worker ─────────────────────────────────────────────────────
   - type: web
@@ -41,4 +58,6 @@ services:
       - key: GROQ_API_KEY
         sync: false
       - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: SENTRY_DSN
         sync: false
