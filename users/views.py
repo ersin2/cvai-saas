@@ -4,6 +4,7 @@ import stripe
 from django.shortcuts import render, redirect
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
+from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -38,10 +39,10 @@ def register(request):
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
         if form.is_valid():
-            form.save()
-            username = form.cleaned_data.get('username')
-            messages.success(request, f'Account created for {username}! You can now log in.')
-            return redirect('login')
+            user = form.save()
+            login(request, user)
+            messages.success(request, f'Welcome, {user.username}! Your account is ready.')
+            return redirect('dashboard')
     else:
         form = UserCreationForm()
     return render(request, 'users/register.html', {'form': form})
@@ -49,6 +50,8 @@ def register(request):
 
 @login_required
 def profile(request):
+    from .models import Profile
+    Profile.objects.get_or_create(user=request.user)
     return render(request, 'users/profile.html')
 
 
@@ -84,8 +87,12 @@ def buy_premium(request, plan):
         )
         return redirect('pricing')
 
+    # ── Ensure profile exists ────────────────────────────────────────────────
+    from .models import Profile
+    user_profile, _ = Profile.objects.get_or_create(user=request.user)
+
     # ── Already on this plan ─────────────────────────────────────────────────
-    if request.user.profile.plan == plan:
+    if user_profile.plan == plan:
         messages.info(request, f'You are already on the {PLAN_DISPLAY[plan]} plan.')
         return redirect('pricing')
 
