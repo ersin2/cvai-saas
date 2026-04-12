@@ -222,6 +222,92 @@ Generate the elite career response now.
     })
 
 
+# === AI RESUME GENERATION ===
+@login_required
+@require_POST
+async def generate_resume(request):
+    """
+    Async AI resume generation using the Elite ATS-Optimized prompt.
+    Transforms raw, unstructured career data into a world-class resume.
+    """
+    error_message = None
+    result = None
+    profile = await Profile.objects.aget(user=request.user)
+
+    resume_text  = request.POST.get('resume', '')
+    language     = request.POST.get('language', 'English')
+    first_name   = request.POST.get('first_name', '').strip()
+    last_name    = request.POST.get('last_name', '').strip()
+    full_name    = f"{first_name} {last_name}".strip() or "the candidate"
+
+    if not profile.has_generations_left():
+        error_message = "You've used all free generations! Upgrade to Pro for more."
+    else:
+        # ── ELITE ATS-OPTIMIZED SYSTEM PROMPT ──────────────────────────────
+        system_prompt = f"""You are an Elite Executive Recruiter and an expert in ATS (Applicant Tracking System) optimization. Your goal is to transform the user's raw, unstructured text into a world-class, top-tier resume.
+
+CRITICAL RULES:
+
+1. LANGUAGE MATCH: You MUST generate the final resume in the EXACT SAME LANGUAGE the user used in their input. The user has selected: {language}. If they wrote in Russian, the output must be entirely in Russian. Do not translate to English unless the input is in English. EVERY SINGLE WORD of your output MUST be in {language}.
+
+2. NO CHATBOT FLUFF: Output ONLY the resume content. Do not include introductory phrases like "Here is your resume" or "Sure, I can help." Do not add any commentary before or after the resume.
+
+3. FORMAT: Use clean Markdown formatting. Use **bolding** for job titles, company names, and key metrics.
+
+RESUME BUILDING STRATEGY:
+
+- STRUCTURE: Organize the output into clear sections: **Professional Summary**, **Experience**, **Skills**, and **Education**. Adapt sections based on the user's input (e.g., add Certifications, Projects, or Languages if relevant data is provided).
+
+- THE XYZ FORMULA: Rewrite ALL job duties into powerful achievement bullets using Google's XYZ formula: "Accomplished [X] as measured by [Y], by doing [Z]". Focus on impact, metrics, and numbers. Even if the user provides no numbers, infer logical qualitative impacts.
+
+- ACTION VERBS: Start EVERY bullet point with a strong action verb (e.g., Orchestrated, Spearheaded, Engineered, Optimized, Accelerated, Streamlined, Championed, Delivered, Architected, Drove).
+
+- KILL THE BUZZWORDS: Ruthlessly delete empty fluff ("hard worker," "team player," "results-driven," "go-getter"). Replace them with concrete skills and measurable achievements.
+
+- SKILLS INJECTION: Extract ALL technical and soft skills from the user's story and list them in a dedicated, comma-separated section optimized for ATS keyword scanners. Group them logically (e.g., Technical Skills, Tools & Platforms, Leadership & Communication).
+
+TONE: Confident, data-driven, highly professional, and concise. Make the candidate sound like the top 1% in their field.
+
+⚠️ ABSOLUTE LANGUAGE RULE: Every word of your entire response MUST be in {language}. Section headers, bullet points, summary — EVERYTHING in {language}. If you write even one word in the wrong language, you have failed the task."""
+
+        user_prompt = f"""
+========================================
+CANDIDATE RAW DATA — TRANSFORM INTO AN ELITE RESUME
+========================================
+Candidate Name: {full_name}
+
+Raw Career Information:
+{resume_text}
+
+Output Language: {language}
+
+⚠️ REMINDER: Your ENTIRE output must be in {language}.
+Generate the world-class, ATS-optimized resume now.
+"""
+        result, error_message = await _call_ai_service(system_prompt, user_prompt)
+
+        if result:
+            await Generation.objects.acreate(
+                user=request.user,
+                resume_text=resume_text,
+                job_description='[AI Resume Generation]',
+                company_name='',
+                job_title='',
+                tone='Professional',
+                language=language,
+                result=result,
+            )
+            await sync_to_async(profile.use_generation)()
+
+    return await arender(request, 'generator/home.html', {
+        'result': result,
+        'error_message': error_message,
+        'resume_text': resume_text,
+        'pdf_templates': TEMPLATES,
+        'active_tab': 'resume',
+    })
+
+
 # === GENERATION HISTORY ===
 @login_required
 def history(request):
