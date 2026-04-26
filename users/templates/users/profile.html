@@ -377,7 +377,7 @@
                     <p class="text-white-50 mb-0">Get unlimited AI generations and access to Pro PDF templates.</p>
                 </div>
                 <div class="col-md-4">
-                    <form action="{% url 'buy_premium' %}" method="post">
+                    <form action="{% url 'buy_premium' 'pro' %}" method="post">
                         {% csrf_token %}
                         <button type="submit" class="btn-buy">Get Pro Access 💎</button>
                     </form>
