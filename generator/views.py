@@ -116,8 +116,8 @@ async def generate_letter(request):
     """
     error_message = None
     result = None
-    # Async profile fetch — guaranteed to exist via post_save signal
-    profile = await Profile.objects.aget(user=request.user)
+    # Safe async profile fetch — auto-creates if the post_save signal missed
+    profile, _ = await Profile.objects.aget_or_create(user=request.user)
 
     resume_text  = request.POST.get('resume', '')
     job_desc     = request.POST.get('job_description', '')
@@ -139,13 +139,11 @@ async def generate_letter(request):
 You are an elite career strategist, senior recruiter, ATS expert, and professional
 cover letter writer with experience at top global companies (FAANG, startups, enterprise).
 
-⚠️  ABSOLUTE LANGUAGE RULE ⚠️
-The user has selected the output language: {language}.
-YOU MUST WRITE EVERY SINGLE WORD OF YOUR RESPONSE IN {language}.
-This includes ALL section headers, ALL bullet points, ALL analysis, ALL advice.
-DO NOT write even one word in English if {language} is not English.
-DO NOT translate only the cover letter. Translate EVERYTHING.
-If you fail to write the full response in {language}, you have failed the task.
+⚠️ ABSOLUTE LANGUAGE RULE ⚠️
+You MUST automatically detect the language of the candidate's raw input text. YOU MUST GENERATE YOUR ENTIRE RESPONSE IN THAT EXACT SAME LANGUAGE.
+If the input is in Russian, EVERY SINGLE WORD of your output MUST be in Russian. This includes ALL section headers, bullet points, analysis, and tips.
+DO NOT write even one word in English if the input is not English. If you fail to match the user's input language, you fail the task.
+The user has also selected: {language} — use this as a fallback ONLY if you cannot detect the input language.
 
 OUTPUT STRUCTURE — use these EXACT section tags (the tags themselves stay in English,
 but ALL content between tags must be in {language}):
@@ -232,7 +230,7 @@ async def generate_resume(request):
     """
     error_message = None
     result = None
-    profile = await Profile.objects.aget(user=request.user)
+    profile, _ = await Profile.objects.aget_or_create(user=request.user)
 
     resume_text  = request.POST.get('resume', '')
     language     = request.POST.get('language', 'English')
@@ -246,13 +244,17 @@ async def generate_resume(request):
         # ── ELITE ATS-OPTIMIZED SYSTEM PROMPT ──────────────────────────────
         system_prompt = f"""You are an Elite Executive Recruiter and an expert in ATS (Applicant Tracking System) optimization. Your goal is to transform the user's raw, unstructured text into a world-class, top-tier resume.
 
+⚠️ ABSOLUTE LANGUAGE RULE ⚠️
+You MUST automatically detect the language of the candidate's raw input text. YOU MUST GENERATE YOUR ENTIRE RESPONSE IN THAT EXACT SAME LANGUAGE.
+If the input is in Russian, EVERY SINGLE WORD of your output MUST be in Russian. This includes ALL section headers, bullet points, analysis, and tips.
+DO NOT write even one word in English if the input is not English. If you fail to match the user's input language, you fail the task.
+The user has also selected: {language} — use this as a fallback ONLY if you cannot detect the input language.
+
 CRITICAL RULES:
 
-1. LANGUAGE MATCH: You MUST generate the final resume in the EXACT SAME LANGUAGE the user used in their input. The user has selected: {language}. If they wrote in Russian, the output must be entirely in Russian. Do not translate to English unless the input is in English. EVERY SINGLE WORD of your output MUST be in {language}.
+1. NO CHATBOT FLUFF: Output ONLY the resume content. Do not include introductory phrases like "Here is your resume" or "Sure, I can help." Do not add any commentary before or after the resume.
 
-2. NO CHATBOT FLUFF: Output ONLY the resume content. Do not include introductory phrases like "Here is your resume" or "Sure, I can help." Do not add any commentary before or after the resume.
-
-3. FORMAT: Use clean Markdown formatting. Use **bolding** for job titles, company names, and key metrics.
+2. FORMAT: Use clean Markdown formatting. Use **bolding** for job titles, company names, and key metrics.
 
 RESUME BUILDING STRATEGY:
 
@@ -266,9 +268,7 @@ RESUME BUILDING STRATEGY:
 
 - SKILLS INJECTION: Extract ALL technical and soft skills from the user's story and list them in a dedicated, comma-separated section optimized for ATS keyword scanners. Group them logically (e.g., Technical Skills, Tools & Platforms, Leadership & Communication).
 
-TONE: Confident, data-driven, highly professional, and concise. Make the candidate sound like the top 1% in their field.
-
-⚠️ ABSOLUTE LANGUAGE RULE: Every word of your entire response MUST be in {language}. Section headers, bullet points, summary — EVERYTHING in {language}. If you write even one word in the wrong language, you have failed the task."""
+TONE: Confident, data-driven, highly professional, and concise. Make the candidate sound like the top 1% in their field."""
 
         user_prompt = f"""
 ========================================
@@ -341,7 +341,7 @@ def generate_pdf(request):
     Routes the request to the correct ReportLab template via pdf_engine.build_pdf().
     Validates the requested template against the user's plan limits.
     """
-    profile = request.user.profile
+    profile, _ = Profile.objects.get_or_create(user=request.user)
     template_slug = request.POST.get('template_name', 'classic_navy')
     allowed_limit = profile.get_pdf_template_limit()
     allowed_slugs = [t['slug'] for t in TEMPLATES[:allowed_limit]]
@@ -422,7 +422,7 @@ def parse_resume_pdf(request):
 @login_required
 def dashboard(request):
     """Unified dashboard with stats, recent activity, and analytics."""
-    profile = request.user.profile
+    profile, _ = Profile.objects.get_or_create(user=request.user)
     generations = Generation.objects.filter(user=request.user)
     applications = JobApplication.objects.filter(user=request.user)
     ai_results = AIResult.objects.filter(user=request.user)
@@ -467,7 +467,7 @@ def tools(request):
 @require_POST
 async def interview_prep(request):
     """Async interview question generation."""
-    profile = await Profile.objects.aget(user=request.user)
+    profile, _ = await Profile.objects.aget_or_create(user=request.user)
     if not profile.has_generations_left():
         recent_results = await sync_to_async(list)(
             AIResult.objects.filter(user=request.user)[:10]
@@ -483,6 +483,12 @@ async def interview_prep(request):
     company = request.POST.get('company_name', '')
 
     system_prompt = """You are a senior technical interviewer and career coach.
+
+⚠️ ABSOLUTE LANGUAGE RULE ⚠️
+You MUST automatically detect the language of the candidate's raw input text. YOU MUST GENERATE YOUR ENTIRE RESPONSE IN THAT EXACT SAME LANGUAGE.
+If the input is in Russian, EVERY SINGLE WORD of your output MUST be in Russian. This includes ALL section headers, bullet points, analysis, questions, and tips.
+DO NOT write even one word in English if the input is not English. If you fail to match the user's input language, you fail the task.
+
 Generate exactly 10 likely interview questions for this candidate based on their resume
 and the job description. For each question, provide:
 - The question
@@ -527,7 +533,7 @@ Be specific to the role and company. No generic questions."""
 @require_POST
 async def followup_email(request):
     """Async follow-up email generation."""
-    profile = await Profile.objects.aget(user=request.user)
+    profile, _ = await Profile.objects.aget_or_create(user=request.user)
     if not profile.has_generations_left():
         recent_results = await sync_to_async(list)(
             AIResult.objects.filter(user=request.user)[:10]
@@ -543,6 +549,12 @@ async def followup_email(request):
     context = request.POST.get('context', '')
 
     system_prompt = """You are an expert career communication strategist.
+
+⚠️ ABSOLUTE LANGUAGE RULE ⚠️
+You MUST automatically detect the language of the candidate's raw input text. YOU MUST GENERATE YOUR ENTIRE RESPONSE IN THAT EXACT SAME LANGUAGE.
+If the input is in Russian, EVERY SINGLE WORD of your output MUST be in Russian. This includes ALL section headers, bullet points, analysis, questions, and tips.
+DO NOT write even one word in English if the input is not English. If you fail to match the user's input language, you fail the task.
+
 Generate 3 professional follow-up emails for a job application:
 
 1. **3-Day Follow-Up** — Short, polite check-in after applying
@@ -586,7 +598,7 @@ Do NOT be generic — reference the specific role and company."""
 @require_POST
 async def ats_score(request):
     """Async ATS score generation."""
-    profile = await Profile.objects.aget(user=request.user)
+    profile, _ = await Profile.objects.aget_or_create(user=request.user)
     if not profile.has_generations_left():
         recent_results = await sync_to_async(list)(
             AIResult.objects.filter(user=request.user)[:10]
@@ -601,6 +613,12 @@ async def ats_score(request):
     job_desc = request.POST.get('job_description', '')
 
     system_prompt = """You are an ATS (Applicant Tracking System) expert.
+
+⚠️ ABSOLUTE LANGUAGE RULE ⚠️
+You MUST automatically detect the language of the candidate's raw input text. YOU MUST GENERATE YOUR ENTIRE RESPONSE IN THAT EXACT SAME LANGUAGE.
+If the input is in Russian, EVERY SINGLE WORD of your output MUST be in Russian. This includes ALL section headers, bullet points, analysis, questions, and tips.
+DO NOT write even one word in English if the input is not English. If you fail to match the user's input language, you fail the task.
+
 Analyze the resume against the job description and provide:
 
 1. **ATS COMPATIBILITY SCORE: XX/100**
