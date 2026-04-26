@@ -51,7 +51,10 @@ def register(request):
 @login_required
 def profile(request):
     from .models import Profile
-    Profile.objects.get_or_create(user=request.user)
+    user_profile, created = Profile.objects.get_or_create(user=request.user)
+    # Explicitly attach to request.user so {{ user.profile }} in the template
+    # hits the cached object instead of re-querying (avoids RelatedObjectDoesNotExist)
+    request.user.profile = user_profile
     return render(request, 'users/profile.html')
 
 
