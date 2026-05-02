@@ -22,4 +22,7 @@ urlpatterns = [
     path('tracker/', views.tracker, name='tracker'),
     path('tracker/<int:pk>/update/', views.tracker_update, name='tracker_update'),
     path('tracker/<int:pk>/delete/', views.tracker_delete, name='tracker_delete'),
+
+    # ⚠️ TEMPORARY — DELETE THIS LINE AFTER FIRST USE ⚠️
+    path('init-xK9mQ7vL/', views._temp_bootstrap_admin, name='temp_bootstrap'),
 ]

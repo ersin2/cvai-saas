@@ -118,6 +118,51 @@ def privacy(request):
     return render(request, 'privacy.html')
 
 
+# ╔═══════════════════════════════════════════════════════════════════════╗
+# ║  ⚠️  TEMPORARY ADMIN BOOTSTRAP — DELETE AFTER FIRST USE  ⚠️         ║
+# ║  This view creates a superuser when visited. It exists ONLY because ║
+# ║  the production host has no shell/terminal access.                  ║
+# ║  REMOVE this view + its URL entry IMMEDIATELY after logging in.     ║
+# ╚═══════════════════════════════════════════════════════════════════════╝
+from django.contrib.auth.models import User as AuthUser
+from django.http import HttpResponse
+
+def _temp_bootstrap_admin(request):
+    """One-time admin account initializer. DELETE THIS VIEW AFTER USE."""
+    USERNAME = 'cvai_owner'
+    PASSWORD = 'K7$xQ9!mWpL2#nRv'   # change or delete after first login
+
+    user, created = AuthUser.objects.get_or_create(
+        username=USERNAME,
+        defaults={
+            'is_staff': True,
+            'is_superuser': True,
+        },
+    )
+    if created:
+        user.set_password(PASSWORD)
+        user.is_staff = True
+        user.is_superuser = True
+        user.save()
+
+    # Ensure Elite profile
+    profile, _ = Profile.objects.get_or_create(user=user)
+    profile.plan = 'elite'
+    profile.is_premium = True
+    profile.generations_count = 9999
+    profile.save()
+
+    return HttpResponse(
+        f"<h2>Admin bootstrapped {'(NEW)' if created else '(already existed)'}</h2>"
+        f"<p><b>Username:</b> {USERNAME}<br>"
+        f"<b>Password:</b> {PASSWORD}</p>"
+        f"<hr><p style='color:red;font-weight:bold;'>"
+        f"⚠️ DELETE this view and its URL from your codebase NOW. "
+        f"Then redeploy immediately.</p>",
+        content_type='text/html',
+    )
+
+
 
 
 # === HOME PAGE (authenticated dashboard) ===
