@@ -14,6 +14,8 @@
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <!-- Quill.js Rich Text Editor -->
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
 
     <style>
         :root {
@@ -849,6 +851,117 @@
             color: #000;
             box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
         }
+
+        /* RESUME TAB ICON */
+        .icon-resume {
+            background: rgba(99, 102, 241, 0.15);
+            color: #818cf8;
+        }
+
+        /* ══ QUILL DARK THEME OVERRIDES ══ */
+        .quill-editor-wrap {
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(0, 0, 0, 0.35);
+        }
+        .quill-editor-wrap .ql-toolbar.ql-snow {
+            background: rgba(0, 0, 0, 0.4);
+            border: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .quill-editor-wrap .ql-toolbar .ql-stroke {
+            stroke: #94a3b8;
+        }
+        .quill-editor-wrap .ql-toolbar .ql-fill {
+            fill: #94a3b8;
+        }
+        .quill-editor-wrap .ql-toolbar .ql-picker-label {
+            color: #94a3b8;
+        }
+        .quill-editor-wrap .ql-toolbar button:hover .ql-stroke,
+        .quill-editor-wrap .ql-toolbar .ql-active .ql-stroke {
+            stroke: var(--primary);
+        }
+        .quill-editor-wrap .ql-toolbar button:hover .ql-fill,
+        .quill-editor-wrap .ql-toolbar .ql-active .ql-fill {
+            fill: var(--primary);
+        }
+        .quill-editor-wrap .ql-container.ql-snow {
+            border: none;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.95rem;
+            color: #e2e8f0;
+            min-height: 320px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .quill-editor-wrap .ql-editor {
+            color: #cbd5e1;
+            line-height: 1.75;
+            padding: 24px;
+        }
+        .quill-editor-wrap .ql-editor h1, .quill-editor-wrap .ql-editor h2,
+        .quill-editor-wrap .ql-editor h3 {
+            color: #f1f5f9;
+        }
+        .quill-editor-wrap .ql-editor.ql-blank::before {
+            color: #475569;
+            font-style: normal;
+        }
+        .quill-editor-wrap .ql-snow .ql-picker-options {
+            background: #1e293b;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+        }
+        .quill-editor-wrap .ql-snow .ql-picker-item {
+            color: #e2e8f0;
+        }
+
+        /* Resume editor section */
+        .resume-editor-section {
+            display: none;
+            animation: fadeSlideIn 0.5s ease both;
+        }
+        .resume-editor-section.active { display: block; }
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Download resume PDF button */
+        .btn-download-resume {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border: none;
+            color: white;
+            font-weight: 800;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: 0.3s;
+            font-family: 'Outfit', sans-serif;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.25);
+        }
+        .btn-download-resume:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+            color: white;
+        }
+
+        /* Resume template carousel (reuses tmpl-card styles) */
+        .resume-tmpl-carousel {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 8px 0 10px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(99,102,241,0.3) transparent;
+        }
+        .resume-tmpl-carousel::-webkit-scrollbar { height: 4px; }
+        .resume-tmpl-carousel::-webkit-scrollbar-track { background: transparent; }
+        .resume-tmpl-carousel::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.3); border-radius:4px; }
     </style>
 </head>
 
@@ -979,13 +1092,19 @@
 
                 <div class="glass-card animate__animated animate__fadeInUp">
 
-                    <!-- MAIN TABS: AI vs PDF -->
+                    <!-- MAIN TABS: AI Letter / AI Resume / PDF -->
                     <div class="main-tabs">
                         <button type="button" class="main-tab-btn active" onclick="switchTab('ai', this)">
                             <span class="tab-icon"><i class="fas fa-magic"></i></span>
-                            AI Letter Generator
+                            AI Letter
                             <span class="badge bg-warning text-dark ms-1"
                                 style="font-size: 0.65rem; padding: 3px 7px; border-radius: 6px;">ELITE</span>
+                        </button>
+                        <button type="button" class="main-tab-btn" onclick="switchTab('resume', this)">
+                            <span class="tab-icon"><i class="fas fa-file-alt"></i></span>
+                            AI Resume
+                            <span class="badge ms-1"
+                                style="font-size: 0.65rem; padding: 3px 7px; border-radius: 6px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white;">NEW</span>
                         </button>
                         <button type="button" class="main-tab-btn" onclick="switchTab('pdf', this)">
                             <span class="tab-icon"><i class="fas fa-file-pdf"></i></span>
@@ -1335,6 +1454,122 @@
                         <!-- END TAB PDF -->
 
                     </form>
+
+                    <!-- ============ TAB 3: AI RESUME GENERATOR ============ -->
+                    <div id="tab-resume" style="display: none;">
+                        <form id="resumeForm" enctype="multipart/form-data">
+                            {% csrf_token %}
+
+                            <div class="section-header">
+                                <div class="section-icon icon-resume"><i class="fas fa-file-alt"></i></div>
+                                <div>
+                                    <h5 class="text-white fw-bold m-0">AI Resume Generator</h5>
+                                    <div class="text-white-50" style="font-size: 0.82rem;">Powered by Llama 3 · Edit live, then download PDF</div>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">First Name</label>
+                                    <input type="text" name="first_name" id="resumeFirstName" class="form-control" placeholder="John">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Last Name</label>
+                                    <input type="text" name="last_name" id="resumeLastName" class="form-control" placeholder="Smith">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Language</label>
+                                    <select name="language" class="form-select">
+                                        <option value="English" selected>English 🇺🇸</option>
+                                        <option value="Russian">Russian 🇷🇺</option>
+                                        <option value="German">German 🇩🇪</option>
+                                        <option value="French">French 🇫🇷</option>
+                                        <option value="Spanish">Spanish 🇪🇸</option>
+                                        <option value="Portuguese">Portuguese 🇵🇹</option>
+                                        <option value="Italian">Italian 🇮🇹</option>
+                                        <option value="Dutch">Dutch 🇳🇱</option>
+                                        <option value="Polish">Polish 🇵🇱</option>
+                                        <option value="Turkish">Turkish 🇹🇷</option>
+                                        <option value="Chinese">Chinese 🇨🇳</option>
+                                        <option value="Japanese">Japanese 🇯🇵</option>
+                                        <option value="Korean">Korean 🇰🇷</option>
+                                        <option value="Arabic">Arabic 🇸🇦</option>
+                                        <option value="Hindi">Hindi 🇮🇳</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 d-flex align-items-end">
+                                    <label class="btn w-100"
+                                        style="background: rgba(99,102,241,0.1); color: #818cf8; border: 1px solid rgba(99,102,241,0.25); border-radius: 12px; font-size: 0.88rem; font-weight: 700; cursor: pointer; padding: 13px 16px; text-align: center;">
+                                        <i class="fas fa-file-pdf me-2"></i>Upload PDF Resume
+                                        <input type="file" name="resume_pdf" accept=".pdf" id="resumePdfUploadNew"
+                                            onchange="handleResumePdfUpload(this)" style="display:none;">
+                                    </label>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Your Career Info / Resume Text</label>
+                                    <textarea name="resume" id="resumeTextField" class="form-control" rows="6"
+                                        placeholder="Paste your career story, job titles, achievements — or upload a PDF above..."></textarea>
+                                    <div class="mt-1" style="font-size: 0.75rem; color: #475569;">
+                                        <i class="fas fa-lightbulb me-1" style="color: #818cf8;"></i>
+                                        Tip: Just dump everything — the AI will structure it into a polished resume.
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <button type="button" class="btn btn-custom w-100" id="generateResumeBtn"
+                                        onclick="submitResumeForm()"
+                                        style="background: linear-gradient(135deg, #4338ca, #6366f1, #8b5cf6); background-size: 200% 200%; animation: gradientAnim 5s ease infinite; color: white;">
+                                        <i class="fas fa-sparkles me-2"></i>Generate AI Resume
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- RESUME EDITOR (appears after generation) -->
+                        <div class="resume-editor-section" id="resumeEditorSection">
+                            <div class="d-flex align-items-center justify-content-between mb-3 mt-4">
+                                <h6 class="text-white fw-bold m-0">
+                                    <i class="fas fa-check-circle me-2" style="color: #22c55e;"></i>Your AI Resume — Edit Live
+                                </h6>
+                                <span style="font-size: 0.78rem; color: #64748b;">
+                                    <i class="fas fa-pen me-1"></i>Click anywhere to edit
+                                </span>
+                            </div>
+                            <div class="quill-editor-wrap mb-3">
+                                <div id="resumeQuillEditor"></div>
+                            </div>
+
+                            <!-- Template selector for PDF export -->
+                            <label class="form-label mb-2"><i class="fas fa-palette me-2" style="color:#818cf8;"></i>Choose PDF Template</label>
+                            <div class="resume-tmpl-carousel mb-3" id="resumeTemplateCarousel">
+                                {% with plan=user.profile.plan limit=user.profile.get_pdf_template_limit %}
+                                {% for t in pdf_templates %}
+                                <div class="tmpl-card {% if forloop.counter0 < limit %}{% if forloop.first %}selected{% endif %}{% else %}locked{% endif %}"
+                                     data-slug="{{ t.slug }}"
+                                     data-locked="{% if forloop.counter0 >= limit %}1{% else %}0{% endif %}"
+                                     onclick="selectResumeTemplate(this)">
+                                    <div class="tmpl-emoji">{{ t.preview }}</div>
+                                    <div class="tmpl-name">{{ t.name }}</div>
+                                    <div class="tmpl-desc">{{ t.desc }}</div>
+                                    {% if forloop.counter0 >= limit %}
+                                    <div class="tmpl-lock">🔒 {% if plan == 'free' %}Pro+{% else %}Elite{% endif %}</div>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                                {% endwith %}
+                            </div>
+                            <input type="hidden" id="resumeTemplateInput" value="classic_navy">
+
+                            <button type="button" class="btn btn-download-resume w-100" id="downloadResumePdfBtn"
+                                onclick="downloadFinalResumePdf()">
+                                <i class="fas fa-download me-2"></i>Download Final PDF
+                            </button>
+
+                            <!-- Resume error display -->
+                            <div class="alert-custom mt-3" id="resumeErrorBox" style="display:none;"></div>
+                        </div>
+                    </div>
+                    <!-- END TAB RESUME -->
+
                 </div>
 
             </div>
@@ -1345,6 +1580,7 @@
         // TAB SWITCHING
         function switchTab(tab, btn) {
             document.getElementById('tab-ai').style.display = tab === 'ai' ? 'block' : 'none';
+            document.getElementById('tab-resume').style.display = tab === 'resume' ? 'block' : 'none';
             document.getElementById('tab-pdf').style.display = tab === 'pdf' ? 'block' : 'none';
             document.querySelectorAll('.main-tab-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
@@ -1619,6 +1855,14 @@
                 if (resp.ok || resp.redirected) {
                     const html = await resp.text();
                     document.open(); document.write(html); document.close();
+                } else if (resp.status === 429) {
+                    hideLoading(btn, overlay);
+                    try {
+                        const data = await resp.json();
+                        showToast(data.error || 'Too many requests. Please wait a moment.', 'warning');
+                    } catch (e) {
+                        showToast('Too many requests. Please slow down and try again.', 'warning');
+                    }
                 } else {
                     hideLoading(btn, overlay);
                     showToast('Server error (' + resp.status + '). Please try again.', 'danger');
@@ -1726,6 +1970,241 @@
         function dismissOnboarding() {
             localStorage.setItem('cvai_onboarded', '1');
             document.getElementById('onboardingOverlay').style.display = 'none';
+        }
+    </script>
+
+    <!-- Quill.js Rich Text Editor + Markdown parser -->
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <script>
+        // ── QUILL EDITOR INSTANCE (lazy-init) ───────────────────────────────
+        let resumeQuill = null;
+
+        function initQuillEditor() {
+            if (resumeQuill) return;
+            resumeQuill = new Quill('#resumeQuillEditor', {
+                theme: 'snow',
+                placeholder: 'Your AI-generated resume will appear here...',
+                modules: {
+                    toolbar: [
+                        [{ 'header': [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline'],
+                        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                        [{ 'align': [] }],
+                        ['clean']
+                    ]
+                }
+            });
+        }
+
+        // ── RESUME PDF UPLOAD (fills textarea + keeps file for server) ──────
+        function handleResumePdfUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+            if (!file.name.toLowerCase().endsWith('.pdf')) {
+                showToast('Only PDF files are supported.', 'warning');
+                input.value = '';
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('File too large. Maximum size is 5MB.', 'warning');
+                input.value = '';
+                return;
+            }
+
+            const label = input.closest('label');
+            const origHTML = label.innerHTML;
+            label.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Parsing PDF...';
+
+            const formData = new FormData();
+            formData.append('pdf_file', file);
+
+            fetch('{% url "parse_resume_pdf" %}', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                body: formData
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.text) {
+                    document.getElementById('resumeTextField').value = data.text;
+                    showToast('Resume text extracted from PDF!', 'success');
+                } else {
+                    showToast(data.error || 'Could not extract text.', 'danger');
+                }
+            })
+            .catch(() => showToast('Failed to parse PDF.', 'danger'))
+            .finally(() => { label.innerHTML = origHTML; });
+        }
+
+        // ── RESUME TEMPLATE SELECTOR ────────────────────────────────────────
+        function selectResumeTemplate(card) {
+            if (card.dataset.locked === '1') {
+                showToast('Upgrade to unlock this template! 🔒', 'warning');
+                return;
+            }
+            document.querySelectorAll('#resumeTemplateCarousel .tmpl-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            document.getElementById('resumeTemplateInput').value = card.dataset.slug;
+        }
+
+        // ── SUBMIT RESUME FORM (AJAX → JSON → Quill) ───────────────────────
+        async function submitResumeForm() {
+            const form    = document.getElementById('resumeForm');
+            const btn     = document.getElementById('generateResumeBtn');
+            const overlay = document.getElementById('loadingOverlay');
+            const bar     = document.getElementById('loadingBar');
+            const pct     = document.getElementById('loadingPercent');
+            const step    = document.getElementById('loadingStep');
+            const errBox  = document.getElementById('resumeErrorBox');
+
+            errBox.style.display = 'none';
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
+            btn.style.opacity = '0.6';
+            overlay.classList.add('active');
+
+            const steps = [
+                { at: 8,  msg: 'Analyzing your career data...' },
+                { at: 25, msg: 'Extracting key achievements...' },
+                { at: 48, msg: 'Building resume structure...' },
+                { at: 68, msg: 'Optimizing for ATS...' },
+                { at: 82, msg: 'Polishing final draft...' },
+                { at: 90, msg: 'Almost ready...' },
+            ];
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 2.5 + 0.3;
+                if (progress >= 92) { progress = 92; clearInterval(interval); }
+                bar.style.width = progress + '%';
+                pct.textContent = Math.floor(progress) + '%';
+                for (let i = steps.length - 1; i >= 0; i--) {
+                    if (progress >= steps[i].at) {
+                        if (step.textContent !== steps[i].msg) {
+                            step.style.opacity = '0';
+                            setTimeout(() => { step.textContent = steps[i].msg; step.style.opacity = '1'; }, 200);
+                        }
+                        break;
+                    }
+                }
+            }, 280);
+
+            try {
+                const resp = await fetch('{% url "generate_resume" %}', {
+                    method: 'POST',
+                    body: new FormData(form),
+                });
+                clearInterval(interval);
+
+                // Handle rate-limit (429) or non-JSON error responses
+                if (resp.status === 429) {
+                    let msg = 'Too many requests. Please wait a minute and try again.';
+                    try { const d = await resp.json(); msg = d.error || msg; } catch(e) {}
+                    overlay.classList.remove('active');
+                    bar.style.width = '0%'; pct.textContent = '0%';
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-sparkles me-2"></i>Generate AI Resume';
+                    btn.style.opacity = '1';
+                    showToast(msg, 'warning');
+                    return;
+                }
+
+                const data = await resp.json();
+
+                // Complete progress bar
+                bar.style.width = '100%';
+                pct.textContent = '100%';
+                step.textContent = 'Done!';
+
+                setTimeout(() => {
+                    overlay.classList.remove('active');
+                    bar.style.width = '0%';
+                    pct.textContent = '0%';
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-sparkles me-2"></i>Generate AI Resume';
+                    btn.style.opacity = '1';
+
+                    if (data.error) {
+                        errBox.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>' + data.error;
+                        errBox.style.display = 'block';
+                        return;
+                    }
+
+                    if (data.result) {
+                        // Convert markdown to HTML and load into Quill
+                        initQuillEditor();
+                        const html = marked.parse(data.result);
+                        resumeQuill.root.innerHTML = html;
+
+                        // Show editor section
+                        const editorSection = document.getElementById('resumeEditorSection');
+                        editorSection.classList.add('active');
+                        editorSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        showToast('Resume generated! Edit it below, then download as PDF.', 'success');
+                    }
+                }, 600);
+            } catch (err) {
+                clearInterval(interval);
+                overlay.classList.remove('active');
+                bar.style.width = '0%';
+                pct.textContent = '0%';
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-sparkles me-2"></i>Generate AI Resume';
+                btn.style.opacity = '1';
+                showToast('Connection failed. Is the AI service running?', 'danger');
+            }
+        }
+
+        // ── DOWNLOAD FINAL RESUME PDF ───────────────────────────────────────
+        function downloadFinalResumePdf() {
+            if (!resumeQuill) {
+                showToast('Generate a resume first!', 'warning');
+                return;
+            }
+            const btn = document.getElementById('downloadResumePdfBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Building PDF...';
+
+            const content  = resumeQuill.root.innerHTML;
+            const fullName = (
+                (document.getElementById('resumeFirstName').value.trim() + ' ' +
+                 document.getElementById('resumeLastName').value.trim()).trim()
+            ) || 'Your Name';
+            const template = document.getElementById('resumeTemplateInput').value;
+
+            const formData = new FormData();
+            formData.append('resume_content', content);
+            formData.append('full_name', fullName);
+            formData.append('target_role', 'Professional');
+            formData.append('template_name', template);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            fetch('{% url "export_resume_pdf" %}', {
+                method: 'POST',
+                body: formData,
+            })
+            .then(resp => {
+                if (!resp.ok) throw new Error('PDF generation failed');
+                return resp.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'CVAI_Resume_' + template + '.pdf';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+                showToast('PDF downloaded successfully!', 'success');
+            })
+            .catch(() => showToast('Failed to generate PDF. Please try again.', 'danger'))
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-download me-2"></i>Download Final PDF';
+            });
         }
     </script>
 

@@ -464,7 +464,14 @@
                     </div>
                     {% endfor %}
                     {% else %}
-                    <div class="text-center text-white-50 py-3"><small>No cover letters yet</small></div>
+                    <div style="text-align:center; padding: 30px 16px;">
+                        <div style="width:56px; height:56px; margin:0 auto 14px; border-radius:16px; background:rgba(76,201,240,0.08); display:flex; align-items:center; justify-content:center;">
+                            <i class="fas fa-pen-nib" style="font-size:1.4rem; color:var(--primary); opacity:0.6;"></i>
+                        </div>
+                        <div class="text-white fw-bold" style="font-size:0.95rem; margin-bottom:4px;">Your FAANG-level letter awaits</div>
+                        <div style="color:#64748b; font-size:0.78rem; margin-bottom:14px;">Generate your first AI cover letter in seconds</div>
+                        <a href="{% url 'home' %}" style="background:linear-gradient(135deg,#4361ee,#4cc9f0); color:white; font-weight:700; font-size:0.78rem; padding:8px 20px; border-radius:10px; text-decoration:none; display:inline-block;">Create Now <i class="fas fa-arrow-right ms-1"></i></a>
+                    </div>
                     {% endif %}
                 </div>
             </div>
@@ -483,7 +490,14 @@
                     </div>
                     {% endfor %}
                     {% else %}
-                    <div class="text-center text-white-50 py-3"><small>No applications yet</small></div>
+                    <div style="text-align:center; padding: 30px 16px;">
+                        <div style="width:56px; height:56px; margin:0 auto 14px; border-radius:16px; background:rgba(34,197,94,0.08); display:flex; align-items:center; justify-content:center;">
+                            <i class="fas fa-briefcase" style="font-size:1.4rem; color:#22c55e; opacity:0.6;"></i>
+                        </div>
+                        <div class="text-white fw-bold" style="font-size:0.95rem; margin-bottom:4px;">Start tracking applications</div>
+                        <div style="color:#64748b; font-size:0.78rem; margin-bottom:14px;">Never lose track of where you applied</div>
+                        <a href="{% url 'tracker' %}" style="background:linear-gradient(135deg,#22c55e,#4cc9f0); color:white; font-weight:700; font-size:0.78rem; padding:8px 20px; border-radius:10px; text-decoration:none; display:inline-block;">Add Application <i class="fas fa-arrow-right ms-1"></i></a>
+                    </div>
                     {% endif %}
                 </div>
             </div>
@@ -502,7 +516,14 @@
                     </div>
                     {% endfor %}
                     {% else %}
-                    <div class="text-center text-white-50 py-3"><small>No AI results yet</small></div>
+                    <div style="text-align:center; padding: 30px 16px;">
+                        <div style="width:56px; height:56px; margin:0 auto 14px; border-radius:16px; background:rgba(247,37,133,0.08); display:flex; align-items:center; justify-content:center;">
+                            <i class="fas fa-wand-magic-sparkles" style="font-size:1.4rem; color:var(--secondary); opacity:0.6;"></i>
+                        </div>
+                        <div class="text-white fw-bold" style="font-size:0.95rem; margin-bottom:4px;">Unlock your AI arsenal</div>
+                        <div style="color:#64748b; font-size:0.78rem; margin-bottom:14px;">Interview prep, ATS scoring, follow-ups & more</div>
+                        <a href="{% url 'tools' %}" style="background:linear-gradient(135deg,#f72585,#ff6b6b); color:white; font-weight:700; font-size:0.78rem; padding:8px 20px; border-radius:10px; text-decoration:none; display:inline-block;">Explore AI Tools <i class="fas fa-arrow-right ms-1"></i></a>
+                    </div>
                     {% endif %}
                 </div>
             </div>

@@ -1,6 +1,7 @@
 import httpx
 import os
 import io
+import re
 import json
 import tempfile
 import logging
@@ -8,6 +9,7 @@ from pathlib import Path
 
 from asgiref.sync import sync_to_async          # wrap sync ORM/render calls for use in async views
 from django.conf import settings                # reads AI_SERVICE_URL
+from django.core.cache import cache             # lightweight rate-limiting store
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import FileResponse, JsonResponse
 from django.contrib.auth.decorators import login_required
@@ -19,6 +21,30 @@ from .models import Generation, JobApplication, AIResult
 from .pdf_engine import build_pdf, get_templates_for_plan, TEMPLATES
 
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# RATE LIMITER  (uses Django's default cache — LocMemCache or Redis)
+# Free: 3 requests/minute   |   Pro/Elite: 30 requests/minute
+# ---------------------------------------------------------------------------
+RATE_LIMITS = {'free': 3, 'pro': 30, 'elite': 30}
+RATE_WINDOW = 60  # seconds
+
+def _check_rate_limit(user, plan: str):
+    """
+    Returns None if the user is within limits, or a JsonResponse(429) if throttled.
+    Uses a simple counter-per-user stored in Django's cache.
+    """
+    limit = RATE_LIMITS.get(plan, 3)
+    cache_key = f"rl:{user.id}"
+    count = cache.get(cache_key, 0)
+    if count >= limit:
+        return JsonResponse(
+            {'error': 'Too many requests. Please wait a minute and try again.'},
+            status=429,
+        )
+    cache.set(cache_key, count + 1, RATE_WINDOW)
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -118,6 +144,11 @@ async def generate_letter(request):
     result = None
     # Safe async profile fetch — auto-creates if the post_save signal missed
     profile, _ = await Profile.objects.aget_or_create(user=request.user)
+
+    # ── Rate-limit check ──
+    throttled = await sync_to_async(_check_rate_limit)(request.user, profile.plan)
+    if throttled:
+        return throttled
 
     resume_text  = request.POST.get('resume', '')
     job_desc     = request.POST.get('job_description', '')
@@ -220,23 +251,46 @@ Generate the elite career response now.
     })
 
 
-# === AI RESUME GENERATION ===
+# === AI RESUME GENERATION (JSON response for Live-Edit flow) ===
 @login_required
 @require_POST
 async def generate_resume(request):
     """
     Async AI resume generation using the Elite ATS-Optimized prompt.
-    Transforms raw, unstructured career data into a world-class resume.
+    Returns JSON {"result": "...", "error": "..."} for the frontend
+    Quill.js live-edit flow instead of rendering a full page.
+
+    Accepts an optional uploaded PDF (field name 'resume_pdf').
+    If present, extracts text via pdfminer and combines it with
+    any typed text the user also entered.
     """
     error_message = None
     result = None
     profile, _ = await Profile.objects.aget_or_create(user=request.user)
+
+    # ── Rate-limit check ──
+    throttled = await sync_to_async(_check_rate_limit)(request.user, profile.plan)
+    if throttled:
+        return throttled
 
     resume_text  = request.POST.get('resume', '')
     language     = request.POST.get('language', 'English')
     first_name   = request.POST.get('first_name', '').strip()
     last_name    = request.POST.get('last_name', '').strip()
     full_name    = f"{first_name} {last_name}".strip() or "the candidate"
+
+    # ── PDF upload: extract text and prepend to typed resume text ───────
+    pdf_file = request.FILES.get('resume_pdf')
+    if pdf_file:
+        try:
+            pdf_text = await sync_to_async(pdf_extract_text)(pdf_file)
+            pdf_text = (pdf_text or '').strip()
+            if pdf_text:
+                # Combine: uploaded PDF text first, then any additional typed text
+                resume_text = f"{pdf_text}\n\n{resume_text}".strip()
+        except Exception as exc:
+            logger.warning("PDF extraction failed in generate_resume: %s", exc)
+            # Non-fatal — continue with whatever text the user typed
 
     if not profile.has_generations_left():
         error_message = "You've used all free generations! Upgrade to Pro for more."
@@ -299,12 +353,10 @@ Generate the world-class, ATS-optimized resume now.
             )
             await sync_to_async(profile.use_generation)()
 
-    return await arender(request, 'generator/home.html', {
+    # Return JSON for the frontend Quill.js live-edit flow
+    return JsonResponse({
         'result': result,
-        'error_message': error_message,
-        'resume_text': resume_text,
-        'pdf_templates': TEMPLATES,
-        'active_tab': 'resume',
+        'error': error_message,
     })
 
 
@@ -352,6 +404,52 @@ def generate_pdf(request):
 
     buffer = build_pdf(template_slug, request)
     filename = f'CVAI_{template_slug}.pdf'
+    return FileResponse(buffer, as_attachment=True, filename=filename)
+
+
+# === EXPORT RESUME PDF (from Quill live-edit content) ===
+@login_required
+@require_POST
+def export_resume_pdf(request):
+    """
+    Accepts user-edited resume content from the Quill.js editor
+    and builds a downloadable PDF using pdf_engine.
+
+    Expects POST fields:
+      - resume_content: plain text of the edited resume
+      - full_name: candidate name for the PDF header
+      - target_role: job title for the PDF header
+      - template_name: which PDF template to use (default: classic_navy)
+    """
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+
+    resume_content = request.POST.get('resume_content', '')
+    full_name      = request.POST.get('full_name', 'Your Name')
+    target_role    = request.POST.get('target_role', 'Professional')
+    template_slug  = request.POST.get('template_name', 'classic_navy')
+
+    # Validate template against plan limits (same guard as generate_pdf)
+    allowed_limit = profile.get_pdf_template_limit()
+    allowed_slugs = [t['slug'] for t in TEMPLATES[:allowed_limit]]
+    if template_slug not in allowed_slugs:
+        template_slug = allowed_slugs[0]
+
+    # Strip HTML tags to get clean text for ReportLab templates
+    clean_text = re.sub(r'<[^>]+>', '', resume_content)
+    # Normalise whitespace: collapse blank lines but keep structure
+    clean_text = re.sub(r'\n{3,}', '\n\n', clean_text).strip()
+
+    # Inject the content into request.POST so pdf_engine builders can read it
+    # (they read from request.POST['resume'], 'experience_text', 'full_name', etc.)
+    mutable_post = request.POST.copy()
+    mutable_post['resume']          = clean_text
+    mutable_post['experience_text'] = clean_text
+    mutable_post['full_name']       = full_name
+    mutable_post['target_role']     = target_role
+    request.POST = mutable_post
+
+    buffer = build_pdf(template_slug, request)
+    filename = f'CVAI_Resume_{template_slug}.pdf'
     return FileResponse(buffer, as_attachment=True, filename=filename)
 
 
@@ -468,6 +566,10 @@ def tools(request):
 async def interview_prep(request):
     """Async interview question generation."""
     profile, _ = await Profile.objects.aget_or_create(user=request.user)
+    # ── Rate-limit check ──
+    throttled = await sync_to_async(_check_rate_limit)(request.user, profile.plan)
+    if throttled:
+        return throttled
     if not profile.has_generations_left():
         recent_results = await sync_to_async(list)(
             AIResult.objects.filter(user=request.user)[:10]
@@ -534,6 +636,10 @@ Be specific to the role and company. No generic questions."""
 async def followup_email(request):
     """Async follow-up email generation."""
     profile, _ = await Profile.objects.aget_or_create(user=request.user)
+    # ── Rate-limit check ──
+    throttled = await sync_to_async(_check_rate_limit)(request.user, profile.plan)
+    if throttled:
+        return throttled
     if not profile.has_generations_left():
         recent_results = await sync_to_async(list)(
             AIResult.objects.filter(user=request.user)[:10]
@@ -599,6 +705,10 @@ Do NOT be generic — reference the specific role and company."""
 async def ats_score(request):
     """Async ATS score generation."""
     profile, _ = await Profile.objects.aget_or_create(user=request.user)
+    # ── Rate-limit check ──
+    throttled = await sync_to_async(_check_rate_limit)(request.user, profile.plan)
+    if throttled:
+        return throttled
     if not profile.has_generations_left():
         recent_results = await sync_to_async(list)(
             AIResult.objects.filter(user=request.user)[:10]

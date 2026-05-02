@@ -7,6 +7,7 @@ urlpatterns = [
     path('generate/', views.generate_letter, name='generate_letter'),
     path('generate-resume/', views.generate_resume, name='generate_resume'),
     path('download-pdf/', views.generate_pdf, name='download_pdf'),
+    path('export-resume-pdf/', views.export_resume_pdf, name='export_resume_pdf'),
     path('history/', views.history, name='history'),
     path('history/<int:pk>/delete/', views.delete_generation, name='delete_generation'),
 

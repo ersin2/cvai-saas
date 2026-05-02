@@ -347,11 +347,13 @@
                     {% endfor %}
                     {% else %}
                     <div class="empty-state">
-                        <div class="empty-icon"><i class="fas fa-inbox"></i></div>
-                        <h5 class="text-white-50">No generations yet</h5>
-                        <p>Generate your first AI cover letter to see it here.</p>
-                        <a href="{% url 'home' %}" class="btn btn-outline-info mt-2"
-                            style="border-radius: 10px; padding: 10px 24px; font-weight: 600;">
+                        <div style="width:80px; height:80px; margin:0 auto 20px; border-radius:20px; background:linear-gradient(135deg, rgba(76,201,240,0.1), rgba(247,37,133,0.1)); display:flex; align-items:center; justify-content:center;">
+                            <i class="fas fa-rocket" style="font-size:2rem; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip:text; -webkit-text-fill-color:transparent;"></i>
+                        </div>
+                        <h5 class="text-white fw-bold" style="margin-bottom:8px;">Your FAANG-level resume is waiting to be created</h5>
+                        <p style="color:#64748b; max-width:360px; margin:0 auto 20px; font-size:0.88rem; line-height:1.6;">Generate your first AI-powered cover letter or resume and it will appear here for easy access.</p>
+                        <a href="{% url 'home' %}" class="btn mt-1"
+                            style="background: linear-gradient(135deg, #4361ee, #4cc9f0); color:white; border-radius:12px; padding:12px 32px; font-weight:700; font-size:0.88rem; border:none; box-shadow: 0 8px 24px rgba(67,97,238,0.25); transition:0.3s;">
                             <i class="fas fa-magic me-2"></i>Start Generating
                         </a>
                     </div>
@@ -384,11 +386,12 @@
                     card.style.maxHeight = '0';
                     card.style.marginBottom = '0';
                     setTimeout(() => card.remove(), 420);
+                    showToast('Generation deleted.', 'success');
                 } else {
-                    alert('Could not delete: ' + (data.error || 'Unknown error'));
+                    showToast('Could not delete: ' + (data.error || 'Unknown error'), 'danger');
                 }
             } catch (e) {
-                alert('Network error. Please try again.');
+                showToast('Network error. Please try again.', 'danger');
             }
         }
 
@@ -396,7 +399,33 @@
             document.getElementById('mobileDrawer').classList.toggle('open');
             document.getElementById('mobileBackdrop').classList.toggle('open');
         }
+
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            const icons = {success:'check-circle', warning:'exclamation-triangle', danger:'times-circle'};
+            toast.className = 'toast-notification toast-' + type;
+            toast.innerHTML = '<i class="fas fa-' + (icons[type] || 'info-circle') + ' me-2"></i>' + message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 4000);
+        }
     </script>
+
+    <style>
+        .toast-notification {
+            position: fixed; bottom: 30px; right: 30px;
+            padding: 16px 24px; border-radius: 14px;
+            font-size: 0.9rem; font-weight: 600; color: white;
+            z-index: 9999; opacity: 0; transform: translateY(20px);
+            transition: all 0.3s ease; backdrop-filter: blur(20px);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+        }
+        .toast-notification.show { opacity:1; transform:translateY(0); }
+        .toast-success { background: rgba(34,197,94,0.9); }
+        .toast-warning { background: rgba(234,179,8,0.9); }
+        .toast-danger  { background: rgba(239,68,68,0.9); }
+    </style>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 

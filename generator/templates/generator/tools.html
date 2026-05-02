@@ -398,7 +398,7 @@
                         <h4 class="text-white fw-bold mb-1"><i class="fas fa-comments me-2 text-info"></i>Interview Prep
                             AI</h4>
                         <p class="text-white-50 small mb-4">Get 10 likely interview questions with perfect answers.</p>
-                        <form method="post" action="{% url 'interview_prep' %}" onsubmit="showLoading()">
+                        <form id="form-interview" onsubmit="submitToolForm(event, 'interview')">
                             {% csrf_token %}
                             <div class="mb-3">
                                 <label class="form-label">Company Name</label>
@@ -428,7 +428,7 @@
                                 style="color: var(--secondary);"></i>Follow-Up Email Generator</h4>
                         <p class="text-white-50 small mb-4">Create professional follow-up emails for 3, 7, and 14 days.
                         </p>
-                        <form method="post" action="{% url 'followup_email' %}" onsubmit="showLoading()">
+                        <form id="form-followup" onsubmit="submitToolForm(event, 'followup')">
                             {% csrf_token %}
                             <div class="row g-3">
                                 <div class="col-md-6">
@@ -462,7 +462,7 @@
                         <h4 class="text-white fw-bold mb-1"><i class="fas fa-chart-bar me-2 text-warning"></i>ATS Score
                             Checker</h4>
                         <p class="text-white-50 small mb-4">See how well your resume matches the job (0-100 score).</p>
-                        <form method="post" action="{% url 'ats_score' %}" onsubmit="showLoading()">
+                        <form id="form-ats" onsubmit="submitToolForm(event, 'ats')">
                             {% csrf_token %}
                             <div class="mb-3">
                                 <label class="form-label">Your Resume</label>
@@ -580,11 +580,64 @@
 
         function showToast(message, type) {
             const toast = document.createElement('div');
+            const icons = {success:'check-circle', warning:'exclamation-triangle', danger:'times-circle'};
             toast.className = 'toast-notification toast-' + type;
-            toast.innerHTML = '<i class="fas fa-' + (type === 'success' ? 'check-circle' : 'times-circle') + ' me-2"></i>' + message;
+            toast.innerHTML = '<i class="fas fa-' + (icons[type] || 'info-circle') + ' me-2"></i>' + message;
             document.body.appendChild(toast);
             setTimeout(() => toast.classList.add('show'), 10);
             setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 4000);
+        }
+
+        // AJAX tool form submission with graceful error handling
+        const TOOL_URLS = {
+            interview: '{% url "interview_prep" %}',
+            followup:  '{% url "followup_email" %}',
+            ats:       '{% url "ats_score" %}'
+        };
+
+        async function submitToolForm(event, toolName) {
+            event.preventDefault();
+            const form = event.target;
+            const btn = form.querySelector('button[type=submit]');
+            const origBtn = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
+            document.getElementById('loadingSpinner').classList.add('show');
+
+            const formData = new FormData(form);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            try {
+                const resp = await fetch(TOOL_URLS[toolName], {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (resp.status === 429) {
+                    let msg = 'Too many requests. Please wait a minute.';
+                    try { const d = await resp.json(); msg = d.error || msg; } catch(e) {}
+                    showToast(msg, 'warning');
+                    btn.disabled = false;
+                    btn.innerHTML = origBtn;
+                    document.getElementById('loadingSpinner').classList.remove('show');
+                    return;
+                }
+
+                if (resp.ok || resp.redirected) {
+                    const html = await resp.text();
+                    document.open(); document.write(html); document.close();
+                } else {
+                    showToast('Server error (' + resp.status + '). Please try again.', 'danger');
+                    btn.disabled = false;
+                    btn.innerHTML = origBtn;
+                    document.getElementById('loadingSpinner').classList.remove('show');
+                }
+            } catch(err) {
+                showToast('Connection failed. Is the AI service running?', 'danger');
+                btn.disabled = false;
+                btn.innerHTML = origBtn;
+                document.getElementById('loadingSpinner').classList.remove('show');
+            }
         }
     </script>
 
@@ -613,6 +666,10 @@
 
         .toast-success {
             background: rgba(34, 197, 94, 0.9);
+        }
+
+        .toast-warning {
+            background: rgba(234, 179, 8, 0.9);
         }
 
         .toast-danger {
