@@ -5,17 +5,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CVAI | AI Cover Letter Generator</title>
+    <title>Resume Studio | CVAI — AI-Powered Visual Resume Builder</title>
     <meta name="description"
-        content="Generate AI-powered cover letters tailored to any job description. Get ATS scores, recruiter analysis, and multiple versions in seconds.">
+        content="Build a stunning, ATS-optimized resume with AI. Upload your old PDF or paste your story — get a professionally structured A4 resume in seconds.">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Montserrat:wght@300;400;600;700;800&family=Merriweather:wght@300;400;700&family=Playfair+Display:wght@400;600;700;800&family=Lora:wght@400;500;600;700&family=Raleway:wght@300;400;600;700;800&family=Nunito:wght@300;400;600;700;800&family=EB+Garamond:wght@400;500;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
-    <!-- Quill.js Rich Text Editor -->
-    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+    <!-- Resume Studio Styles -->
+    {% include 'generator/partials/studio_styles.html' %}
 
     <style>
         :root {
@@ -33,42 +33,27 @@
             min-height: 100vh;
             overflow-x: hidden;
             background-image:
-                radial-gradient(circle at 10% 20%, rgba(76, 201, 240, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(247, 37, 133, 0.15) 0%, transparent 40%);
+                radial-gradient(circle at 10% 20%, rgba(76, 201, 240, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(247, 37, 133, 0.12) 0%, transparent 40%);
         }
 
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--dark-bg);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #2d3748;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--primary);
-        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--dark-bg); }
+        ::-webkit-scrollbar-thumb { background: #2d3748; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
 
         /* NAVBAR */
         .navbar-custom {
-            padding: 18px 0;
+            padding: 14px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            margin-bottom: 40px;
             position: sticky;
             top: 0;
             z-index: 100;
-            background: rgba(10, 14, 23, 0.85);
+            background: rgba(10, 14, 23, 0.9);
             backdrop-filter: blur(20px);
-            padding-left: 20px;
-            padding-right: 20px;
         }
 
         .logo-text {
@@ -132,6 +117,27 @@
             color: white;
         }
 
+        .btn-upgrade {
+            background: linear-gradient(45deg, #ffd700, #ffaa00);
+            border: none;
+            color: #000;
+            font-weight: 800;
+            padding: 7px 16px;
+            border-radius: 10px;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+        .btn-upgrade:hover {
+            transform: scale(1.03);
+            color: #000;
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+        }
+
         /* HAMBURGER MENU */
         .hamburger-btn {
             display: none;
@@ -162,9 +168,7 @@
             overflow-y: auto;
         }
 
-        .mobile-drawer.open {
-            right: 0;
-        }
+        .mobile-drawer.open { right: 0; }
 
         .mobile-drawer .nav-link-item {
             display: block;
@@ -206,9 +210,7 @@
             z-index: 999;
         }
 
-        .mobile-backdrop.open {
-            display: block;
-        }
+        .mobile-backdrop.open { display: block; }
 
         .drawer-close-btn {
             position: absolute;
@@ -228,381 +230,9 @@
         }
 
         @media (max-width: 768px) {
-            .hamburger-btn {
-                display: block;
-            }
-
-            .nav-actions {
-                display: none !important;
-            }
-
-            .navbar-custom {
-                padding: 14px 16px;
-            }
-        }
-
-        /* GLASS CARD */
-        .glass-card {
-            background: rgba(20, 25, 40, 0.7);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 24px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            padding: 40px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .glass-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--primary), var(--secondary), transparent);
-        }
-
-        /* MAIN TABS (AI / PDF) */
-        .main-tabs {
-            display: flex;
-            gap: 4px;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 6px;
-            border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            margin-bottom: 32px;
-        }
-
-        .main-tab-btn {
-            flex: 1;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 12px;
-            background: transparent;
-            color: #64748b;
-            font-family: 'Outfit', sans-serif;
-            font-weight: 700;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .main-tab-btn:hover {
-            color: #94a3b8;
-            background: rgba(255, 255, 255, 0.04);
-        }
-
-        .main-tab-btn.active {
-            background: linear-gradient(135deg, rgba(76, 201, 240, 0.15), rgba(247, 37, 133, 0.15));
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .main-tab-btn.active .tab-icon {
-            color: var(--primary);
-        }
-
-        /* FORM ELEMENTS */
-        .form-label {
-            font-size: 0.82rem;
-            font-weight: 700;
-            color: #64748b;
-            margin-bottom: 8px;
-            letter-spacing: 0.8px;
-            text-transform: uppercase;
-        }
-
-        .form-control,
-        .form-select {
-            background: rgba(0, 0, 0, 0.3) !important;
-            border: 1px solid var(--border) !important;
-            color: #fff !important;
-            border-radius: 12px;
-            padding: 13px 16px;
-            font-family: 'Outfit', sans-serif;
-            font-size: 0.95rem;
-            transition: all 0.3s;
-        }
-
-        .form-control:focus,
-        .form-select:focus {
-            background: rgba(0, 0, 0, 0.5) !important;
-            border-color: var(--primary) !important;
-            box-shadow: 0 0 0 4px rgba(76, 201, 240, 0.12);
-            outline: none;
-        }
-
-        .form-control::placeholder {
-            color: #334155;
-        }
-
-        option {
-            background-color: #1a202c;
-            color: white;
-        }
-
-        textarea.form-control {
-            resize: vertical;
-            min-height: 110px;
-        }
-
-        /* FILE UPLOAD */
-        .file-upload-box {
-            position: relative;
-            height: 110px;
-            border: 2px dashed rgba(255, 255, 255, 0.15);
-            border-radius: 16px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255, 255, 255, 0.02);
-            transition: 0.3s;
-            cursor: pointer;
-            overflow: hidden;
-        }
-
-        .file-upload-box:hover {
-            border-color: var(--secondary);
-            background: rgba(247, 37, 133, 0.05);
-        }
-
-        .file-upload-box input {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
-            z-index: 2;
-        }
-
-        .file-icon {
-            font-size: 1.8rem;
-            color: #334155;
-            margin-bottom: 8px;
-            transition: 0.3s;
-        }
-
-        .file-text {
-            font-size: 0.85rem;
-            color: #475569;
-        }
-
-        .file-upload-box:hover .file-icon {
-            color: var(--secondary);
-            transform: scale(1.1);
-        }
-
-        /* SKILLS */
-        .skill-row {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 14px;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-
-        .range-slider {
-            -webkit-appearance: none;
-            width: 100%;
-            height: 5px;
-            border-radius: 3px;
-            background: rgba(255, 255, 255, 0.1);
-            outline: none;
-        }
-
-        .range-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: var(--primary);
-            cursor: pointer;
-            box-shadow: 0 0 8px var(--primary);
-            border: 2px solid #fff;
-            transition: 0.2s;
-        }
-
-        .range-slider::-webkit-slider-thumb:hover {
-            transform: scale(1.2);
-        }
-
-        .level-badge {
-            font-size: 0.72rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            padding: 4px 9px;
-            border-radius: 6px;
-            background: rgba(76, 201, 240, 0.1);
-            color: var(--primary);
-            min-width: 75px;
-            text-align: center;
-        }
-
-        /* BUTTONS */
-        .btn-custom {
-            border: none;
-            padding: 15px;
-            border-radius: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: 0.3s;
-            font-family: 'Outfit', sans-serif;
-            font-size: 0.9rem;
-        }
-
-        .btn-ai {
-            background: linear-gradient(135deg, #3a1c71, #d76d77, #ffaf7b);
-            background-size: 200% 200%;
-            animation: gradientAnim 5s ease infinite;
-            color: white;
-        }
-
-        .btn-ai:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(215, 109, 119, 0.4);
-            color: white;
-        }
-
-        .btn-ai:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        @keyframes gradientAnim {
-            0% {
-                background-position: 0% 50%
-            }
-
-            50% {
-                background-position: 100% 50%
-            }
-
-            100% {
-                background-position: 0% 50%
-            }
-        }
-
-        .btn-pdf {
-            background: var(--primary);
-            color: #0f172a;
-            font-weight: 800;
-            box-shadow: 0 0 20px rgba(76, 201, 240, 0.25);
-        }
-
-        .btn-pdf:hover {
-            background: #fff;
-            transform: translateY(-2px);
-            box-shadow: 0 0 30px rgba(76, 201, 240, 0.5);
-        }
-
-        .btn-add {
-            background: transparent;
-            border: 1px dashed rgba(255, 255, 255, 0.2);
-            color: #64748b;
-            font-size: 0.88rem;
-            padding: 10px;
-            width: 100%;
-            border-radius: 10px;
-            transition: 0.2s;
-        }
-
-        .btn-add:hover {
-            border-color: var(--primary);
-            color: white;
-            background: rgba(76, 201, 240, 0.08);
-        }
-
-        .btn-del {
-            color: #ef4444;
-            background: none;
-            border: none;
-            font-size: 1rem;
-            opacity: 0.5;
-            transition: 0.2s;
-            padding: 4px 8px;
-        }
-
-        .btn-del:hover {
-            opacity: 1;
-            transform: scale(1.2);
-        }
-
-        /* RESULT TABS */
-        .nav-pills .nav-link {
-            color: #64748b;
-            transition: 0.3s;
-            font-weight: 600;
-            font-size: 0.88rem;
-            border-radius: 10px;
-            padding: 8px 16px;
-        }
-
-        .nav-pills .nav-link:hover {
-            color: white;
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        .nav-pills .nav-link.active {
-            background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
-            color: white !important;
-            box-shadow: 0 4px 15px rgba(247, 37, 133, 0.3);
-        }
-
-        /* RESULT BOX */
-        .result-box {
-            background: rgba(0, 0, 0, 0.35);
-            border: 1px solid rgba(76, 201, 240, 0.25);
-            border-radius: 16px;
-            padding: 28px;
-            position: relative;
-        }
-
-        .result-text {
-            white-space: pre-wrap;
-            font-family: 'Outfit', sans-serif;
-            font-size: 0.93rem;
-            color: #cbd5e1;
-            line-height: 1.7;
-        }
-
-        /* COPY BUTTON */
-        .btn-copy {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            color: #94a3b8;
-            padding: 6px 14px;
-            border-radius: 8px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .btn-copy:hover {
-            background: rgba(255, 255, 255, 0.12);
-            color: white;
-        }
-
-        .btn-copy.copied {
-            background: rgba(16, 185, 129, 0.15);
-            border-color: rgba(16, 185, 129, 0.4);
-            color: #10b981;
+            .hamburger-btn { display: block; }
+            .nav-actions { display: none !important; }
+            .navbar-custom { padding: 14px 16px; }
         }
 
         /* ══ PREMIUM FULL-SCREEN LOADING OVERLAY ══ */
@@ -636,16 +266,12 @@
         }
         .loading-modal::before {
             content:'';
-            position:absolute;
-            inset:0;
-            border-radius:28px;
+            position:absolute; inset:0; border-radius:28px;
             background: radial-gradient(ellipse at 50% 0%, rgba(76,201,240,0.08) 0%, transparent 60%);
             pointer-events:none;
         }
         .loading-modal-bar-top {
-            position:absolute;
-            top:0; left:0; right:0;
-            height:2px;
+            position:absolute; top:0; left:0; right:0; height:2px;
             background: linear-gradient(90deg, #4361ee, #4cc9f0, #f72585, #4cc9f0, #4361ee);
             background-size: 300% 100%;
             border-radius: 28px 28px 0 0;
@@ -653,34 +279,23 @@
         }
         @keyframes bar-slide { to { background-position: -300% 0; } }
 
-        /* dual concentric rings */
-        .rings-wrap {
-            position:relative;
-            width:80px; height:80px;
-            margin: 0 auto 28px;
-        }
+        .rings-wrap { position:relative; width:80px; height:80px; margin: 0 auto 28px; }
         .ring-outer {
-            position:absolute; inset:0;
-            border-radius:50%;
+            position:absolute; inset:0; border-radius:50%;
             border: 3px solid rgba(76,201,240,0.12);
             border-top-color: var(--primary);
             animation: spin 1s linear infinite;
         }
         .ring-inner {
-            position:absolute; inset:12px;
-            border-radius:50%;
+            position:absolute; inset:12px; border-radius:50%;
             border: 2px solid rgba(247,37,133,0.12);
             border-top-color: var(--secondary);
             animation: spin 0.65s linear infinite reverse;
         }
-        .ring-dot {
-            position:absolute; inset:0;
-            display:flex; align-items:center; justify-content:center;
-        }
+        .ring-dot { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
         .ring-dot::after {
             content:''; width:10px; height:10px; border-radius:50%;
-            background:var(--primary);
-            box-shadow: 0 0 12px var(--primary);
+            background:var(--primary); box-shadow: 0 0 12px var(--primary);
             animation: pulse-dot 1s ease-in-out infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -689,279 +304,38 @@
             50%      { transform:scale(0.6); opacity:0.4; }
         }
 
-        .loading-step-text {
-            font-weight: 700;
-            font-size: 1rem;
-            color: #e2e8f0;
-            margin-bottom: 6px;
-            min-height: 1.4em;
-            transition: opacity 0.3s;
-        }
-        .loading-sub-text {
-            color: #475569;
-            font-size: 0.82rem;
-            margin-bottom: 24px;
-        }
-        .loading-progress-wrap {
-            background: rgba(255,255,255,0.05);
-            border-radius: 99px;
-            height: 6px;
-            overflow: hidden;
-            margin-bottom: 10px;
-        }
+        .loading-step-text { font-weight: 700; font-size: 1rem; color: #e2e8f0; margin-bottom: 6px; min-height: 1.4em; transition: opacity 0.3s; }
+        .loading-sub-text { color: #475569; font-size: 0.82rem; margin-bottom: 24px; }
+        .loading-progress-wrap { background: rgba(255,255,255,0.05); border-radius: 99px; height: 6px; overflow: hidden; margin-bottom: 10px; }
         .loading-progress-bar {
-            height:100%;
-            width:0%;
+            height:100%; width:0%;
             background: linear-gradient(90deg, #4361ee, #4cc9f0, #f72585);
             background-size: 200% 100%;
-            border-radius: 99px;
-            transition: width 0.5s ease;
+            border-radius: 99px; transition: width 0.5s ease;
             animation: bar-color 3s linear infinite;
         }
         @keyframes bar-color { to { background-position: -200% 0; } }
-        .loading-percent {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.78rem;
-            color: #4cc9f0;
-            text-align:right;
-        }
-        /* PDF template carousel */
-        .template-carousel {
-            display: flex;
-            gap: 12px;
-            overflow-x: auto;
-            padding-bottom: 10px;
-            scrollbar-width: thin;
-            scrollbar-color: rgba(76,201,240,0.3) transparent;
-        }
-        .template-carousel::-webkit-scrollbar { height: 4px; }
-        .template-carousel::-webkit-scrollbar-track { background: transparent; }
-        .template-carousel::-webkit-scrollbar-thumb { background: rgba(76,201,240,0.3); border-radius:4px; }
-        .tmpl-card {
-            flex-shrink: 0;
-            width: 130px;
-            background: rgba(0,0,0,0.3);
-            border: 1.5px solid rgba(255,255,255,0.08);
-            border-radius: 14px;
-            padding: 14px 10px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.25s;
-        }
-        .tmpl-card:hover {
-            border-color: rgba(76,201,240,0.4);
-            background: rgba(76,201,240,0.05);
-            transform: translateY(-2px);
-        }
-        .tmpl-card.selected {
-            border-color: var(--primary);
-            background: rgba(76,201,240,0.1);
-            box-shadow: 0 0 16px rgba(76,201,240,0.25);
-        }
-        .tmpl-card.locked {
-            opacity: 0.45;
-            cursor: not-allowed;
-        }
-        .tmpl-card.locked:hover { transform: none; border-color: rgba(255,255,255,0.08); }
-        .tmpl-emoji { font-size: 1.7rem; margin-bottom: 8px; }
-        .tmpl-name { font-size: 0.78rem; font-weight: 700; color: #e2e8f0; margin-bottom: 4px; }
-        .tmpl-desc { font-size: 0.68rem; color: #64748b; line-height: 1.3; }
-        .tmpl-lock { font-size: 0.7rem; color: #fcd34d; margin-top: 4px; }
+        .loading-percent { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #4cc9f0; text-align:right; }
 
-        /* SECTION DIVIDER */
-        .section-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 24px;
+        /* TOAST NOTIFICATIONS */
+        .toast-notification {
+            position: fixed; bottom: 30px; right: 30px;
+            padding: 16px 24px; border-radius: 14px;
+            font-size: 0.9rem; font-weight: 600; color: white;
+            z-index: 9999; opacity: 0; transform: translateY(20px);
+            transition: all 0.3s ease; backdrop-filter: blur(20px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
         }
+        .toast-notification.show { opacity: 1; transform: translateY(0); }
+        .toast-success { background: rgba(34, 197, 94, 0.9); }
+        .toast-warning { background: rgba(234, 179, 8, 0.9); color: #000; }
+        .toast-danger { background: rgba(239, 68, 68, 0.9); }
 
-        .section-icon {
-            width: 38px;
-            height: 38px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
+        @keyframes gradientAnim {
+            0% { background-position: 0% 50% }
+            50% { background-position: 100% 50% }
+            100% { background-position: 0% 50% }
         }
-
-        .icon-ai {
-            background: rgba(247, 37, 133, 0.15);
-            color: var(--secondary);
-        }
-
-        .icon-pdf {
-            background: rgba(76, 201, 240, 0.15);
-            color: var(--primary);
-        }
-
-        /* ALERT */
-        .alert-custom {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            color: #fca5a5;
-            border-radius: 12px;
-            padding: 14px 18px;
-            font-size: 0.9rem;
-        }
-
-        /* UPGRADE BANNER */
-        .upgrade-banner {
-            background: linear-gradient(135deg, rgba(255, 215, 0, 0.06), rgba(255, 140, 0, 0.06));
-            border: 1px solid rgba(255, 215, 0, 0.2);
-            border-radius: 16px;
-            padding: 18px 22px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-            margin-bottom: 28px;
-        }
-
-        .upgrade-banner-text {
-            font-size: 0.9rem;
-            color: #fcd34d;
-            font-weight: 600;
-        }
-
-        .upgrade-banner-sub {
-            font-size: 0.8rem;
-            color: #92400e;
-            margin-top: 2px;
-        }
-
-        .btn-upgrade {
-            background: linear-gradient(45deg, #ffd700, #ffaa00);
-            border: none;
-            color: #000;
-            font-weight: 800;
-            padding: 9px 20px;
-            border-radius: 10px;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            white-space: nowrap;
-            text-decoration: none;
-            transition: 0.2s;
-        }
-
-        .btn-upgrade:hover {
-            transform: scale(1.03);
-            color: #000;
-            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
-        }
-
-        /* RESUME TAB ICON */
-        .icon-resume {
-            background: rgba(99, 102, 241, 0.15);
-            color: #818cf8;
-        }
-
-        /* ══ QUILL DARK THEME OVERRIDES ══ */
-        .quill-editor-wrap {
-            border-radius: 16px;
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            background: rgba(0, 0, 0, 0.35);
-        }
-        .quill-editor-wrap .ql-toolbar.ql-snow {
-            background: rgba(0, 0, 0, 0.4);
-            border: none;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        }
-        .quill-editor-wrap .ql-toolbar .ql-stroke {
-            stroke: #94a3b8;
-        }
-        .quill-editor-wrap .ql-toolbar .ql-fill {
-            fill: #94a3b8;
-        }
-        .quill-editor-wrap .ql-toolbar .ql-picker-label {
-            color: #94a3b8;
-        }
-        .quill-editor-wrap .ql-toolbar button:hover .ql-stroke,
-        .quill-editor-wrap .ql-toolbar .ql-active .ql-stroke {
-            stroke: var(--primary);
-        }
-        .quill-editor-wrap .ql-toolbar button:hover .ql-fill,
-        .quill-editor-wrap .ql-toolbar .ql-active .ql-fill {
-            fill: var(--primary);
-        }
-        .quill-editor-wrap .ql-container.ql-snow {
-            border: none;
-            font-family: 'Outfit', sans-serif;
-            font-size: 0.95rem;
-            color: #e2e8f0;
-            min-height: 320px;
-            max-height: 600px;
-            overflow-y: auto;
-        }
-        .quill-editor-wrap .ql-editor {
-            color: #cbd5e1;
-            line-height: 1.75;
-            padding: 24px;
-        }
-        .quill-editor-wrap .ql-editor h1, .quill-editor-wrap .ql-editor h2,
-        .quill-editor-wrap .ql-editor h3 {
-            color: #f1f5f9;
-        }
-        .quill-editor-wrap .ql-editor.ql-blank::before {
-            color: #475569;
-            font-style: normal;
-        }
-        .quill-editor-wrap .ql-snow .ql-picker-options {
-            background: #1e293b;
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px;
-        }
-        .quill-editor-wrap .ql-snow .ql-picker-item {
-            color: #e2e8f0;
-        }
-
-        /* Resume editor section */
-        .resume-editor-section {
-            display: none;
-            animation: fadeSlideIn 0.5s ease both;
-        }
-        .resume-editor-section.active { display: block; }
-        @keyframes fadeSlideIn {
-            from { opacity: 0; transform: translateY(16px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Download resume PDF button */
-        .btn-download-resume {
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            border: none;
-            color: white;
-            font-weight: 800;
-            padding: 15px;
-            border-radius: 12px;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: 0.3s;
-            font-family: 'Outfit', sans-serif;
-            box-shadow: 0 0 20px rgba(99, 102, 241, 0.25);
-        }
-        .btn-download-resume:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
-            color: white;
-        }
-
-        /* Resume template carousel (reuses tmpl-card styles) */
-        .resume-tmpl-carousel {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            padding: 8px 0 10px;
-            scrollbar-width: thin;
-            scrollbar-color: rgba(99,102,241,0.3) transparent;
-        }
-        .resume-tmpl-carousel::-webkit-scrollbar { height: 4px; }
-        .resume-tmpl-carousel::-webkit-scrollbar-track { background: transparent; }
-        .resume-tmpl-carousel::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.3); border-radius:4px; }
     </style>
 </head>
 
@@ -971,16 +345,13 @@
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-modal">
             <div class="loading-modal-bar-top"></div>
-
             <div class="rings-wrap">
                 <div class="ring-outer"></div>
                 <div class="ring-inner"></div>
                 <div class="ring-dot"></div>
             </div>
-
             <div class="loading-step-text" id="loadingStep">Analyzing your resume...</div>
             <div class="loading-sub-text">Elite AI — usually 5–15 seconds</div>
-
             <div class="loading-progress-wrap">
                 <div class="loading-progress-bar" id="loadingBar"></div>
             </div>
@@ -1002,8 +373,7 @@
                 <i class="fas fa-bolt me-1"></i>
                 {{ user.profile.generations_count }} / {{ user.profile.get_limit }} gens · Free
             </span>
-            <a href="{% url 'pricing' %}" class="btn-upgrade" style="padding: 7px 16px; font-size: 0.78rem;">Upgrade
-                ⚡</a>
+            <a href="{% url 'pricing' %}" class="btn-upgrade">Upgrade ⚡</a>
             {% else %}
             <span class="gen-counter"
                 style="border-color: rgba(255,215,0,0.4); color: #fcd34d; background: rgba(255,215,0,0.08);">
@@ -1039,7 +409,7 @@
             {% endif %}
         </div>
         <a href="{% url 'home' %}" class="nav-link-item" style="color:var(--primary);"><i
-                class="fas fa-pen-nib me-2"></i>Generator</a>
+                class="fas fa-pen-ruler me-2"></i>Resume Studio</a>
         <a href="{% url 'dashboard' %}" class="nav-link-item"><i class="fas fa-chart-pie me-2"></i>Dashboard</a>
         <a href="{% url 'tools' %}" class="nav-link-item"><i class="fas fa-wand-magic-sparkles me-2"></i>AI Tools</a>
         <a href="{% url 'tracker' %}" class="nav-link-item"><i class="fas fa-briefcase me-2"></i>Tracker</a>
@@ -1055,708 +425,18 @@
     </div>
     {% endif %}
 
-    <div class="container pb-5">
-        <div class="row justify-content-center">
-            <div class="col-lg-9 col-xl-8">
-
-                <!-- USAGE COUNTER WIDGET -->
-                {% if user.is_authenticated %}
-                <div class="mb-3 animate__animated animate__fadeIn"
-                    style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <i class="fas fa-bolt" style="color: #4cc9f0; font-size: 1.1rem;"></i>
-                        <div>
-                            {% if user.profile.is_premium %}
-                            <span style="font-weight:700; color:white; font-size:0.92rem;"><i
-                                    class="fas fa-infinity me-1" style="color:#ffd700;"></i> Unlimited
-                                generations</span>
-                            <span style="color:#64748b; font-size:0.8rem; margin-left:8px;">{{ user.profile.plan|upper }} Plan</span>
-                            {% else %}
-                            <span style="font-weight:700; color:white; font-size:0.92rem;">{{ user.profile.generations_count }} of {{ user.profile.get_limit }} free generations used</span>
-                            <div
-                                style="background: rgba(255,255,255,0.06); border-radius: 6px; height: 5px; width: 120px; margin-top: 4px; overflow: hidden;">
-                                <div
-                                    style="height:100%; background: linear-gradient(90deg, #22c55e, #4cc9f0); border-radius: 6px; width: {% widthratio user.profile.generations_count user.profile.get_limit 100 %}%;">
-                                </div>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% if not user.profile.is_premium %}
-                    <a href="{% url 'pricing' %}"
-                        style="background: linear-gradient(135deg, #4361ee, #f72585); color:white; font-weight:700; font-size:0.78rem; padding:8px 16px; border-radius:10px; text-decoration:none; white-space:nowrap;">Upgrade
-                        <i class="fas fa-arrow-right ms-1"></i></a>
-                    {% endif %}
-                </div>
-                {% endif %}
-
-                <div class="glass-card animate__animated animate__fadeInUp">
-
-                    <!-- MAIN TABS: AI Letter / AI Resume / PDF -->
-                    <div class="main-tabs">
-                        <button type="button" class="main-tab-btn active" onclick="switchTab('ai', this)">
-                            <span class="tab-icon"><i class="fas fa-magic"></i></span>
-                            AI Letter
-                            <span class="badge bg-warning text-dark ms-1"
-                                style="font-size: 0.65rem; padding: 3px 7px; border-radius: 6px;">ELITE</span>
-                        </button>
-                        <button type="button" class="main-tab-btn" onclick="switchTab('resume', this)">
-                            <span class="tab-icon"><i class="fas fa-file-alt"></i></span>
-                            AI Resume
-                            <span class="badge ms-1"
-                                style="font-size: 0.65rem; padding: 3px 7px; border-radius: 6px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white;">NEW</span>
-                        </button>
-                        <button type="button" class="main-tab-btn" onclick="switchTab('pdf', this)">
-                            <span class="tab-icon"><i class="fas fa-file-pdf"></i></span>
-                            PDF CV Builder
-                        </button>
-                    </div>
-
-                    <form method="post" action="{% url 'generate_letter' %}" id="aiForm">
-                        {% csrf_token %}
-                        <!-- ============ TAB 1: AI GENERATOR ============ -->
-                        <div id="tab-ai">
-
-                            {% if user.profile.plan == 'free' %}
-                            <div class="upgrade-banner">
-                                <div>
-                                    <div class="upgrade-banner-text"><i class="fas fa-crown me-2"></i>You're on the Free
-                                        plan</div>
-                                    <div class="upgrade-banner-sub">Upgrade for unlimited generations + priority speed
-                                    </div>
-                                </div>
-                                <a href="{% url 'pricing' %}" class="btn-upgrade">Upgrade Now</a>
-                            </div>
-                            {% endif %}
-
-                            <div class="section-header">
-                                <div class="section-icon icon-ai"><i class="fas fa-magic"></i></div>
-                                <div>
-                                    <h5 class="text-white fw-bold m-0">AI Cover Letter</h5>
-                                    <div class="text-white-50" style="font-size: 0.82rem;">Powered by Llama 3 · 5
-                                        outputs in one click</div>
-                                </div>
-                            </div>
-
-                            <div class="row g-3 mb-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">First Name</label>
-                                    <input type="text" name="first_name" class="form-control"
-                                        placeholder="John">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Last Name</label>
-                                    <input type="text" name="last_name" class="form-control"
-                                        placeholder="Smith">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Target Company</label>
-                                    <input type="text" name="company_name" class="form-control"
-                                        placeholder="Google, Amazon, etc.">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Job Title</label>
-                                    <input type="text" name="job_title_ai" class="form-control"
-                                        placeholder="Senior Product Manager">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Tone</label>
-                                    <select name="tone" class="form-select">
-                                        <option value="Professional" selected>Professional 👔</option>
-                                        <option value="Confident">Confident 🔥</option>
-                                        <option value="Bold">Bold 🚀</option>
-                                        <option value="Concise">Concise 📝</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Language</label>
-                                    <select name="language" class="form-select">
-                                        <option value="English" selected>English 🇺🇸</option>
-                                        <option value="Russian">Russian 🇷🇺</option>
-                                        <option value="German">German 🇩🇪</option>
-                                        <option value="French">French 🇫🇷</option>
-                                        <option value="Spanish">Spanish 🇪🇸</option>
-                                        <option value="Portuguese">Portuguese 🇵🇹</option>
-                                        <option value="Italian">Italian 🇮🇹</option>
-                                        <option value="Dutch">Dutch 🇳🇱</option>
-                                        <option value="Polish">Polish 🇵🇱</option>
-                                        <option value="Turkish">Turkish 🇹🇷</option>
-                                        <option value="Chinese">Chinese 🇨🇳</option>
-                                        <option value="Japanese">Japanese 🇯🇵</option>
-                                        <option value="Korean">Korean 🇰🇷</option>
-                                        <option value="Arabic">Arabic 🇸🇦</option>
-                                        <option value="Hindi">Hindi 🇮🇳</option>
-                                    </select>
-                                </div>
-                                <div class="col-12">
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <label class="form-label mb-0">Your CV / Resume Text</label>
-                                        <label class="btn btn-sm"
-                                            style="background: rgba(168,85,247,0.1); color: #a855f7; border: 1px solid rgba(168,85,247,0.2); border-radius: 10px; font-size: 0.78rem; font-weight: 600; cursor: pointer; margin-bottom: 0;">
-                                            <i class="fas fa-file-pdf me-1"></i>Upload PDF
-                                            <input type="file" accept=".pdf" id="resumePdfUpload"
-                                                onchange="uploadResumePdf(this)" style="display:none;">
-                                        </label>
-                                    </div>
-                                    <textarea name="resume" id="resumeField" class="form-control" rows="5"
-                                        placeholder="Paste your resume text here or upload a PDF...">{{ resume_text }}</textarea>
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label">Job Description</label>
-                                    <div class="d-flex gap-2 mb-2">
-                                        <input type="url" id="jobUrlInput" class="form-control"
-                                            placeholder="Or paste a job URL here..." style="font-size: 0.85rem;">
-                                        <button type="button" class="btn btn-outline-info btn-sm"
-                                            onclick="fetchJobUrl()"
-                                            style="white-space: nowrap; border-radius: 10px; font-weight: 600; padding: 6px 16px;"><i
-                                                class="fas fa-link me-1"></i>Fetch</button>
-                                    </div>
-                                    <textarea name="job_description" id="jobDescField" class="form-control" rows="5"
-                                        placeholder="Paste the job description here..."></textarea>
-                                </div>
-                                <div class="col-12">
-                                    <button type="button" class="btn btn-custom btn-ai w-100" id="generateBtn"
-                                        onclick="submitForm()">
-                                        <i class="fas fa-sparkles me-2"></i>Generate Elite Letter
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- RESULT SECTION -->
-                            {% if result %}
-                            {% load custom_filters %}
-                            {% with sections=result|parse_sections %}
-
-                            <div class="mt-4 animate__animated animate__fadeInUp">
-                                <div class="d-flex align-items-center justify-content-between mb-3">
-                                    <h6 class="text-white fw-bold m-0">
-                                        <i class="fas fa-check-circle text-success me-2"></i>Result ready
-                                    </h6>
-                                    <button type="button" class="btn btn-sm" onclick="downloadResultPdf()"
-                                        style="background: rgba(76,201,240,0.1); color: #4cc9f0; border: 1px solid rgba(76,201,240,0.2); border-radius: 10px; font-size: 0.78rem; font-weight: 600;">
-                                        <i class="fas fa-file-pdf me-1"></i>Download PDF
-                                    </button>
-                                </div>
-
-                                <ul class="nav nav-pills mb-3 flex-wrap gap-2" id="pills-tab" role="tablist"
-                                    style="background: rgba(0,0,0,0.25); padding: 8px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.06);">
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link active" data-bs-toggle="pill"
-                                            data-bs-target="#pills-main" type="button">📄 Letter</button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#pills-alt"
-                                            type="button">🎭 Versions</button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#pills-ats"
-                                            type="button">🤖 ATS Score</button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#pills-risk"
-                                            type="button">⚠️ Red Flags</button>
-                                    </li>
-                                </ul>
-
-                                <div class="tab-content">
-
-                                    <div class="tab-pane fade show active" id="pills-main" role="tabpanel">
-                                        <div class="result-box">
-                                            <button class="btn-copy" onclick="copyText('main-text', this)">
-                                                <i class="fas fa-copy me-1"></i>Copy
-                                            </button>
-                                            <pre id="main-text" class="result-text"
-                                                style="padding-top: 8px;">{{ sections.main }}</pre>
-                                        </div>
-                                    </div>
-
-                                    <div class="tab-pane fade" id="pills-alt" role="tabpanel">
-                                        <div class="row g-3">
-                                            <div class="col-md-6">
-                                                <div class="result-box h-100">
-                                                    <button class="btn-copy" onclick="copyText('ver-a-text', this)"><i
-                                                            class="fas fa-copy me-1"></i>Copy</button>
-                                                    <h6 class="text-warning fw-bold mb-3">Version A: Corporate</h6>
-                                                    <pre id="ver-a-text" class="result-text"
-                                                        style="font-size: 0.85rem;">{{ sections.ver_a }}</pre>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="result-box h-100"
-                                                    style="border-color: rgba(247,37,133,0.25);">
-                                                    <button class="btn-copy" onclick="copyText('ver-b-text', this)"><i
-                                                            class="fas fa-copy me-1"></i>Copy</button>
-                                                    <h6 class="text-info fw-bold mb-3">Version B: Bold</h6>
-                                                    <pre id="ver-b-text" class="result-text"
-                                                        style="font-size: 0.85rem;">{{ sections.ver_b }}</pre>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="tab-pane fade" id="pills-ats" role="tabpanel">
-                                        <div class="result-box"
-                                            style="border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.05);">
-                                            <h6 class="text-success fw-bold mb-3"><i class="fas fa-robot me-2"></i>ATS
-                                                Compatibility Analysis</h6>
-                                            <pre class="result-text">{{ sections.ats }}</pre>
-                                        </div>
-                                    </div>
-
-                                    <div class="tab-pane fade" id="pills-risk" role="tabpanel">
-                                        <div class="result-box"
-                                            style="border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05);">
-                                            <h6 class="text-danger fw-bold mb-3"><i
-                                                    class="fas fa-exclamation-triangle me-2"></i>Recruiter Red Flags
-                                            </h6>
-                                            <pre class="result-text">{{ sections.risks }}</pre>
-                                        </div>
-                                    </div>
-
-                                </div>
-                            </div>
-
-                            {% endwith %}
-                            {% endif %}
-
-                            {% if error_message %}
-                            <div class="alert-custom mt-3">
-                                <i class="fas fa-exclamation-circle me-2"></i>{{ error_message }}
-                            </div>
-                            {% endif %}
-
-                        </div>
-                        <!-- END TAB AI -->
-                    </form>
-
-                    <form method="post" action="{% url 'download_pdf' %}" enctype="multipart/form-data" id="pdfForm">
-                        {% csrf_token %}
-                        <!-- ============ TAB 2: PDF BUILDER ============ -->
-                        <div id="tab-pdf" style="display: none;">
-
-                            <div class="section-header">
-                                <div class="section-icon icon-pdf"><i class="fas fa-file-pdf"></i></div>
-                                <div>
-                                    <h5 class="text-white fw-bold m-0">PDF CV Builder</h5>
-                                    <div class="text-white-50" style="font-size: 0.82rem;">Navy Pro template · Download
-                                        instantly</div>
-                                </div>
-                            </div>
-
-                            <div class="row g-3">
-
-                                <div class="col-12">
-                                    <label class="form-label">Profile Photo</label>
-                                    <div class="file-upload-box" id="drop-zone">
-                                        <input type="file" name="photo" accept="image/*"
-                                            onchange="updateFileLabel(this)">
-                                        <i class="fas fa-cloud-upload-alt file-icon"></i>
-                                        <span class="file-text" id="file-label">Drop photo here or click to
-                                            upload</span>
-                                    </div>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Full Name</label>
-                                    <input type="text" name="full_name" class="form-control" placeholder="John Smith">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Job Title</label>
-                                    <input type="text" name="target_role" class="form-control"
-                                        placeholder="Python Developer">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Email</label>
-                                    <input type="email" name="email" class="form-control" placeholder="john@email.com">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Phone</label>
-                                    <input type="text" name="phone" class="form-control" placeholder="+1 234 567 890">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">LinkedIn</label>
-                                    <input type="text" name="linkedin" class="form-control"
-                                        placeholder="linkedin.com/in/yourname">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Location</label>
-                                    <input type="text" name="location" class="form-control"
-                                        placeholder="Kuala Lumpur, Malaysia">
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label">Profile Summary</label>
-                                    <textarea name="about_me" class="form-control" rows="3"
-                                        placeholder="A brief description of who you are and what you bring..."></textarea>
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label">Work Experience</label>
-                                    <textarea name="experience_text" class="form-control" rows="6"
-                                        placeholder="Python Developer · TechCorp · 2022–2024&#10;- Built REST APIs serving 10k+ users&#10;- Integrated Stripe payment system"></textarea>
-                                </div>
-
-                                <div class="col-12">
-                                    <label class="form-label d-flex justify-content-between">
-                                        <span>Skills</span>
-                                        <span class="text-white-50 small normal-case"
-                                            style="text-transform: none; font-weight: 400;">Drag slider to set
-                                            level</span>
-                                    </label>
-                                    <div id="skills-container"></div>
-                                    <button type="button" class="btn-add mt-2" onclick="addSkillRow()">
-                                        <i class="fas fa-plus me-2"></i>Add Skill
-                                    </button>
-                                    <input type="hidden" name="skills_list" id="hidden_skills_input">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Languages</label>
-                                    <input type="text" name="languages" class="form-control"
-                                        placeholder="English (Fluent), Russian (Native)">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">References</label>
-                                    <input type="text" name="references" class="form-control"
-                                        placeholder="Available on request">
-                                </div>
-
-                                <!-- PDF TEMPLATE SELECTOR CAROUSEL -->
-                                <div class="col-12 mt-3">
-                                    <label class="form-label mb-2"><i class="fas fa-palette me-2" style="color:var(--primary);"></i>Choose PDF Template</label>
-                                    <div class="template-carousel" id="templateCarousel">
-                                        {% with plan=user.profile.plan limit=user.profile.get_pdf_template_limit %}
-                                        {% for t in pdf_templates %}
-                                        <div class="tmpl-card {% if forloop.counter0 < limit %}{% if forloop.first %}selected{% endif %}{% else %}locked{% endif %}"
-                                             data-slug="{{ t.slug }}"
-                                             data-locked="{% if forloop.counter0 >= limit %}1{% else %}0{% endif %}"
-                                             onclick="selectTemplate(this)">
-                                            <div class="tmpl-emoji">{{ t.preview }}</div>
-                                            <div class="tmpl-name">{{ t.name }}</div>
-                                            <div class="tmpl-desc">{{ t.desc }}</div>
-                                            {% if forloop.counter0 >= limit %}
-                                            <div class="tmpl-lock">🔒 {% if plan == 'free' %}Pro+{% else %}Elite{% endif %}</div>
-                                            {% endif %}
-                                        </div>
-                                        {% endfor %}
-                                        {% endwith %}
-                                    </div>
-                                    <input type="hidden" name="template_name" id="templateNameInput" value="classic_navy">
-                                </div>
-
-                                <div class="col-12 mt-2">
-                                    <button type="submit" class="btn btn-custom btn-pdf w-100"
-                                        onclick="collectSkills()">
-                                        <i class="fas fa-download me-2"></i>Download PDF
-                                    </button>
-                                </div>
-
-                            </div>
-                        </div>
-                        <!-- END TAB PDF -->
-
-                    </form>
-
-                    <!-- ============ TAB 3: AI RESUME GENERATOR ============ -->
-                    <div id="tab-resume" style="display: none;">
-                        <form id="resumeForm" enctype="multipart/form-data">
-                            {% csrf_token %}
-
-                            <div class="section-header">
-                                <div class="section-icon icon-resume"><i class="fas fa-file-alt"></i></div>
-                                <div>
-                                    <h5 class="text-white fw-bold m-0">AI Resume Generator</h5>
-                                    <div class="text-white-50" style="font-size: 0.82rem;">Powered by Llama 3 · Edit live, then download PDF</div>
-                                </div>
-                            </div>
-
-                            <div class="row g-3 mb-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">First Name</label>
-                                    <input type="text" name="first_name" id="resumeFirstName" class="form-control" placeholder="John">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Last Name</label>
-                                    <input type="text" name="last_name" id="resumeLastName" class="form-control" placeholder="Smith">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Language</label>
-                                    <select name="language" class="form-select">
-                                        <option value="English" selected>English 🇺🇸</option>
-                                        <option value="Russian">Russian 🇷🇺</option>
-                                        <option value="German">German 🇩🇪</option>
-                                        <option value="French">French 🇫🇷</option>
-                                        <option value="Spanish">Spanish 🇪🇸</option>
-                                        <option value="Portuguese">Portuguese 🇵🇹</option>
-                                        <option value="Italian">Italian 🇮🇹</option>
-                                        <option value="Dutch">Dutch 🇳🇱</option>
-                                        <option value="Polish">Polish 🇵🇱</option>
-                                        <option value="Turkish">Turkish 🇹🇷</option>
-                                        <option value="Chinese">Chinese 🇨🇳</option>
-                                        <option value="Japanese">Japanese 🇯🇵</option>
-                                        <option value="Korean">Korean 🇰🇷</option>
-                                        <option value="Arabic">Arabic 🇸🇦</option>
-                                        <option value="Hindi">Hindi 🇮🇳</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6 d-flex align-items-end">
-                                    <label class="btn w-100"
-                                        style="background: rgba(99,102,241,0.1); color: #818cf8; border: 1px solid rgba(99,102,241,0.25); border-radius: 12px; font-size: 0.88rem; font-weight: 700; cursor: pointer; padding: 13px 16px; text-align: center;">
-                                        <i class="fas fa-file-pdf me-2"></i>Upload PDF Resume
-                                        <input type="file" name="resume_pdf" accept=".pdf" id="resumePdfUploadNew"
-                                            onchange="handleResumePdfUpload(this)" style="display:none;">
-                                    </label>
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label">Your Career Info / Resume Text</label>
-                                    <textarea name="resume" id="resumeTextField" class="form-control" rows="6"
-                                        placeholder="Paste your career story, job titles, achievements — or upload a PDF above..."></textarea>
-                                    <div class="mt-1" style="font-size: 0.75rem; color: #475569;">
-                                        <i class="fas fa-lightbulb me-1" style="color: #818cf8;"></i>
-                                        Tip: Just dump everything — the AI will structure it into a polished resume.
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <button type="button" class="btn btn-custom w-100" id="generateResumeBtn"
-                                        onclick="submitResumeForm()"
-                                        style="background: linear-gradient(135deg, #4338ca, #6366f1, #8b5cf6); background-size: 200% 200%; animation: gradientAnim 5s ease infinite; color: white;">
-                                        <i class="fas fa-sparkles me-2"></i>Generate AI Resume
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-
-                        <!-- RESUME EDITOR (appears after generation) -->
-                        <div class="resume-editor-section" id="resumeEditorSection">
-                            <div class="d-flex align-items-center justify-content-between mb-3 mt-4">
-                                <h6 class="text-white fw-bold m-0">
-                                    <i class="fas fa-check-circle me-2" style="color: #22c55e;"></i>Your AI Resume — Edit Live
-                                </h6>
-                                <span style="font-size: 0.78rem; color: #64748b;">
-                                    <i class="fas fa-pen me-1"></i>Click anywhere to edit
-                                </span>
-                            </div>
-                            <div class="quill-editor-wrap mb-3">
-                                <div id="resumeQuillEditor"></div>
-                            </div>
-
-                            <!-- Template selector for PDF export -->
-                            <label class="form-label mb-2"><i class="fas fa-palette me-2" style="color:#818cf8;"></i>Choose PDF Template</label>
-                            <div class="resume-tmpl-carousel mb-3" id="resumeTemplateCarousel">
-                                {% with plan=user.profile.plan limit=user.profile.get_pdf_template_limit %}
-                                {% for t in pdf_templates %}
-                                <div class="tmpl-card {% if forloop.counter0 < limit %}{% if forloop.first %}selected{% endif %}{% else %}locked{% endif %}"
-                                     data-slug="{{ t.slug }}"
-                                     data-locked="{% if forloop.counter0 >= limit %}1{% else %}0{% endif %}"
-                                     onclick="selectResumeTemplate(this)">
-                                    <div class="tmpl-emoji">{{ t.preview }}</div>
-                                    <div class="tmpl-name">{{ t.name }}</div>
-                                    <div class="tmpl-desc">{{ t.desc }}</div>
-                                    {% if forloop.counter0 >= limit %}
-                                    <div class="tmpl-lock">🔒 {% if plan == 'free' %}Pro+{% else %}Elite{% endif %}</div>
-                                    {% endif %}
-                                </div>
-                                {% endfor %}
-                                {% endwith %}
-                            </div>
-                            <input type="hidden" id="resumeTemplateInput" value="classic_navy">
-
-                            <button type="button" class="btn btn-download-resume w-100" id="downloadResumePdfBtn"
-                                onclick="downloadFinalResumePdf()">
-                                <i class="fas fa-download me-2"></i>Download Final PDF
-                            </button>
-
-                            <!-- Resume error display -->
-                            <div class="alert-custom mt-3" id="resumeErrorBox" style="display:none;"></div>
-                        </div>
-                    </div>
-                    <!-- END TAB RESUME -->
-
-                </div>
-
-            </div>
-        </div>
-    </div>
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- UNIFIED RESUME STUDIO — Full Page Split Panel               -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+    {% include 'generator/partials/studio_content.html' %}
 
     <script>
-        // TAB SWITCHING
-        function switchTab(tab, btn) {
-            document.getElementById('tab-ai').style.display = tab === 'ai' ? 'block' : 'none';
-            document.getElementById('tab-resume').style.display = tab === 'resume' ? 'block' : 'none';
-            document.getElementById('tab-pdf').style.display = tab === 'pdf' ? 'block' : 'none';
-            document.querySelectorAll('.main-tab-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        }
-
-        // Show result tab automatically if result exists
-        {% if result %}
-        document.addEventListener('DOMContentLoaded', function () {
-            // Already on AI tab, result is visible
-        });
-        {% endif %}
-
-        // PDF TEMPLATE SELECTOR
-        function selectTemplate(card) {
-            if (card.dataset.locked === '1') {
-                showToast('Upgrade to unlock this template! 🔒', 'warning');
-                return;
-            }
-            document.querySelectorAll('.tmpl-card').forEach(c => c.classList.remove('selected'));
-            card.classList.add('selected');
-            document.getElementById('templateNameInput').value = card.dataset.slug;
-        }
-        // Init first non-locked card
-        document.addEventListener('DOMContentLoaded', function() {
-            const first = document.querySelector('.tmpl-card:not(.locked)');
-            if (first) selectTemplate(first);
-        });
-
-        // FILE LABEL UPDATE
-        function updateFileLabel(input) {
-            const label = document.getElementById('file-label');
-            const icon = input.parentElement.querySelector('.file-icon');
-            if (input.files && input.files.length > 0) {
-                label.innerHTML = '<span style="color:#4cc9f0;">' + input.files[0].name + '</span>';
-                icon.className = "fas fa-check-circle file-icon text-success";
-            }
-        }
-
-        // COPY TO CLIPBOARD (no alert, smooth animation)
-        function copyText(elementId, btn) {
-            const text = document.getElementById(elementId).innerText;
-            navigator.clipboard.writeText(text).then(function () {
-                btn.classList.add('copied');
-                btn.innerHTML = '<i class="fas fa-check me-1"></i>Copied!';
-                setTimeout(() => {
-                    btn.classList.remove('copied');
-                    btn.innerHTML = '<i class="fas fa-copy me-1"></i>Copy';
-                }, 2000);
-            });
-        }
-
-        // SKILL LEVEL NAME
-        function getLevelName(val) {
-            if (val >= 90) return "EXPERT";
-            if (val >= 70) return "SENIOR";
-            if (val >= 40) return "MIDDLE";
-            return "JUNIOR";
-        }
-
-        // ADD SKILL ROW
-        function addSkillRow(name = "", val = 50) {
-            const container = document.getElementById('skills-container');
-            const div = document.createElement('div');
-            div.className = 'skill-row animate__animated animate__fadeIn';
-            div.innerHTML = `
-            <div style="width: 38%;">
-                <input type="text" class="form-control form-control-sm skill-name" placeholder="Skill name" value="${name}">
-            </div>
-            <div class="d-flex align-items-center gap-3" style="flex: 1;">
-                <input type="range" class="range-slider skill-val" min="0" max="100" value="${val}" oninput="updateLabel(this)">
-                <span class="level-badge">${getLevelName(val)}</span>
-            </div>
-            <button type="button" class="btn-del" onclick="this.parentElement.remove()">
-                <i class="fas fa-times"></i>
-            </button>
-        `;
-            container.appendChild(div);
-        }
-
-        // UPDATE LEVEL BADGE
-        function updateLabel(slider) {
-            const badge = slider.nextElementSibling;
-            badge.innerText = getLevelName(slider.value);
-            badge.style.color = slider.value >= 90 ? "#f72585" : "#4cc9f0";
-            badge.style.background = slider.value >= 90 ? "rgba(247,37,133,0.1)" : "rgba(76,201,240,0.1)";
-        }
-
-        // COLLECT SKILLS INTO HIDDEN INPUT
-        function collectSkills() {
-            const rows = document.querySelectorAll('.skill-row');
-            let result = [];
-            rows.forEach(row => {
-                const name = row.querySelector('.skill-name').value.trim();
-                const val = row.querySelector('.skill-val').value;
-                if (name) result.push(`${name}-${val}`);
-            });
-            document.getElementById('hidden_skills_input').value = result.join(',');
-        }
-
-        // DEFAULT SKILLS ON LOAD
-        window.onload = function () {
-            if (document.getElementById('skills-container').children.length === 0) {
-                addSkillRow('Python', 80);
-                addSkillRow('Django', 70);
-                addSkillRow('SQL', 60);
-            }
-        };
-        // RESUME PDF UPLOAD
-        function uploadResumePdf(input) {
-            const file = input.files[0];
-            if (!file) return;
-            if (!file.name.toLowerCase().endsWith('.pdf')) {
-                showToast('Only PDF files are supported.', 'warning');
-                input.value = '';
-                return;
-            }
-            if (file.size > 5 * 1024 * 1024) {
-                showToast('File too large. Maximum size is 5MB.', 'warning');
-                input.value = '';
-                return;
-            }
-
-            const label = input.closest('label');
-            const origHTML = label.innerHTML;
-            label.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Parsing PDF...';
-
-            const formData = new FormData();
-            formData.append('pdf_file', file);
-
-            fetch('{% url "parse_resume_pdf" %}', {
-                method: 'POST',
-                headers: { 'X-CSRFToken': '{{ csrf_token }}' },
-                body: formData
-            })
-                .then(r => r.json())
-                .then(data => {
-                    if (data.text) {
-                        document.getElementById('resumeField').value = data.text;
-                        showToast('Resume extracted from PDF successfully!', 'success');
-                    } else {
-                        showToast(data.error || 'Could not extract text from PDF.', 'danger');
-                    }
-                })
-                .catch(() => showToast('Failed to parse PDF. Try pasting your resume text instead.', 'danger'))
-                .finally(() => { label.innerHTML = origHTML; input.value = ''; });
-        }
-
-        // JOB URL SCRAPER
-        function fetchJobUrl() {
-            const url = document.getElementById('jobUrlInput').value.trim();
-            if (!url) { showToast('Please paste a job URL first.', 'warning'); return; }
-            const btn = event.target.closest('button');
-            btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Fetching...';
-
-            fetch('{% url "scrape_job" %}', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': '{{ csrf_token }}' },
-                body: 'url=' + encodeURIComponent(url)
-            })
-                .then(r => r.json())
-                .then(data => {
-                    if (data.text) {
-                        document.getElementById('jobDescField').value = data.text;
-                        showToast('Job description loaded successfully!', 'success');
-                    }
-                    else { showToast(data.error || 'Could not fetch that URL.', 'danger'); }
-                })
-                .catch(() => showToast('Network error. Try pasting the text instead.', 'danger'))
-                .finally(() => { btn.disabled = false; btn.innerHTML = '<i class="fas fa-link me-1"></i>Fetch'; });
-        }
-
         // TOAST NOTIFICATION
         function showToast(message, type) {
             const toast = document.createElement('div');
+            const icons = {success:'check-circle', warning:'exclamation-triangle', danger:'times-circle'};
             toast.className = 'toast-notification toast-' + type;
-            toast.innerHTML = '<i class="fas fa-' + (type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'times-circle') + ' me-2"></i>' + message;
+            toast.innerHTML = '<i class="fas fa-' + (icons[type] || 'info-circle') + ' me-2"></i>' + message;
             document.body.appendChild(toast);
             setTimeout(() => toast.classList.add('show'), 10);
             setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 4000);
@@ -1766,143 +446,6 @@
         function toggleMobileNav() {
             document.getElementById('mobileDrawer').classList.toggle('open');
             document.getElementById('mobileBackdrop').classList.toggle('open');
-        }
-    </script>
-
-    <style>
-        .toast-notification {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            padding: 16px 24px;
-            border-radius: 14px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: white;
-            z-index: 9999;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.3s ease;
-            backdrop-filter: blur(20px);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
-        }
-
-        .toast-notification.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .toast-success {
-            background: rgba(34, 197, 94, 0.9);
-        }
-
-        .toast-warning {
-            background: rgba(234, 179, 8, 0.9);
-            color: #000;
-        }
-
-        .toast-danger {
-            background: rgba(239, 68, 68, 0.9);
-        }
-    </style>
-
-    <script>
-        // ── Form submission via fetch() ─────────────────────────────────────
-        async function submitForm() {
-            const form    = document.getElementById('aiForm');
-            const btn     = document.getElementById('generateBtn');
-            const overlay = document.getElementById('loadingOverlay');
-            const bar     = document.getElementById('loadingBar');
-            const pct     = document.getElementById('loadingPercent');
-            const step    = document.getElementById('loadingStep');
-
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
-            btn.style.opacity = '0.6';
-            overlay.classList.add('active');
-
-            const steps = [
-                { at: 8,  msg: 'Analyzing your resume...' },
-                { at: 25, msg: 'Matching keywords to job...' },
-                { at: 48, msg: 'Crafting your cover letter...' },
-                { at: 68, msg: 'Writing alternate versions...' },
-                { at: 82, msg: 'Running ATS analysis...' },
-                { at: 90, msg: 'Checking red flags...' },
-            ];
-            let progress = 0;
-            const interval = setInterval(() => {
-                progress += Math.random() * 2.5 + 0.3;
-                if (progress >= 92) { progress = 92; clearInterval(interval); }
-                bar.style.width = progress + '%';
-                pct.textContent = Math.floor(progress) + '%';
-                for (let i = steps.length - 1; i >= 0; i--) {
-                    if (progress >= steps[i].at) {
-                        if (step.textContent !== steps[i].msg) {
-                            step.style.opacity = '0';
-                            setTimeout(() => { step.textContent = steps[i].msg; step.style.opacity = '1'; }, 200);
-                        }
-                        break;
-                    }
-                }
-            }, 280);
-
-            try {
-                const resp = await fetch(form.action, {
-                    method: 'POST',
-                    body: new FormData(form),
-                });
-                clearInterval(interval);
-                if (resp.ok || resp.redirected) {
-                    const html = await resp.text();
-                    document.open(); document.write(html); document.close();
-                } else if (resp.status === 429) {
-                    hideLoading(btn, overlay);
-                    try {
-                        const data = await resp.json();
-                        showToast(data.error || 'Too many requests. Please wait a moment.', 'warning');
-                    } catch (e) {
-                        showToast('Too many requests. Please slow down and try again.', 'warning');
-                    }
-                } else {
-                    hideLoading(btn, overlay);
-                    showToast('Server error (' + resp.status + '). Please try again.', 'danger');
-                }
-            } catch (err) {
-                clearInterval(interval);
-                hideLoading(btn, overlay);
-                showToast('Connection failed. Is the AI service running?', 'danger');
-            }
-        }
-
-        function hideLoading(btn, overlay) {
-            overlay.classList.remove('active');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-sparkles me-2"></i>Generate Elite Letter';
-            btn.style.opacity = '1';
-        }
-
-        function showToast(msg, type) {
-            const t = document.createElement('div');
-            t.className = 'toast-notification toast-' + (type || 'danger');
-            t.textContent = msg;
-            document.body.appendChild(t);
-            setTimeout(() => t.remove(), 5000);
-        }
-
-
-        function downloadResultPdf() {
-            const mainText = document.getElementById('main-text');
-            if (!mainText) return;
-            const text = mainText.textContent || mainText.innerText;
-            const w = window.open('', '_blank');
-            w.document.write('<html><head><title>CVAI Cover Letter</title>');
-            w.document.write('<style>body{font-family:Georgia,serif;max-width:700px;margin:40px auto;padding:20px;line-height:1.7;color:#222;font-size:14px;}h1{font-size:18px;color:#333;border-bottom:2px solid #4cc9f0;padding-bottom:8px;}</style>');
-            w.document.write('</head><body>');
-            w.document.write('<h1>Cover Letter — Generated by CVAI</h1>');
-            w.document.write('<pre style="white-space:pre-wrap;font-family:Georgia,serif;">' + text.replace(/</g, '&lt;') + '</pre>');
-            w.document.write('</body></html>');
-            w.document.close();
-            w.print();
         }
     </script>
 
@@ -1916,8 +459,8 @@
             </div>
 
             <div style="font-size:2.5rem; margin-bottom:16px;">🚀</div>
-            <h3 style="color:white; font-weight:800; margin-bottom:6px;">Welcome to CVAI!</h3>
-            <p style="color:#64748b; font-size:0.9rem; margin-bottom:28px;">Generate an AI cover letter in 3 easy steps
+            <h3 style="color:white; font-weight:800; margin-bottom:6px;">Welcome to CVAI Resume Studio!</h3>
+            <p style="color:#64748b; font-size:0.9rem; margin-bottom:28px;">Build a stunning resume in 3 easy steps
             </p>
 
             <div style="display:flex; flex-direction:column; gap:14px; text-align:left; margin-bottom:28px;">
@@ -1927,8 +470,8 @@
                         style="min-width:36px; height:36px; background:linear-gradient(135deg,#4361ee,#4cc9f0); border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; color:white; font-size:0.9rem;">
                         1</div>
                     <div>
-                        <div style="color:white; font-weight:700; font-size:0.92rem;">Paste your resume</div>
-                        <div style="color:#64748b; font-size:0.78rem;">Or upload a PDF — we'll extract the text</div>
+                        <div style="color:white; font-weight:700; font-size:0.92rem;">Upload or paste your resume</div>
+                        <div style="color:#64748b; font-size:0.78rem;">Drop a PDF or paste your raw career story</div>
                     </div>
                 </div>
                 <div
@@ -1937,8 +480,8 @@
                         style="min-width:36px; height:36px; background:linear-gradient(135deg,#f72585,#ff6b6b); border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; color:white; font-size:0.9rem;">
                         2</div>
                     <div>
-                        <div style="color:white; font-weight:700; font-size:0.92rem;">Add the job description</div>
-                        <div style="color:#64748b; font-size:0.78rem;">Paste text or use a URL — we'll fetch it</div>
+                        <div style="color:white; font-weight:700; font-size:0.92rem;">AI enhances & structures it</div>
+                        <div style="color:#64748b; font-size:0.78rem;">Instant JSON extraction with ATS optimization</div>
                     </div>
                 </div>
                 <div
@@ -1947,8 +490,8 @@
                         style="min-width:36px; height:36px; background:linear-gradient(135deg,#22c55e,#4cc9f0); border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; color:white; font-size:0.9rem;">
                         3</div>
                     <div>
-                        <div style="color:white; font-weight:700; font-size:0.92rem;">Generate & download</div>
-                        <div style="color:#64748b; font-size:0.78rem;">Get 3 versions + ATS score in seconds</div>
+                        <div style="color:white; font-weight:700; font-size:0.92rem;">Edit inline & download PDF</div>
+                        <div style="color:#64748b; font-size:0.78rem;">Click on the A4 canvas to edit, pick a template, export</div>
                     </div>
                 </div>
             </div>
@@ -1973,240 +516,8 @@
         }
     </script>
 
-    <!-- Quill.js Rich Text Editor + Markdown parser -->
-    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
-    <script>
-        // ── QUILL EDITOR INSTANCE (lazy-init) ───────────────────────────────
-        let resumeQuill = null;
-
-        function initQuillEditor() {
-            if (resumeQuill) return;
-            resumeQuill = new Quill('#resumeQuillEditor', {
-                theme: 'snow',
-                placeholder: 'Your AI-generated resume will appear here...',
-                modules: {
-                    toolbar: [
-                        [{ 'header': [1, 2, 3, false] }],
-                        ['bold', 'italic', 'underline'],
-                        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-                        [{ 'align': [] }],
-                        ['clean']
-                    ]
-                }
-            });
-        }
-
-        // ── RESUME PDF UPLOAD (fills textarea + keeps file for server) ──────
-        function handleResumePdfUpload(input) {
-            const file = input.files[0];
-            if (!file) return;
-            if (!file.name.toLowerCase().endsWith('.pdf')) {
-                showToast('Only PDF files are supported.', 'warning');
-                input.value = '';
-                return;
-            }
-            if (file.size > 5 * 1024 * 1024) {
-                showToast('File too large. Maximum size is 5MB.', 'warning');
-                input.value = '';
-                return;
-            }
-
-            const label = input.closest('label');
-            const origHTML = label.innerHTML;
-            label.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Parsing PDF...';
-
-            const formData = new FormData();
-            formData.append('pdf_file', file);
-
-            fetch('{% url "parse_resume_pdf" %}', {
-                method: 'POST',
-                headers: { 'X-CSRFToken': '{{ csrf_token }}' },
-                body: formData
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.text) {
-                    document.getElementById('resumeTextField').value = data.text;
-                    showToast('Resume text extracted from PDF!', 'success');
-                } else {
-                    showToast(data.error || 'Could not extract text.', 'danger');
-                }
-            })
-            .catch(() => showToast('Failed to parse PDF.', 'danger'))
-            .finally(() => { label.innerHTML = origHTML; });
-        }
-
-        // ── RESUME TEMPLATE SELECTOR ────────────────────────────────────────
-        function selectResumeTemplate(card) {
-            if (card.dataset.locked === '1') {
-                showToast('Upgrade to unlock this template! 🔒', 'warning');
-                return;
-            }
-            document.querySelectorAll('#resumeTemplateCarousel .tmpl-card').forEach(c => c.classList.remove('selected'));
-            card.classList.add('selected');
-            document.getElementById('resumeTemplateInput').value = card.dataset.slug;
-        }
-
-        // ── SUBMIT RESUME FORM (AJAX → JSON → Quill) ───────────────────────
-        async function submitResumeForm() {
-            const form    = document.getElementById('resumeForm');
-            const btn     = document.getElementById('generateResumeBtn');
-            const overlay = document.getElementById('loadingOverlay');
-            const bar     = document.getElementById('loadingBar');
-            const pct     = document.getElementById('loadingPercent');
-            const step    = document.getElementById('loadingStep');
-            const errBox  = document.getElementById('resumeErrorBox');
-
-            errBox.style.display = 'none';
-
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
-            btn.style.opacity = '0.6';
-            overlay.classList.add('active');
-
-            const steps = [
-                { at: 8,  msg: 'Analyzing your career data...' },
-                { at: 25, msg: 'Extracting key achievements...' },
-                { at: 48, msg: 'Building resume structure...' },
-                { at: 68, msg: 'Optimizing for ATS...' },
-                { at: 82, msg: 'Polishing final draft...' },
-                { at: 90, msg: 'Almost ready...' },
-            ];
-            let progress = 0;
-            const interval = setInterval(() => {
-                progress += Math.random() * 2.5 + 0.3;
-                if (progress >= 92) { progress = 92; clearInterval(interval); }
-                bar.style.width = progress + '%';
-                pct.textContent = Math.floor(progress) + '%';
-                for (let i = steps.length - 1; i >= 0; i--) {
-                    if (progress >= steps[i].at) {
-                        if (step.textContent !== steps[i].msg) {
-                            step.style.opacity = '0';
-                            setTimeout(() => { step.textContent = steps[i].msg; step.style.opacity = '1'; }, 200);
-                        }
-                        break;
-                    }
-                }
-            }, 280);
-
-            try {
-                const resp = await fetch('{% url "generate_resume" %}', {
-                    method: 'POST',
-                    body: new FormData(form),
-                });
-                clearInterval(interval);
-
-                // Handle rate-limit (429) or non-JSON error responses
-                if (resp.status === 429) {
-                    let msg = 'Too many requests. Please wait a minute and try again.';
-                    try { const d = await resp.json(); msg = d.error || msg; } catch(e) {}
-                    overlay.classList.remove('active');
-                    bar.style.width = '0%'; pct.textContent = '0%';
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-sparkles me-2"></i>Generate AI Resume';
-                    btn.style.opacity = '1';
-                    showToast(msg, 'warning');
-                    return;
-                }
-
-                const data = await resp.json();
-
-                // Complete progress bar
-                bar.style.width = '100%';
-                pct.textContent = '100%';
-                step.textContent = 'Done!';
-
-                setTimeout(() => {
-                    overlay.classList.remove('active');
-                    bar.style.width = '0%';
-                    pct.textContent = '0%';
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-sparkles me-2"></i>Generate AI Resume';
-                    btn.style.opacity = '1';
-
-                    if (data.error) {
-                        errBox.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>' + data.error;
-                        errBox.style.display = 'block';
-                        return;
-                    }
-
-                    if (data.result) {
-                        // Convert markdown to HTML and load into Quill
-                        initQuillEditor();
-                        const html = marked.parse(data.result);
-                        resumeQuill.root.innerHTML = html;
-
-                        // Show editor section
-                        const editorSection = document.getElementById('resumeEditorSection');
-                        editorSection.classList.add('active');
-                        editorSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        showToast('Resume generated! Edit it below, then download as PDF.', 'success');
-                    }
-                }, 600);
-            } catch (err) {
-                clearInterval(interval);
-                overlay.classList.remove('active');
-                bar.style.width = '0%';
-                pct.textContent = '0%';
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-sparkles me-2"></i>Generate AI Resume';
-                btn.style.opacity = '1';
-                showToast('Connection failed. Is the AI service running?', 'danger');
-            }
-        }
-
-        // ── DOWNLOAD FINAL RESUME PDF ───────────────────────────────────────
-        function downloadFinalResumePdf() {
-            if (!resumeQuill) {
-                showToast('Generate a resume first!', 'warning');
-                return;
-            }
-            const btn = document.getElementById('downloadResumePdfBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Building PDF...';
-
-            const content  = resumeQuill.root.innerHTML;
-            const fullName = (
-                (document.getElementById('resumeFirstName').value.trim() + ' ' +
-                 document.getElementById('resumeLastName').value.trim()).trim()
-            ) || 'Your Name';
-            const template = document.getElementById('resumeTemplateInput').value;
-
-            const formData = new FormData();
-            formData.append('resume_content', content);
-            formData.append('full_name', fullName);
-            formData.append('target_role', 'Professional');
-            formData.append('template_name', template);
-            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-
-            fetch('{% url "export_resume_pdf" %}', {
-                method: 'POST',
-                body: formData,
-            })
-            .then(resp => {
-                if (!resp.ok) throw new Error('PDF generation failed');
-                return resp.blob();
-            })
-            .then(blob => {
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'CVAI_Resume_' + template + '.pdf';
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                window.URL.revokeObjectURL(url);
-                showToast('PDF downloaded successfully!', 'success');
-            })
-            .catch(() => showToast('Failed to generate PDF. Please try again.', 'danger'))
-            .finally(() => {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-download me-2"></i>Download Final PDF';
-            });
-        }
-    </script>
+    <!-- Resume Studio Scripts (html2pdf.js + reactive canvas) -->
+    {% include 'generator/partials/studio_scripts.html' %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

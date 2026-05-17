@@ -1,0 +1,375 @@
+<!-- Resume Studio Content — Unified A4 Visual Builder -->
+<div class="studio-page" id="studioPage">
+    <!-- ════ PRO SIDEBAR TOGGLE (mobile) ════ -->
+    <button class="pro-sidebar-fab" id="proSidebarFab" onclick="toggleProSidebar()" title="Design Customization">
+        <i class="fas fa-palette"></i>
+    </button>
+    <!-- ════ LEFT PANEL: AI BRAIN ════ -->
+    <div class="studio-left">
+
+        <!-- AI ASSISTANT -->
+        <div class="studio-section">
+            <div class="studio-section-title"><i class="fas fa-wand-magic-sparkles"></i> AI Resume Assistant</div>
+            <form id="studioAiForm" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="ai-upload-zone mb-3" id="studioPdfZone">
+                    <input type="file" name="resume_pdf" accept=".pdf" id="studioPdfInput" onchange="handleStudioPdfUpload(this)">
+                    <div class="ai-upload-icon"><i class="fas fa-file-pdf"></i></div>
+                    <div class="ai-upload-text" id="studioPdfLabel">Upload your existing PDF resume</div>
+                    <div class="ai-upload-hint">or drag & drop · max 5MB</div>
+                </div>
+                <div class="qe-field mb-3">
+                    <label>Or paste your raw career story</label>
+                    <textarea name="resume" id="studioRawText" rows="4" placeholder="I worked at Google for 5 years as a senior engineer, built APIs that serve 10M users..."></textarea>
+                </div>
+                <div class="qe-row mb-3">
+                    <div class="qe-field">
+                        <label>First Name</label>
+                        <input type="text" name="first_name" id="studioFirstName" placeholder="John">
+                    </div>
+                    <div class="qe-field">
+                        <label>Last Name</label>
+                        <input type="text" name="last_name" id="studioLastName" placeholder="Smith">
+                    </div>
+                </div>
+                <div class="qe-field mb-3">
+                    <label>Language</label>
+                    <select name="language" id="studioLang">
+                        <option value="English" selected>English 🇺🇸</option>
+                        <option value="Russian">Russian 🇷🇺</option>
+                        <option value="German">German 🇩🇪</option>
+                        <option value="French">French 🇫🇷</option>
+                        <option value="Spanish">Spanish 🇪🇸</option>
+                        <option value="Portuguese">Portuguese 🇵🇹</option>
+                        <option value="Italian">Italian 🇮🇹</option>
+                        <option value="Turkish">Turkish 🇹🇷</option>
+                        <option value="Chinese">Chinese 🇨🇳</option>
+                        <option value="Japanese">Japanese 🇯🇵</option>
+                        <option value="Korean">Korean 🇰🇷</option>
+                        <option value="Arabic">Arabic 🇸🇦</option>
+                        <option value="Hindi">Hindi 🇮🇳</option>
+                    </select>
+                </div>
+                <button type="button" class="btn-ai-fill" id="studioAiBtn" onclick="studioAiFill()">
+                    <i class="fas fa-sparkles me-2"></i>Auto-Fill & Enhance with AI
+                </button>
+            </form>
+        </div>
+
+        <!-- QUICK EDIT FIELDS (shown after AI fill) -->
+        <div class="studio-section" id="studioEditPanel" style="display:none;">
+            <div class="studio-section-title"><i class="fas fa-pen-to-square"></i> Quick Edit</div>
+            <div class="qe-row mb-2">
+                <div class="qe-field">
+                    <label>Full Name</label>
+                    <input type="text" id="qeFullName" oninput="syncToCanvas('full_name', this.value)">
+                </div>
+                <div class="qe-field">
+                    <label>Job Title</label>
+                    <input type="text" id="qeRole" oninput="syncToCanvas('target_role', this.value)">
+                </div>
+            </div>
+            <div class="qe-row mb-2">
+                <div class="qe-field">
+                    <label>Email</label>
+                    <input type="text" id="qeEmail" oninput="syncToCanvas('email', this.value)">
+                </div>
+                <div class="qe-field">
+                    <label>Phone</label>
+                    <input type="text" id="qePhone" oninput="syncToCanvas('phone', this.value)">
+                </div>
+            </div>
+            <div class="qe-row mb-2">
+                <div class="qe-field">
+                    <label>Location</label>
+                    <input type="text" id="qeLocation" oninput="syncToCanvas('location', this.value)">
+                </div>
+                <div class="qe-field">
+                    <label>LinkedIn</label>
+                    <input type="text" id="qeLinkedin" oninput="syncToCanvas('linkedin', this.value)">
+                </div>
+            </div>
+            <div class="qe-field mb-2">
+                <label>Summary</label>
+                <textarea id="qeSummary" rows="3" oninput="syncToCanvas('summary', this.value)"></textarea>
+            </div>
+        </div>
+
+        <!-- SKILLS EDITOR -->
+        <div class="studio-section" id="studioSkillsPanel" style="display:none;">
+            <div class="studio-section-title"><i class="fas fa-chart-bar"></i> Skills</div>
+            <div id="studioSkillsList"></div>
+            <button type="button" class="btn-add-skill" onclick="addStudioSkill('', 50)">
+                <i class="fas fa-plus me-1"></i>Add Skill
+            </button>
+        </div>
+
+    </div>
+
+    <!-- ════ CENTER + PRO SIDEBAR WRAPPER ════ -->
+    <div class="studio-center-wrap">
+    <!-- ════ CENTER PANEL: A4 CANVAS ════ -->
+    <div class="studio-right">
+        <div class="canvas-toolbar">
+            <div class="tpl-switcher" id="tplSwitcher">
+                <button type="button" class="tpl-pill active" data-tpl="tpl-classic-navy" onclick="switchTpl(this)">
+                    <span class="tpl-dot" style="background:#2c3e50;"></span>Classic Navy
+                </button>
+                <button type="button" class="tpl-pill" data-tpl="tpl-modern-minimalist" onclick="switchTpl(this)">
+                    <span class="tpl-dot" style="background:#667eea;"></span>Minimalist
+                </button>
+                <button type="button" class="tpl-pill" data-tpl="tpl-tech-startup" onclick="switchTpl(this)">
+                    <span class="tpl-dot" style="background:#39d353;"></span>Tech Bold
+                </button>
+                <button type="button" class="tpl-pill" data-tpl="tpl-executive" onclick="switchTpl(this)">
+                    <span class="tpl-dot" style="background:#d4a853;"></span>Executive
+                </button>
+                <button type="button" class="tpl-pill" data-tpl="tpl-creative" onclick="switchTpl(this)">
+                    <span class="tpl-dot" style="background:#ff6b6b;"></span>Creative
+                </button>
+            </div>
+            <button type="button" class="btn-download-pdf" id="studioDownloadBtn" onclick="studioDownloadPdf()">
+                <i class="fas fa-download me-2"></i>Download PDF
+            </button>
+        </div>
+
+        <div class="a4-canvas-wrap">
+            <div class="a4-paper tpl-classic-navy" id="a4Paper">
+                <!-- SIDEBAR (Classic Navy uses this) -->
+                <div class="cv-sidebar" id="cvSidebar">
+                    <div class="cv-section-title" style="margin-top:0;">Contacts</div>
+                    <div class="cv-contact-label">LOCATION</div>
+                    <div class="cv-contact-item" contenteditable="true" id="cvLocation" data-field="location"></div>
+                    <div class="cv-contact-label" style="margin-top:8px;">EMAIL</div>
+                    <div class="cv-contact-item" contenteditable="true" id="cvEmail" data-field="email"></div>
+                    <div class="cv-contact-label" style="margin-top:8px;">PHONE</div>
+                    <div class="cv-contact-item" contenteditable="true" id="cvPhone" data-field="phone"></div>
+                    <div class="cv-contact-label" style="margin-top:8px;">LINKEDIN</div>
+                    <div class="cv-contact-item" contenteditable="true" id="cvLinkedin" data-field="linkedin"></div>
+                    <div class="cv-section-title">Skills</div>
+                    <div id="cvSkillBars"></div>
+                    <div class="cv-section-title">Languages</div>
+                    <div class="cv-contact-item" contenteditable="true" id="cvLanguages" data-field="languages"></div>
+                </div>
+
+                <!-- HEADER BAND (Creative template) -->
+                <div class="cv-header-band" id="cvHeaderBand"></div>
+                <!-- ACCENT BAR (Tech template) -->
+                <div class="cv-accent-bar" id="cvAccentBar"></div>
+
+                <!-- MAIN BODY -->
+                <div class="cv-main" id="cvMain">
+                    <div class="cv-name" contenteditable="true" id="cvName" data-field="full_name">Your Name</div>
+                    <div class="cv-role" contenteditable="true" id="cvRole" data-field="target_role">Professional Title</div>
+                    <div class="cv-contact-row" id="cvContactRow" style="display:none;"></div>
+                    <div class="cv-divider"></div>
+
+                    <div class="cv-section-title">Summary</div>
+                    <div class="cv-section-divider" style="display:none;"></div>
+                    <div class="cv-body-text" contenteditable="true" id="cvSummary" data-field="summary">
+                        <span class="cv-placeholder">Click "Auto-Fill with AI" to generate your resume, or start typing here...</span>
+                    </div>
+
+                    <div class="cv-section-title">Experience</div>
+                    <div class="cv-section-divider" style="display:none;"></div>
+                    <div id="cvExperience"></div>
+
+                    <div id="cvSkillsInlineWrap" style="display:none;">
+                        <div class="cv-section-title">Skills</div>
+                        <div class="cv-section-divider" style="display:none;"></div>
+                        <div class="cv-skills-inline" id="cvSkillsInline"></div>
+                    </div>
+
+                    <div class="cv-section-title" id="cvEduTitle" style="display:none;">Education</div>
+                    <div class="cv-section-divider" style="display:none;"></div>
+                    <div id="cvEducation"></div>
+
+                    <div id="cvLangInlineWrap" style="display:none;">
+                        <div class="cv-section-title">Languages</div>
+                        <div class="cv-body-text" contenteditable="true" id="cvLangInline" data-field="languages_inline"></div>
+                    </div>
+                </div>
+
+                <!-- Bottom accent bar (Creative) -->
+                <div class="cv-accent-bar-bottom" id="cvAccentBarBottom"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════ PRO CUSTOMIZATION SIDEBAR ════ -->
+    <aside class="pro-sidebar" id="proSidebar">
+        <div class="pro-sidebar-header">
+            <div class="pro-sidebar-logo">
+                <i class="fas fa-palette"></i>
+                <span>Pro Design</span>
+            </div>
+            <button class="pro-sidebar-close" onclick="toggleProSidebar()" title="Close">
+                <i class="fas fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- ── SECTION: COLOR THEME ── -->
+        <div class="pro-section">
+            <div class="pro-section-label">
+                <i class="fas fa-droplet"></i>
+                <span>Color Theme</span>
+            </div>
+
+            <div class="pro-color-row">
+                <div class="pro-color-field">
+                    <label class="pro-field-label">Primary</label>
+                    <div class="pro-color-swatch-wrap">
+                        <input type="color" id="dcPrimaryColor" value="#4cc9f0" class="pro-color-input" oninput="applyDesignColor('primary', this.value)">
+                        <input type="text" id="dcPrimaryHex" value="#4cc9f0" class="pro-hex-input" maxlength="7" oninput="applyDesignColorHex('primary', this.value)">
+                    </div>
+                </div>
+                <div class="pro-color-field">
+                    <label class="pro-field-label">Secondary</label>
+                    <div class="pro-color-swatch-wrap">
+                        <input type="color" id="dcSecondaryColor" value="#2c3e50" class="pro-color-input" oninput="applyDesignColor('secondary', this.value)">
+                        <input type="text" id="dcSecondaryHex" value="#2c3e50" class="pro-hex-input" maxlength="7" oninput="applyDesignColorHex('secondary', this.value)">
+                    </div>
+                </div>
+            </div>
+
+            <div class="pro-palette-label">Quick Palettes</div>
+            <div class="pro-palette-grid" id="palettePresets">
+                <button type="button" class="pro-palette-chip" onclick="applyPalette('#4cc9f0','#2c3e50')" title="Ocean Navy">
+                    <span class="chip-a" style="background:#4cc9f0;"></span>
+                    <span class="chip-b" style="background:#2c3e50;"></span>
+                    <span class="chip-name">Ocean</span>
+                </button>
+                <button type="button" class="pro-palette-chip" onclick="applyPalette('#667eea','#1a1a2e')" title="Indigo Night">
+                    <span class="chip-a" style="background:#667eea;"></span>
+                    <span class="chip-b" style="background:#1a1a2e;"></span>
+                    <span class="chip-name">Indigo</span>
+                </button>
+                <button type="button" class="pro-palette-chip" onclick="applyPalette('#39d353','#0d1117')" title="Matrix Green">
+                    <span class="chip-a" style="background:#39d353;"></span>
+                    <span class="chip-b" style="background:#0d1117;"></span>
+                    <span class="chip-name">Matrix</span>
+                </button>
+                <button type="button" class="pro-palette-chip" onclick="applyPalette('#d4a853','#1c1917')" title="Executive Gold">
+                    <span class="chip-a" style="background:#d4a853;"></span>
+                    <span class="chip-b" style="background:#1c1917;"></span>
+                    <span class="chip-name">Gold</span>
+                </button>
+                <button type="button" class="pro-palette-chip" onclick="applyPalette('#ff6b6b','#1a1a2e')" title="Coral Creative">
+                    <span class="chip-a" style="background:#ff6b6b;"></span>
+                    <span class="chip-b" style="background:#1a1a2e;"></span>
+                    <span class="chip-name">Coral</span>
+                </button>
+                <button type="button" class="pro-palette-chip" onclick="applyPalette('#e63946','#1d3557')" title="Bold Crimson">
+                    <span class="chip-a" style="background:#e63946;"></span>
+                    <span class="chip-b" style="background:#1d3557;"></span>
+                    <span class="chip-name">Crimson</span>
+                </button>
+                <button type="button" class="pro-palette-chip" onclick="applyPalette('#06d6a0','#073b4c')" title="Mint Teal">
+                    <span class="chip-a" style="background:#06d6a0;"></span>
+                    <span class="chip-b" style="background:#073b4c;"></span>
+                    <span class="chip-name">Mint</span>
+                </button>
+                <button type="button" class="pro-palette-chip" onclick="applyPalette('#8338ec','#1b1b2f')" title="Purple Aura">
+                    <span class="chip-a" style="background:#8338ec;"></span>
+                    <span class="chip-b" style="background:#1b1b2f;"></span>
+                    <span class="chip-name">Aura</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ── SECTION: TYPOGRAPHY ── -->
+        <div class="pro-section">
+            <div class="pro-section-label">
+                <i class="fas fa-font"></i>
+                <span>Typography</span>
+            </div>
+
+            <label class="pro-field-label" style="margin-bottom:6px; display:block;">Font Family</label>
+            <div class="pro-font-grid" id="proFontGrid">
+                <button type="button" class="pro-font-chip active" data-font="'Segoe UI', system-ui, sans-serif" onclick="selectProFont(this)">
+                    <span class="font-preview" style="font-family:'Segoe UI',sans-serif;">Aa</span>
+                    <span class="font-chip-name">System</span>
+                </button>
+                <button type="button" class="pro-font-chip" data-font="'Roboto', sans-serif" onclick="selectProFont(this)">
+                    <span class="font-preview" style="font-family:'Roboto',sans-serif;">Aa</span>
+                    <span class="font-chip-name">Roboto</span>
+                </button>
+                <button type="button" class="pro-font-chip" data-font="'Montserrat', sans-serif" onclick="selectProFont(this)">
+                    <span class="font-preview" style="font-family:'Montserrat',sans-serif;">Aa</span>
+                    <span class="font-chip-name">Montserrat</span>
+                </button>
+                <button type="button" class="pro-font-chip" data-font="'Merriweather', serif" onclick="selectProFont(this)">
+                    <span class="font-preview" style="font-family:'Merriweather',serif;">Aa</span>
+                    <span class="font-chip-name">Merriweather</span>
+                </button>
+                <button type="button" class="pro-font-chip" data-font="'Playfair Display', serif" onclick="selectProFont(this)">
+                    <span class="font-preview" style="font-family:'Playfair Display',serif;">Aa</span>
+                    <span class="font-chip-name">Playfair</span>
+                </button>
+                <button type="button" class="pro-font-chip" data-font="'Lora', serif" onclick="selectProFont(this)">
+                    <span class="font-preview" style="font-family:'Lora',serif;">Aa</span>
+                    <span class="font-chip-name">Lora</span>
+                </button>
+            </div>
+            <!-- Hidden select kept for JS compatibility -->
+            <select id="dcFontFamily" onchange="applyDesignFont(this.value)" style="display:none;"></select>
+        </div>
+
+        <!-- ── SECTION: SPACING & SIZE ── -->
+        <div class="pro-section">
+            <div class="pro-section-label">
+                <i class="fas fa-sliders"></i>
+                <span>Spacing &amp; Size</span>
+            </div>
+
+            <div class="pro-slider-block">
+                <div class="pro-slider-header">
+                    <span class="pro-slider-name">Font Size</span>
+                    <span class="pro-slider-badge" id="dcFontSizeVal">10pt</span>
+                </div>
+                <div class="pro-slider-track-wrap">
+                    <input type="range" class="pro-range" id="dcFontSize" min="8" max="13" value="10" step="0.5" oninput="applyDesignSlider('fontSize', this.value)">
+                </div>
+                <div class="pro-slider-ticks">
+                    <span>8pt</span><span>10pt</span><span>13pt</span>
+                </div>
+            </div>
+
+            <div class="pro-slider-block">
+                <div class="pro-slider-header">
+                    <span class="pro-slider-name">Line Spacing</span>
+                    <span class="pro-slider-badge" id="dcLineSpacingVal">1.50</span>
+                </div>
+                <div class="pro-slider-track-wrap">
+                    <input type="range" class="pro-range" id="dcLineSpacing" min="1.0" max="2.2" value="1.5" step="0.05" oninput="applyDesignSlider('lineSpacing', this.value)">
+                </div>
+                <div class="pro-slider-ticks">
+                    <span>1.0</span><span>1.6</span><span>2.2</span>
+                </div>
+            </div>
+
+            <div class="pro-slider-block">
+                <div class="pro-slider-header">
+                    <span class="pro-slider-name">Section Margins</span>
+                    <span class="pro-slider-badge" id="dcSectionMarginVal">18px</span>
+                </div>
+                <div class="pro-slider-track-wrap">
+                    <input type="range" class="pro-range" id="dcSectionMargin" min="8" max="32" value="18" step="1" oninput="applyDesignSlider('sectionMargin', this.value)">
+                </div>
+                <div class="pro-slider-ticks">
+                    <span>8px</span><span>20px</span><span>32px</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── SECTION: RESET ── -->
+        <div class="pro-section pro-section-reset">
+            <button type="button" class="pro-reset-btn" onclick="resetDesignDefaults()">
+                <i class="fas fa-rotate-left"></i>
+                Reset to Template Defaults
+            </button>
+        </div>
+    </aside>
+
+    </div><!-- /.studio-center-wrap -->
+</div><!-- /.studio-page -->

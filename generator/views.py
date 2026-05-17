@@ -119,15 +119,10 @@ def privacy(request):
 
 
 
-# === HOME PAGE (authenticated dashboard) ===
+# === HOME PAGE — Unified Resume Studio ===
 @login_required
 def home(request):
-    return render(request, 'generator/home.html', {
-        'result': None,
-        'error_message': None,
-        'resume_text': '',
-        'pdf_templates': TEMPLATES,   # all 5 — plan-gating is in the template
-    })
+    return render(request, 'generator/home.html')
 
 
 
@@ -240,24 +235,25 @@ Generate the elite career response now.
             # use_generation() calls self.save() — wrap with sync_to_async
             await sync_to_async(profile.use_generation)()
 
-    # arender wraps Django's sync render() — required in async views to avoid
-    # SynchronousOnlyOperation when the template evaluates user.profile lazily.
-    return await arender(request, 'generator/home.html', {
+    # Return JSON — the old template no longer renders cover letter results inline.
+    # This endpoint remains available as an API for future use.
+    return JsonResponse({
         'result': result,
-        'error_message': error_message,
-        'resume_text': resume_text,
-        'pdf_templates': TEMPLATES,
+        'error': error_message,
     })
 
 
-# === AI RESUME GENERATION (JSON response for Live-Edit flow) ===
+# === AI RESUME GENERATION (Structured JSON for Visual Studio) ===
 @login_required
 @require_POST
 async def generate_resume(request):
     """
-    Async AI resume generation using the Elite ATS-Optimized prompt.
-    Returns JSON {"result": "...", "error": "..."} for the frontend
-    Quill.js live-edit flow instead of rendering a full page.
+    Async AI resume generation — returns STRUCTURED JSON for the
+    A4 Visual Resume Studio canvas.
+
+    The AI is prompted to output a JSON object with fields:
+    full_name, target_role, email, phone, location, linkedin,
+    summary, experience[], skills[], education[], languages[].
 
     Accepts an optional uploaded PDF (field name 'resume_pdf').
     If present, extracts text via pdfminer and combines it with
@@ -285,76 +281,99 @@ async def generate_resume(request):
             pdf_text = await sync_to_async(pdf_extract_text)(pdf_file)
             pdf_text = (pdf_text or '').strip()
             if pdf_text:
-                # Combine: uploaded PDF text first, then any additional typed text
                 resume_text = f"{pdf_text}\n\n{resume_text}".strip()
         except Exception as exc:
             logger.warning("PDF extraction failed in generate_resume: %s", exc)
-            # Non-fatal — continue with whatever text the user typed
 
     if not profile.has_generations_left():
         error_message = "You've used all free generations! Upgrade to Pro for more."
     else:
-        # ── ELITE ATS-OPTIMIZED SYSTEM PROMPT ──────────────────────────────
-        system_prompt = f"""You are an Elite Executive Recruiter and an expert in ATS (Applicant Tracking System) optimization. Your goal is to transform the user's raw, unstructured text into a world-class, top-tier resume.
+        # ── STRUCTURED JSON RESUME PROMPT ──────────────────────────────────
+        system_prompt = f"""You are an Elite Executive Recruiter and ATS optimization expert.
+Transform the candidate's raw text into a structured resume.
 
 ⚠️ ABSOLUTE LANGUAGE RULE ⚠️
-You MUST automatically detect the language of the candidate's raw input text. YOU MUST GENERATE YOUR ENTIRE RESPONSE IN THAT EXACT SAME LANGUAGE.
-If the input is in Russian, EVERY SINGLE WORD of your output MUST be in Russian. This includes ALL section headers, bullet points, analysis, and tips.
-DO NOT write even one word in English if the input is not English. If you fail to match the user's input language, you fail the task.
-The user has also selected: {language} — use this as a fallback ONLY if you cannot detect the input language.
+Detect the language of the input. ALL content values in your JSON output MUST be in that language.
+The user selected: {language} — use as fallback only.
 
-CRITICAL RULES:
+You MUST output ONLY a valid JSON object — no markdown, no commentary, no code fences.
+The JSON schema is:
+{{
+  "full_name": "string",
+  "target_role": "string",
+  "email": "string or empty",
+  "phone": "string or empty",
+  "location": "string or empty",
+  "linkedin": "string or empty",
+  "summary": "2-3 sentence professional summary",
+  "experience": [
+    {{
+      "title": "Job Title",
+      "company": "Company Name",
+      "dates": "Jan 2022 – Present",
+      "bullets": ["Achievement bullet 1", "Achievement bullet 2", "Achievement bullet 3"]
+    }}
+  ],
+  "skills": [
+    {{"name": "Skill Name", "level": 85}}
+  ],
+  "education": [
+    {{
+      "degree": "Degree Name",
+      "school": "University Name",
+      "dates": "2018 – 2022"
+    }}
+  ],
+  "languages": ["English (Fluent)", "Spanish (Native)"]
+}}
 
-1. NO CHATBOT FLUFF: Output ONLY the resume content. Do not include introductory phrases like "Here is your resume" or "Sure, I can help." Do not add any commentary before or after the resume.
+RULES:
+- Rewrite job duties using Google's XYZ formula with action verbs and metrics
+- Extract ALL skills with estimated proficiency levels (0-100)
+- Kill buzzwords — replace with concrete achievements
+- If data is missing (email, phone), leave as empty string
+- Output ONLY the JSON. No text before or after it."""
 
-2. FORMAT: Use clean Markdown formatting. Use **bolding** for job titles, company names, and key metrics.
-
-RESUME BUILDING STRATEGY:
-
-- STRUCTURE: Organize the output into clear sections: **Professional Summary**, **Experience**, **Skills**, and **Education**. Adapt sections based on the user's input (e.g., add Certifications, Projects, or Languages if relevant data is provided).
-
-- THE XYZ FORMULA: Rewrite ALL job duties into powerful achievement bullets using Google's XYZ formula: "Accomplished [X] as measured by [Y], by doing [Z]". Focus on impact, metrics, and numbers. Even if the user provides no numbers, infer logical qualitative impacts.
-
-- ACTION VERBS: Start EVERY bullet point with a strong action verb (e.g., Orchestrated, Spearheaded, Engineered, Optimized, Accelerated, Streamlined, Championed, Delivered, Architected, Drove).
-
-- KILL THE BUZZWORDS: Ruthlessly delete empty fluff ("hard worker," "team player," "results-driven," "go-getter"). Replace them with concrete skills and measurable achievements.
-
-- SKILLS INJECTION: Extract ALL technical and soft skills from the user's story and list them in a dedicated, comma-separated section optimized for ATS keyword scanners. Group them logically (e.g., Technical Skills, Tools & Platforms, Leadership & Communication).
-
-TONE: Confident, data-driven, highly professional, and concise. Make the candidate sound like the top 1% in their field."""
-
-        user_prompt = f"""
-========================================
-CANDIDATE RAW DATA — TRANSFORM INTO AN ELITE RESUME
-========================================
-Candidate Name: {full_name}
+        user_prompt = f"""Candidate Name: {full_name}
 
 Raw Career Information:
 {resume_text}
 
 Output Language: {language}
 
-⚠️ REMINDER: Your ENTIRE output must be in {language}.
-Generate the world-class, ATS-optimized resume now.
-"""
-        result, error_message = await _call_ai_service(system_prompt, user_prompt)
+Generate the structured JSON resume now."""
 
-        if result:
+        raw_result, error_message = await _call_ai_service(system_prompt, user_prompt, temperature=0.4)
+
+        if raw_result:
+            # Attempt to parse the JSON from the AI response
+            try:
+                # Strip markdown code fences if the AI wrapped them
+                cleaned = raw_result.strip()
+                if cleaned.startswith('```'):
+                    cleaned = re.sub(r'^```(?:json)?\s*', '', cleaned)
+                    cleaned = re.sub(r'\s*```$', '', cleaned)
+                parsed = json.loads(cleaned)
+                result = parsed
+            except (json.JSONDecodeError, ValueError) as exc:
+                logger.warning("AI returned non-JSON for resume: %s", exc)
+                # Fallback: return raw text so the frontend can still display something
+                result = {'_raw': raw_result}
+
             await Generation.objects.acreate(
                 user=request.user,
                 resume_text=resume_text,
-                job_description='[AI Resume Generation]',
+                job_description='[AI Resume Studio]',
                 company_name='',
                 job_title='',
                 tone='Professional',
                 language=language,
-                result=result,
+                result=json.dumps(result, ensure_ascii=False) if isinstance(result, dict) else raw_result,
             )
             await sync_to_async(profile.use_generation)()
 
-    # Return JSON for the frontend Quill.js live-edit flow
     return JsonResponse({
-        'result': result,
+        'resume': result,
         'error': error_message,
     })
 
@@ -406,50 +425,7 @@ def generate_pdf(request):
     return FileResponse(buffer, as_attachment=True, filename=filename)
 
 
-# === EXPORT RESUME PDF (from Quill live-edit content) ===
-@login_required
-@require_POST
-def export_resume_pdf(request):
-    """
-    Accepts user-edited resume content from the Quill.js editor
-    and builds a downloadable PDF using pdf_engine.
-
-    Expects POST fields:
-      - resume_content: plain text of the edited resume
-      - full_name: candidate name for the PDF header
-      - target_role: job title for the PDF header
-      - template_name: which PDF template to use (default: classic_navy)
-    """
-    profile, _ = Profile.objects.get_or_create(user=request.user)
-
-    resume_content = request.POST.get('resume_content', '')
-    full_name      = request.POST.get('full_name', 'Your Name')
-    target_role    = request.POST.get('target_role', 'Professional')
-    template_slug  = request.POST.get('template_name', 'classic_navy')
-
-    # Validate template against plan limits (same guard as generate_pdf)
-    allowed_limit = profile.get_pdf_template_limit()
-    allowed_slugs = [t['slug'] for t in TEMPLATES[:allowed_limit]]
-    if template_slug not in allowed_slugs:
-        template_slug = allowed_slugs[0]
-
-    # Strip HTML tags to get clean text for ReportLab templates
-    clean_text = re.sub(r'<[^>]+>', '', resume_content)
-    # Normalise whitespace: collapse blank lines but keep structure
-    clean_text = re.sub(r'\n{3,}', '\n\n', clean_text).strip()
-
-    # Inject the content into request.POST so pdf_engine builders can read it
-    # (they read from request.POST['resume'], 'experience_text', 'full_name', etc.)
-    mutable_post = request.POST.copy()
-    mutable_post['resume']          = clean_text
-    mutable_post['experience_text'] = clean_text
-    mutable_post['full_name']       = full_name
-    mutable_post['target_role']     = target_role
-    request.POST = mutable_post
-
-    buffer = build_pdf(template_slug, request)
-    filename = f'CVAI_Resume_{template_slug}.pdf'
-    return FileResponse(buffer, as_attachment=True, filename=filename)
+# (export_resume_pdf removed — replaced by client-side html2pdf.js in Resume Studio)
 
 
 # =====================================================
