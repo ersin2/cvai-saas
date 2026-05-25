@@ -1,3 +1,8 @@
+# ── Redis (shared cache + rate-limiter backend) ───────────────────────────
+redis:
+  - name: mysite-redis
+    plan: free
+
 databases:
   - name: mysitedb
     databaseName: mysite
@@ -27,7 +32,13 @@ services:
       # Point Django at the FastAPI AI service deployed on Render
       # Set this to the actual URL of your ai_worker service after deploying it
       - key: AI_SERVICE_URL
-        value: "http://127.0.0.1:8001"   # ← replace with Render internal URL
+        # Private-network URL — only reachable inside Render's internal network
+        value: "http://ai-worker:10000"
+      - key: REDIS_URL
+        fromService:
+          name: mysite-redis
+          type: redis
+          property: connectionString
       # Stripe (set manually in Render dashboard)
       - key: STRIPE_SECRET_KEY
         sync: false
@@ -47,13 +58,14 @@ services:
         sync: false
 
   # ── FastAPI AI worker ─────────────────────────────────────────────────────
-  - type: web
+  - type: pserv
     name: ai-worker
     plan: free
     runtime: python
     rootDir: ai_service
     buildCommand: "pip install -r requirements-ai.txt"
-    startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT"
+    # Private services always bind on port 10000 — do NOT use $PORT
+    startCommand: "uvicorn main:app --host 0.0.0.0 --port 10000"
     envVars:
       - key: GROQ_API_KEY
         sync: false

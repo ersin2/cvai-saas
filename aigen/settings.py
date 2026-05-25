@@ -169,6 +169,37 @@ STRIPE_PRICE_ID = STRIPE_PRICE_ID_PRO
 AI_SERVICE_URL = os.environ.get('AI_SERVICE_URL', 'http://127.0.0.1:8001')
 
 
+# ── Cache (Redis in production, LocMem fallback for local dev) ──────────────
+# REDIS_URL is injected automatically by Render via fromService → connectionString.
+# Locally, leave it unset — LocMemCache is fine for a single-process dev server.
+_REDIS_URL = os.environ.get('REDIS_URL', '')
+
+if _REDIS_URL:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': _REDIS_URL,
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                # Drop stale connections instead of raising on network hiccup
+                'IGNORE_EXCEPTIONS': True,
+            },
+            # Namespace keeps keys isolated if you ever share this Redis instance
+            'KEY_PREFIX': 'mysite',
+        }
+    }
+    # Optional: reuse the same Redis connection for Django sessions
+    SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+    SESSION_CACHE_ALIAS = 'default'
+else:
+    # Safe default for local development — no Redis required
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        }
+    }
+
+
 # ── CSRF Trusted Origins ────────────────────────────────────────────────────
 # Required for POST requests from the production domain (Stripe webhooks, forms).
 # Render sets RENDER_EXTERNAL_HOSTNAME; APP_URL covers custom domains.

@@ -129,6 +129,10 @@ function renderCanvas() {
     // Sync quick-edit fields
     syncQuickEdit();
     renderSkillsEditor();
+    // ── Autosave hook: persist state after every render ──
+    scheduleAutosave();
+    // ── Page-break engine: check overflow after DOM settles ──
+    requestAnimationFrame(checkPageOverflow);
 }
 
 // ── Sync state → quick edit panel ────────────────────────────
@@ -714,4 +718,354 @@ switchTpl = function(btn) {
     const styleEl = document.getElementById('dcDynamicStyle');
     if (styleEl) styleEl.textContent = '';
 };
+
+// ═══════════════════════════════════════════════════════════════
+// FEATURE 1 — STATE AUTOSAVE & SESSION RESTORE
+// Key: 'rs_studio_session'
+// ═══════════════════════════════════════════════════════════════
+
+const RS_STORAGE_KEY = 'rs_studio_session';
+const RS_DC_KEY      = 'rs_dc_colors';    // persist design color choices
+let   _autosaveTimer = null;              // debounce handle
+
+/**
+ * scheduleAutosave — debounces localStorage writes.
+ * Waits 800ms of inactivity before writing, so rapid slider
+ * drags don't hammer the serialiser on every frame.
+ */
+function scheduleAutosave() {
+    clearTimeout(_autosaveTimer);
+    _autosaveTimer = setTimeout(commitAutosave, 800);
+}
+
+/**
+ * commitAutosave — serialises RS + current design colors into
+ * localStorage. Silently catches QuotaExceededError.
+ */
+function commitAutosave() {
+    try {
+        const snapshot = JSON.stringify(RS);
+        localStorage.setItem(RS_STORAGE_KEY, snapshot);
+        // also persist live design colors if they exist
+        if (window._dcColors) {
+            localStorage.setItem(RS_DC_KEY, JSON.stringify(window._dcColors));
+        }
+    } catch (e) {
+        // Storage quota exceeded — fail silently, show subtle indicator
+        console.warn('[Autosave] localStorage write failed:', e.message);
+    }
+    updateAutosaveIndicator();
+}
+
+/**
+ * updateAutosaveIndicator — pulses a tiny "Saved" badge in the toolbar
+ * so users get tactile feedback without a disruptive toast.
+ */
+function updateAutosaveIndicator() {
+    const el = document.getElementById('autosaveIndicator');
+    if (!el) return;
+    el.textContent = 'Saved ✓';
+    el.classList.add('as-pulse');
+    setTimeout(() => el.classList.remove('as-pulse'), 1800);
+}
+
+/**
+ * restoreSession — called once on DOMContentLoaded.
+ * Loads RS from localStorage and re-renders if data exists.
+ */
+function restoreSession() {
+    const raw = localStorage.getItem(RS_STORAGE_KEY);
+    if (!raw) return;
+    try {
+        const saved = JSON.parse(raw);
+        // Merge keys into RS (don't replace the object reference)
+        Object.assign(RS, saved);
+
+        // Restore the active template
+        const tpl = RS._currentTpl || 'tpl-classic-navy';
+        const paper = document.getElementById('a4Paper');
+        if (paper) paper.className = 'a4-paper ' + tpl;
+
+        // Re-activate the correct template pill
+        document.querySelectorAll('.tpl-pill').forEach(p => {
+            p.classList.toggle('active', p.dataset.tpl === tpl);
+        });
+
+        // Restore design colors
+        const rawDc = localStorage.getItem(RS_DC_KEY);
+        if (rawDc) {
+            const dc = JSON.parse(rawDc);
+            window._dcColors = dc;
+            const styleEl = document.getElementById('dcDynamicStyle');
+            if (styleEl) styleEl.textContent = _buildColorCSS(tpl, dc.primary, dc.secondary);
+            const pc = document.getElementById('dcPrimaryColor');
+            const ph = document.getElementById('dcPrimaryHex');
+            const sc = document.getElementById('dcSecondaryColor');
+            const sh = document.getElementById('dcSecondaryHex');
+            if (pc) pc.value = dc.primary;
+            if (ph) ph.value = dc.primary;
+            if (sc) sc.value = dc.secondary;
+            if (sh) sh.value = dc.secondary;
+        }
+
+        renderCanvas();
+        // Show edit panels if we have real content
+        if (RS.full_name || RS.summary) showEditPanels();
+        showToast('Session restored — welcome back!', 'success');
+    } catch (e) {
+        console.warn('[Session Restore] Failed to parse saved state:', e.message);
+    }
+}
+
+/**
+ * syncStateToBackend — async stub.
+ * In production, replace the fetch body with your real serialiser
+ * and add Django CSRF handling via the getCsrfToken() helper.
+ */
+async function syncStateToBackend() {
+    try {
+        const payload = {
+            state: JSON.parse(JSON.stringify(RS)),        // deep clone
+            dc_colors: window._dcColors || null,
+            saved_at: new Date().toISOString(),
+        };
+        const resp = await fetch('/save-resume/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken(),
+            },
+            body: JSON.stringify(payload),
+        });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        console.info('[Backend Sync] State pushed at', payload.saved_at);
+    } catch (err) {
+        // Non-fatal: localStorage is the primary store; backend is secondary
+        console.warn('[Backend Sync] Failed:', err.message);
+    }
+}
+
+/** Returns the Django CSRF token from the cookie. */
+function getCsrfToken() {
+    const name = 'csrftoken';
+    const match = document.cookie.split(';')
+        .map(c => c.trim())
+        .find(c => c.startsWith(name + '='));
+    return match ? match.split('=')[1] : '';
+}
+
+// Start 30-second backend sync interval after DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    restoreSession();
+    setInterval(syncStateToBackend, 30_000);
+});
+
+
+// ═══════════════════════════════════════════════════════════════
+// FEATURE 2 — A4 PAGE-BREAK ENGINE & "FIT TO 1 PAGE"
+// ═══════════════════════════════════════════════════════════════
+
+// Throttle handle so we don't check on every frame during resize
+let _overflowCheckTimer = null;
+
+/**
+ * checkPageOverflow — measures if the A4 paper content overflows
+ * its physical one-page height and applies a warning indicator.
+ *
+ * A4 at 96dpi = 1122.5px tall. We use scrollHeight vs the paper's
+ * own offsetHeight (which is capped by the CSS min-height rule).
+ */
+function checkPageOverflow() {
+    clearTimeout(_overflowCheckTimer);
+    _overflowCheckTimer = setTimeout(_doOverflowCheck, 150);
+}
+
+function _doOverflowCheck() {
+    const paper = document.getElementById('a4Paper');
+    if (!paper) return;
+
+    // A4 at screen resolution: 210mm ≈ 794px, 297mm ≈ 1122px at 96dpi
+    const A4_HEIGHT_PX = 1122;
+    const overflows = paper.scrollHeight > A4_HEIGHT_PX + 20; // 20px grace
+
+    paper.classList.toggle('page-overflow', overflows);
+
+    const badge = document.getElementById('pageOverflowBadge');
+    if (badge) badge.style.display = overflows ? 'flex' : 'none';
+
+    if (overflows) {
+        // Only toast once per session, not on every render
+        if (!window._overflowToastShown) {
+            showToast('Content exceeds one page — use Fit to 1 Page to fix.', 'warning');
+            window._overflowToastShown = true;
+        }
+    } else {
+        window._overflowToastShown = false;
+    }
+}
+
+/**
+ * fitToOnePage — incrementally reduces font size, line-height,
+ * and section margins until the canvas fits within A4 height.
+ *
+ * It reads the current slider values as the starting point,
+ * then steps them down up to 40 iterations to prevent infinite loops.
+ */
+function fitToOnePage() {
+    const paper = document.getElementById('a4Paper');
+    const fsSlider  = document.getElementById('dcFontSize');
+    const lhSlider  = document.getElementById('dcLineSpacing');
+    const smSlider  = document.getElementById('dcSectionMargin');
+    if (!paper || !fsSlider) return;
+
+    const A4_HEIGHT_PX = 1122;
+    const MAX_ITERATIONS = 40;
+    let iterations = 0;
+
+    // Read current values from sliders (already applied to canvas)
+    let fs = parseFloat(fsSlider.value);
+    let lh = parseFloat(lhSlider.value);
+    let sm = parseFloat(smSlider.value);
+
+    // Minimum clamp values to avoid unreadable output
+    const MIN_FS = 7;
+    const MIN_LH = 1.0;
+    const MIN_SM = 6;
+
+    const btn = document.getElementById('btnFitToPage');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Fitting...'; }
+
+    function step() {
+        if (paper.scrollHeight <= A4_HEIGHT_PX + 10 || iterations >= MAX_ITERATIONS) {
+            // Done
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-compress-alt"></i> Fit to 1 Page'; }
+            _doOverflowCheck();
+            const msg = iterations >= MAX_ITERATIONS
+                ? 'Fit limit reached. Try removing some content.'
+                : 'Fitted to 1 page — your resume looks great!';
+            showToast(msg, iterations >= MAX_ITERATIONS ? 'warning' : 'success');
+            commitAutosave();
+            return;
+        }
+
+        // Reduce each parameter slightly on each iteration
+        if (fs > MIN_FS)  { fs = Math.max(MIN_FS,  fs - 0.25); fsSlider.value = fs;  applyDesignSlider('fontSize', fs); }
+        if (lh > MIN_LH)  { lh = Math.max(MIN_LH,  lh - 0.05); lhSlider.value = lh;  applyDesignSlider('lineSpacing', lh); }
+        if (sm > MIN_SM)  { sm = Math.max(MIN_SM,  sm - 1);    smSlider.value = sm;  applyDesignSlider('sectionMargin', sm); }
+
+        iterations++;
+        // Use requestAnimationFrame so the DOM has time to reflow between steps
+        requestAnimationFrame(step);
+    }
+
+    // Kick off the loop
+    requestAnimationFrame(step);
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// FEATURE 3 — INLINE AI REFINEMENT (MAGIC WAND)
+// ═══════════════════════════════════════════════════════════════
+
+// Track the currently open refinement dropdown
+let _activeRefinementMenu = null;
+
+/**
+ * openRefinementMenu — positions and displays the refine-menu
+ * dropdown anchored to the clicked wand button.
+ *
+ * @param {HTMLElement} btn   - The wand button element
+ * @param {string}      taId  - ID of the target textarea
+ */
+function openRefinementMenu(btn, taId) {
+    // Close any already-open menu
+    closeRefinementMenu();
+
+    const menu = document.getElementById('refineDropdown');
+    if (!menu) return;
+
+    // Store which textarea we're targeting
+    menu.dataset.targetId = taId;
+
+    // Position below the button
+    const rect = btn.getBoundingClientRect();
+    menu.style.top  = (rect.bottom + window.scrollY + 6) + 'px';
+    menu.style.left = (rect.left  + window.scrollX)     + 'px';
+    menu.style.display = 'flex';
+    _activeRefinementMenu = menu;
+
+    // Close on outside click
+    setTimeout(() => document.addEventListener('click', _outsideMenuClose, { once: true }), 0);
+}
+
+function closeRefinementMenu() {
+    if (_activeRefinementMenu) {
+        _activeRefinementMenu.style.display = 'none';
+        _activeRefinementMenu = null;
+    }
+}
+
+function _outsideMenuClose(e) {
+    const menu = document.getElementById('refineDropdown');
+    if (menu && !menu.contains(e.target)) closeRefinementMenu();
+}
+
+/**
+ * runRefinement — fetches the AI refinement endpoint.
+ *
+ * @param {string} mode  - 'professional' | 'grammar' | 'metrics'
+ */
+async function runRefinement(mode) {
+    const menu   = document.getElementById('refineDropdown');
+    const taId   = menu && menu.dataset.targetId;
+    const ta     = taId ? document.getElementById(taId) : null;
+    if (!ta) { closeRefinementMenu(); return; }
+
+    const originalText = ta.value.trim();
+    if (!originalText) {
+        showToast('The field is empty — add some text first.', 'warning');
+        closeRefinementMenu();
+        return;
+    }
+
+    closeRefinementMenu();
+
+    // Show loading state on the wand button tied to this textarea
+    const wandBtn = document.querySelector(`.wand-btn[data-ta="${taId}"]`);
+    if (wandBtn) { wandBtn.disabled = true; wandBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
+
+    try {
+        const resp = await fetch('/api/refine-text/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken(),
+            },
+            body: JSON.stringify({ text: originalText, mode }),
+        });
+
+        if (resp.status === 429) {
+            showToast('Too many requests. Please wait a moment.', 'warning');
+            return;
+        }
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
+        const data = await resp.json();
+        const refined = data.refined_text || data.text || data.result;
+        if (!refined) throw new Error('Empty response from AI');
+
+        ta.value = refined;
+        ta.dispatchEvent(new Event('input', { bubbles: true }));
+        ta.style.transition = 'background 0.4s';
+        ta.style.background = 'rgba(76,201,240,0.08)';
+        setTimeout(() => { ta.style.background = ''; }, 800);
+
+        showToast('Text refined by AI — review and adjust as needed.', 'success');
+    } catch (err) {
+        console.error('[Refinement] Error:', err.message);
+        showToast('Refinement failed: ' + err.message, 'danger');
+    } finally {
+        if (wandBtn) { wandBtn.disabled = false; wandBtn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i>'; }
+    }
+}
 </script>

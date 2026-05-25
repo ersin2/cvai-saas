@@ -1141,3 +1141,235 @@
     }
 }
 </style>
+
+<style>
+/* ═══════════════════════════════════════════════════════════════ */
+/* ══ FEATURE 1 — AUTOSAVE INDICATOR                              */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.autosave-indicator {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #22c55e;
+    opacity: 0;
+    letter-spacing: 0.5px;
+    transition: opacity 0.4s;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 4px;
+}
+
+/* Pulse on save: briefly shows the badge then fades out */
+@keyframes asFlash {
+    0%   { opacity: 0; transform: translateY(3px); }
+    20%  { opacity: 1; transform: translateY(0); }
+    80%  { opacity: 1; }
+    100% { opacity: 0; }
+}
+.autosave-indicator.as-pulse {
+    animation: asFlash 1.8s ease forwards;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* ══ FEATURE 2 — PAGE-BREAK WARNING & FIT TO PAGE               */
+/* ═══════════════════════════════════════════════════════════════ */
+
+/* Red pulsing border on overflow */
+.a4-paper.page-overflow {
+    box-shadow:
+        0 1px 3px rgba(0,0,0,0.08),
+        0 8px 24px rgba(0,0,0,0.15),
+        0 30px 80px rgba(0,0,0,0.35),
+        0 0 0 2px rgba(239, 68, 68, 0.6),
+        0 0 0 4px rgba(239, 68, 68, 0.12);
+    animation: overflowPulse 2s ease-in-out infinite;
+}
+
+@keyframes overflowPulse {
+    0%, 100% { box-shadow:
+        0 1px 3px rgba(0,0,0,0.08),
+        0 30px 80px rgba(0,0,0,0.35),
+        0 0 0 2px rgba(239, 68, 68, 0.6),
+        0 0 0 6px rgba(239, 68, 68, 0.08); }
+    50% { box-shadow:
+        0 1px 3px rgba(0,0,0,0.08),
+        0 30px 80px rgba(0,0,0,0.35),
+        0 0 0 2px rgba(239, 68, 68, 0.9),
+        0 0 0 8px rgba(239, 68, 68, 0.04); }
+}
+
+/* Floating warning badge positioned relative to a4-canvas-wrap */
+.a4-canvas-wrap {
+    position: relative;
+}
+
+.page-overflow-badge {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(239, 68, 68, 0.9);
+    backdrop-filter: blur(8px);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 20;
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+    pointer-events: none;
+    animation: badgeFadeIn 0.3s ease;
+    white-space: nowrap;
+}
+.page-overflow-badge i { font-size: 0.76rem; }
+
+@keyframes badgeFadeIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Fit-to-Page button in Pro Sidebar */
+.pro-fit-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 11px 16px;
+    background: rgba(76, 201, 240, 0.07);
+    border: 1px solid rgba(76, 201, 240, 0.2);
+    border-radius: 12px;
+    color: #4cc9f0;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.22s;
+    letter-spacing: 0.3px;
+    margin-bottom: 8px;
+}
+.pro-fit-btn:hover {
+    background: rgba(76, 201, 240, 0.14);
+    border-color: rgba(76, 201, 240, 0.4);
+    color: #93e4f8;
+    box-shadow: 0 4px 16px rgba(76, 201, 240, 0.15);
+    transform: translateY(-1px);
+}
+.pro-fit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+.pro-fit-btn i { font-size: 0.82rem; }
+
+.pro-fit-hint {
+    font-size: 0.66rem;
+    color: #334155;
+    line-height: 1.45;
+    margin: 0;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* ══ FEATURE 3 — MAGIC WAND & REFINEMENT DROPDOWN               */
+/* ═══════════════════════════════════════════════════════════════ */
+
+/* Row wrapper: label on the left, wand btn on the right */
+.wand-field-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+/* Label inherits existing qe-field label styles — no override needed */
+
+/* The ✨ wand button */
+.wand-btn {
+    background: transparent;
+    border: 1px solid rgba(76, 201, 240, 0.15);
+    border-radius: 8px;
+    color: #475569;
+    width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    padding: 0;
+}
+.wand-btn:hover {
+    background: rgba(76, 201, 240, 0.1);
+    border-color: rgba(76, 201, 240, 0.4);
+    color: #4cc9f0;
+    box-shadow: 0 0 10px rgba(76, 201, 240, 0.2);
+    transform: scale(1.1);
+}
+.wand-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+.wand-btn i { pointer-events: none; }
+
+/* Floating refinement dropdown (positioned via JS) */
+.refine-dropdown {
+    position: absolute;
+    z-index: 9999;
+    background: rgba(10, 14, 28, 0.97);
+    border: 1px solid rgba(76, 201, 240, 0.18);
+    border-radius: 14px;
+    padding: 6px;
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(76, 201, 240, 0.06);
+    backdrop-filter: blur(20px);
+    flex-direction: column;
+    gap: 3px;
+    min-width: 180px;
+    animation: refineMenuIn 0.18s ease;
+}
+@keyframes refineMenuIn {
+    from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.refine-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 13px;
+    background: transparent;
+    border: none;
+    border-radius: 9px;
+    color: #94a3b8;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.18s;
+    font-family: 'Outfit', sans-serif;
+}
+.refine-option:hover {
+    background: rgba(76, 201, 240, 0.1);
+    color: #e2e8f0;
+}
+.refine-option i {
+    font-size: 0.78rem;
+    color: #4cc9f0;
+    width: 14px;
+    text-align: center;
+    flex-shrink: 0;
+}
+.refine-option:nth-child(1) i { color: #a78bfa; }
+.refine-option:nth-child(2) i { color: #4cc9f0; }
+.refine-option:nth-child(3) i { color: #22c55e; }
+</style>

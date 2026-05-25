@@ -19,7 +19,13 @@
                     <div class="ai-upload-hint">or drag & drop · max 5MB</div>
                 </div>
                 <div class="qe-field mb-3">
-                    <label>Or paste your raw career story</label>
+                    <div class="wand-field-header">
+                        <label>Or paste your raw career story</label>
+                        <button type="button" class="wand-btn" data-ta="studioRawText"
+                            onclick="openRefinementMenu(this, 'studioRawText')" title="Refine with AI">
+                            <i class="fas fa-wand-magic-sparkles"></i>
+                        </button>
+                    </div>
                     <textarea name="resume" id="studioRawText" rows="4" placeholder="I worked at Google for 5 years as a senior engineer, built APIs that serve 10M users..."></textarea>
                 </div>
                 <div class="qe-row mb-3">
@@ -90,9 +96,28 @@
                 </div>
             </div>
             <div class="qe-field mb-2">
-                <label>Summary</label>
+                <div class="wand-field-header">
+                    <label>Summary</label>
+                    <button type="button" class="wand-btn" data-ta="qeSummary"
+                        onclick="openRefinementMenu(this, 'qeSummary')" title="Refine with AI">
+                        <i class="fas fa-wand-magic-sparkles"></i>
+                    </button>
+                </div>
                 <textarea id="qeSummary" rows="3" oninput="syncToCanvas('summary', this.value)"></textarea>
             </div>
+        </div>
+
+        <!-- SHARED REFINEMENT DROPDOWN (positioned via JS) -->
+        <div class="refine-dropdown" id="refineDropdown" style="display:none;">
+            <button type="button" class="refine-option" onclick="runRefinement('professional')">
+                <i class="fas fa-briefcase"></i> Make Professional
+            </button>
+            <button type="button" class="refine-option" onclick="runRefinement('grammar')">
+                <i class="fas fa-spell-check"></i> Fix Grammar
+            </button>
+            <button type="button" class="refine-option" onclick="runRefinement('metrics')">
+                <i class="fas fa-chart-line"></i> Add Metrics
+            </button>
         </div>
 
         <!-- SKILLS EDITOR -->
@@ -131,9 +156,15 @@
             <button type="button" class="btn-download-pdf" id="studioDownloadBtn" onclick="studioDownloadPdf()">
                 <i class="fas fa-download me-2"></i>Download PDF
             </button>
+            <span class="autosave-indicator" id="autosaveIndicator"></span>
         </div>
 
         <div class="a4-canvas-wrap">
+            <!-- Page overflow warning badge -->
+            <div class="page-overflow-badge" id="pageOverflowBadge" style="display:none;" title="Content exceeds one A4 page">
+                <i class="fas fa-triangle-exclamation"></i>
+                <span>Exceeds 1 page</span>
+            </div>
             <div class="a4-paper tpl-classic-navy" id="a4Paper">
                 <!-- SIDEBAR (Classic Navy uses this) -->
                 <div class="cv-sidebar" id="cvSidebar">
@@ -360,6 +391,19 @@
                     <span>8px</span><span>20px</span><span>32px</span>
                 </div>
             </div>
+        </div>
+
+        <!-- ── SECTION: FIT TO PAGE ── -->
+        <div class="pro-section">
+            <div class="pro-section-label">
+                <i class="fas fa-file-contract"></i>
+                <span>Page Fit</span>
+            </div>
+            <button type="button" class="pro-fit-btn" id="btnFitToPage" onclick="fitToOnePage()">
+                <i class="fas fa-compress-alt"></i>
+                Fit to 1 Page
+            </button>
+            <p class="pro-fit-hint">Auto-reduces font size &amp; spacing until your resume fills exactly one A4 page.</p>
         </div>
 
         <!-- ── SECTION: RESET ── -->
