@@ -10,327 +10,142 @@
         content="Access AI-powered interview prep, follow-up email generator, and ATS score checker to maximize your job search success.">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}">
+
     <style>
-        :root {
-            --primary: #4cc9f0;
-            --secondary: #f72585;
-            --dark-bg: #0a0e17;
-        }
-
-        body {
-            background-color: var(--dark-bg);
-            font-family: 'Outfit', sans-serif;
-            color: #e2e8f0;
-            min-height: 100vh;
-            background-image: radial-gradient(circle at 20% 80%, rgba(76, 201, 240, 0.1) 0%, transparent 40%),
-                radial-gradient(circle at 80% 20%, rgba(247, 37, 133, 0.1) 0%, transparent 40%);
-        }
-
-        .navbar-custom {
-            padding: 18px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            margin-bottom: 30px;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: rgba(10, 14, 23, 0.9);
-            backdrop-filter: blur(20px);
-        }
-
-        .logo-text {
-            font-family: 'JetBrains Mono', monospace;
-            font-weight: 700;
-            font-size: 1.4rem;
-            background: linear-gradient(90deg, #fff, var(--primary));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .nav-link-item {
-            color: #94a3b8;
-            text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 600;
-            padding: 6px 12px;
-            border-radius: 8px;
-            transition: 0.2s;
-        }
-
-        .nav-link-item:hover {
-            color: white;
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .nav-link-item.active {
-            color: var(--primary);
-            background: rgba(76, 201, 240, 0.1);
-        }
-
-        /* TOOL TABS */
+        /* ── TOOL TABS ── */
         .tool-tabs {
             display: flex;
-            gap: 12px;
-            margin-bottom: 30px;
+            gap: 8px;
+            margin-bottom: 28px;
             flex-wrap: wrap;
         }
 
         .tool-tab {
-            padding: 14px 24px;
-            border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            background: rgba(255, 255, 255, 0.03);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--surface-2);
             cursor: pointer;
-            transition: 0.3s;
+            transition: border-color var(--transition-base), color var(--transition-fast), background var(--transition-base);
             text-decoration: none;
-            color: #94a3b8;
+            color: var(--text-secondary);
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
+            user-select: none;
         }
 
         .tool-tab:hover {
-            border-color: var(--primary);
-            color: white;
-            background: rgba(76, 201, 240, 0.05);
+            border-color: rgba(76, 201, 240, 0.35);
+            color: var(--text-primary);
+            background: var(--primary-dim);
         }
 
         .tool-tab.active {
             border-color: var(--primary);
             color: var(--primary);
-            background: rgba(76, 201, 240, 0.1);
+            background: var(--primary-dim);
         }
 
-        .tool-tab i {
-            margin-right: 8px;
-        }
+        /* ── TOOL PANELS ── */
+        .tool-panel { display: none; }
+        .tool-panel.active { display: block; animation: fadeSlideUp 0.3s ease both; }
 
-        /* TOOL PANELS */
-        .tool-panel {
-            display: none;
-        }
-
-        .tool-panel.active {
-            display: block;
-        }
-
-        .glass-card {
-            background: rgba(20, 25, 40, 0.7);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 24px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            padding: 35px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .glass-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-        }
-
-        .form-control,
-        .form-select {
-            background: rgba(0, 0, 0, 0.3) !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            color: #fff !important;
-            border-radius: 12px;
-            padding: 12px;
-        }
-
-        .form-control:focus,
-        .form-select:focus {
-            border-color: var(--primary) !important;
-            box-shadow: 0 0 10px rgba(76, 201, 240, 0.2);
-        }
-
-        .form-label {
-            color: rgba(255, 255, 255, 0.7);
-            font-weight: 600;
-            font-size: 0.85rem;
-        }
-
+        /* ── GENERATE BUTTON ── */
         .btn-tool {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
             background: linear-gradient(135deg, #4361ee, var(--secondary));
             border: none;
             color: white;
-            padding: 14px 28px;
-            border-radius: 14px;
+            padding: 13px 28px;
+            border-radius: var(--radius-md);
             font-weight: 700;
-            width: 100%;
-            font-size: 1rem;
-            transition: 0.3s;
-            letter-spacing: 0.5px;
+            font-size: 0.95rem;
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast), opacity var(--transition-fast);
+            letter-spacing: 0.3px;
+            cursor: pointer;
         }
 
-        .btn-tool:hover {
+        .btn-tool:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(67, 97, 238, 0.4);
+            box-shadow: 0 10px 32px rgba(67, 97, 238, 0.45);
             color: white;
         }
 
-        /* RESULT */
-        .result-box {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(76, 201, 240, 0.15);
-            border-radius: 16px;
-            padding: 30px;
-            margin-top: 30px;
-            white-space: pre-wrap;
-            line-height: 1.8;
-            font-size: 0.95rem;
-            color: #cbd5e1;
+        .btn-tool:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
+        /* ── RESULT BOX ── */
+        .result-box {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(76, 201, 240, 0.15);
+            border-radius: var(--radius-md);
+            padding: 28px;
+            margin-top: 28px;
+            white-space: pre-wrap;
+            line-height: 1.8;
+            font-size: 0.93rem;
+            color: #cbd5e1;
+            animation: fadeSlideUp 0.4s ease both;
+        }
+
+        /* ── ATS SCORE RING ── */
         .ats-score-ring {
-            width: 120px;
-            height: 120px;
+            width: 110px;
+            height: 110px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             font-weight: 800;
             color: white;
             margin: 0 auto 20px;
+            font-family: var(--font-mono);
         }
 
-        /* HISTORY SIDEBAR */
+        /* ── HISTORY SIDEBAR ── */
         .history-item-sm {
-            padding: 12px 16px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            margin-bottom: 8px;
+            padding: 11px 14px;
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            margin-bottom: 6px;
             cursor: pointer;
-            transition: 0.2s;
-            font-size: 0.85rem;
+            transition: background var(--transition-fast), border-color var(--transition-fast);
+            font-size: 0.84rem;
         }
 
         .history-item-sm:hover {
-            background: rgba(255, 255, 255, 0.05);
-            border-color: rgba(76, 201, 240, 0.2);
+            background: var(--surface-3);
+            border-color: var(--border);
         }
 
+        /* ── LOADING ── */
         .loading-spinner {
             display: none;
             text-align: center;
-            padding: 40px;
+            padding: 40px 20px;
         }
 
-        .loading-spinner.show {
-            display: block;
-        }
+        .loading-spinner.show { display: block; }
 
-        /* HAMBURGER MENU */
-        .hamburger-btn {
-            display: none;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 6px;
-            z-index: 1001;
-        }
-
-        .mobile-drawer {
-            position: fixed;
-            top: 0;
-            right: -300px;
-            width: 280px;
-            height: 100vh;
-            background: rgba(15, 20, 35, 0.98);
-            backdrop-filter: blur(30px);
-            z-index: 1000;
-            transition: right 0.3s ease;
-            padding: 80px 24px 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            border-left: 1px solid rgba(255, 255, 255, 0.08);
-            overflow-y: auto;
-        }
-
-        .mobile-drawer.open {
-            right: 0;
-        }
-
-        .mobile-drawer .nav-link-item {
-            display: block;
-            padding: 14px 16px;
-            font-size: 1rem;
-            border-radius: 12px;
-        }
-
-        .mobile-drawer .nav-link-item:hover {
-            background: rgba(76, 201, 240, 0.08);
-        }
-
-        .mobile-drawer .drawer-divider {
-            height: 1px;
-            background: rgba(255, 255, 255, 0.06);
-            margin: 12px 0;
-        }
-
-        .mobile-backdrop {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-        }
-
-        .mobile-backdrop.open {
-            display: block;
-        }
-
-        .drawer-close-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.08);
-            border: none;
-            color: white;
-            font-size: 1.2rem;
-            width: 36px;
-            height: 36px;
+        .spinner-ring {
+            width: 52px;
+            height: 52px;
+            border: 3px solid rgba(76, 201, 240, 0.15);
+            border-top-color: var(--primary);
             border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        @media (max-width: 768px) {
-            .hamburger-btn {
-                display: block;
-            }
-
-            .desktop-nav {
-                display: none !important;
-            }
-
-            .navbar-custom {
-                padding: 14px 16px;
-            }
+            animation: spin 0.9s linear infinite;
+            margin: 0 auto 16px;
         }
     </style>
 </head>
@@ -340,16 +155,17 @@
     <!-- NAVBAR -->
     <nav class="navbar-custom">
         <a href="{% url 'home' %}" class="logo-text">
-            <i class="fas fa-cube" style="-webkit-text-fill-color: var(--primary);"></i>
-            CV<span style="-webkit-text-fill-color: var(--secondary);">AI</span>
+            <i class="fas fa-cube"></i>CV<span style="-webkit-text-fill-color: var(--secondary);">AI</span>
         </a>
-        <div class="desktop-nav" style="display:flex; align-items:center; gap:12px;">
-            <a href="{% url 'home' %}" class="nav-link-item">Generator</a>
+        <div class="nav-group desktop-nav">
+            <a href="{% url 'home' %}"      class="nav-link-item">Generator</a>
             <a href="{% url 'dashboard' %}" class="nav-link-item">Dashboard</a>
-            <a href="{% url 'tools' %}" class="nav-link-item active">AI Tools</a>
-            <a href="{% url 'tracker' %}" class="nav-link-item">Tracker</a>
-            <a href="{% url 'history' %}" class="nav-link-item">History</a>
-            <a href="{% url 'profile' %}" class="nav-link-item"><i class="fas fa-user me-1"></i>{{ user.username }}</a>
+            <a href="{% url 'tools' %}"     class="nav-link-item active">AI Tools</a>
+            <a href="{% url 'tracker' %}"   class="nav-link-item">Tracker</a>
+            <a href="{% url 'history' %}"   class="nav-link-item">History</a>
+            <a href="{% url 'profile' %}"   class="user-badge">
+                <i class="fas fa-user"></i>{{ user.username }}
+            </a>
         </div>
         <button class="hamburger-btn" onclick="toggleMobileNav()"><i class="fas fa-bars"></i></button>
     </nav>
@@ -357,47 +173,57 @@
     <!-- MOBILE DRAWER -->
     <div class="mobile-backdrop" id="mobileBackdrop" onclick="toggleMobileNav()"></div>
     <div class="mobile-drawer" id="mobileDrawer">
-        <button class="drawer-close-btn" onclick="toggleMobileNav()"><i class="fas fa-times"></i></button>
-        <a href="{% url 'home' %}" class="nav-link-item"><i class="fas fa-pen-nib me-2"></i>Generator</a>
-        <a href="{% url 'dashboard' %}" class="nav-link-item"><i class="fas fa-chart-pie me-2"></i>Dashboard</a>
-        <a href="{% url 'tools' %}" class="nav-link-item" style="color:var(--primary);"><i
-                class="fas fa-wand-magic-sparkles me-2"></i>AI Tools</a>
-        <a href="{% url 'tracker' %}" class="nav-link-item"><i class="fas fa-briefcase me-2"></i>Tracker</a>
-        <a href="{% url 'history' %}" class="nav-link-item"><i class="fas fa-clock-rotate-left me-2"></i>History</a>
-        <div class="drawer-divider"></div>
-        <a href="{% url 'pricing' %}" class="nav-link-item"><i class="fas fa-tags me-2"></i>Pricing</a>
-        <a href="{% url 'profile' %}" class="nav-link-item"><i class="fas fa-user me-2"></i>{{ user.username }}</a>
+        <div class="drawer-header">
+            <span class="logo-text" style="font-size:1.1rem;">CV<span style="-webkit-text-fill-color:var(--secondary);">AI</span></span>
+            <button class="drawer-close-btn" onclick="toggleMobileNav()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="drawer-nav-section">
+            <a href="{% url 'home' %}"      class="nav-link-item"><i class="fas fa-pen-ruler"></i>Generator</a>
+            <a href="{% url 'dashboard' %}" class="nav-link-item"><i class="fas fa-chart-pie"></i>Dashboard</a>
+            <a href="{% url 'tools' %}"     class="nav-link-item active"><i class="fas fa-wand-magic-sparkles"></i>AI Tools</a>
+            <a href="{% url 'tracker' %}"   class="nav-link-item"><i class="fas fa-briefcase"></i>Tracker</a>
+            <a href="{% url 'history' %}"   class="nav-link-item"><i class="fas fa-clock-rotate-left"></i>History</a>
+            <div class="drawer-divider"></div>
+            <a href="{% url 'pricing' %}"   class="nav-link-item"><i class="fas fa-tags"></i>Pricing</a>
+            <a href="{% url 'profile' %}"   class="nav-link-item"><i class="fas fa-user"></i>{{ user.username }}</a>
+        </div>
     </div>
 
+    <!-- PAGE CONTENT -->
     <div class="container pb-5">
-        <h2 class="text-white fw-bold mb-1"><i class="fas fa-wand-magic-sparkles me-2"
-                style="color: var(--primary);"></i>AI Career Tools</h2>
-        <p class="text-white-50 mb-4">Power up your job search with AI-driven tools.</p>
+
+        <!-- PAGE HEADER -->
+        <div class="page-header anim-fade-up">
+            <h1 class="page-title"><i class="fas fa-wand-magic-sparkles"></i> AI Career Tools</h1>
+            <p class="page-subtitle">Power up your job search with AI-driven tools.</p>
+        </div>
 
         <!-- TOOL TABS -->
-        <div class="tool-tabs">
+        <div class="tool-tabs anim-fade-up anim-delay-1">
             <div class="tool-tab {% if not active_tool or active_tool == 'interview' %}active{% endif %}"
-                onclick="showTool('interview')">
+                onclick="showTool('interview', this)">
                 <i class="fas fa-comments"></i>Interview Prep
             </div>
-            <div class="tool-tab {% if active_tool == 'followup' %}active{% endif %}" onclick="showTool('followup')">
+            <div class="tool-tab {% if active_tool == 'followup' %}active{% endif %}"
+                onclick="showTool('followup', this)">
                 <i class="fas fa-envelope"></i>Follow-Up Emails
             </div>
-            <div class="tool-tab {% if active_tool == 'ats' %}active{% endif %}" onclick="showTool('ats')">
+            <div class="tool-tab {% if active_tool == 'ats' %}active{% endif %}"
+                onclick="showTool('ats', this)">
                 <i class="fas fa-chart-bar"></i>ATS Score
             </div>
         </div>
 
-        <div class="row">
+        <div class="row g-4">
             <div class="col-lg-8">
 
-                <!-- INTERVIEW PREP -->
-                <div class="tool-panel {% if not active_tool or active_tool == 'interview' %}active{% endif %}"
-                    id="panel-interview">
+                <!-- ── INTERVIEW PREP ── -->
+                <div class="tool-panel {% if not active_tool or active_tool == 'interview' %}active{% endif %}" id="panel-interview">
                     <div class="glass-card">
-                        <h4 class="text-white fw-bold mb-1"><i class="fas fa-comments me-2 text-info"></i>Interview Prep
-                            AI</h4>
-                        <p class="text-white-50 small mb-4">Get 10 likely interview questions with perfect answers.</p>
+                        <h2 class="section-title mb-1">
+                            <i class="fas fa-comments" style="color: var(--primary);"></i>Interview Prep AI
+                        </h2>
+                        <p class="page-subtitle mb-4">Get 10 likely interview questions with perfect answers.</p>
                         <form id="form-interview" onsubmit="submitToolForm(event, 'interview')">
                             {% csrf_token %}
                             <div class="mb-3">
@@ -407,27 +233,28 @@
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Your Resume</label>
-                                <textarea name="resume" class="form-control" rows="4" placeholder="Paste your resume..."
-                                    required></textarea>
+                                <textarea name="resume" class="form-control" rows="4"
+                                    placeholder="Paste your resume..." required></textarea>
                             </div>
-                            <div class="mb-3">
+                            <div class="mb-4">
                                 <label class="form-label">Job Description</label>
                                 <textarea name="job_description" class="form-control" rows="4"
                                     placeholder="Paste the job description..." required></textarea>
                             </div>
-                            <button type="submit" class="btn-tool"><i class="fas fa-brain me-2"></i>Generate Interview
-                                Prep</button>
+                            <button type="submit" class="btn-tool">
+                                <i class="fas fa-brain"></i>Generate Interview Prep
+                            </button>
                         </form>
                     </div>
                 </div>
 
-                <!-- FOLLOW-UP EMAILS -->
+                <!-- ── FOLLOW-UP EMAILS ── -->
                 <div class="tool-panel {% if active_tool == 'followup' %}active{% endif %}" id="panel-followup">
                     <div class="glass-card">
-                        <h4 class="text-white fw-bold mb-1"><i class="fas fa-envelope me-2"
-                                style="color: var(--secondary);"></i>Follow-Up Email Generator</h4>
-                        <p class="text-white-50 small mb-4">Create professional follow-up emails for 3, 7, and 14 days.
-                        </p>
+                        <h2 class="section-title mb-1">
+                            <i class="fas fa-envelope" style="color: var(--secondary);"></i>Follow-Up Email Generator
+                        </h2>
+                        <p class="page-subtitle mb-4">Create professional follow-up emails for 3, 7, and 14 days.</p>
                         <form id="form-followup" onsubmit="submitToolForm(event, 'followup')">
                             {% csrf_token %}
                             <div class="row g-3">
@@ -442,26 +269,29 @@
                                         placeholder="Senior Developer" required>
                                 </div>
                                 <div class="col-12">
-                                    <label class="form-label">Additional Context <span
-                                            class="text-white-50">(optional)</span></label>
+                                    <label class="form-label">
+                                        Additional Context <span class="text-white-50">(optional)</span>
+                                    </label>
                                     <textarea name="context" class="form-control" rows="3"
                                         placeholder="e.g., I had a great chat with the hiring manager about..."></textarea>
                                 </div>
                                 <div class="col-12">
-                                    <button type="submit" class="btn-tool"><i
-                                            class="fas fa-paper-plane me-2"></i>Generate Follow-Ups</button>
+                                    <button type="submit" class="btn-tool">
+                                        <i class="fas fa-paper-plane"></i>Generate Follow-Ups
+                                    </button>
                                 </div>
                             </div>
                         </form>
                     </div>
                 </div>
 
-                <!-- ATS SCORE -->
+                <!-- ── ATS SCORE ── -->
                 <div class="tool-panel {% if active_tool == 'ats' %}active{% endif %}" id="panel-ats">
                     <div class="glass-card">
-                        <h4 class="text-white fw-bold mb-1"><i class="fas fa-chart-bar me-2 text-warning"></i>ATS Score
-                            Checker</h4>
-                        <p class="text-white-50 small mb-4">See how well your resume matches the job (0-100 score).</p>
+                        <h2 class="section-title mb-1">
+                            <i class="fas fa-chart-bar" style="color: var(--warning);"></i>ATS Score Checker
+                        </h2>
+                        <p class="page-subtitle mb-4">See how well your resume matches the job (0–100 score).</p>
                         <form id="form-ats" onsubmit="submitToolForm(event, 'ats')">
                             {% csrf_token %}
                             <div class="mb-3">
@@ -469,80 +299,89 @@
                                 <textarea name="resume" class="form-control" rows="5"
                                     placeholder="Paste your full resume text..." required></textarea>
                             </div>
-                            <div class="mb-3">
+                            <div class="mb-4">
                                 <label class="form-label">Job Description</label>
                                 <textarea name="job_description" class="form-control" rows="5"
                                     placeholder="Paste the target job description..." required></textarea>
                             </div>
-                            <button type="submit" class="btn-tool"><i class="fas fa-search me-2"></i>Analyze ATS
-                                Score</button>
+                            <button type="submit" class="btn-tool">
+                                <i class="fas fa-search"></i>Analyze ATS Score
+                            </button>
                         </form>
                     </div>
                 </div>
 
-                <!-- RESULT AREA -->
+                <!-- ── ERROR ── -->
                 {% if tool_error %}
-                <div class="alert alert-danger bg-danger bg-opacity-25 border-0 text-white mt-4 rounded-4">
+                <div class="alert bg-danger bg-opacity-25 border-0 text-white mt-4 rounded-4 anim-fade-up"
+                     style="border: 1px solid rgba(239,68,68,0.25) !important; border-left: 3px solid var(--danger) !important;">
                     <i class="fas fa-exclamation-circle me-2"></i>{{ tool_error }}
                 </div>
                 {% endif %}
 
+                <!-- ── RESULT ── -->
                 {% if tool_result %}
                 <div class="result-box" id="toolResultBox">
                     {% if ats_score %}
                     <div class="text-center mb-4">
                         <div class="ats-score-ring" style="background: conic-gradient(
-                        {% if ats_score >= 80 %}#22c55e{% elif ats_score >= 60 %}#eab308{% else %}#ef4444{% endif %} {{ ats_score }}%,
-                        rgba(255,255,255,0.1) {{ ats_score }}%);">
+                            {% if ats_score >= 80 %}#22c55e{% elif ats_score >= 60 %}#eab308{% else %}#ef4444{% endif %} {{ ats_score }}%,
+                            rgba(255,255,255,0.08) {{ ats_score }}%);">
                             {{ ats_score }}
                         </div>
-                        <div class="text-white fw-bold">ATS Compatibility Score</div>
+                        <div class="fw-bold" style="font-size: 0.9rem;">ATS Compatibility Score</div>
                     </div>
                     {% endif %}
-                    <div class="d-flex justify-content-end mb-2">
-                        <button class="btn btn-sm" onclick="copyResult()"
-                            style="background: rgba(76,201,240,0.1); color: var(--primary); border: 1px solid rgba(76,201,240,0.2); border-radius: 10px; font-size: 0.8rem; font-weight: 600;">
-                            <i class="fas fa-copy me-1"></i>Copy to Clipboard
+                    <div class="d-flex justify-content-end mb-3">
+                        <button class="btn-ghost" onclick="copyResult()" style="font-size: 0.8rem; padding: 8px 16px;">
+                            <i class="fas fa-copy"></i>Copy to Clipboard
                         </button>
                     </div>
                     {{ tool_result }}
                 </div>
                 {% endif %}
 
-                <!-- LOADING -->
+                <!-- ── LOADING ── -->
                 <div class="loading-spinner" id="loadingSpinner">
-                    <div class="spinner-border text-info mb-3" style="width: 3rem; height: 3rem;"></div>
-                    <div class="text-white fw-bold">AI is analyzing...</div>
-                    <div class="text-white-50 small">Usually takes 10-20 seconds</div>
+                    <div class="spinner-ring"></div>
+                    <div class="fw-bold" style="font-size: 0.95rem; color: var(--text-primary);">AI is analyzing...</div>
+                    <div style="color: var(--text-muted); font-size: 0.82rem; margin-top: 4px;">Usually takes 10–20 seconds</div>
                 </div>
             </div>
 
-            <!-- HISTORY SIDEBAR -->
-            <div class="col-lg-4">
-                <div class="glass-card" style="padding: 24px;">
-                    <h6 class="text-white fw-bold mb-3"><i class="fas fa-clock me-2 text-info"></i>Recent Results</h6>
+            <!-- ── HISTORY SIDEBAR ── -->
+            <div class="col-lg-4 anim-fade-up anim-delay-2">
+                <div class="glass-card glass-card-sm">
+                    <h2 class="section-title mb-4">
+                        <i class="fas fa-clock" style="color: var(--primary);"></i>Recent Results
+                    </h2>
                     {% if results %}
                     {% for r in results %}
-                    <div class="history-item-sm"
-                        onclick="this.querySelector('.hist-detail').classList.toggle('d-none')">
+                    <div class="history-item-sm" onclick="this.querySelector('.hist-detail').classList.toggle('d-none')">
                         <div class="d-flex justify-content-between align-items-center">
                             <span>
-                                {% if r.result_type == 'interview' %}<i class="fas fa-comments text-info me-1"></i>
-                                {% elif r.result_type == 'followup' %}<i class="fas fa-envelope text-danger me-1"></i>
-                                {% else %}<i class="fas fa-chart-bar text-warning me-1"></i>{% endif %}
-                                {{ r.input_summary|truncatechars:30 }}
+                                {% if r.result_type == 'interview' %}<i class="fas fa-comments" style="color: var(--primary); margin-right: 5px;"></i>
+                                {% elif r.result_type == 'followup' %}<i class="fas fa-envelope" style="color: var(--secondary); margin-right: 5px;"></i>
+                                {% else %}<i class="fas fa-chart-bar" style="color: var(--warning); margin-right: 5px;"></i>{% endif %}
+                                {{ r.input_summary|truncatechars:28 }}
                             </span>
-                            <small class="text-white-50">{{ r.created_at|date:"M d" }}</small>
+                            <small style="color: var(--text-muted); font-family: var(--font-mono); font-size: 0.72rem; margin-left: 8px; flex-shrink: 0;">
+                                {{ r.created_at|date:"M d" }}
+                            </small>
                         </div>
                         <div class="hist-detail d-none mt-2"
-                            style="white-space: pre-wrap; font-size: 0.8rem; color: #94a3b8; max-height: 200px; overflow-y: auto;">
-                            {{ r.result|truncatechars:500 }}</div>
+                            style="white-space: pre-wrap; font-size: 0.78rem; color: var(--text-secondary); max-height: 200px; overflow-y: auto; line-height: 1.6;">
+                            {{ r.result|truncatechars:500 }}
+                        </div>
                     </div>
                     {% endfor %}
                     {% else %}
-                    <div class="text-center text-white-50 py-4">
-                        <i class="fas fa-inbox d-block mb-2" style="font-size: 1.5rem; opacity: 0.3;"></i>
-                        <small>No results yet. Try a tool!</small>
+                    <div class="empty-state-v2" style="padding: 32px 16px;">
+                        <div class="empty-icon-box" style="width: 48px; height: 48px;">
+                            <i class="fas fa-inbox" style="color: var(--text-muted); font-size: 1.2rem;"></i>
+                        </div>
+                        <div class="empty-title" style="font-size: 0.88rem;">No results yet</div>
+                        <p class="empty-desc" style="font-size: 0.78rem;">Try a tool!</p>
                     </div>
                     {% endif %}
                 </div>
@@ -551,15 +390,11 @@
     </div>
 
     <script>
-        function showTool(name) {
+        function showTool(name, el) {
             document.querySelectorAll('.tool-panel').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.tool-tab').forEach(t => t.classList.remove('active'));
             document.getElementById('panel-' + name).classList.add('active');
-            event.target.closest('.tool-tab').classList.add('active');
-        }
-
-        function showLoading() {
-            document.getElementById('loadingSpinner').classList.add('show');
+            el.classList.add('active');
         }
 
         function toggleMobileNav() {
@@ -573,7 +408,7 @@
                 navigator.clipboard.writeText(box.innerText).then(() => {
                     showToast('Copied to clipboard!', 'success');
                 }).catch(() => {
-                    showToast('Failed to copy. Try selecting the text manually.', 'danger');
+                    showToast('Failed to copy. Please select the text manually.', 'danger');
                 });
             }
         }
@@ -582,13 +417,12 @@
             const toast = document.createElement('div');
             const icons = {success:'check-circle', warning:'exclamation-triangle', danger:'times-circle'};
             toast.className = 'toast-notification toast-' + type;
-            toast.innerHTML = '<i class="fas fa-' + (icons[type] || 'info-circle') + ' me-2"></i>' + message;
+            toast.innerHTML = '<i class="fas fa-' + (icons[type] || 'info-circle') + '"></i>' + message;
             document.body.appendChild(toast);
             setTimeout(() => toast.classList.add('show'), 10);
             setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 4000);
         }
 
-        // AJAX tool form submission with graceful error handling
         const TOOL_URLS = {
             interview: '{% url "interview_prep" %}',
             followup:  '{% url "followup_email" %}',
@@ -599,83 +433,39 @@
             event.preventDefault();
             const form = event.target;
             const btn = form.querySelector('button[type=submit]');
-            const origBtn = btn.innerHTML;
+            const origHTML = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Generating...';
             document.getElementById('loadingSpinner').classList.add('show');
 
             const formData = new FormData(form);
             formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
             try {
-                const resp = await fetch(TOOL_URLS[toolName], {
-                    method: 'POST',
-                    body: formData,
-                });
-
+                const resp = await fetch(TOOL_URLS[toolName], { method: 'POST', body: formData });
                 if (resp.status === 429) {
                     let msg = 'Too many requests. Please wait a minute.';
                     try { const d = await resp.json(); msg = d.error || msg; } catch(e) {}
                     showToast(msg, 'warning');
-                    btn.disabled = false;
-                    btn.innerHTML = origBtn;
+                    btn.disabled = false; btn.innerHTML = origHTML;
                     document.getElementById('loadingSpinner').classList.remove('show');
                     return;
                 }
-
                 if (resp.ok || resp.redirected) {
                     const html = await resp.text();
                     document.open(); document.write(html); document.close();
                 } else {
                     showToast('Server error (' + resp.status + '). Please try again.', 'danger');
-                    btn.disabled = false;
-                    btn.innerHTML = origBtn;
+                    btn.disabled = false; btn.innerHTML = origHTML;
                     document.getElementById('loadingSpinner').classList.remove('show');
                 }
             } catch(err) {
                 showToast('Connection failed. Is the AI service running?', 'danger');
-                btn.disabled = false;
-                btn.innerHTML = origBtn;
+                btn.disabled = false; btn.innerHTML = origHTML;
                 document.getElementById('loadingSpinner').classList.remove('show');
             }
         }
     </script>
-
-    <style>
-        .toast-notification {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            padding: 16px 24px;
-            border-radius: 14px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: white;
-            z-index: 9999;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.3s ease;
-            backdrop-filter: blur(20px);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
-        }
-
-        .toast-notification.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .toast-success {
-            background: rgba(34, 197, 94, 0.9);
-        }
-
-        .toast-warning {
-            background: rgba(234, 179, 8, 0.9);
-        }
-
-        .toast-danger {
-            background: rgba(239, 68, 68, 0.9);
-        }
-    </style>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

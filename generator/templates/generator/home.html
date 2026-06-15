@@ -14,6 +14,8 @@
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Montserrat:wght@300;400;600;700;800&family=Merriweather:wght@300;400;700&family=Playfair+Display:wght@400;600;700;800&family=Lora:wght@400;500;600;700&family=Raleway:wght@300;400;600;700;800&family=Nunito:wght@300;400;600;700;800&family=EB+Garamond:wght@400;500;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <!-- Global Design System -->
+    <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}">
     <!-- Resume Studio Styles -->
     {% include 'generator/partials/studio_styles.html' %}
 
@@ -138,16 +140,9 @@
             box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
         }
 
-        /* HAMBURGER MENU */
+        /* HAMBURGER MENU — overridden by global CSS */
         .hamburger-btn {
             display: none;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 6px;
-            z-index: 1001;
         }
 
         .mobile-drawer {
@@ -362,12 +357,12 @@
     <!-- STICKY NAVBAR -->
     <nav class="navbar-custom">
         <a href="{% url 'home' %}" class="logo-text">
-            <i class="fas fa-cube" style="-webkit-text-fill-color: var(--primary);"></i>
+            <i class="fas fa-cube"></i>
             CV<span style="-webkit-text-fill-color: var(--secondary);">AI</span>
         </a>
 
         {% if user.is_authenticated %}
-        <div class="nav-actions">
+        <div class="nav-group nav-actions">
             {% if user.profile.plan == 'free' %}
             <span class="gen-counter">
                 <i class="fas fa-bolt me-1"></i>
@@ -376,7 +371,7 @@
             <a href="{% url 'pricing' %}" class="btn-upgrade">Upgrade ⚡</a>
             {% else %}
             <span class="gen-counter"
-                style="border-color: rgba(255,215,0,0.4); color: #fcd34d; background: rgba(255,215,0,0.08);">
+                style="border-color: rgba(245,158,11,0.4); color: #fcd34d; background: rgba(245,158,11,0.08);">
                 <i class="fas fa-crown me-1"></i> {{ user.profile.plan|upper }}
             </span>
             {% endif %}
@@ -386,7 +381,7 @@
             <a href="{% url 'history' %}" class="nav-link-item">History</a>
             <a href="{% url 'pricing' %}" class="nav-link-item">Pricing</a>
             <a href="{% url 'profile' %}" class="user-badge">
-                <i class="fas fa-user me-2" style="color: var(--primary);"></i>{{ user.username }}
+                <i class="fas fa-user"></i>{{ user.username }}
             </a>
         </div>
         <button class="hamburger-btn" onclick="toggleMobileNav()">
@@ -399,29 +394,28 @@
     {% if user.is_authenticated %}
     <div class="mobile-backdrop" id="mobileBackdrop" onclick="toggleMobileNav()"></div>
     <div class="mobile-drawer" id="mobileDrawer">
-        <button class="drawer-close-btn" onclick="toggleMobileNav()"><i class="fas fa-times"></i></button>
-        <div class="drawer-plan-badge">
+        <div class="drawer-header">
+            <span class="logo-text" style="font-size:1.1rem;">CV<span style="-webkit-text-fill-color:var(--secondary);">AI</span></span>
+            <button class="drawer-close-btn" onclick="toggleMobileNav()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="drawer-nav-section">
             {% if user.profile.plan == 'free' %}
-            <i class="fas fa-bolt me-1"></i>{{ user.profile.generations_count }} / {{ user.profile.get_limit }} gens ·
-            Free
+            <div class="drawer-plan-badge"><i class="fas fa-bolt me-1"></i>{{ user.profile.generations_count }} / {{ user.profile.get_limit }} · Free</div>
             {% else %}
-            <i class="fas fa-crown me-1"></i> {{ user.profile.plan|upper }} Plan
+            <div class="drawer-plan-badge" style="color: var(--gold); background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.2);"><i class="fas fa-crown me-1"></i>{{ user.profile.plan|upper }} Plan</div>
+            {% endif %}
+            <a href="{% url 'home' %}" class="nav-link-item active"><i class="fas fa-pen-ruler"></i>Resume Studio</a>
+            <a href="{% url 'dashboard' %}" class="nav-link-item"><i class="fas fa-chart-pie"></i>Dashboard</a>
+            <a href="{% url 'tools' %}" class="nav-link-item"><i class="fas fa-wand-magic-sparkles"></i>AI Tools</a>
+            <a href="{% url 'tracker' %}" class="nav-link-item"><i class="fas fa-briefcase"></i>Tracker</a>
+            <a href="{% url 'history' %}" class="nav-link-item"><i class="fas fa-clock-rotate-left"></i>History</a>
+            <div class="drawer-divider"></div>
+            <a href="{% url 'pricing' %}" class="nav-link-item"><i class="fas fa-tags"></i>Pricing</a>
+            <a href="{% url 'profile' %}" class="nav-link-item"><i class="fas fa-user"></i>{{ user.username }}</a>
+            {% if user.profile.plan == 'free' %}
+            <a href="{% url 'pricing' %}" class="btn-upgrade mt-2" style="display:flex; justify-content:center; border-radius:var(--radius-sm); text-decoration:none; padding:11px;">Upgrade to Pro ⚡</a>
             {% endif %}
         </div>
-        <a href="{% url 'home' %}" class="nav-link-item" style="color:var(--primary);"><i
-                class="fas fa-pen-ruler me-2"></i>Resume Studio</a>
-        <a href="{% url 'dashboard' %}" class="nav-link-item"><i class="fas fa-chart-pie me-2"></i>Dashboard</a>
-        <a href="{% url 'tools' %}" class="nav-link-item"><i class="fas fa-wand-magic-sparkles me-2"></i>AI Tools</a>
-        <a href="{% url 'tracker' %}" class="nav-link-item"><i class="fas fa-briefcase me-2"></i>Tracker</a>
-        <a href="{% url 'history' %}" class="nav-link-item"><i class="fas fa-clock-rotate-left me-2"></i>History</a>
-        <div class="drawer-divider"></div>
-        <a href="{% url 'pricing' %}" class="nav-link-item"><i class="fas fa-tags me-2"></i>Pricing</a>
-        <a href="{% url 'profile' %}" class="nav-link-item"><i class="fas fa-user me-2"></i>{{ user.username }}</a>
-        {% if user.profile.plan == 'free' %}
-        <a href="{% url 'pricing' %}" class="btn-upgrade"
-            style="display:block; text-align:center; margin-top:12px; padding:12px; border-radius:12px; text-decoration:none;">Upgrade
-            to Pro ⚡</a>
-        {% endif %}
     </div>
     {% endif %}
 

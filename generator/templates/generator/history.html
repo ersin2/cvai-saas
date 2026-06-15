@@ -10,283 +10,103 @@
         content="Review your AI-generated cover letters, see past results, and reuse your best letters for new applications.">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}">
+
     <style>
-        :root {
-            --primary: #4cc9f0;
-            --secondary: #f72585;
-            --dark-bg: #0a0e17;
-            --glass: rgba(255, 255, 255, 0.03);
-            --border: rgba(255, 255, 255, 0.1);
-        }
-
-        body {
-            background-color: var(--dark-bg);
-            font-family: 'Outfit', sans-serif;
-            color: #e2e8f0;
-            min-height: 100vh;
-            background-image:
-                radial-gradient(circle at 10% 20%, rgba(76, 201, 240, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(247, 37, 133, 0.15) 0%, transparent 40%);
-        }
-
-        .navbar-custom {
-            padding: 18px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            margin-bottom: 40px;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: rgba(10, 14, 23, 0.85);
-            backdrop-filter: blur(20px);
-        }
-
-        .logo-text {
-            font-family: 'JetBrains Mono', monospace;
-            font-weight: 700;
-            font-size: 1.4rem;
-            background: linear-gradient(90deg, #fff, var(--primary));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .nav-link-item {
-            color: #94a3b8;
-            text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 600;
-            padding: 6px 12px;
-            border-radius: 8px;
-            transition: 0.2s;
-        }
-
-        .nav-link-item:hover {
-            color: white;
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .glass-card {
-            background: rgba(20, 25, 40, 0.7);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 24px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            padding: 40px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .glass-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--primary), var(--secondary), transparent);
-        }
-
+        /* ── HISTORY ITEM ── */
         .history-item {
-            background: rgba(0, 0, 0, 0.25);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 16px;
-            padding: 20px 24px;
-            margin-bottom: 16px;
-            transition: 0.3s;
+            background: rgba(0, 0, 0, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius-md);
+            padding: 18px 22px;
+            margin-bottom: 10px;
+            transition: border-color var(--transition-base), background var(--transition-base), box-shadow var(--transition-base);
             cursor: pointer;
         }
 
         .history-item:hover {
-            border-color: rgba(76, 201, 240, 0.3);
-            background: rgba(0, 0, 0, 0.35);
-        }
-
-        .history-meta {
-            font-size: 0.8rem;
-            color: #64748b;
+            border-color: rgba(76, 201, 240, 0.25);
+            background: rgba(0, 0, 0, 0.26);
+            box-shadow: 0 6px 24px rgba(0,0,0,0.2);
         }
 
         .history-company {
             color: var(--primary);
             font-weight: 700;
-            font-size: 1.05rem;
+            font-size: 1rem;
         }
 
-        .history-title {
-            color: #94a3b8;
+        .history-title-text {
+            color: var(--text-secondary);
             font-size: 0.88rem;
         }
 
+        .history-meta {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+
         .history-preview {
-            color: #475569;
-            font-size: 0.85rem;
-            margin-top: 8px;
-            line-height: 1.5;
+            color: var(--text-muted);
+            font-size: 0.84rem;
+            margin-top: 10px;
+            line-height: 1.6;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .history-full {
+            white-space: pre-wrap;
+            color: #cbd5e1;
+            font-size: 0.88rem;
+            line-height: 1.75;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 16px;
+            margin-top: 12px;
         }
 
         .badge-tone {
-            background: rgba(247, 37, 133, 0.12);
+            background: var(--secondary-dim);
             color: var(--secondary);
+            border: 1px solid rgba(247,37,133,0.2);
             font-size: 0.72rem;
             font-weight: 700;
             padding: 3px 10px;
-            border-radius: 6px;
+            border-radius: 99px;
+            letter-spacing: 0.02em;
         }
 
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #475569;
-        }
-
-        .empty-icon {
-            font-size: 3rem;
-            margin-bottom: 16px;
-            opacity: 0.3;
-        }
-
-        .btn-del-hist {
-            background: rgba(247, 37, 133, 0.08);
-            border: 1px solid rgba(247, 37, 133, 0.2);
-            color: #f72585;
-            border-radius: 8px;
-            padding: 4px 9px;
+        .expand-indicator {
             font-size: 0.75rem;
-            line-height: 1;
-            transition: background 0.2s, color 0.2s, border-color 0.2s;
-            cursor: pointer;
-        }
-        .btn-del-hist:hover {
-            background: rgba(247, 37, 133, 0.22);
-            border-color: #f72585;
-            color: #ff6bae;
-        }
-
-
-        /* HAMBURGER MENU */
-        .hamburger-btn {
-            display: none;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 6px;
-            z-index: 1001;
-        }
-
-        .mobile-drawer {
-            position: fixed;
-            top: 0;
-            right: -300px;
-            width: 280px;
-            height: 100vh;
-            background: rgba(15, 20, 35, 0.98);
-            backdrop-filter: blur(30px);
-            z-index: 1000;
-            transition: right 0.3s ease;
-            padding: 80px 24px 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            border-left: 1px solid rgba(255, 255, 255, 0.08);
-            overflow-y: auto;
-        }
-
-        .mobile-drawer.open {
-            right: 0;
-        }
-
-        .mobile-drawer .nav-link-item {
-            display: block;
-            padding: 14px 16px;
-            font-size: 1rem;
-            border-radius: 12px;
-        }
-
-        .mobile-drawer .nav-link-item:hover {
-            background: rgba(76, 201, 240, 0.08);
-        }
-
-        .mobile-drawer .drawer-divider {
-            height: 1px;
-            background: rgba(255, 255, 255, 0.06);
-            margin: 12px 0;
-        }
-
-        .mobile-backdrop {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-        }
-
-        .mobile-backdrop.open {
-            display: block;
-        }
-
-        .drawer-close-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.08);
-            border: none;
-            color: white;
-            font-size: 1.2rem;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            cursor: pointer;
+            color: var(--text-muted);
+            margin-top: 8px;
             display: flex;
             align-items: center;
-            justify-content: center;
-        }
-
-        @media (max-width: 768px) {
-            .hamburger-btn {
-                display: block;
-            }
-
-            .desktop-nav {
-                display: none !important;
-            }
-
-            .navbar-custom {
-                padding: 14px 16px;
-            }
+            gap: 5px;
         }
     </style>
 </head>
 
 <body>
 
+    <!-- NAVBAR -->
     <nav class="navbar-custom">
         <a href="{% url 'home' %}" class="logo-text">
-            <i class="fas fa-cube" style="-webkit-text-fill-color: var(--primary);"></i>
-            CV<span style="-webkit-text-fill-color: var(--secondary);">AI</span>
+            <i class="fas fa-cube"></i>CV<span style="-webkit-text-fill-color: var(--secondary);">AI</span>
         </a>
-        <div class="desktop-nav" style="display:flex; align-items:center; gap:12px;">
-            <a href="{% url 'home' %}" class="nav-link-item">Generator</a>
+        <div class="nav-group desktop-nav">
+            <a href="{% url 'home' %}"      class="nav-link-item">Generator</a>
             <a href="{% url 'dashboard' %}" class="nav-link-item">Dashboard</a>
-            <a href="{% url 'tools' %}" class="nav-link-item">AI Tools</a>
-            <a href="{% url 'tracker' %}" class="nav-link-item">Tracker</a>
-            <a href="{% url 'history' %}" class="nav-link-item"
-                style="color: var(--primary); background: rgba(76,201,240,0.1);">History</a>
-            <a href="{% url 'profile' %}" class="nav-link-item"><i class="fas fa-user me-1"></i>{{ user.username }}</a>
+            <a href="{% url 'tools' %}"     class="nav-link-item">AI Tools</a>
+            <a href="{% url 'tracker' %}"   class="nav-link-item">Tracker</a>
+            <a href="{% url 'history' %}"   class="nav-link-item active">History</a>
+            <a href="{% url 'profile' %}"   class="user-badge">
+                <i class="fas fa-user"></i>{{ user.username }}
+            </a>
         </div>
         <button class="hamburger-btn" onclick="toggleMobileNav()"><i class="fas fa-bars"></i></button>
     </nav>
@@ -294,78 +114,104 @@
     <!-- MOBILE DRAWER -->
     <div class="mobile-backdrop" id="mobileBackdrop" onclick="toggleMobileNav()"></div>
     <div class="mobile-drawer" id="mobileDrawer">
-        <button class="drawer-close-btn" onclick="toggleMobileNav()"><i class="fas fa-times"></i></button>
-        <a href="{% url 'home' %}" class="nav-link-item"><i class="fas fa-pen-nib me-2"></i>Generator</a>
-        <a href="{% url 'dashboard' %}" class="nav-link-item"><i class="fas fa-chart-pie me-2"></i>Dashboard</a>
-        <a href="{% url 'tools' %}" class="nav-link-item"><i class="fas fa-wand-magic-sparkles me-2"></i>AI Tools</a>
-        <a href="{% url 'tracker' %}" class="nav-link-item"><i class="fas fa-briefcase me-2"></i>Tracker</a>
-        <a href="{% url 'history' %}" class="nav-link-item" style="color:var(--primary);"><i
-                class="fas fa-clock-rotate-left me-2"></i>History</a>
-        <div class="drawer-divider"></div>
-        <a href="{% url 'pricing' %}" class="nav-link-item"><i class="fas fa-tags me-2"></i>Pricing</a>
-        <a href="{% url 'profile' %}" class="nav-link-item"><i class="fas fa-user me-2"></i>{{ user.username }}</a>
+        <div class="drawer-header">
+            <span class="logo-text" style="font-size:1.1rem;">CV<span style="-webkit-text-fill-color:var(--secondary);">AI</span></span>
+            <button class="drawer-close-btn" onclick="toggleMobileNav()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="drawer-nav-section">
+            <a href="{% url 'home' %}"      class="nav-link-item"><i class="fas fa-pen-ruler"></i>Generator</a>
+            <a href="{% url 'dashboard' %}" class="nav-link-item"><i class="fas fa-chart-pie"></i>Dashboard</a>
+            <a href="{% url 'tools' %}"     class="nav-link-item"><i class="fas fa-wand-magic-sparkles"></i>AI Tools</a>
+            <a href="{% url 'tracker' %}"   class="nav-link-item"><i class="fas fa-briefcase"></i>Tracker</a>
+            <a href="{% url 'history' %}"   class="nav-link-item active"><i class="fas fa-clock-rotate-left"></i>History</a>
+            <div class="drawer-divider"></div>
+            <a href="{% url 'pricing' %}"   class="nav-link-item"><i class="fas fa-tags"></i>Pricing</a>
+            <a href="{% url 'profile' %}"   class="nav-link-item"><i class="fas fa-user"></i>{{ user.username }}</a>
+        </div>
     </div>
 
-    <div class="container pb-5">
-        <div class="row justify-content-center">
-            <div class="col-lg-9 col-xl-8">
+    <!-- PAGE CONTENT -->
+    <div class="container pb-5" style="max-width: 860px;">
 
-                <div class="glass-card">
-                    <div class="d-flex align-items-center justify-content-between mb-4">
-                        <div>
-                            <h4 class="text-white fw-bold m-0"><i class="fas fa-clock-rotate-left me-2"
-                                    style="color: var(--primary);"></i>Generation History</h4>
-                            <div class="text-white-50 mt-1" style="font-size: 0.85rem;">Your last {{ generations|length
-                                }} AI cover letters</div>
-                        </div>
-                    </div>
+        <!-- PAGE HEADER -->
+        <div class="page-header anim-fade-up">
+            <h1 class="page-title"><i class="fas fa-clock-rotate-left"></i> Generation History</h1>
+            <p class="page-subtitle">
+                {% if generations %}Your last {{ generations|length }} AI cover letters{% else %}No generations yet{% endif %}
+            </p>
+        </div>
 
-                    {% if generations %}
-                    {% for gen in generations %}
-                    <div class="history-item" id="hist-{{ gen.id }}"
-                         onclick="this.querySelector('.history-full').classList.toggle('d-none')">
-                        <div class="d-flex align-items-center justify-content-between mb-2">
-                            <div>
-                                <span class="history-company">{{ gen.company_name|default:"Unknown Company" }}</span>
-                                <span class="history-title ms-2">&middot; {{ gen.job_title|default:"Position" }}</span>
-                            </div>
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="badge-tone">{{ gen.tone }}</span>
-                                <span class="history-meta">{{ gen.created_at|date:"M d, Y H:i" }}</span>
-                                <button class="btn btn-del-hist"
-                                        title="Delete"
-                                        onclick="event.stopPropagation(); deleteGeneration({{ gen.id }})">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
-                            </div>
+        <!-- HISTORY CARD -->
+        <div class="glass-card anim-fade-up anim-delay-1">
+
+            {% if generations %}
+            {% for gen in generations %}
+            <div class="history-item" id="hist-{{ gen.id }}"
+                 onclick="toggleHistoryItem(this)">
+                <div class="d-flex align-items-start justify-content-between gap-3">
+                    <div style="min-width: 0;">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="history-company">{{ gen.company_name|default:"Unknown Company" }}</span>
+                            <span class="history-title-text">· {{ gen.job_title|default:"Position" }}</span>
                         </div>
                         <div class="history-preview">{{ gen.result|truncatechars:200 }}</div>
-                        <div class="history-full d-none mt-3"
-                            style="white-space: pre-wrap; color: #cbd5e1; font-size: 0.9rem; line-height: 1.7; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 16px;">
-                            {{ gen.result }}</div>
-                    </div>
-                    {% endfor %}
-                    {% else %}
-                    <div class="empty-state">
-                        <div style="width:80px; height:80px; margin:0 auto 20px; border-radius:20px; background:linear-gradient(135deg, rgba(76,201,240,0.1), rgba(247,37,133,0.1)); display:flex; align-items:center; justify-content:center;">
-                            <i class="fas fa-rocket" style="font-size:2rem; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip:text; -webkit-text-fill-color:transparent;"></i>
+                        <div class="history-full d-none">{{ gen.result }}</div>
+                        <div class="expand-indicator">
+                            <i class="fas fa-chevron-down expand-icon" style="transition: transform 0.25s;"></i>
+                            Click to expand
                         </div>
-                        <h5 class="text-white fw-bold" style="margin-bottom:8px;">Your FAANG-level resume is waiting to be created</h5>
-                        <p style="color:#64748b; max-width:360px; margin:0 auto 20px; font-size:0.88rem; line-height:1.6;">Generate your first AI-powered cover letter or resume and it will appear here for easy access.</p>
-                        <a href="{% url 'home' %}" class="btn mt-1"
-                            style="background: linear-gradient(135deg, #4361ee, #4cc9f0); color:white; border-radius:12px; padding:12px 32px; font-weight:700; font-size:0.88rem; border:none; box-shadow: 0 8px 24px rgba(67,97,238,0.25); transition:0.3s;">
-                            <i class="fas fa-magic me-2"></i>Start Generating
-                        </a>
                     </div>
-                    {% endif %}
-
+                    <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                        <span class="badge-tone">{{ gen.tone }}</span>
+                        <span class="history-meta">{{ gen.created_at|date:"M d, Y" }}</span>
+                        <button class="btn-danger-sm"
+                                title="Delete"
+                                onclick="event.stopPropagation(); deleteGeneration({{ gen.id }})">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
+            {% endfor %}
+
+            {% else %}
+            <div class="empty-state-v2">
+                <div class="empty-icon-box">
+                    <i class="fas fa-rocket" style="color: var(--primary);"></i>
+                </div>
+                <div class="empty-title">Your FAANG-level resume is waiting</div>
+                <p class="empty-desc">Generate your first AI-powered cover letter and it will appear here for easy access.</p>
+                <a href="{% url 'home' %}" class="btn-primary-grad">
+                    <i class="fas fa-magic me-2"></i>Start Generating
+                </a>
+            </div>
+            {% endif %}
+
         </div>
     </div>
 
     <script>
         const CSRF = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+
+        function toggleHistoryItem(item) {
+            const full = item.querySelector('.history-full');
+            const preview = item.querySelector('.history-preview');
+            const icon = item.querySelector('.expand-icon');
+            const indicator = item.querySelector('.expand-indicator');
+            const isOpen = !full.classList.contains('d-none');
+
+            if (isOpen) {
+                full.classList.add('d-none');
+                preview.style.display = '';
+                icon.style.transform = 'rotate(0deg)';
+                indicator.childNodes[1].textContent = ' Click to expand';
+            } else {
+                full.classList.remove('d-none');
+                preview.style.display = 'none';
+                icon.style.transform = 'rotate(180deg)';
+                indicator.childNodes[1].textContent = ' Click to collapse';
+            }
+        }
 
         async function deleteGeneration(pk) {
             if (!confirm('Delete this generation? This cannot be undone.')) return;
@@ -380,12 +226,16 @@
                 const data = await resp.json();
                 if (data.ok) {
                     const card = document.getElementById('hist-' + pk);
-                    card.style.transition = 'opacity 0.4s ease, max-height 0.4s ease, margin 0.4s ease';
+                    card.style.transition = 'opacity 0.35s ease, max-height 0.35s ease, margin 0.35s ease, padding 0.35s ease';
                     card.style.overflow = 'hidden';
-                    card.style.opacity = '0';
-                    card.style.maxHeight = '0';
-                    card.style.marginBottom = '0';
-                    setTimeout(() => card.remove(), 420);
+                    card.style.maxHeight = card.offsetHeight + 'px';
+                    requestAnimationFrame(() => {
+                        card.style.opacity = '0';
+                        card.style.maxHeight = '0';
+                        card.style.marginBottom = '0';
+                        card.style.padding = '0';
+                    });
+                    setTimeout(() => card.remove(), 370);
                     showToast('Generation deleted.', 'success');
                 } else {
                     showToast('Could not delete: ' + (data.error || 'Unknown error'), 'danger');
@@ -404,27 +254,12 @@
             const toast = document.createElement('div');
             const icons = {success:'check-circle', warning:'exclamation-triangle', danger:'times-circle'};
             toast.className = 'toast-notification toast-' + type;
-            toast.innerHTML = '<i class="fas fa-' + (icons[type] || 'info-circle') + ' me-2"></i>' + message;
+            toast.innerHTML = '<i class="fas fa-' + (icons[type] || 'info-circle') + '"></i>' + message;
             document.body.appendChild(toast);
             setTimeout(() => toast.classList.add('show'), 10);
             setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 4000);
         }
     </script>
-
-    <style>
-        .toast-notification {
-            position: fixed; bottom: 30px; right: 30px;
-            padding: 16px 24px; border-radius: 14px;
-            font-size: 0.9rem; font-weight: 600; color: white;
-            z-index: 9999; opacity: 0; transform: translateY(20px);
-            transition: all 0.3s ease; backdrop-filter: blur(20px);
-            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
-        }
-        .toast-notification.show { opacity:1; transform:translateY(0); }
-        .toast-success { background: rgba(34,197,94,0.9); }
-        .toast-warning { background: rgba(234,179,8,0.9); }
-        .toast-danger  { background: rgba(239,68,68,0.9); }
-    </style>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

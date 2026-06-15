@@ -10,186 +10,156 @@
         content="Sign in to CVAI and continue generating AI-powered cover letters, tracking applications, and acing interviews.">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}">
 
     <style>
-        :root {
-            --primary: #4cc9f0;
-            --secondary: #f72585;
-            --dark-bg: #0a0e17;
-        }
-
         body {
-            background-color: var(--dark-bg);
-            font-family: 'Outfit', sans-serif;
-            color: #e2e8f0;
-            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background-image:
-                radial-gradient(circle at 20% 30%, rgba(76, 201, 240, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 80% 70%, rgba(247, 37, 133, 0.06) 0%, transparent 50%);
+            min-height: 100vh;
+            padding: 20px;
         }
 
         .auth-container {
             width: 100%;
             max-width: 460px;
-            padding: 20px;
+            animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
 
-        .glass-card {
-            background: rgba(20, 25, 40, 0.7);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 24px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            padding: 40px;
+        .auth-card {
+            background: rgba(14, 18, 32, 0.92);
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            box-shadow: 0 32px 80px -12px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04);
+            padding: 44px 40px 40px;
             position: relative;
             overflow: hidden;
         }
 
-        .glass-card::before {
+        .auth-card::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, var(--secondary), var(--primary));
+            top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, var(--secondary), var(--primary), var(--secondary));
+            background-size: 200% 100%;
+            animation: shimmer 3s linear infinite;
         }
 
-        .form-control {
-            background: rgba(0, 0, 0, 0.3) !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            color: #fff !important;
-            padding: 14px 16px;
-            border-radius: 14px;
-            font-size: 0.95rem;
-        }
-
-        .form-control:focus {
-            border-color: var(--primary) !important;
-            box-shadow: 0 0 0 3px rgba(76, 201, 240, 0.12);
-        }
-
-        .btn-neon {
-            background: linear-gradient(135deg, #4361ee, #f72585);
-            border: none;
-            color: white;
-            padding: 15px;
-            width: 100%;
-            border-radius: 14px;
-            font-weight: 700;
-            font-size: 1rem;
-            letter-spacing: 0.5px;
-            transition: 0.3s;
-        }
-
-        .btn-neon:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(247, 37, 133, 0.3);
-            color: white;
-        }
-
-        .logo {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 1.6rem;
+        /* Logo */
+        .auth-logo {
+            font-family: var(--font-mono);
+            font-size: 1.7rem;
             font-weight: 700;
             text-align: center;
-            margin-bottom: 6px;
-            display: block;
             text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 6px;
         }
 
-        .logo-cv {
+        .auth-subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            margin-bottom: 28px;
+        }
+
+        /* Social proof */
+        .social-proof {
+            background: var(--primary-dim);
+            border: 1px solid rgba(76, 201, 240, 0.15);
+            border-radius: var(--radius-md);
+            padding: 14px 20px;
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .social-proof-count {
+            font-family: var(--font-mono);
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1;
+        }
+
+        .social-proof-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-top: 3px;
+        }
+
+        /* Submit button */
+        .btn-auth {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, #4361ee, var(--secondary));
             color: white;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast), opacity var(--transition-fast);
+            letter-spacing: 0.3px;
         }
 
-        .logo-ai {
-            color: var(--secondary);
+        .btn-auth:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 36px rgba(247, 37, 133, 0.35);
+            opacity: 0.94;
         }
 
+        .btn-auth:active {
+            transform: translateY(0);
+        }
+
+        /* Trust bar */
         .trust-bar {
             display: flex;
             justify-content: center;
             gap: 24px;
             margin-top: 24px;
             padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            flex-wrap: wrap;
         }
 
         .trust-item {
             display: flex;
             align-items: center;
             gap: 6px;
-            font-size: 0.78rem;
-            color: #64748b;
+            font-size: 0.76rem;
+            color: var(--text-dim);
             font-weight: 600;
         }
 
-        .trust-item i {
-            color: var(--primary);
-            font-size: 0.7rem;
-        }
+        .trust-item i { color: var(--primary); font-size: 0.75rem; }
 
-        .social-proof {
-            text-align: center;
-            margin-bottom: 24px;
-            padding: 14px;
-            background: rgba(76, 201, 240, 0.04);
-            border: 1px solid rgba(76, 201, 240, 0.1);
-            border-radius: 14px;
-        }
-
-        .social-proof-count {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 1.3rem;
-            font-weight: 800;
-            color: var(--primary);
-        }
-
-        .social-proof-text {
-            font-size: 0.82rem;
-            color: #64748b;
-            font-weight: 600;
-        }
-
-        .input-group-icon {
-            position: relative;
-        }
-
-        .input-group-icon i {
-            position: absolute;
-            left: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #475569;
-            font-size: 0.9rem;
-        }
-
-        .input-group-icon input {
-            padding-left: 44px;
-        }
-
+        /* Back link */
         .back-link {
             display: block;
             text-align: center;
-            margin: 16px 0 0;
-            font-size: 0.85rem;
+            margin-top: 18px;
         }
 
         .back-link a {
-            color: #64748b;
+            color: var(--text-muted);
             text-decoration: none;
-            transition: 0.2s;
+            font-size: 0.84rem;
+            transition: color var(--transition-fast);
         }
 
-        .back-link a:hover {
-            color: var(--primary);
+        .back-link a:hover { color: var(--primary); }
+
+        @media (max-width: 480px) {
+            .auth-card { padding: 32px 24px 28px; border-radius: var(--radius-lg); }
         }
     </style>
 </head>
@@ -197,43 +167,62 @@
 <body>
 
     <div class="auth-container">
-        <div class="glass-card">
-            <a href="{% url 'landing' %}" class="logo"><i class="fas fa-cube text-info me-2"></i><span
-                    class="logo-cv">CV</span><span class="logo-ai">AI</span></a>
-            <p class="text-center text-white-50 mb-4" style="font-size:0.9rem;">Sign in to your account</p>
+        <div class="auth-card">
+            <!-- LOGO -->
+            <a href="{% url 'landing' %}" class="auth-logo">
+                <i class="fas fa-cube" style="-webkit-text-fill-color: var(--primary); font-size: 1.4rem;"></i>
+                <span style="color: white;">CV</span><span style="color: var(--secondary);">AI</span>
+            </a>
+            <p class="auth-subtitle">Welcome back — sign in to continue</p>
 
+            <!-- SOCIAL PROOF -->
             <div class="social-proof">
                 <div class="social-proof-count">2,400+</div>
                 <div class="social-proof-text">cover letters generated this month</div>
             </div>
 
+            <!-- ERROR -->
+            {% if form.errors %}
+            <div class="mb-3 p-3 rounded-3" style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #fca5a5; font-size: 0.88rem;">
+                <i class="fas fa-exclamation-circle me-2"></i>Invalid credentials. Please try again.
+            </div>
+            {% endif %}
+
+            <!-- FORM -->
             <form method="post">
                 {% csrf_token %}
 
-                {% if form.errors %}
-                <div class="alert alert-danger bg-danger bg-opacity-25 border-0 text-white small p-3 rounded-3 mb-3">
-                    <i class="fas fa-exclamation-circle me-2"></i>Invalid credentials. Please try again.
-                </div>
-                {% endif %}
-
-                <div class="mb-3 input-group-icon">
-                    <i class="fas fa-user"></i>
-                    <input type="text" name="username" class="form-control" placeholder="Username" required>
+                <div class="mb-3">
+                    <label class="form-label">Username</label>
+                    <div class="input-icon-wrap">
+                        <i class="fas fa-user"></i>
+                        <input type="text" name="username" id="id_username" class="form-control"
+                            placeholder="Your username" required autocomplete="username">
+                    </div>
                 </div>
 
-                <div class="mb-4 input-group-icon">
-                    <i class="fas fa-lock"></i>
-                    <input type="password" name="password" class="form-control" placeholder="Password" required>
+                <div class="mb-4">
+                    <label class="form-label">Password</label>
+                    <div class="input-icon-wrap">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" name="password" id="id_password" class="form-control"
+                            placeholder="Your password" required autocomplete="current-password">
+                    </div>
                 </div>
 
-                <button type="submit" class="btn btn-neon">Sign In <i class="fas fa-arrow-right ms-2"></i></button>
+                <button type="submit" class="btn-auth" id="btn-login">
+                    Sign In <i class="fas fa-arrow-right ms-2"></i>
+                </button>
             </form>
 
-            <div class="text-center mt-4">
-                <span class="text-white-50 small">Don't have an account?</span>
-                <a href="{% url 'register' %}" class="text-info fw-bold text-decoration-none ms-1">Sign Up Free</a>
+            <!-- REGISTER LINK -->
+            <div class="text-center mt-4" style="font-size: 0.88rem;">
+                <span style="color: var(--text-muted);">Don't have an account?</span>
+                <a href="{% url 'register' %}" class="fw-bold text-decoration-none ms-1"
+                   style="color: var(--primary);">Sign Up Free</a>
             </div>
 
+            <!-- TRUST BAR -->
             <div class="trust-bar">
                 <div class="trust-item"><i class="fas fa-shield-halved"></i>256-bit SSL</div>
                 <div class="trust-item"><i class="fas fa-lock"></i>No credit card</div>
@@ -242,7 +231,7 @@
         </div>
 
         <div class="back-link">
-            <a href="{% url 'landing' %}"><i class="fas fa-arrow-left me-1"></i> Back to homepage</a>
+            <a href="{% url 'landing' %}"><i class="fas fa-arrow-left me-1"></i>Back to homepage</a>
         </div>
     </div>
 
