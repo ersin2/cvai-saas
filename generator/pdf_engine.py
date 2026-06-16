@@ -207,7 +207,9 @@ def _build_classic_navy(req, buf):
                               textColor=C_TEXT, spaceBefore=18, spaceAfter=8, textTransform='uppercase')
     s_body  = ParagraphStyle('B', fontName='Helvetica', fontSize=10.5,
                               textColor=colors.HexColor("#34495e"), leading=16, spaceAfter=8)
-    s_bullet = ParagraphStyle('Bullet', parent=s_body, bulletIndent=10, leftIndent=20, spaceBefore=2, spaceAfter=4)
+    s_bullet = ParagraphStyle('Bullet', parent=s_body, bulletIndent=5, leftIndent=15, spaceBefore=2, spaceAfter=4)
+    s_job_title = ParagraphStyle('JT', parent=s_body, fontName='Helvetica-Bold', fontSize=11.5, spaceBefore=12, spaceAfter=2)
+    s_job_meta = ParagraphStyle('JM', parent=s_body, fontName='Helvetica', fontSize=10.5, textColor=colors.HexColor("#444444"), spaceBefore=0, spaceAfter=6)
 
     story = []
     photo_path = _process_photo(req.FILES.get('photo'))
@@ -215,15 +217,19 @@ def _build_classic_navy(req, buf):
         story.append(RLImage(photo_path, width=50*mm, height=50*mm))
         story.append(Spacer(1, 20))
 
-    story.append(Paragraph("CONTACTS", s_sb_h))
-    for lbl, val in [("LOCATION", req.POST.get('location')),
-                     ("EMAIL",    req.POST.get('email')),
-                     ("PHONE",    req.POST.get('phone')),
-                     ("LINKEDIN", req.POST.get('linkedin'))]:
-        if val:
-            story.append(Paragraph(lbl, s_sb_l))
-            story.append(Paragraph(val, s_sb_t))
-            story.append(Spacer(1, 2))
+    contacts_data = [
+        ("LOCATION", req.POST.get('location')),
+        ("EMAIL",    req.POST.get('email')),
+        ("PHONE",    req.POST.get('phone')),
+        ("LINKEDIN", req.POST.get('linkedin'))
+    ]
+    if any(val for lbl, val in contacts_data):
+        story.append(Paragraph("CONTACTS", s_sb_h))
+        for lbl, val in contacts_data:
+            if val:
+                story.append(Paragraph(lbl, s_sb_l))
+                story.append(Paragraph(val, s_sb_t))
+                story.append(Spacer(1, 2))
 
     skills = _parse_skills(req.POST.get('skills_list', ''))
     if skills:
@@ -262,9 +268,11 @@ def _build_classic_navy(req, buf):
                     # Render as proper bullet point
                     story.append(Paragraph(t[1:].strip(), s_bullet, bulletText='•'))
                 elif len(t) < 100 and ('|' in t or any(char.isdigit() for char in t)):
-                    # Job entry header
-                    story.append(Spacer(1, 8))
-                    story.append(Paragraph(f"<b>{t}</b>", s_body))
+                    # Company & Dates meta string
+                    story.append(Paragraph(f'<font color="#444444">{t}</font>', s_job_meta))
+                elif len(t) < 100:
+                    # Job Title 
+                    story.append(Paragraph(f"<b>{t}</b>", s_job_title))
                 else:
                     # Regular text paragraph
                     story.append(Paragraph(t, s_body))
