@@ -151,14 +151,18 @@
                 <div class="d-flex align-items-start justify-content-between gap-3">
                     <div style="min-width: 0;">
                         <div class="d-flex align-items-center gap-2 flex-wrap">
-                            <span class="history-company">{{ gen.company_name|default:"Unknown Company" }}</span>
-                            <span class="history-title-text">· {{ gen.job_title|default:"Position" }}</span>
+                            {% if gen.company_name or gen.job_title %}
+                                <span class="history-company">{{ gen.company_name|default:"Unknown Company" }}</span>
+                                <span class="history-title-text">· {{ gen.job_title|default:"Position" }}</span>
+                            {% else %}
+                                <span class="history-company">AI Resume Draft</span>
+                            {% endif %}
                         </div>
                         <div class="history-preview">{{ gen.result|truncatechars:200 }}</div>
                         <div class="history-full d-none">{{ gen.result }}</div>
                         <div class="expand-indicator">
                             <i class="fas fa-chevron-down expand-icon" style="transition: transform 0.25s;"></i>
-                            Click to expand
+                            <span class="expand-text">Click to expand</span>
                         </div>
                     </div>
                     <div class="d-flex align-items-center gap-2 flex-shrink-0">
@@ -197,21 +201,76 @@
             const full = item.querySelector('.history-full');
             const preview = item.querySelector('.history-preview');
             const icon = item.querySelector('.expand-icon');
-            const indicator = item.querySelector('.expand-indicator');
+            const textSpan = item.querySelector('.expand-text');
             const isOpen = !full.classList.contains('d-none');
 
             if (isOpen) {
                 full.classList.add('d-none');
                 preview.style.display = '';
                 icon.style.transform = 'rotate(0deg)';
-                indicator.childNodes[1].textContent = ' Click to expand';
+                textSpan.textContent = 'Click to expand';
             } else {
                 full.classList.remove('d-none');
                 preview.style.display = 'none';
                 icon.style.transform = 'rotate(180deg)';
-                indicator.childNodes[1].textContent = ' Click to collapse';
+                textSpan.textContent = 'Click to collapse';
             }
         }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const escapeHtml = (str) => {
+                if (!str) return '';
+                return String(str).replace(/[&<>"']/g, m => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+                }[m]));
+            };
+
+            document.querySelectorAll('.history-item').forEach(item => {
+                const fullDiv = item.querySelector('.history-full');
+                const previewDiv = item.querySelector('.history-preview');
+                const rawContent = fullDiv.textContent.trim();
+                
+                if (rawContent.startsWith('{') && rawContent.endsWith('}')) {
+                    try {
+                        const data = JSON.parse(rawContent);
+                        const name = data.full_name || 'Candidate';
+                        const summary = data.summary || 'No summary available.';
+                        
+                        // Mini preview format
+                        previewDiv.innerHTML = `<strong style="color: var(--text-1);">${escapeHtml(name)}</strong> — ${escapeHtml(summary).substring(0, 160)}...`;
+                        
+                        // Full content HTML format
+                        let fullHtml = `<strong style="font-size:1.1rem; color:var(--text-1);">${escapeHtml(name)}</strong><br>`;
+                        if (data.target_role) {
+                            fullHtml += `<span style="color:var(--primary); font-weight:600; font-size:0.9rem;">${escapeHtml(data.target_role)}</span><br>`;
+                        }
+                        fullHtml += `<div style="margin-top:12px; color:#cbd5e1;">${escapeHtml(summary)}</div>`;
+                        
+                        if (data.experience && data.experience.length > 0) {
+                            fullHtml += `<div style="margin-top:16px; font-weight:700; color:var(--text-1);">Experience</div><ul style="padding-left:20px; margin-top:6px; margin-bottom:0;">`;
+                            data.experience.forEach(exp => {
+                                fullHtml += `<li style="margin-bottom:6px;"><strong>${escapeHtml(exp.title || 'Role')}</strong> at <span style="color:var(--primary);">${escapeHtml(exp.company || 'Company')}</span></li>`;
+                            });
+                            fullHtml += `</ul>`;
+                        }
+                        
+                        if (data.skills && data.skills.length > 0) {
+                            fullHtml += `<div style="margin-top:16px; font-weight:700; color:var(--text-1);">Skills</div>`;
+                            fullHtml += `<div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">`;
+                            data.skills.forEach(skill => {
+                                let skillName = typeof skill === 'string' ? skill : (skill.name || '');
+                                fullHtml += `<span class="badge-tone" style="border-radius:4px; font-weight:600; padding:4px 8px;">${escapeHtml(skillName)}</span>`;
+                            });
+                            fullHtml += `</div>`;
+                        }
+                        
+                        fullDiv.innerHTML = fullHtml;
+                    } catch (e) {
+                        // ignore JSON parse errors
+                    }
+                }
+            });
+        });
 
         async function deleteGeneration(pk) {
             if (!confirm('Delete this generation? This cannot be undone.')) return;
