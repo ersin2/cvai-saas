@@ -2,7 +2,7 @@ import logging
 import stripe
 
 from django.shortcuts import render, redirect
-from django.contrib.auth.forms import UserCreationForm
+from .forms import UserRegisterForm
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
@@ -37,14 +37,17 @@ PLAN_DISPLAY = {
 
 def register(request):
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = UserRegisterForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
-            messages.success(request, f'Welcome, {user.username}! Your account is ready.')
+            messages.success(
+                request,
+                f'Welcome, {user.username}! Your account is ready.'
+            )
             return redirect('dashboard')
     else:
-        form = UserCreationForm()
+        form = UserRegisterForm()
     return render(request, 'users/register.html', {'form': form})
 
 
