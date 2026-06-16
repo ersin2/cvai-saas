@@ -8,7 +8,7 @@
   <!-- ════════════════════════════════════════════════════════════
        TOP CONTROL BAR  — slim, single-row command strip
        ════════════════════════════════════════════════════════════ -->
-  <div class="studio-ctrl-bar" id="studioCtrlBar">
+  <div class="studio-ctrl-bar d-flex flex-nowrap overflow-x-auto" id="studioCtrlBar" style="scrollbar-width: none;">
 
     <!-- Back link -->
     <a href="{% url 'dashboard' %}" class="ctrl-back-link" title="Back to Dashboard">
@@ -80,13 +80,13 @@
   <!-- ════════════════════════════════════════════════════════════
        MAIN STUDIO BODY  (Sidebar + Canvas)
        ════════════════════════════════════════════════════════════ -->
-  <div class="studio-body">
+  <div class="studio-body row g-0 m-0 w-100">
 
     <!-- ══════════════════════════════════════════════════════════
          LEFT SIDEBAR — THE EDITOR
          All inputs in Bootstrap 5 Accordions for clean UX
          ══════════════════════════════════════════════════════════ -->
-    <aside class="studio-sidebar" id="studioSidebar">
+    <aside class="studio-sidebar col-12 col-lg-4 col-xl-3" id="studioSidebar">
 
       <!-- Sidebar header -->
       <div class="sidebar-header">
@@ -568,7 +568,7 @@
          RIGHT CANVAS — THE WORKSPACE
          Floating A4 paper on a Figma-style gray board
          ═══════════════════════════════════════════════════════════ -->
-    <main class="studio-canvas-wrap" id="studioCanvasWrap">
+    <main class="studio-canvas-wrap col-12 col-lg-8 col-xl-9" id="studioCanvasWrap">
 
       <!-- The A4 paper (Live Preview) -->
       <div class="a4-paper tpl-classic-navy" id="a4Paper">
