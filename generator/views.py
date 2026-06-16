@@ -6,6 +6,7 @@ import json
 import tempfile
 import logging
 from pathlib import Path
+from urllib.parse import urlparse
 
 from asgiref.sync import sync_to_async          # wrap sync ORM/render calls for use in async views
 from django.conf import settings                # reads AI_SERVICE_URL
@@ -144,14 +145,14 @@ async def generate_letter(request):
     if throttled:
         return throttled
 
-    resume_text  = request.POST.get('resume', '')
-    job_desc     = request.POST.get('job_description', '')
-    company_name = request.POST.get('company_name', 'Target Company')
-    job_title    = request.POST.get('job_title_ai', 'Professional')
-    tone         = request.POST.get('tone', 'Professional')
-    language     = request.POST.get('language', 'English')
-    first_name   = request.POST.get('first_name', '').strip()
-    last_name    = request.POST.get('last_name', '').strip()
+    resume_text  = request.POST.get('resume', '')[:10000]
+    job_desc     = request.POST.get('job_description', '')[:10000]
+    company_name = request.POST.get('company_name', 'Target Company')[:200]
+    job_title    = request.POST.get('job_title_ai', 'Professional')[:200]
+    tone         = request.POST.get('tone', 'Professional')[:200]
+    language     = request.POST.get('language', 'English')[:200]
+    first_name   = request.POST.get('first_name', '').strip()[:200]
+    last_name    = request.POST.get('last_name', '').strip()[:200]
     full_name    = f"{first_name} {last_name}".strip() or "the candidate"
 
     if not profile.has_generations_left():
@@ -268,10 +269,10 @@ async def generate_resume(request):
     if throttled:
         return throttled
 
-    resume_text  = request.POST.get('resume', '')
-    language     = request.POST.get('language', 'English')
-    first_name   = request.POST.get('first_name', '').strip()
-    last_name    = request.POST.get('last_name', '').strip()
+    resume_text  = request.POST.get('resume', '')[:10000]
+    language     = request.POST.get('language', 'English')[:200]
+    first_name   = request.POST.get('first_name', '').strip()[:200]
+    last_name    = request.POST.get('last_name', '').strip()[:200]
     full_name    = f"{first_name} {last_name}".strip() or "the candidate"
 
     # ── PDF upload: extract text and prepend to typed resume text ───────
@@ -281,7 +282,8 @@ async def generate_resume(request):
             pdf_text = await sync_to_async(pdf_extract_text)(pdf_file)
             pdf_text = (pdf_text or '').strip()
             if pdf_text:
-                resume_text = f"{pdf_text}\n\n{resume_text}".strip()
+                # Combine PDF text + typed text, then re-enforce the cap
+                resume_text = f"{pdf_text}\n\n{resume_text}".strip()[:10000]
         except Exception as exc:
             logger.warning("PDF extraction failed in generate_resume: %s", exc)
 
@@ -412,6 +414,12 @@ def generate_pdf(request):
     Validates the requested template against the user's plan limits.
     """
     profile, _ = Profile.objects.get_or_create(user=request.user)
+
+    # ── Rate-limit: PDF rendering is CPU-intensive ────────────────────────
+    throttled = _check_rate_limit(request.user, profile.plan)
+    if throttled:
+        return throttled
+
     template_slug = request.POST.get('template_name', 'classic_navy')
     allowed_limit = profile.get_pdf_template_limit()
     allowed_slugs = [t['slug'] for t in TEMPLATES[:allowed_limit]]
@@ -437,10 +445,57 @@ def generate_pdf(request):
 @login_required
 @require_POST
 def scrape_job_url(request):
-    """Scrape a job posting URL and return the extracted text."""
+    """Scrape a job posting URL and return the extracted text.
+
+    Security:
+    - Rate-limited per user/plan to prevent abuse.
+    - SSRF-protected: only public http/https URLs are allowed.
+      Requests to localhost, loopback, link-local, and RFC-1918
+      private ranges are rejected with a 400 before any network call.
+    """
+    # ── Rate-limit check ─────────────────────────────────────────────────
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    throttled = _check_rate_limit(request.user, profile.plan)
+    if throttled:
+        return throttled
+
     url = request.POST.get('url', '').strip()
     if not url:
         return JsonResponse({'error': 'No URL provided'}, status=400)
+
+    # ── SSRF guard ────────────────────────────────────────────────────
+    try:
+        parsed = urlparse(url)
+    except Exception:
+        return JsonResponse({'error': 'Invalid URL.'}, status=400)
+
+    if parsed.scheme not in ('http', 'https'):
+        return JsonResponse(
+            {'error': 'Only http and https URLs are allowed.'},
+            status=400,
+        )
+
+    hostname = (parsed.hostname or '').lower()
+    _BLOCKED = (
+        'localhost',
+        '127.0.0.1',
+        '0.0.0.0',
+        '[::1]',
+        '::1',
+    )
+    _BLOCKED_PREFIXES = (
+        '192.168.',   # RFC-1918 class C
+        '10.',        # RFC-1918 class A
+        '172.16.',    # RFC-1918 class B start
+        '169.254.',   # link-local (APIPA / AWS metadata)
+    )
+    if hostname in _BLOCKED or any(hostname.startswith(p) for p in _BLOCKED_PREFIXES):
+        logger.warning("SSRF attempt blocked for URL: %s (user=%s)", url, request.user.id)
+        return JsonResponse(
+            {'error': 'Requests to internal or private network addresses are not allowed.'},
+            status=400,
+        )
+    # ── End SSRF guard ────────────────────────────────────────────────
 
     try:
         from bs4 import BeautifulSoup
@@ -454,31 +509,56 @@ def scrape_job_url(request):
             tag.decompose()
 
         text = soup.get_text(separator='\n', strip=True)
-        # Trim to reasonable length
         lines = [l.strip() for l in text.split('\n') if l.strip()]
         cleaned = '\n'.join(lines[:150])  # Max 150 lines
 
         return JsonResponse({'text': cleaned[:5000]})  # Max 5000 chars
     except Exception as e:
-        logger.warning(f"Scrape error: {e}")
+        logger.warning("Scrape error: %s", e)
         return JsonResponse({'error': 'Could not fetch that URL. Try pasting the text instead.'}, status=400)
+
 
 # === RESUME PDF PARSER ===
 @login_required
 @require_POST
 def parse_resume_pdf(request):
-    """Extract text from an uploaded PDF resume."""
+    """Extract text from an uploaded PDF resume.
+
+    Security:
+    - Rate-limited per user/plan.
+    - Magic-bytes validated: only true PDF streams (starting with b'%PDF')
+      are accepted, preventing disguised malware uploads.
+    """
+    # ── Rate-limit: pdfminer extraction can be expensive ────────────────────
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    throttled = _check_rate_limit(request.user, profile.plan)
+    if throttled:
+        return throttled
+
     pdf_file = request.FILES.get('pdf_file')
     if not pdf_file:
         return JsonResponse({'error': 'No file uploaded.'}, status=400)
 
-    # Validate file type
-    if not pdf_file.name.lower().endswith('.pdf'):
-        return JsonResponse({'error': 'Only PDF files are supported.'}, status=400)
-
-    # Validate file size (max 5MB)
+    # Validate file size (max 5MB) — check before reading any bytes
     if pdf_file.size > 5 * 1024 * 1024:
         return JsonResponse({'error': 'File too large. Maximum size is 5MB.'}, status=400)
+
+    # ── Magic bytes validation ───────────────────────────────────────────────
+    # Read the first 4 bytes and confirm the PDF signature.
+    # This catches renamed executables/scripts regardless of the file extension.
+    magic = pdf_file.read(4)
+    if magic != b'%PDF':
+        logger.warning(
+            "Rejected non-PDF upload from user=%s: magic=%r filename=%r",
+            request.user.id, magic, pdf_file.name,
+        )
+        return JsonResponse(
+            {'error': 'Invalid file format. Only real PDF files are accepted.'},
+            status=400,
+        )
+    # Reset pointer so pdfminer reads the full file from the beginning
+    pdf_file.seek(0)
+    # ── End magic bytes validation ───────────────────────────────────────────
 
     try:
         text = pdf_extract_text(pdf_file)
@@ -487,7 +567,7 @@ def parse_resume_pdf(request):
             return JsonResponse({'error': 'Could not extract text from this PDF. It may be image-based.'}, status=400)
         return JsonResponse({'text': text[:10000]})  # Max 10k chars
     except Exception as e:
-        logger.warning(f"PDF parse error: {e}")
+        logger.warning("PDF parse error: %s", e)
         return JsonResponse({'error': 'Failed to parse PDF. Try pasting your resume text instead.'}, status=400)
 
 
@@ -555,9 +635,9 @@ async def interview_prep(request):
             'tool_error': "You've used all free generations! Upgrade to Pro for unlimited AI tools.",
         })
 
-    resume = request.POST.get('resume', '')
-    job_desc = request.POST.get('job_description', '')
-    company = request.POST.get('company_name', '')
+    resume  = request.POST.get('resume', '')[:10000]
+    job_desc = request.POST.get('job_description', '')[:10000]
+    company  = request.POST.get('company_name', '')[:200]
 
     system_prompt = """You are a senior technical interviewer and career coach.
 
@@ -625,9 +705,9 @@ async def followup_email(request):
             'tool_error': "You've used all free generations! Upgrade to Pro for unlimited AI tools.",
         })
 
-    company = request.POST.get('company_name', '')
-    job_title = request.POST.get('job_title', '')
-    context = request.POST.get('context', '')
+    company   = request.POST.get('company_name', '')[:200]
+    job_title = request.POST.get('job_title', '')[:200]
+    context   = request.POST.get('context', '')[:10000]
 
     system_prompt = """You are an expert career communication strategist.
 
@@ -694,8 +774,8 @@ async def ats_score(request):
             'tool_error': "You've used all free generations! Upgrade to Pro for unlimited AI tools.",
         })
 
-    resume = request.POST.get('resume', '')
-    job_desc = request.POST.get('job_description', '')
+    resume   = request.POST.get('resume', '')[:10000]
+    job_desc = request.POST.get('job_description', '')[:10000]
 
     system_prompt = """You are an ATS (Applicant Tracking System) expert.
 

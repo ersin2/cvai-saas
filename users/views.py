@@ -4,7 +4,7 @@ import stripe
 from django.shortcuts import render, redirect
 from .forms import UserRegisterForm
 from django.contrib import messages
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -149,6 +149,78 @@ def payment_success(request):
         'Refresh the page if you do not see the change immediately.'
     )
     return redirect('profile')
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# GDPR ACCOUNT DELETION  — cancels Stripe subscription then deletes user
+# ──────────────────────────────────────────────────────────────────────────────
+
+@login_required
+@require_POST
+def delete_account(request):
+    """
+    GDPR-compliant permanent account deletion.
+
+    Order of operations:
+    1. Cancel / delete the Stripe customer so no further charges occur.
+       Stripe errors are logged but never block the Django deletion —
+       the user’s right to erasure must be fulfilled even if Stripe is down.
+    2. Log the user out to invalidate the current session.
+    3. Delete the Django User record.  All related data (Profile,
+       Generation, JobApplication, AIResult) is removed via CASCADE.
+
+    Returns JSON so the frontend can redirect programmatically.
+    """
+    user = request.user
+
+    # ── Step 1: Cancel Stripe customer / subscriptions ───────────────────
+    try:
+        from .models import Profile
+        profile = Profile.objects.get(user=user)
+        customer_id = profile.stripe_customer_id
+
+        if customer_id:
+            # Cancel all active subscriptions before deleting the customer
+            # so Stripe does not attempt a final invoice on deletion.
+            subscriptions = stripe.Subscription.list(
+                customer=customer_id, status='active', limit=10
+            )
+            for sub in subscriptions.auto_paging_iter():
+                stripe.Subscription.cancel(sub.id)
+                logger.info(
+                    'delete_account: cancelled Stripe subscription %s for user %s.',
+                    sub.id, user.id,
+                )
+
+            stripe.Customer.delete(customer_id)
+            logger.info(
+                'delete_account: deleted Stripe customer %s for user %s.',
+                customer_id, user.id,
+            )
+
+    except Profile.DoesNotExist:
+        pass  # No profile — nothing to cancel
+    except stripe.error.StripeError as exc:
+        # Log the Stripe failure but proceed with Django deletion.
+        # GDPR right to erasure takes precedence over billing edge-cases.
+        logger.error(
+            'delete_account: Stripe error while cancelling customer for user %s: %s',
+            user.id, exc,
+        )
+    except Exception as exc:
+        logger.exception(
+            'delete_account: unexpected error during Stripe cancellation for user %s: %s',
+            user.id, exc,
+        )
+
+    # ── Step 2: Invalidate session ────────────────────────────────────────
+    logout(request)
+
+    # ── Step 3: Delete user (cascades all related data) ──────────────────
+    user.delete()
+    logger.info('delete_account: user %s permanently deleted.', user.id)
+
+    return JsonResponse({'status': 'success'})
 
 
 # ──────────────────────────────────────────────────────────────────────────────

@@ -61,7 +61,7 @@ class AIResult(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='ai_results')
     result_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
-    application = models.ForeignKey(JobApplication, on_delete=models.SET_NULL, null=True, blank=True, related_name='ai_results')
+    application = models.ForeignKey(JobApplication, on_delete=models.CASCADE, related_name='ai_results')
     input_summary = models.CharField(max_length=500, blank=True, default='')
     result = models.TextField()
     score = models.IntegerField(null=True, blank=True)  # For ATS scores

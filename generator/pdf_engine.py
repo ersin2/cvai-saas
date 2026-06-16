@@ -19,6 +19,7 @@ import io
 import os
 import logging
 import tempfile
+import contextlib
 
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
@@ -139,10 +140,24 @@ class ProSkillBar(Flowable):
         c.roundRect(0, 2, self.width * self.level, 5, 2, fill=1, stroke=0)
 
 
-def _process_photo(photo_file) -> str | None:
-    """Save uploaded photo as a circular-masked PNG temp file. Returns path."""
+@contextlib.contextmanager
+def _process_photo(photo_file):
+    """
+    Context manager: process the uploaded photo into a circular-masked PNG
+    temp file, yield its path, then ALWAYS delete it — even if the PDF
+    builder raises an exception mid-way.
+
+    Usage::
+
+        with _process_photo(req.FILES.get('photo')) as photo_path:
+            if photo_path:
+                story.append(RLImage(photo_path, ...))
+    """
     if not photo_file:
-        return None
+        yield None
+        return
+
+    path = None
     try:
         img = Image.open(photo_file).convert("RGBA")
         mask = Image.new('L', (500, 500), 0)
@@ -155,10 +170,16 @@ def _process_photo(photo_file) -> str | None:
         path = tmp.name
         output.save(tmp, format='PNG')
         tmp.close()
-        return path
-    except Exception as e:
-        logger.warning("Photo processing failed: %s", e)
-        return None
+        yield path
+    except Exception as exc:
+        logger.warning("Photo processing failed: %s", exc)
+        yield None          # builder continues without a photo
+    finally:
+        if path:
+            try:
+                os.unlink(path)
+            except OSError:
+                pass
 
 
 def _parse_skills(skills_str: str):
@@ -243,10 +264,10 @@ def _build_classic_navy(req, buf):
                                   spaceBefore=0, spaceAfter=8)
 
     story = []
-    photo_path = _process_photo(req.FILES.get('photo'))
-    if photo_path:
-        story.append(RLImage(photo_path, width=50*mm, height=50*mm))
-        story.append(Spacer(1, 20))
+    with _process_photo(req.FILES.get('photo')) as photo_path:
+        if photo_path:
+            story.append(RLImage(photo_path, width=50*mm, height=50*mm))
+            story.append(Spacer(1, 20))
 
     # ── Sidebar content ───────────────────────────────────────────────────────
     # CONTACTS: header is fully suppressed when no contact field is filled
@@ -317,12 +338,7 @@ def _build_classic_navy(req, buf):
         story.append(Paragraph("REFERENCES", s_h2))
         story.append(Paragraph(req.POST.get('references'), s_body))
 
-    try:
-        doc.build(story)
-    finally:
-        if photo_path:
-            try: os.unlink(photo_path)
-            except OSError: pass
+    doc.build(story)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
