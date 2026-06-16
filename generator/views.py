@@ -799,7 +799,8 @@ def tracker_update(request, pk):
     if new_status in dict(JobApplication.STATUS_CHOICES):
         app.status = new_status
         app.save()
-    return redirect('tracker')
+        return JsonResponse({'status': 'success', 'new_status': new_status})
+    return JsonResponse({'error': 'Invalid status'}, status=400)
 
 
 @login_required
@@ -808,5 +809,49 @@ def tracker_delete(request, pk):
     """Delete a job application."""
     app = get_object_or_404(JobApplication, pk=pk, user=request.user)
     app.delete()
-    messages.success(request, 'Application removed.')
-    return redirect('tracker')
+    return JsonResponse({'status': 'success'})
+
+
+@login_required
+@require_POST
+def export_pdf_weasyprint(request):
+    """
+    Generate a PDF from raw HTML and CSS sent by the frontend via WeasyPrint.
+    This captures the exact DOM state (Canvas) and renders it server-side.
+    """
+    try:
+        from weasyprint import HTML, CSS
+    except ImportError:
+        return JsonResponse({'error': 'WeasyPrint is not installed on the server.'}, status=500)
+
+    html_content = request.POST.get('html', '')
+    css_content = request.POST.get('css', '')
+
+    if not html_content:
+        return JsonResponse({'error': 'Missing HTML content'}, status=400)
+
+    # Wrap the raw HTML fragment into a full document
+    full_html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            @page {{ size: A4; margin: 0; }}
+            body {{ margin: 0; padding: 0; background: white; }}
+            {css_content}
+        </style>
+    </head>
+    <body>
+        {html_content}
+    </body>
+    </html>
+    """
+
+    pdf_file = io.BytesIO()
+    # Base URL is required for relative assets (fonts, images) to resolve
+    base_url = request.build_absolute_uri('/')
+    HTML(string=full_html, base_url=base_url).write_pdf(pdf_file)
+    pdf_file.seek(0)
+
+    return FileResponse(pdf_file, as_attachment=True, filename='CVAI_Resume.pdf', content_type='application/pdf')

@@ -314,10 +314,9 @@
                                 {% endif %}
                             </td>
                             <td data-label="Status" class="status-select-wrap">
-                                <form method="post" action="{% url 'tracker_update' app.pk %}" style="display: inline;">
+                                <form method="post" action="{% url 'tracker_update' app.pk %}" style="display: inline;" class="ajax-status-form">
                                     {% csrf_token %}
-                                    <select name="status" class="form-select form-select-sm status-select"
-                                        onchange="this.form.submit()" data-current="{{ app.status }}">
+                                    <select name="status" class="form-select form-select-sm status-select" data-current="{{ app.status }}">
                                         <option value="saved">📌 Saved</option>
                                         <option value="applied">📤 Applied</option>
                                         <option value="interview">🎤 Interview</option>
@@ -340,8 +339,7 @@
                                     <i class="fas fa-sticky-note"></i>
                                 </span>
                                 {% endif %}
-                                <form method="post" action="{% url 'tracker_delete' app.pk %}"
-                                    style="display: inline;" onsubmit="return confirm('Delete this application?');">
+                                <form method="post" action="{% url 'tracker_delete' app.pk %}" style="display: inline;" class="ajax-delete-form">
                                     {% csrf_token %}
                                     <button type="submit" class="action-btn delete" title="Delete">
                                         <i class="fas fa-trash-alt"></i>
@@ -427,9 +425,92 @@
     </div>
 
     <script>
+        // Set initial status
         document.querySelectorAll('.status-select').forEach(function (sel) {
             var cur = sel.getAttribute('data-current');
             if (cur) sel.value = cur;
+            
+            // Listen for changes
+            sel.addEventListener('change', function(e) {
+                const form = this.closest('.ajax-status-form');
+                const row = form.closest('tr');
+                const formData = new FormData(form);
+                
+                // Visual feedback
+                row.style.opacity = '0.5';
+                row.style.pointerEvents = 'none';
+
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Update color coding based on new status (optional but nice)
+                        // Restoring row visibility
+                        row.style.opacity = '1';
+                        row.style.pointerEvents = 'auto';
+                        
+                        // Show a small toast or just let the dropdown color do the talking
+                    } else {
+                        alert(data.error || 'Failed to update status.');
+                        row.style.opacity = '1';
+                        row.style.pointerEvents = 'auto';
+                        // Revert
+                        sel.value = sel.getAttribute('data-current');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Network error.');
+                    row.style.opacity = '1';
+                    row.style.pointerEvents = 'auto';
+                    sel.value = sel.getAttribute('data-current');
+                });
+            });
+        });
+
+        // AJAX Delete
+        document.querySelectorAll('.ajax-delete-form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                if (!confirm('Delete this application?')) return;
+                
+                const row = this.closest('tr');
+                row.style.opacity = '0.5';
+                row.style.pointerEvents = 'none';
+
+                fetch(this.action, {
+                    method: 'POST',
+                    body: new FormData(this),
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        row.style.transition = 'all 0.3s ease';
+                        row.style.transform = 'translateX(20px)';
+                        row.style.opacity = '0';
+                        setTimeout(() => row.remove(), 300);
+                    } else {
+                        alert('Failed to delete application.');
+                        row.style.opacity = '1';
+                        row.style.pointerEvents = 'auto';
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Network error.');
+                    row.style.opacity = '1';
+                    row.style.pointerEvents = 'auto';
+                });
+            });
         });
 
         function toggleMobileNav() {

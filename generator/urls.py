@@ -13,6 +13,7 @@ urlpatterns = [
     # New features
     path('scrape-job/', views.scrape_job_url, name='scrape_job'),
     path('parse-resume-pdf/', views.parse_resume_pdf, name='parse_resume_pdf'),
+    path('export-pdf-weasyprint/', views.export_pdf_weasyprint, name='export_pdf_weasyprint'),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('tools/', views.tools, name='tools'),
     path('interview-prep/', views.interview_prep, name='interview_prep'),

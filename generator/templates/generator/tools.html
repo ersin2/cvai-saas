@@ -337,7 +337,7 @@
                             <i class="fas fa-copy"></i>Copy to Clipboard
                         </button>
                     </div>
-                    {{ tool_result }}
+                    <div id="toolResultContent" data-raw-result="{{ tool_result|escape }}"></div>
                 </div>
                 {% endif %}
 
@@ -465,6 +465,46 @@
                 document.getElementById('loadingSpinner').classList.remove('show');
             }
         }
+        // Run on load
+        document.addEventListener('DOMContentLoaded', () => {
+            const contentDiv = document.getElementById('toolResultContent');
+            if (contentDiv) {
+                const raw = contentDiv.getAttribute('data-raw-result') || '';
+                contentDiv.innerHTML = formatMarkdown(raw);
+            }
+            
+            // Format sidebar history items
+            document.querySelectorAll('.hist-detail').forEach(el => {
+                const raw = el.innerText;
+                el.innerHTML = formatMarkdown(raw);
+            });
+        });
+
+        function formatMarkdown(text) {
+            if (!text) return '';
+            let html = text;
+            
+            // Headers
+            html = html.replace(/^### (.*$)/gim, '<h5>$1</h5>');
+            html = html.replace(/^## (.*$)/gim, '<h4>$1</h4>');
+            html = html.replace(/^# (.*$)/gim, '<h3>$1</h3>');
+            
+            // Bold
+            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            
+            // Bullets
+            html = html.replace(/^\s*-\s+(.*$)/gim, '<li>$1</li>');
+            html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>'); // basic wrap
+            
+            // Paragraphs (double newline)
+            html = html.split(/\n\s*\n/).map(p => {
+                if (p.trim().startsWith('<h') || p.trim().startsWith('<ul') || p.trim().startsWith('<li')) return p;
+                return '<p>' + p.replace(/\n/g, '<br>') + '</p>';
+            }).join('\n');
+            
+            return html;
+        }
+
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

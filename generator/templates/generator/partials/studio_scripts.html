@@ -368,31 +368,12 @@ function handleStudioPdfUpload(input) {
     }
 
     const label = document.getElementById('studioPdfLabel');
-    label.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Extracting text...';
+    label.innerHTML = '<i class="fas fa-check-circle me-1" style="color:#22c55e;"></i>' + file.name;
+    document.getElementById('studioRawText').value = 'Extracting data from PDF...';
 
-    const formData = new FormData();
-    formData.append('pdf_file', file);
-
-    fetch('{% url "parse_resume_pdf" %}', {
-        method: 'POST',
-        headers: { 'X-CSRFToken': '{{ csrf_token }}' },
-        body: formData
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.text) {
-            document.getElementById('studioRawText').value = data.text;
-            label.innerHTML = '<i class="fas fa-check-circle me-1" style="color:#22c55e;"></i>' + file.name;
-            showToast('PDF text extracted! Click "Auto-Fill" to enhance with AI.', 'success');
-        } else {
-            showToast(data.error || 'Could not extract text.', 'danger');
-            label.textContent = 'Upload your existing PDF resume';
-        }
-    })
-    .catch(() => {
-        showToast('Failed to parse PDF.', 'danger');
-        label.textContent = 'Upload your existing PDF resume';
-    });
+    // Directly trigger AI auto-fill
+    // generate_resume already checks request.FILES.get('resume_pdf') and extracts text!
+    studioAiFill();
 }
 
 // ── PDF Download (html2pdf.js WYSIWYG) ───────────────────────
@@ -404,32 +385,52 @@ function studioDownloadPdf() {
 
     paper.querySelectorAll('[contenteditable]').forEach(el => el.blur());
 
-    const opt = {
-        margin: 0,
-        filename: 'CVAI_Resume_' + RS._currentTpl + '.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: {
-            scale: 2,
-            useCORS: true,
-            letterRendering: true,
-            scrollY: 0,
-            windowWidth: paper.scrollWidth,
-            windowHeight: paper.scrollHeight
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
+    let cssContent = `
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;500;700&family=Montserrat:wght@400;600;700&family=Merriweather:wght@300;400;700&family=Playfair+Display:wght@400;600;700&display=swap');
+    `;
+    document.querySelectorAll('style').forEach(styleTag => {
+        cssContent += styleTag.innerHTML + '\n';
+    });
 
-    html2pdf().set(opt).from(paper).save()
-        .then(() => {
-            showToast('PDF downloaded successfully!', 'success');
-        })
-        .catch(() => {
-            showToast('PDF generation failed. Please try again.', 'danger');
-        })
-        .finally(() => {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-download me-2"></i>Download PDF';
-        });
+    const formData = new FormData();
+    formData.append('html', paper.outerHTML);
+    formData.append('css', cssContent);
+
+    fetch('{% url "export_pdf_weasyprint" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: formData
+    })
+    .then(async resp => {
+        if (!resp.ok) {
+            let errorMsg = 'PDF Generation failed';
+            try { const errData = await resp.json(); errorMsg = errData.error || errorMsg; } catch (e) {}
+            throw new Error(errorMsg);
+        }
+        return resp.blob();
+    })
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = 'CVAI_Resume_' + RS._currentTpl + '.pdf';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+        showToast('PDF downloaded successfully!', 'success');
+    })
+    .catch(err => {
+        console.error(err);
+        showToast(err.message || 'PDF generation failed. Please try again.', 'danger');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-file-arrow-down me-2"></i>Export PDF';
+    });
 }
 
 // ── Canvas inline edit → state sync ──────────────────────────
