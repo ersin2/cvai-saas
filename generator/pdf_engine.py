@@ -202,11 +202,12 @@ def _build_classic_navy(req, buf):
     s_name  = ParagraphStyle('N', fontName='Helvetica-Bold', fontSize=32,
                               textColor=C_TEXT, leading=34, spaceAfter=5)
     s_role  = ParagraphStyle('R', fontName='Helvetica-Bold', fontSize=14,
-                              textColor=C_ACC, textTransform='uppercase', spaceAfter=20)
+                              textColor=C_ACC, textTransform='uppercase', spaceAfter=15)
     s_h2    = ParagraphStyle('H2', fontName='Helvetica-Bold', fontSize=13,
                               textColor=C_TEXT, spaceBefore=18, spaceAfter=8, textTransform='uppercase')
     s_body  = ParagraphStyle('B', fontName='Helvetica', fontSize=10.5,
                               textColor=colors.HexColor("#34495e"), leading=16, spaceAfter=8)
+    s_bullet = ParagraphStyle('Bullet', parent=s_body, bulletIndent=10, leftIndent=20, spaceBefore=2, spaceAfter=4)
 
     story = []
     photo_path = _process_photo(req.FILES.get('photo'))
@@ -224,11 +225,12 @@ def _build_classic_navy(req, buf):
             story.append(Paragraph(val, s_sb_t))
             story.append(Spacer(1, 2))
 
-    for name, lvl in _parse_skills(req.POST.get('skills_list', '')):
-        if not story or story[-1].__class__.__name__ != "ProSkillBar":
-            story.append(Paragraph("SKILLS", s_sb_h))
-        story.append(ProSkillBar(name, lvl, width=65*mm))
-        story.append(Spacer(1, 10))
+    skills = _parse_skills(req.POST.get('skills_list', ''))
+    if skills:
+        story.append(Paragraph("SKILLS", s_sb_h))
+        for name, lvl in skills:
+            story.append(ProSkillBar(name, lvl, width=65*mm))
+            story.append(Spacer(1, 10))
 
     langs = req.POST.get('languages')
     if langs:
@@ -239,13 +241,16 @@ def _build_classic_navy(req, buf):
 
     story.append(Paragraph(req.POST.get('full_name', 'Your Name'), s_name))
     story.append(Paragraph(req.POST.get('target_role', 'Professional'), s_role))
+    
     line = Drawing(130*mm, 2)
     line.add(Line(0, 0, 130*mm, 0, strokeColor=colors.HexColor("#ecf0f1"), strokeWidth=2))
     story.append(line)
+    story.append(Spacer(1, 10))
 
     if req.POST.get('about_me'):
         story.append(Paragraph("PROFILE", s_h2))
         story.append(Paragraph(req.POST.get('about_me'), s_body))
+        story.append(Spacer(1, 5))
 
     exp = req.POST.get('experience_text') or req.POST.get('resume', '')
     if exp:
@@ -253,7 +258,16 @@ def _build_classic_navy(req, buf):
         for t in exp.split('\n'):
             t = t.strip()
             if t:
-                story.append(Paragraph(f"<b>{t}</b>" if len(t) < 80 and any(c.isdigit() for c in t) else t, s_body))
+                if t.startswith('-') or t.startswith('*'):
+                    # Render as proper bullet point
+                    story.append(Paragraph(t[1:].strip(), s_bullet, bulletText='•'))
+                elif len(t) < 100 and ('|' in t or any(char.isdigit() for char in t)):
+                    # Job entry header
+                    story.append(Spacer(1, 8))
+                    story.append(Paragraph(f"<b>{t}</b>", s_body))
+                else:
+                    # Regular text paragraph
+                    story.append(Paragraph(t, s_body))
 
     if req.POST.get('references'):
         story.append(Paragraph("REFERENCES", s_h2))
