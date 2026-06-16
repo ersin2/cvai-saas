@@ -378,25 +378,48 @@ function handleStudioPdfUpload(input) {
 
 // ── PDF Download (html2pdf.js WYSIWYG) ───────────────────────
 function studioDownloadPdf() {
-    const paper = document.getElementById('a4Paper');
     const btn = document.getElementById('studioDownloadBtn');
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Building PDF...';
 
-    paper.querySelectorAll('[contenteditable]').forEach(el => el.blur());
-
-    let cssContent = `
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;500;700&family=Montserrat:wght@400;600;700&family=Merriweather:wght@300;400;700&family=Playfair+Display:wght@400;600;700&display=swap');
-    `;
-    document.querySelectorAll('style').forEach(styleTag => {
-        cssContent += styleTag.innerHTML + '\n';
-    });
-
+    // 1. Package the Reactive State (RS) into a FormData payload
     const formData = new FormData();
-    formData.append('html', paper.outerHTML);
-    formData.append('css', cssContent);
+    formData.append('full_name', RS.full_name || '');
+    formData.append('target_role', RS.target_role || '');
+    formData.append('email', RS.email || '');
+    formData.append('phone', RS.phone || '');
+    formData.append('location', RS.location || '');
+    formData.append('linkedin', RS.linkedin || '');
+    formData.append('about_me', RS.summary || '');
+    formData.append('languages', (RS.languages || []).join(', '));
 
-    fetch('{% url "export_pdf_weasyprint" %}', {
+    // Format experience as raw text for the backend
+    let expText = '';
+    if (RS.experience && RS.experience.length > 0) {
+        expText = RS.experience.map(e => {
+            let txt = `${e.title || ''}\n${e.company || ''} | ${e.dates || ''}\n`;
+            if (e.bullets) {
+                txt += e.bullets.map(b => `- ${b}`).join('\n');
+            }
+            return txt;
+        }).join('\n\n');
+    }
+    formData.append('experience_text', expText);
+
+    // Format skills as "Skill-Level,Skill-Level"
+    let skillsList = '';
+    if (RS.skills && RS.skills.length > 0) {
+        skillsList = RS.skills.map(s => `${s.name}-${s.level}`).join(',');
+    }
+    formData.append('skills_list', skillsList);
+    
+    // Pass the active template name
+    // RS._currentTpl is something like 'tpl-classic-navy', map it to 'classic_navy'
+    let tplName = (RS._currentTpl || 'tpl-classic-navy').replace('tpl-', '').replace(/-/g, '_');
+    formData.append('template_name', tplName);
+
+    // 2. Fetch the ReportLab PDF view
+    fetch('{% url "download_pdf" %}', {
         method: 'POST',
         headers: {
             'X-CSRFToken': '{{ csrf_token }}'
@@ -416,7 +439,7 @@ function studioDownloadPdf() {
         const a = document.createElement('a');
         a.style.display = 'none';
         a.href = url;
-        a.download = 'CVAI_Resume_' + RS._currentTpl + '.pdf';
+        a.download = `CVAI_Resume_${tplName}.pdf`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
