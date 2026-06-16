@@ -25,9 +25,9 @@ logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # RATE LIMITER  (uses Django's default cache — LocMemCache or Redis)
-# Free: 3 requests/minute   |   Pro/Elite: 30 requests/minute
+# Free: 3 req/min  |  Pro: 20 req/min  |  Elite: 50 req/min
 # ---------------------------------------------------------------------------
-RATE_LIMITS = {'free': 3, 'pro': 30, 'elite': 30}
+RATE_LIMITS = {'free': 3, 'pro': 20, 'elite': 50}
 RATE_WINDOW = 60  # seconds
 
 def _check_rate_limit(user, plan: str):
@@ -760,6 +760,20 @@ Be brutally honest. Give specific keyword suggestions. Start with the score on t
 def tracker(request):
     """Job application tracker dashboard."""
     if request.method == 'POST':
+        # ── Plan limit guard ─────────────────────────────────────────────────
+        profile, _ = Profile.objects.get_or_create(user=request.user)
+        current_count = JobApplication.objects.filter(user=request.user).count()
+        max_jobs = profile.get_max_tracked_jobs()
+
+        if current_count >= max_jobs:
+            messages.error(
+                request,
+                f"You've reached the limit of {max_jobs} tracked jobs for your "
+                f"{profile.get_plan_display()} plan. Upgrade to track more!"
+            )
+            return redirect('pricing')
+        # ── End limit guard ──────────────────────────────────────────────────
+
         JobApplication.objects.create(
             user=request.user,
             company_name=request.POST.get('company_name', ''),

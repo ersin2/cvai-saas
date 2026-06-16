@@ -23,14 +23,19 @@ class Profile(models.Model):
     }
 
     # ── how many PDF templates each plan can access ─────────────────────────
-    # Templates are indexed 0-based in pdf_engine.TEMPLATES list.
-    # Free  →  1 template  (index 0)
-    # Pro   →  5 templates (indices 0-4)
-    # Elite → all templates
+    # Free  → 1 template  |  Pro → 3 templates  |  Elite → 5 (all) templates
     PDF_TEMPLATE_LIMITS = {
         'free':  1,
-        'pro':   5,
-        'elite': 99,
+        'pro':   3,
+        'elite': 5,
+    }
+
+    # ── how many tracked jobs each plan can store ────────────────────────────
+    # Free → 10  |  Pro → 50  |  Elite → unlimited
+    JOB_TRACKER_LIMITS = {
+        'free':  10,
+        'pro':   50,
+        'elite': 99999,
     }
 
     def get_limit(self):
@@ -38,8 +43,12 @@ class Profile(models.Model):
         return self.PLAN_LIMITS.get(self.plan, 3)
 
     def get_pdf_template_limit(self):
-        """Return how many distinct PDF templates the user can choose from."""
+        """Free: 1 template, Pro: 3 templates, Elite: 5 (all) templates."""
         return self.PDF_TEMPLATE_LIMITS.get(self.plan, 1)
+
+    def get_max_tracked_jobs(self):
+        """Free: 10 jobs, Pro: 50 jobs, Elite: Unlimited (99999)."""
+        return self.JOB_TRACKER_LIMITS.get(self.plan, 10)
 
     def has_generations_left(self):
         """True if the user still has at least one generation available."""
