@@ -1044,16 +1044,139 @@
       /* Main content */
       let contentHtml = '';
       if (content) {
-        if (key === 'letter') {
-          contentHtml = `
-            <div class="letter-preview-card">
-              <div class="lpc-header">
-                <span class="lpc-title"><i class="fas fa-file-alt me-1"></i>Generated Content</span>
-              </div>
-              <pre class="modal-result-text" style="margin:0;">${escHtml(content)}</pre>
+        let isJson = false;
+        let trimmedContent = content.trim();
+        let parsedJson = null;
+
+        // Auto-Detect JSON
+        if (trimmedContent.startsWith('{') && trimmedContent.endsWith('}')) {
+          try {
+            parsedJson = JSON.parse(trimmedContent);
+            isJson = true;
+          } catch (e) {
+            // Not valid JSON, fall back to plain text
+          }
+        }
+
+        if (isJson && parsedJson) {
+          // Dynamic JSON Formatter for Resumes
+          let data = parsedJson;
+          let rHtml = '<div class="resume-preview-card" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 24px; color: #f1f5f9;">';
+          
+          // Header
+          rHtml += `<h2 style="font-size: 1.5rem; font-weight: 800; color: #fff; margin-bottom: 4px;">${escHtml(data.full_name || 'Candidate Name')}</h2>`;
+          if (data.target_role) {
+            rHtml += `<div style="font-size: 1rem; color: var(--primary); font-weight: 600; margin-bottom: 12px;">${escHtml(data.target_role)}</div>`;
+          }
+          
+          // Contact info
+          let contactItems = [];
+          if (data.email) contactItems.push(`<i class="fas fa-envelope" style="color:var(--text-muted); margin-right:4px;"></i>${escHtml(data.email)}`);
+          if (data.phone) contactItems.push(`<i class="fas fa-phone" style="color:var(--text-muted); margin-right:4px;"></i>${escHtml(data.phone)}`);
+          if (data.location) contactItems.push(`<i class="fas fa-map-marker-alt" style="color:var(--text-muted); margin-right:4px;"></i>${escHtml(data.location)}`);
+          if (data.linkedin) contactItems.push(`<i class="fab fa-linkedin" style="color:var(--text-muted); margin-right:4px;"></i>${escHtml(data.linkedin)}`);
+          
+          if (contactItems.length > 0) {
+            rHtml += `<div style="display:flex; flex-wrap:wrap; gap:16px; font-size:0.8rem; color:#94a3b8; margin-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 16px;">
+                ${contactItems.map(item => `<div>${item}</div>`).join('')}
             </div>`;
+          }
+          
+          // Summary Block
+          if (data.summary) {
+            rHtml += `<h3 style="font-size: 0.9rem; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Professional Summary</h3>`;
+            rHtml += `<p style="font-size: 0.88rem; color: #cbd5e1; line-height: 1.6; margin-bottom: 24px; white-space: pre-wrap;">${escHtml(data.summary)}</p>`;
+          }
+          
+          // Experience Block
+          if (data.experience && data.experience.length > 0) {
+            rHtml += `<h3 style="font-size: 0.9rem; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Experience</h3>`;
+            data.experience.forEach(exp => {
+              rHtml += `<div style="background: rgba(76,201,240,0.05); border: 1px solid rgba(76,201,240,0.1); border-radius: 8px; padding: 16px; margin-bottom: 12px;">`;
+              rHtml += `<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">`;
+              rHtml += `<div>
+                  <strong style="font-size: 0.95rem; color: #fff; display: block;">${escHtml(exp.title || '')}</strong>
+                  <span style="font-size: 0.85rem; color: var(--primary); font-weight: 600;">${escHtml(exp.company || '')}</span>
+              </div>`;
+              rHtml += `<div style="font-size: 0.8rem; color: #94a3b8; font-family: 'JetBrains Mono', monospace;">${escHtml(exp.dates || '')}</div>`;
+              rHtml += `</div>`;
+              if (exp.bullets && exp.bullets.length > 0) {
+                rHtml += `<ul style="margin: 0; padding-left: 20px; font-size: 0.85rem; color: #cbd5e1; line-height: 1.5;">`;
+                exp.bullets.forEach(bullet => {
+                  rHtml += `<li style="margin-bottom: 4px;">${escHtml(bullet)}</li>`;
+                });
+                rHtml += `</ul>`;
+              }
+              rHtml += `</div>`;
+            });
+          }
+          
+          // Skills Block
+          if (data.skills && data.skills.length > 0) {
+            rHtml += `<h3 style="font-size: 0.9rem; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; margin-top: 24px;">Skills</h3>`;
+            rHtml += `<div style="display: flex; flex-wrap: wrap; gap: 8px;">`;
+            data.skills.forEach(skill => {
+              let name = typeof skill === 'string' ? skill : (skill.name || '');
+              let level = typeof skill === 'string' ? '' : (skill.level ? `<span style="opacity:0.6; margin-left: 6px; font-size: 0.7rem;">${skill.level}%</span>` : '');
+              rHtml += `<div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 99px; padding: 4px 12px; font-size: 0.8rem; font-weight: 600; color: #e2e8f0; display: flex; align-items: center;">
+                  ${escHtml(name)}${level}
+              </div>`;
+            });
+            rHtml += `</div>`;
+          }
+          
+          rHtml += '</div>';
+          contentHtml = rHtml;
         } else {
-          contentHtml = `<pre class="modal-result-text">${escHtml(content)}</pre>`;
+          // Auto-Detect Plain Text / Markdown
+          let html = escHtml(trimmedContent);
+          
+          // Convert basic markdown syntax
+          html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+          
+          let lines = html.split('\n');
+          let inList = false;
+          let formattedLines = [];
+          
+          for (let i = 0; i < lines.length; i++) {
+              let line = lines[i];
+              if (line.trim().startsWith('- ')) {
+                  if (!inList) {
+                      formattedLines.push('<ul class="ats-list" style="padding-left: 20px; margin-top: 10px; margin-bottom: 10px; list-style-type: disc;">');
+                      inList = true;
+                  }
+                  formattedLines.push(`  <li style="margin-bottom: 6px;">${line.trim().substring(2)}</li>`);
+              } else {
+                  if (inList) {
+                      formattedLines.push('</ul>');
+                      inList = false;
+                  }
+                  formattedLines.push(line);
+              }
+          }
+          if (inList) {
+              formattedLines.push('</ul>');
+          }
+          
+          html = formattedLines.join('\n');
+          
+          // Clean up newlines around block tags to avoid pre-wrap rendering extra spacing
+          html = html.replace(/\n(<ul)/g, '$1')
+                     .replace(/(<\/ul>)\n/g, '$1')
+                     .replace(/\n(<li)/g, '$1')
+                     .replace(/(<\/li>)\n/g, '$1');
+
+          if (key === 'letter') {
+            contentHtml = `
+              <div class="letter-preview-card">
+                <div class="lpc-header">
+                  <span class="lpc-title"><i class="fas fa-file-alt me-1"></i>Generated Content</span>
+                </div>
+                <div class="modal-result-text" style="margin:0;">${html}</div>
+              </div>`;
+          } else {
+            contentHtml = `<div class="modal-result-text">${html}</div>`;
+          }
         }
       } else if (key !== 'app') {
         contentHtml = `<div class="modal-result-text" style="color:var(--text-muted);font-style:italic;text-align:center;padding:20px 0;">
