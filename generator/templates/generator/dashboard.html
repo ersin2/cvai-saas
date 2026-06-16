@@ -3,343 +3,1124 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | CVAI</title>
-    <meta name="description"
-        content="Track your AI cover letter generation stats, application funnel, and career progress in one dashboard.">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | CVAI — Career Command Center</title>
+  <meta name="description"
+    content="Track your AI cover letter generation stats, application funnel, and career progress in one dashboard.">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}">
 
-    <style>
-        /* ── STAT GRID ── */
-        .stat-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-            gap: 14px;
-            margin-bottom: 32px;
-        }
+  <style>
+    /* ═══════════════════════════════════════════════════════
+       DASHBOARD — Premium Overhaul
+       ═══════════════════════════════════════════════════════ */
+    :root {
+      --dash-surface:    rgba(14, 18, 32, 0.92);
+      --dash-border:     rgba(255, 255, 255, 0.07);
+      --dash-hover-bg:   rgba(76, 201, 240, 0.06);
+      --dash-hover-glow: rgba(76, 201, 240, 0.18);
+    }
 
-        /* ── FUNNEL BAR ── */
-        .funnel-bar {
-            height: 30px;
-            border-radius: 8px;
-            margin-bottom: 6px;
-            display: flex;
-            align-items: center;
-            padding: 0 12px;
-            font-size: 0.78rem;
-            font-weight: 700;
-            min-width: 60px;
-            transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-        }
+    body { font-family: 'Inter', 'Outfit', sans-serif; }
 
-        /* ── CHART ── */
-        .chart-container { position: relative; height: 200px; }
+    /* ── STAT GRID ── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+      gap: 14px;
+      margin-bottom: 32px;
+    }
+    @media (max-width: 768px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 380px) { .stat-grid { grid-template-columns: 1fr 1fr; } }
 
-        @media (max-width: 768px) {
-            .stat-grid { grid-template-columns: repeat(2, 1fr); }
-        }
+    /* ── CHART ── */
+    .chart-container { position: relative; height: 210px; }
 
-        @media (max-width: 380px) {
-            .stat-grid { grid-template-columns: 1fr 1fr; }
-        }
-    </style>
+    /* ═══════════════════════════════════════════
+       ACTIVITY FEED ROWS — Interactive
+       ═══════════════════════════════════════════ */
+    .activity-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 14px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition:
+        background 0.22s ease,
+        border-color 0.22s ease,
+        box-shadow 0.22s ease,
+        transform 0.18s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .activity-row::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--dash-hover-bg), transparent);
+      opacity: 0;
+      transition: opacity 0.22s ease;
+    }
+    .activity-row:hover {
+      background: var(--dash-hover-bg);
+      border-color: rgba(76, 201, 240, 0.22);
+      box-shadow: 0 0 0 1px rgba(76, 201, 240, 0.12), 0 4px 20px rgba(76, 201, 240, 0.08);
+      transform: translateX(3px);
+    }
+    .activity-row:hover::before { opacity: 1; }
+    .activity-row:active { transform: translateX(1px) scale(0.99); }
+
+    /* Row type accent icon */
+    .act-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      flex-shrink: 0;
+      transition: transform 0.22s ease;
+    }
+    .activity-row:hover .act-icon { transform: scale(1.08); }
+
+    /* Row body */
+    .act-body {
+      flex: 1;
+      min-width: 0;
+    }
+    .act-title {
+      font-size: 0.83rem;
+      font-weight: 600;
+      color: #e2e8f0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.3;
+    }
+    .act-sub {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 1px;
+    }
+    .act-meta {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* Status badges in activity rows */
+    .act-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 99px;
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+    .act-badge-saved     { background: rgba(148,163,184,0.12); color: #94a3b8; border: 1px solid rgba(148,163,184,0.2); }
+    .act-badge-applied   { background: rgba(76,201,240,0.1);   color: #4cc9f0; border: 1px solid rgba(76,201,240,0.2); }
+    .act-badge-interview { background: rgba(234,179,8,0.1);    color: #eab308; border: 1px solid rgba(234,179,8,0.2); }
+    .act-badge-offer     { background: rgba(34,197,94,0.1);    color: #22c55e; border: 1px solid rgba(34,197,94,0.2); }
+    .act-badge-rejected  { background: rgba(239,68,68,0.1);    color: #ef4444; border: 1px solid rgba(239,68,68,0.2); }
+    .act-badge-ats       { background: rgba(168,85,247,0.1);   color: #a855f7; border: 1px solid rgba(168,85,247,0.2); }
+    .act-badge-interview-prep { background: rgba(251,191,36,0.1); color: #fbbf24; border: 1px solid rgba(251,191,36,0.2); }
+    .act-badge-followup  { background: rgba(247,37,133,0.1);   color: #f72585; border: 1px solid rgba(247,37,133,0.2); }
+
+    /* Chevron indicator */
+    .act-chevron {
+      color: var(--text-muted);
+      font-size: 0.65rem;
+      opacity: 0;
+      transform: translateX(-4px);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      flex-shrink: 0;
+    }
+    .activity-row:hover .act-chevron {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    /* ═══════════════════════════════════════════
+       GLASSMORPHIC MODAL — Premium Dark
+       ═══════════════════════════════════════════ */
+    #activityModal .modal-content {
+      background: rgba(10, 14, 26, 0.97) !important;
+      border: 1px solid rgba(76, 201, 240, 0.18) !important;
+      border-radius: 20px !important;
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
+      box-shadow:
+        0 40px 100px rgba(0, 0, 0, 0.7),
+        0 0 0 1px rgba(255,255,255,0.04),
+        inset 0 1px 0 rgba(255,255,255,0.06) !important;
+      overflow: hidden;
+    }
+    #activityModal .modal-header {
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid rgba(255,255,255,0.07) !important;
+      padding: 20px 24px 16px;
+      position: relative;
+    }
+    /* Rainbow top border on modal */
+    #activityModal .modal-header::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, #4361ee, #4cc9f0, #f72585, #4cc9f0, #4361ee);
+      background-size: 300% 100%;
+      animation: modal-bar 3s linear infinite;
+    }
+    @keyframes modal-bar { to { background-position: -300% 0; } }
+
+    #activityModal .modal-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    #activityModal .modal-title i {
+      font-size: 0.9rem;
+    }
+    #activityModal .modal-body {
+      padding: 24px;
+      max-height: 70vh;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(76,201,240,0.25) transparent;
+    }
+    #activityModal .modal-body::-webkit-scrollbar { width: 5px; }
+    #activityModal .modal-body::-webkit-scrollbar-track { background: transparent; }
+    #activityModal .modal-body::-webkit-scrollbar-thumb { background: rgba(76,201,240,0.2); border-radius: 3px; }
+    #activityModal .modal-footer {
+      border-top: 1px solid rgba(255,255,255,0.07) !important;
+      padding: 14px 24px;
+      background: rgba(255,255,255,0.015);
+    }
+
+    /* Modal content area */
+    .modal-result-text {
+      font-size: 0.86rem;
+      color: #94a3b8;
+      line-height: 1.75;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'Inter', sans-serif;
+    }
+    .modal-result-text strong, .modal-result-text b {
+      color: #e2e8f0;
+      font-weight: 600;
+    }
+
+    /* Modal meta strip */
+    .modal-meta-strip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px;
+      margin-bottom: 18px;
+    }
+    .modal-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .modal-meta-item i {
+      color: var(--primary);
+      font-size: 0.65rem;
+    }
+
+    /* ATS score ring in modal */
+    .modal-ats-score {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 18px;
+      background: rgba(168,85,247,0.06);
+      border: 1px solid rgba(168,85,247,0.15);
+      border-radius: 14px;
+      margin-bottom: 18px;
+    }
+    .ats-score-ring {
+      position: relative;
+      width: 72px;
+      height: 72px;
+      flex-shrink: 0;
+    }
+    .ats-score-ring svg { transform: rotate(-90deg); }
+    .ats-score-ring circle {
+      fill: none;
+      stroke-width: 6;
+      stroke-linecap: round;
+    }
+    .ats-score-ring .track { stroke: rgba(168,85,247,0.12); }
+    .ats-score-ring .fill  { stroke: #a855f7; stroke-dasharray: 188; transition: stroke-dashoffset 1s ease; }
+    .ats-ring-num {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #a855f7;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .ats-score-label { font-size: 0.78rem; color: #94a3b8; }
+    .ats-score-label strong { display: block; font-size: 1rem; color: #e2e8f0; margin-bottom: 2px; }
+
+    /* Letter preview card */
+    .letter-preview-card {
+      background: rgba(76,201,240,0.04);
+      border: 1px solid rgba(76,201,240,0.12);
+      border-radius: 12px;
+      padding: 16px 18px;
+      margin-bottom: 16px;
+    }
+    .letter-preview-card .lpc-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(76,201,240,0.1);
+    }
+    .letter-preview-card .lpc-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--primary);
+    }
+
+    /* Empty state */
+    .dash-empty {
+      text-align: center;
+      padding: 40px 16px 32px;
+    }
+    .dash-empty-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 14px;
+      font-size: 1.4rem;
+    }
+    .dash-empty-title {
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: #e2e8f0;
+      margin-bottom: 5px;
+    }
+    .dash-empty-desc {
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+
+    /* Panel section title */
+    .panel-title {
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .panel-title i { font-size: 0.75rem; }
+
+    /* Section header with count pill */
+    .feed-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .feed-count-pill {
+      font-size: 0.62rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 99px;
+      background: rgba(76,201,240,0.1);
+      color: var(--primary);
+      border: 1px solid rgba(76,201,240,0.2);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Quick action v2 improvements */
+    .quick-action-v2 {
+      position: relative;
+      overflow: hidden;
+    }
+    .quick-action-v2::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(76,201,240,0.04), transparent);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    .quick-action-v2:hover::after { opacity: 1; }
+
+    /* Score bar for ATS in feed */
+    .ats-mini-bar {
+      height: 3px;
+      background: rgba(168,85,247,0.12);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .ats-mini-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #a855f7, #c084fc);
+      border-radius: 2px;
+      transition: width 0.8s cubic-bezier(0.16,1,0.3,1);
+    }
+
+    /* Modal btn */
+    .modal-btn-outline {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 16px;
+      border-radius: 9px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.04);
+      color: #94a3b8;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+    .modal-btn-outline:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.18);
+      color: #e2e8f0;
+    }
+    .modal-btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 18px;
+      border-radius: 9px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      border: none;
+      background: linear-gradient(135deg, #4361ee, #4cc9f0);
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .modal-btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(67,97,238,0.4);
+    }
+  </style>
 </head>
 
 <body>
 
-    <!-- NAVBAR -->
-    <nav class="navbar-custom">
-        <a href="{% url 'home' %}" class="logo-text">
-            <i class="fas fa-cube"></i>CV<span style="-webkit-text-fill-color: var(--secondary);">AI</span>
-        </a>
-        <div class="nav-group desktop-nav">
-            <a href="{% url 'home' %}"      class="nav-link-item">Generator</a>
-            <a href="{% url 'dashboard' %}" class="nav-link-item active">Dashboard</a>
-            <a href="{% url 'tools' %}"     class="nav-link-item">AI Tools</a>
-            <a href="{% url 'tracker' %}"   class="nav-link-item">Tracker</a>
-            <a href="{% url 'history' %}"   class="nav-link-item">History</a>
-            <a href="{% url 'profile' %}"   class="user-badge">
-                <i class="fas fa-user"></i>{{ user.username }}
+  <!-- ════════════ NAVBAR ════════════ -->
+  <nav class="navbar-custom">
+    <a href="{% url 'home' %}" class="logo-text">
+      <i class="fas fa-cube"></i>CV<span style="-webkit-text-fill-color:var(--secondary);">AI</span>
+    </a>
+    <div class="nav-group desktop-nav">
+      <a href="{% url 'home' %}"      class="nav-link-item"><i class="fas fa-pen-ruler me-1" style="font-size:0.8rem;opacity:.7;"></i>Studio</a>
+      <a href="{% url 'dashboard' %}" class="nav-link-item active"><i class="fas fa-chart-pie me-1" style="font-size:0.8rem;opacity:.7;"></i>Dashboard</a>
+      <a href="{% url 'tools' %}"     class="nav-link-item"><i class="fas fa-wand-magic-sparkles me-1" style="font-size:0.8rem;opacity:.7;"></i>AI Tools</a>
+      <a href="{% url 'tracker' %}"   class="nav-link-item"><i class="fas fa-briefcase me-1" style="font-size:0.8rem;opacity:.7;"></i>Tracker</a>
+      <a href="{% url 'history' %}"   class="nav-link-item"><i class="fas fa-clock-rotate-left me-1" style="font-size:0.8rem;opacity:.7;"></i>History</a>
+      <a href="{% url 'profile' %}"   class="user-badge">
+        <i class="fas fa-user"></i>{{ user.username }}
+      </a>
+    </div>
+    <button class="hamburger-btn" onclick="toggleMobileNav()"><i class="fas fa-bars"></i></button>
+  </nav>
+
+  <!-- MOBILE DRAWER -->
+  <div class="mobile-backdrop" id="mobileBackdrop" onclick="toggleMobileNav()"></div>
+  <div class="mobile-drawer" id="mobileDrawer">
+    <div class="drawer-header">
+      <span class="logo-text" style="font-size:1.1rem;">CV<span style="-webkit-text-fill-color:var(--secondary);">AI</span></span>
+      <button class="drawer-close-btn" onclick="toggleMobileNav()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="drawer-nav-section">
+      <a href="{% url 'home' %}"      class="nav-link-item"><i class="fas fa-pen-ruler"></i>Studio</a>
+      <a href="{% url 'dashboard' %}" class="nav-link-item active"><i class="fas fa-chart-pie"></i>Dashboard</a>
+      <a href="{% url 'tools' %}"     class="nav-link-item"><i class="fas fa-wand-magic-sparkles"></i>AI Tools</a>
+      <a href="{% url 'tracker' %}"   class="nav-link-item"><i class="fas fa-briefcase"></i>Tracker</a>
+      <a href="{% url 'history' %}"   class="nav-link-item"><i class="fas fa-clock-rotate-left"></i>History</a>
+      <div class="drawer-divider"></div>
+      <a href="{% url 'pricing' %}"   class="nav-link-item"><i class="fas fa-tags"></i>Pricing</a>
+      <a href="{% url 'profile' %}"   class="nav-link-item"><i class="fas fa-user"></i>{{ user.username }}</a>
+    </div>
+  </div>
+
+  <!-- ════════════ PAGE CONTENT ════════════ -->
+  <div class="container-fluid px-3 px-md-4 pb-5" style="max-width:1300px; margin:0 auto;">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header anim-fade-up" style="padding-top:28px;">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+          <h1 class="page-title"><i class="fas fa-chart-line"></i> Dashboard</h1>
+          <p class="page-subtitle">Your career command center — everything at a glance.</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <a href="{% url 'home' %}" class="btn-primary-grad" style="font-size:0.78rem; padding:8px 18px;">
+            <i class="fas fa-plus me-1"></i>New Resume
+          </a>
+          <a href="{% url 'tools' %}" class="btn-ghost" style="font-size:0.78rem; padding:8px 18px;">
+            <i class="fas fa-wand-magic-sparkles me-1"></i>AI Tools
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ STAT CARDS ═══ -->
+    <div class="stat-grid">
+      <div class="stat-card-v2 card-hoverable anim-fade-up anim-delay-1"
+           style="--card-accent:var(--primary);--card-icon-bg:var(--primary-dim);--card-icon-color:var(--primary);--card-value-color:var(--primary);">
+        <div class="stat-icon-box"><i class="fas fa-file-alt"></i></div>
+        <div class="stat-value-v2">{{ stats.total_generations }}</div>
+        <div class="stat-label-v2">Cover Letters</div>
+      </div>
+      <div class="stat-card-v2 card-hoverable anim-fade-up anim-delay-2"
+           style="--card-accent:var(--secondary);--card-icon-bg:var(--secondary-dim);--card-icon-color:var(--secondary);--card-value-color:var(--secondary);">
+        <div class="stat-icon-box"><i class="fas fa-wand-magic-sparkles"></i></div>
+        <div class="stat-value-v2">{{ stats.total_ai_results }}</div>
+        <div class="stat-label-v2">AI Tool Results</div>
+      </div>
+      <div class="stat-card-v2 card-hoverable anim-fade-up anim-delay-3"
+           style="--card-accent:#22c55e;--card-icon-bg:rgba(34,197,94,0.1);--card-icon-color:#22c55e;--card-value-color:#22c55e;">
+        <div class="stat-icon-box"><i class="fas fa-briefcase"></i></div>
+        <div class="stat-value-v2">{{ stats.total_applications }}</div>
+        <div class="stat-label-v2">Applications</div>
+      </div>
+      <div class="stat-card-v2 card-hoverable anim-fade-up anim-delay-4"
+           style="--card-accent:var(--warning);--card-icon-bg:rgba(234,179,8,0.1);--card-icon-color:var(--warning);--card-value-color:var(--warning);">
+        <div class="stat-icon-box"><i class="fas fa-trophy"></i></div>
+        <div class="stat-value-v2">{{ stats.offers }}</div>
+        <div class="stat-label-v2">Offers Received</div>
+      </div>
+      <div class="stat-card-v2 card-hoverable anim-fade-up anim-delay-5"
+           style="--card-accent:#a855f7;--card-icon-bg:rgba(168,85,247,0.1);--card-icon-color:#a855f7;--card-value-color:#a855f7;">
+        <div class="stat-icon-box"><i class="fas fa-bolt"></i></div>
+        <div class="stat-value-v2">{{ stats.generations_left }}</div>
+        <div class="stat-label-v2">Gens Left · {{ stats.plan }}</div>
+      </div>
+    </div>
+
+    <!-- ═══ FUNNEL + QUICK ACTIONS ═══ -->
+    <div class="row g-4 mb-4">
+
+      <!-- APPLICATION FUNNEL -->
+      <div class="col-lg-6 anim-fade-up anim-delay-2">
+        <div class="glass-card h-100">
+          <div class="panel-title">
+            <i class="fas fa-filter" style="color:var(--primary);"></i>Application Funnel
+          </div>
+          <div class="chart-container">
+            <canvas id="funnelChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUICK ACTIONS -->
+      <div class="col-lg-6 anim-fade-up anim-delay-3">
+        <div class="glass-card h-100">
+          <div class="panel-title">
+            <i class="fas fa-rocket" style="color:var(--secondary);"></i>Quick Actions
+          </div>
+          <a href="{% url 'home' %}" class="quick-action-v2">
+            <div class="quick-action-icon" style="background:var(--primary-dim);color:var(--primary);">
+              <i class="fas fa-pen-ruler"></i>
+            </div>
+            <div>
+              <div class="fw-bold" style="font-size:0.88rem;">Resume Studio</div>
+              <small class="text-white-50">Build & export your A4 resume</small>
+            </div>
+            <i class="fas fa-chevron-right ms-auto" style="color:var(--text-muted);font-size:0.75rem;"></i>
+          </a>
+          <a href="{% url 'tools' %}" class="quick-action-v2">
+            <div class="quick-action-icon" style="background:var(--secondary-dim);color:var(--secondary);">
+              <i class="fas fa-brain"></i>
+            </div>
+            <div>
+              <div class="fw-bold" style="font-size:0.88rem;">Interview Prep AI</div>
+              <small class="text-white-50">Get tailored interview Q&A</small>
+            </div>
+            <i class="fas fa-chevron-right ms-auto" style="color:var(--text-muted);font-size:0.75rem;"></i>
+          </a>
+          <a href="{% url 'tools' %}" class="quick-action-v2">
+            <div class="quick-action-icon" style="background:rgba(234,179,8,0.1);color:var(--warning);">
+              <i class="fas fa-chart-bar"></i>
+            </div>
+            <div>
+              <div class="fw-bold" style="font-size:0.88rem;">ATS Score Checker</div>
+              <small class="text-white-50">Analyze resume compatibility</small>
+            </div>
+            <i class="fas fa-chevron-right ms-auto" style="color:var(--text-muted);font-size:0.75rem;"></i>
+          </a>
+          <a href="{% url 'tracker' %}" class="quick-action-v2">
+            <div class="quick-action-icon" style="background:rgba(34,197,94,0.1);color:#22c55e;">
+              <i class="fas fa-briefcase"></i>
+            </div>
+            <div>
+              <div class="fw-bold" style="font-size:0.88rem;">Application Tracker</div>
+              <small class="text-white-50">Track and manage applications</small>
+            </div>
+            <i class="fas fa-chevron-right ms-auto" style="color:var(--text-muted);font-size:0.75rem;"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ ACTIVITY FEEDS (3 columns) ═══ -->
+    <div class="row g-4">
+
+      <!-- ── RECENT COVER LETTERS ── -->
+      <div class="col-lg-4 anim-fade-up anim-delay-2">
+        <div class="glass-card h-100">
+          <div class="feed-header">
+            <div class="panel-title mb-0">
+              <i class="fas fa-file-alt" style="color:var(--primary);"></i>Cover Letters
+            </div>
+            {% if recent_generations %}
+            <span class="feed-count-pill">{{ recent_generations|length }}</span>
+            {% endif %}
+          </div>
+
+          {% if recent_generations %}
+            {% for gen in recent_generations %}
+            {# ── Determine display title — fallback if company/role blank ── #}
+            {% with
+              co=gen.company_name|default:""
+              jt=gen.job_title|default:""
+            %}
+            {% if co or jt %}
+              {% with display_title=co|default:"Unknown Company" display_sub=jt|default:"Position" %}
+              <div class="activity-row"
+                   data-modal-type="letter"
+                   data-title="{{ display_title }} · {{ display_sub }}"
+                   data-date="{{ gen.created_at|date:'M d, Y' }}"
+                   data-company="{{ display_title }}"
+                   data-role="{{ display_sub }}"
+                   data-content="{{ gen.result|default:'' }}"
+                   tabindex="0" role="button"
+                   aria-label="View cover letter for {{ display_title }}">
+                <div class="act-icon" style="background:var(--primary-dim);">
+                  <i class="fas fa-file-alt" style="color:var(--primary);"></i>
+                </div>
+                <div class="act-body">
+                  <div class="act-title">{{ display_title }}</div>
+                  <div class="act-sub">{{ display_sub }}</div>
+                </div>
+                <span class="act-meta">{{ gen.created_at|date:"M d" }}</span>
+                <i class="fas fa-chevron-right act-chevron"></i>
+              </div>
+              {% endwith %}
+            {% else %}
+              {# ── Blank fields → Resume Studio draft fallback ── #}
+              <div class="activity-row"
+                   data-modal-type="letter"
+                   data-title="AI Resume Optimization Draft"
+                   data-date="{{ gen.created_at|date:'M d, Y' }}"
+                   data-company="Resume Studio"
+                   data-role="AI Optimization Draft"
+                   data-content="{{ gen.result|default:'' }}"
+                   tabindex="0" role="button"
+                   aria-label="View AI Resume Optimization Draft">
+                <div class="act-icon" style="background:rgba(129,140,248,0.12);">
+                  <i class="fas fa-pen-ruler" style="color:#818cf8;"></i>
+                </div>
+                <div class="act-body">
+                  <div class="act-title">AI Resume Optimization Draft</div>
+                  <div class="act-sub">Resume Studio · {{ gen.language }}</div>
+                </div>
+                <span class="act-meta">{{ gen.created_at|date:"M d" }}</span>
+                <i class="fas fa-chevron-right act-chevron"></i>
+              </div>
+            {% endif %}
+            {% endwith %}
+            {% endfor %}
+
+          {% else %}
+          <div class="dash-empty">
+            <div class="dash-empty-icon" style="background:var(--primary-dim);">
+              <i class="fas fa-pen-nib" style="color:var(--primary);"></i>
+            </div>
+            <div class="dash-empty-title">Your FAANG-level letter awaits</div>
+            <p class="dash-empty-desc">Generate your first AI cover letter in seconds</p>
+            <a href="{% url 'home' %}" class="btn-primary-grad" style="font-size:0.78rem;padding:8px 20px;">
+              Create Now <i class="fas fa-arrow-right ms-1"></i>
             </a>
+          </div>
+          {% endif %}
         </div>
-        <button class="hamburger-btn" onclick="toggleMobileNav()"><i class="fas fa-bars"></i></button>
-    </nav>
+      </div>
 
-    <!-- MOBILE DRAWER -->
-    <div class="mobile-backdrop" id="mobileBackdrop" onclick="toggleMobileNav()"></div>
-    <div class="mobile-drawer" id="mobileDrawer">
-        <div class="drawer-header">
-            <span class="logo-text" style="font-size:1.1rem;">CV<span style="-webkit-text-fill-color:var(--secondary);">AI</span></span>
-            <button class="drawer-close-btn" onclick="toggleMobileNav()"><i class="fas fa-times"></i></button>
+      <!-- ── RECENT APPLICATIONS ── -->
+      <div class="col-lg-4 anim-fade-up anim-delay-3">
+        <div class="glass-card h-100">
+          <div class="feed-header">
+            <div class="panel-title mb-0">
+              <i class="fas fa-briefcase" style="color:#22c55e;"></i>Applications
+            </div>
+            {% if recent_apps %}
+            <span class="feed-count-pill" style="background:rgba(34,197,94,0.08);color:#22c55e;border-color:rgba(34,197,94,0.2);">{{ recent_apps|length }}</span>
+            {% endif %}
+          </div>
+
+          {% if recent_apps %}
+            {% for app in recent_apps %}
+            <div class="activity-row"
+                 data-modal-type="app"
+                 data-title="{{ app.company_name }} — {{ app.job_title }}"
+                 data-date="{{ app.created_at|date:'M d, Y' }}"
+                 data-company="{{ app.company_name }}"
+                 data-role="{{ app.job_title }}"
+                 data-status="{{ app.status }}"
+                 data-salary="{{ app.salary_range|default:'—' }}"
+                 data-notes="{{ app.notes|default:'' }}"
+                 tabindex="0" role="button"
+                 aria-label="View application for {{ app.company_name }}">
+              <div class="act-icon" style="background:rgba(34,197,94,0.1);">
+                <i class="fas fa-building" style="color:#22c55e;"></i>
+              </div>
+              <div class="act-body">
+                <div class="act-title">{{ app.company_name|truncatechars:22 }}</div>
+                <div class="act-sub">{{ app.job_title|truncatechars:26 }}</div>
+              </div>
+              <span class="act-badge act-badge-{{ app.status }}">{{ app.status }}</span>
+              <i class="fas fa-chevron-right act-chevron"></i>
+            </div>
+            {% endfor %}
+
+          {% else %}
+          <div class="dash-empty">
+            <div class="dash-empty-icon" style="background:rgba(34,197,94,0.1);">
+              <i class="fas fa-briefcase" style="color:#22c55e;"></i>
+            </div>
+            <div class="dash-empty-title">Start tracking applications</div>
+            <p class="dash-empty-desc">Never lose track of where you applied</p>
+            <a href="{% url 'tracker' %}" class="btn-primary-grad"
+               style="font-size:0.78rem;padding:8px 20px;background:linear-gradient(135deg,#22c55e,#4cc9f0);">
+              Add Application <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+          </div>
+          {% endif %}
         </div>
-        <div class="drawer-nav-section">
-            <a href="{% url 'home' %}"      class="nav-link-item"><i class="fas fa-pen-ruler"></i>Generator</a>
-            <a href="{% url 'dashboard' %}" class="nav-link-item active"><i class="fas fa-chart-pie"></i>Dashboard</a>
-            <a href="{% url 'tools' %}"     class="nav-link-item"><i class="fas fa-wand-magic-sparkles"></i>AI Tools</a>
-            <a href="{% url 'tracker' %}"   class="nav-link-item"><i class="fas fa-briefcase"></i>Tracker</a>
-            <a href="{% url 'history' %}"   class="nav-link-item"><i class="fas fa-clock-rotate-left"></i>History</a>
-            <div class="drawer-divider"></div>
-            <a href="{% url 'pricing' %}"   class="nav-link-item"><i class="fas fa-tags"></i>Pricing</a>
-            <a href="{% url 'profile' %}"   class="nav-link-item"><i class="fas fa-user"></i>{{ user.username }}</a>
+      </div>
+
+      <!-- ── RECENT AI RESULTS ── -->
+      <div class="col-lg-4 anim-fade-up anim-delay-4">
+        <div class="glass-card h-100">
+          <div class="feed-header">
+            <div class="panel-title mb-0">
+              <i class="fas fa-wand-magic-sparkles" style="color:var(--secondary);"></i>AI Results
+            </div>
+            {% if recent_ai %}
+            <span class="feed-count-pill" style="background:var(--secondary-dim);color:var(--secondary);border-color:rgba(247,37,133,0.2);">{{ recent_ai|length }}</span>
+            {% endif %}
+          </div>
+
+          {% if recent_ai %}
+            {% for ai in recent_ai %}
+            {# Choose icon + color based on result type #}
+            {% if ai.result_type == 'ats' %}
+              {% with icon="fas fa-chart-bar" color="#a855f7" bg="rgba(168,85,247,0.1)" badge_cls="act-badge-ats" badge_lbl="ATS" %}
+              <div class="activity-row"
+                   data-modal-type="ai"
+                   data-ai-type="{{ ai.result_type }}"
+                   data-title="{{ ai.input_summary|default:'ATS Score Check' }}"
+                   data-date="{{ ai.created_at|date:'M d, Y' }}"
+                   data-score="{{ ai.score|default:'' }}"
+                   data-content="{{ ai.result|default:'' }}"
+                   tabindex="0" role="button"
+                   aria-label="View {{ ai.result_type }} result">
+                <div class="act-icon" style="background:{{ bg }};">
+                  <i class="{{ icon }}" style="color:{{ color }};"></i>
+                </div>
+                <div class="act-body">
+                  <div class="act-title">{{ ai.input_summary|default:"ATS Score Check"|truncatechars:26 }}</div>
+                  {% if ai.score %}
+                  <div class="ats-mini-bar"><div class="ats-mini-fill" style="width:{{ ai.score }}%;"></div></div>
+                  {% else %}
+                  <div class="act-sub">ATS Score Analysis</div>
+                  {% endif %}
+                </div>
+                {% if ai.score %}
+                <span class="act-meta" style="color:#a855f7;">{{ ai.score }}/100</span>
+                {% else %}
+                <span class="act-badge {{ badge_cls }}">{{ badge_lbl }}</span>
+                {% endif %}
+                <i class="fas fa-chevron-right act-chevron"></i>
+              </div>
+              {% endwith %}
+            {% elif ai.result_type == 'interview' %}
+              {% with icon="fas fa-user-tie" color="#fbbf24" bg="rgba(251,191,36,0.1)" badge_cls="act-badge-interview-prep" badge_lbl="Prep" %}
+              <div class="activity-row"
+                   data-modal-type="ai"
+                   data-ai-type="{{ ai.result_type }}"
+                   data-title="{{ ai.input_summary|default:'Interview Prep' }}"
+                   data-date="{{ ai.created_at|date:'M d, Y' }}"
+                   data-content="{{ ai.result|default:'' }}"
+                   tabindex="0" role="button">
+                <div class="act-icon" style="background:{{ bg }};">
+                  <i class="{{ icon }}" style="color:{{ color }};"></i>
+                </div>
+                <div class="act-body">
+                  <div class="act-title">{{ ai.input_summary|default:"Interview Prep"|truncatechars:26 }}</div>
+                  <div class="act-sub">Interview Q&A</div>
+                </div>
+                <span class="act-meta">{{ ai.created_at|date:"M d" }}</span>
+                <i class="fas fa-chevron-right act-chevron"></i>
+              </div>
+              {% endwith %}
+            {% else %}
+              {% with icon="fas fa-envelope-open-text" color="#f72585" bg="rgba(247,37,133,0.1)" badge_cls="act-badge-followup" badge_lbl="Email" %}
+              <div class="activity-row"
+                   data-modal-type="ai"
+                   data-ai-type="{{ ai.result_type }}"
+                   data-title="{{ ai.input_summary|default:'Follow-Up Email' }}"
+                   data-date="{{ ai.created_at|date:'M d, Y' }}"
+                   data-content="{{ ai.result|default:'' }}"
+                   tabindex="0" role="button">
+                <div class="act-icon" style="background:{{ bg }};">
+                  <i class="{{ icon }}" style="color:{{ color }};"></i>
+                </div>
+                <div class="act-body">
+                  <div class="act-title">{{ ai.input_summary|default:"Follow-Up Email"|truncatechars:26 }}</div>
+                  <div class="act-sub">Follow-Up Sequence</div>
+                </div>
+                <span class="act-meta">{{ ai.created_at|date:"M d" }}</span>
+                <i class="fas fa-chevron-right act-chevron"></i>
+              </div>
+              {% endwith %}
+            {% endif %}
+            {% endfor %}
+
+          {% else %}
+          <div class="dash-empty">
+            <div class="dash-empty-icon" style="background:var(--secondary-dim);">
+              <i class="fas fa-wand-magic-sparkles" style="color:var(--secondary);"></i>
+            </div>
+            <div class="dash-empty-title">Unlock your AI arsenal</div>
+            <p class="dash-empty-desc">Interview prep, ATS scoring, follow-ups & more</p>
+            <a href="{% url 'tools' %}" class="btn-primary-grad"
+               style="font-size:0.78rem;padding:8px 20px;background:linear-gradient(135deg,#f72585,#ff6b6b);">
+              Explore AI Tools <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+          </div>
+          {% endif %}
         </div>
+      </div>
+
+    </div><!-- /.row activity feeds -->
+  </div><!-- /.container -->
+
+
+  <!-- ═════════════════════════════════════════════════════════════
+       PREMIUM GLASSMORPHIC ACTIVITY MODAL
+       Single modal — dynamically populated by JS on row click
+       ═════════════════════════════════════════════════════════════ -->
+  <div class="modal fade" id="activityModal" tabindex="-1" aria-labelledby="activityModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <h2 class="modal-title" id="activityModalLabel">
+            <i class="fas fa-file-alt" id="modalIcon"></i>
+            <span id="modalTitle">Details</span>
+          </h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter:invert(1);opacity:.5;"></button>
+        </div>
+
+        <div class="modal-body" id="modalBody">
+          <!-- Populated dynamically by JS -->
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="modal-btn-outline" data-bs-dismiss="modal">
+            <i class="fas fa-times"></i> Close
+          </button>
+          <a href="{% url 'history' %}" class="modal-btn-outline" id="modalHistoryLink">
+            <i class="fas fa-clock-rotate-left"></i> Full History
+          </a>
+          <button type="button" class="modal-btn-primary" onclick="copyModalContent()" id="modalCopyBtn">
+            <i class="fas fa-copy"></i> Copy Text
+          </button>
+        </div>
+
+      </div>
     </div>
+  </div>
 
-    <!-- PAGE CONTENT -->
-    <div class="container-fluid px-3 px-md-4 pb-5" style="max-width: 1280px; margin: 0 auto;">
 
-        <!-- PAGE HEADER -->
-        <div class="page-header anim-fade-up">
-            <h1 class="page-title"><i class="fas fa-chart-line"></i> Dashboard</h1>
-            <p class="page-subtitle">Your career command center — everything at a glance.</p>
-        </div>
+  <!-- ════════════ SCRIPTS ════════════ -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-        <!-- STAT CARDS -->
-        <div class="stat-grid">
-            <div class="stat-card-v2 card-hoverable anim-fade-up anim-delay-1"
-                 style="--card-accent: var(--primary); --card-icon-bg: var(--primary-dim); --card-icon-color: var(--primary); --card-value-color: var(--primary);">
-                <div class="stat-icon-box"><i class="fas fa-file-alt"></i></div>
-                <div class="stat-value-v2">{{ stats.total_generations }}</div>
-                <div class="stat-label-v2">Cover Letters</div>
-            </div>
-            <div class="stat-card-v2 card-hoverable anim-fade-up anim-delay-2"
-                 style="--card-accent: var(--secondary); --card-icon-bg: var(--secondary-dim); --card-icon-color: var(--secondary); --card-value-color: var(--secondary);">
-                <div class="stat-icon-box"><i class="fas fa-wand-magic-sparkles"></i></div>
-                <div class="stat-value-v2">{{ stats.total_ai_results }}</div>
-                <div class="stat-label-v2">AI Tool Results</div>
-            </div>
-            <div class="stat-card-v2 card-hoverable anim-fade-up anim-delay-3"
-                 style="--card-accent: #22c55e; --card-icon-bg: rgba(34,197,94,0.1); --card-icon-color: #22c55e; --card-value-color: #22c55e;">
-                <div class="stat-icon-box"><i class="fas fa-briefcase"></i></div>
-                <div class="stat-value-v2">{{ stats.total_applications }}</div>
-                <div class="stat-label-v2">Applications</div>
-            </div>
-            <div class="stat-card-v2 card-hoverable anim-fade-up anim-delay-4"
-                 style="--card-accent: var(--warning); --card-icon-bg: rgba(234,179,8,0.1); --card-icon-color: var(--warning); --card-value-color: var(--warning);">
-                <div class="stat-icon-box"><i class="fas fa-trophy"></i></div>
-                <div class="stat-value-v2">{{ stats.offers }}</div>
-                <div class="stat-label-v2">Offers Received</div>
-            </div>
-            <div class="stat-card-v2 card-hoverable anim-fade-up anim-delay-5"
-                 style="--card-accent: #a855f7; --card-icon-bg: rgba(168,85,247,0.1); --card-icon-color: #a855f7; --card-value-color: #a855f7;">
-                <div class="stat-icon-box"><i class="fas fa-bolt"></i></div>
-                <div class="stat-value-v2">{{ stats.generations_left }}</div>
-                <div class="stat-label-v2">Gens Left ({{ stats.plan }})</div>
-            </div>
-        </div>
-
-        <!-- MAIN PANELS: FUNNEL + QUICK ACTIONS -->
-        <div class="row g-4 mb-4">
-            <!-- APPLICATION FUNNEL -->
-            <div class="col-lg-6 anim-fade-up anim-delay-2">
-                <div class="glass-card h-100">
-                    <h2 class="section-title mb-4">
-                        <i class="fas fa-filter" style="color: var(--primary);"></i>Application Funnel
-                    </h2>
-                    <div class="chart-container">
-                        <canvas id="funnelChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- QUICK ACTIONS -->
-            <div class="col-lg-6 anim-fade-up anim-delay-3">
-                <div class="glass-card h-100">
-                    <h2 class="section-title mb-4">
-                        <i class="fas fa-rocket" style="color: var(--secondary);"></i>Quick Actions
-                    </h2>
-                    <a href="{% url 'home' %}" class="quick-action-v2">
-                        <div class="quick-action-icon" style="background: var(--primary-dim); color: var(--primary);">
-                            <i class="fas fa-file-alt"></i>
-                        </div>
-                        <div>
-                            <div class="fw-bold" style="font-size: 0.92rem;">Generate Cover Letter</div>
-                            <small class="text-white-50">Create an AI-powered cover letter</small>
-                        </div>
-                        <i class="fas fa-chevron-right ms-auto" style="color: var(--text-muted); font-size:0.8rem;"></i>
-                    </a>
-                    <a href="{% url 'tools' %}" class="quick-action-v2">
-                        <div class="quick-action-icon" style="background: var(--secondary-dim); color: var(--secondary);">
-                            <i class="fas fa-brain"></i>
-                        </div>
-                        <div>
-                            <div class="fw-bold" style="font-size: 0.92rem;">Interview Prep AI</div>
-                            <small class="text-white-50">Get tailored interview Q&A</small>
-                        </div>
-                        <i class="fas fa-chevron-right ms-auto" style="color: var(--text-muted); font-size:0.8rem;"></i>
-                    </a>
-                    <a href="{% url 'tools' %}" class="quick-action-v2">
-                        <div class="quick-action-icon" style="background: rgba(234,179,8,0.1); color: var(--warning);">
-                            <i class="fas fa-chart-bar"></i>
-                        </div>
-                        <div>
-                            <div class="fw-bold" style="font-size: 0.92rem;">ATS Score Checker</div>
-                            <small class="text-white-50">Analyze resume compatibility</small>
-                        </div>
-                        <i class="fas fa-chevron-right ms-auto" style="color: var(--text-muted); font-size:0.8rem;"></i>
-                    </a>
-                    <a href="{% url 'tracker' %}" class="quick-action-v2">
-                        <div class="quick-action-icon" style="background: rgba(34,197,94,0.1); color: #22c55e;">
-                            <i class="fas fa-briefcase"></i>
-                        </div>
-                        <div>
-                            <div class="fw-bold" style="font-size: 0.92rem;">Application Tracker</div>
-                            <small class="text-white-50">Track and manage applications</small>
-                        </div>
-                        <i class="fas fa-chevron-right ms-auto" style="color: var(--text-muted); font-size:0.8rem;"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- RECENT ACTIVITY -->
-        <div class="row g-4">
-
-            <!-- Recent Cover Letters -->
-            <div class="col-lg-4 anim-fade-up anim-delay-2">
-                <div class="glass-card h-100">
-                    <h2 class="section-title mb-4">
-                        <i class="fas fa-file-alt" style="color: var(--primary);"></i>Recent Cover Letters
-                    </h2>
-                    {% if recent_generations %}
-                        {% for gen in recent_generations %}
-                        <div class="activity-item-v2">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span style="font-size: 0.85rem; font-weight: 600;">
-                                    {{ gen.company_name|default:"—" }}
-                                    <span style="color: var(--text-muted); font-weight: 400;">· {{ gen.job_title|default:"—" }}</span>
-                                </span>
-                                <small style="color: var(--text-muted); font-size: 0.78rem;">{{ gen.created_at|date:"M d" }}</small>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                    <div class="empty-state-v2">
-                        <div class="empty-icon-box"><i class="fas fa-pen-nib" style="color: var(--primary);"></i></div>
-                        <div class="empty-title">Your FAANG-level letter awaits</div>
-                        <p class="empty-desc">Generate your first AI cover letter in seconds</p>
-                        <a href="{% url 'home' %}" class="btn-primary-grad" style="font-size:0.82rem; padding: 9px 22px;">
-                            Create Now <i class="fas fa-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Recent Applications -->
-            <div class="col-lg-4 anim-fade-up anim-delay-3">
-                <div class="glass-card h-100">
-                    <h2 class="section-title mb-4">
-                        <i class="fas fa-briefcase" style="color: #22c55e;"></i>Recent Applications
-                    </h2>
-                    {% if recent_apps %}
-                        {% for app in recent_apps %}
-                        <div class="activity-item-v2">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span style="font-size: 0.85rem; font-weight: 600;">{{ app.company_name|truncatechars:20 }}</span>
-                                <span class="badge-status badge-primary">{{ app.status }}</span>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                    <div class="empty-state-v2">
-                        <div class="empty-icon-box" style="background: rgba(34,197,94,0.1);">
-                            <i class="fas fa-briefcase" style="color: #22c55e;"></i>
-                        </div>
-                        <div class="empty-title">Start tracking applications</div>
-                        <p class="empty-desc">Never lose track of where you applied</p>
-                        <a href="{% url 'tracker' %}" class="btn-primary-grad"
-                           style="font-size:0.82rem; padding: 9px 22px; background: linear-gradient(135deg,#22c55e,#4cc9f0);">
-                            Add Application <i class="fas fa-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Recent AI Results -->
-            <div class="col-lg-4 anim-fade-up anim-delay-4">
-                <div class="glass-card h-100">
-                    <h2 class="section-title mb-4">
-                        <i class="fas fa-wand-magic-sparkles" style="color: var(--secondary);"></i>Recent AI Results
-                    </h2>
-                    {% if recent_ai %}
-                        {% for ai in recent_ai %}
-                        <div class="activity-item-v2">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span style="font-size: 0.85rem; font-weight: 600;">{{ ai.input_summary|truncatechars:25 }}</span>
-                                <small style="color: var(--text-muted); font-size: 0.78rem;">{{ ai.created_at|date:"M d" }}</small>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                    <div class="empty-state-v2">
-                        <div class="empty-icon-box" style="background: var(--secondary-dim);">
-                            <i class="fas fa-wand-magic-sparkles" style="color: var(--secondary);"></i>
-                        </div>
-                        <div class="empty-title">Unlock your AI arsenal</div>
-                        <p class="empty-desc">Interview prep, ATS scoring, follow-ups & more</p>
-                        <a href="{% url 'tools' %}" class="btn-primary-grad"
-                           style="font-size:0.82rem; padding: 9px 22px; background: linear-gradient(135deg,#f72585,#ff6b6b);">
-                            Explore AI Tools <i class="fas fa-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const ctx = document.getElementById('funnelChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Saved', 'Applied', 'Interview', 'Offer', 'Rejected'],
-                datasets: [{
-                    data: [{{ stats.saved }}, {{ stats.applied }}, {{ stats.interviews }}, {{ stats.offers }}, {{ stats.rejected }}],
-                    backgroundColor: [
-                        'rgba(148, 163, 184, 0.75)',
-                        'rgba(76, 201, 240, 0.75)',
-                        'rgba(234, 179, 8, 0.75)',
-                        'rgba(34, 197, 94, 0.75)',
-                        'rgba(239, 68, 68, 0.75)'
-                    ],
-                    borderColor: 'rgba(8, 12, 20, 0.6)',
-                    borderWidth: 3,
-                    hoverOffset: 8
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '62%',
-                plugins: {
-                    legend: {
-                        position: 'right',
-                        labels: {
-                            color: '#94a3b8',
-                            font: { family: 'Outfit', size: 12, weight: '600' },
-                            padding: 14,
-                            usePointStyle: true,
-                            pointStyleWidth: 9,
-                        }
-                    }
-                }
+  <script>
+    /* ─────────────────────────────────────────────────────
+       CHART.JS — Funnel Doughnut
+    ───────────────────────────────────────────────────── */
+    const ctx = document.getElementById('funnelChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Saved', 'Applied', 'Interview', 'Offer', 'Rejected'],
+        datasets: [{
+          data: [
+            {{ stats.saved }}, {{ stats.applied }},
+            {{ stats.interviews }}, {{ stats.offers }}, {{ stats.rejected }}
+          ],
+          backgroundColor: [
+            'rgba(148,163,184,0.72)',
+            'rgba(76,201,240,0.72)',
+            'rgba(234,179,8,0.72)',
+            'rgba(34,197,94,0.72)',
+            'rgba(239,68,68,0.72)',
+          ],
+          borderColor: 'rgba(8,12,20,0.7)',
+          borderWidth: 3,
+          hoverOffset: 10,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '65%',
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: {
+              color: '#94a3b8',
+              font: { family: 'Inter', size: 11, weight: '600' },
+              padding: 14,
+              usePointStyle: true,
+              pointStyleWidth: 9,
             }
-        });
-
-        function toggleMobileNav() {
-            document.getElementById('mobileDrawer').classList.toggle('open');
-            document.getElementById('mobileBackdrop').classList.toggle('open');
+          }
         }
-    </script>
+      }
+    });
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    /* ─────────────────────────────────────────────────────
+       MOBILE NAV TOGGLE
+    ───────────────────────────────────────────────────── */
+    function toggleMobileNav() {
+      document.getElementById('mobileDrawer').classList.toggle('open');
+      document.getElementById('mobileBackdrop').classList.toggle('open');
+    }
+
+    /* ─────────────────────────────────────────────────────
+       ACTIVITY ROW → MODAL SYSTEM
+       Reads data-* attributes, builds modal content,
+       then opens Bootstrap modal. No page reload.
+    ───────────────────────────────────────────────────── */
+    const _modal   = new bootstrap.Modal(document.getElementById('activityModal'));
+    const _mbody   = document.getElementById('modalBody');
+    const _mtitle  = document.getElementById('modalTitle');
+    const _micon   = document.getElementById('modalIcon');
+    let   _rawText = '';   // stored for copy-to-clipboard
+
+    /* Type config */
+    const TYPE_CONFIG = {
+      letter:    { icon: 'fas fa-file-alt',            color: '#4cc9f0',  label: 'Cover Letter' },
+      app:       { icon: 'fas fa-briefcase',           color: '#22c55e',  label: 'Application' },
+      ai_ats:    { icon: 'fas fa-chart-bar',           color: '#a855f7',  label: 'ATS Analysis' },
+      ai_interview: { icon: 'fas fa-user-tie',         color: '#fbbf24',  label: 'Interview Prep' },
+      ai_followup:  { icon: 'fas fa-envelope-open-text', color: '#f72585', label: 'Follow-Up Email' },
+      ai_default: { icon: 'fas fa-wand-magic-sparkles', color: '#f72585', label: 'AI Result' },
+    };
+
+    /* Resolve key from row dataset */
+    function resolveKey(row) {
+      const t = row.dataset.modalType;
+      if (t === 'letter') return 'letter';
+      if (t === 'app')    return 'app';
+      if (t === 'ai') {
+        const at = (row.dataset.aiType || '').toLowerCase();
+        if (at === 'ats')       return 'ai_ats';
+        if (at === 'interview') return 'ai_interview';
+        if (at === 'followup')  return 'ai_followup';
+        return 'ai_default';
+      }
+      return 'ai_default';
+    }
+
+    /* Build HTML for each modal type */
+    function buildModalBody(row) {
+      const key   = resolveKey(row);
+      const cfg   = TYPE_CONFIG[key] || TYPE_CONFIG.ai_default;
+      const title = row.dataset.title || 'Details';
+      const date  = row.dataset.date  || '';
+      const content = (row.dataset.content || '').trim();
+
+      _rawText = content;
+
+      /* Meta strip */
+      const metaHtml = `
+        <div class="modal-meta-strip">
+          <div class="modal-meta-item">
+            <i class="fas fa-calendar-alt"></i>${date}
+          </div>
+          ${row.dataset.company ? `<div class="modal-meta-item"><i class="fas fa-building"></i>${row.dataset.company}</div>` : ''}
+          ${row.dataset.role    ? `<div class="modal-meta-item"><i class="fas fa-user-tie"></i>${row.dataset.role}</div>` : ''}
+          ${row.dataset.status  ? `<div class="modal-meta-item"><i class="fas fa-circle-dot"></i><span class="act-badge act-badge-${row.dataset.status}" style="font-size:0.6rem;">${row.dataset.status}</span></div>` : ''}
+        </div>`;
+
+      /* ATS score ring */
+      const score = parseInt(row.dataset.score || '0');
+      let atsHtml = '';
+      if (key === 'ai_ats' && score > 0) {
+        const dash   = 188;
+        const offset = dash - (dash * score / 100);
+        const scoreColor = score >= 75 ? '#22c55e' : score >= 50 ? '#eab308' : '#ef4444';
+        atsHtml = `
+          <div class="modal-ats-score">
+            <div class="ats-score-ring">
+              <svg viewBox="0 0 72 72" width="72" height="72">
+                <circle class="track" cx="36" cy="36" r="30"/>
+                <circle class="fill" cx="36" cy="36" r="30"
+                  stroke="${scoreColor}"
+                  stroke-dasharray="${dash}"
+                  stroke-dashoffset="${offset}"/>
+              </svg>
+              <div class="ats-ring-num" style="color:${scoreColor};">${score}</div>
+            </div>
+            <div class="ats-score-label">
+              <strong>ATS Compatibility Score</strong>
+              ${score >= 75 ? '✅ Strong match — ready to apply' : score >= 50 ? '⚠️ Moderate — optimize keywords' : '🔴 Weak — needs significant work'}
+            </div>
+          </div>`;
+      }
+
+      /* App notes */
+      let notesHtml = '';
+      if (key === 'app') {
+        const salary = row.dataset.salary || '—';
+        const notes  = (row.dataset.notes || '').trim();
+        notesHtml = `
+          <div class="modal-meta-strip mb-3">
+            <div class="modal-meta-item"><i class="fas fa-sack-dollar"></i>${salary}</div>
+          </div>
+          ${notes ? `<div class="letter-preview-card">
+            <div class="lpc-header">
+              <span class="lpc-title"><i class="fas fa-sticky-note me-1"></i>Notes</span>
+            </div>
+            <p class="modal-result-text" style="margin:0;">${notes}</p>
+          </div>` : ''}`;
+      }
+
+      /* Main content */
+      let contentHtml = '';
+      if (content) {
+        if (key === 'letter') {
+          contentHtml = `
+            <div class="letter-preview-card">
+              <div class="lpc-header">
+                <span class="lpc-title"><i class="fas fa-file-alt me-1"></i>Generated Content</span>
+              </div>
+              <pre class="modal-result-text" style="margin:0;">${escHtml(content)}</pre>
+            </div>`;
+        } else {
+          contentHtml = `<pre class="modal-result-text">${escHtml(content)}</pre>`;
+        }
+      } else if (key !== 'app') {
+        contentHtml = `<div class="modal-result-text" style="color:var(--text-muted);font-style:italic;text-align:center;padding:20px 0;">
+          No content preview available.
+        </div>`;
+      }
+
+      return metaHtml + atsHtml + notesHtml + contentHtml;
+    }
+
+    function escHtml(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    /* Main event listener — delegated on document */
+    document.addEventListener('click', function(e) {
+      const row = e.target.closest('.activity-row');
+      if (!row) return;
+
+      const key = resolveKey(row);
+      const cfg = TYPE_CONFIG[key] || TYPE_CONFIG.ai_default;
+
+      /* Update modal header */
+      _micon.className = cfg.icon;
+      _micon.style.color = cfg.color;
+      _mtitle.textContent = row.dataset.title || cfg.label;
+
+      /* Populate body */
+      _mbody.innerHTML = buildModalBody(row);
+
+      /* Open modal */
+      _modal.show();
+    });
+
+    /* Keyboard: Enter/Space on rows */
+    document.addEventListener('keydown', function(e) {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      const row = e.target.closest('.activity-row');
+      if (!row) return;
+      e.preventDefault();
+      row.click();
+    });
+
+    /* Copy to clipboard */
+    function copyModalContent() {
+      if (!_rawText) return;
+      navigator.clipboard.writeText(_rawText).then(() => {
+        const btn = document.getElementById('modalCopyBtn');
+        btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        setTimeout(() => {
+          btn.innerHTML = '<i class="fas fa-copy"></i> Copy Text';
+        }, 2200);
+      }).catch(() => {
+        alert('Copy failed — please select and copy manually.');
+      });
+    }
+  </script>
+
 </body>
-
 </html>
