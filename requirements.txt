@@ -40,3 +40,5 @@ markdown>=3.6.0
 # Redis cache backend (shared rate-limiter + session store across Gunicorn workers)
 django-redis>=5.4.0
 redis[hiredis]>=5.0.0
+
+weasyprint>=60.0
