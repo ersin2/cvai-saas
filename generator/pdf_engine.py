@@ -89,15 +89,22 @@ def get_templates_for_plan(pdf_limit: int) -> list:
 # ─────────────────────────────────────────────────────────────────────────────
 
 class ProSkillBar(Flowable):
-    """Horizontal skill bar — reusable across all templates."""
+    """Horizontal skill bar — reusable across all templates.
 
-    def __init__(self, name, level_percent, width=150, height=14,
+    Layout (bottom-up, all coords in points):
+      0–5   : bar track
+      5–9   : gap between bar and label
+      9–19  : skill name + level badge row
+    Total height = 22 pts (self.height).
+    """
+
+    def __init__(self, name, level_percent, width=150, height=22,
                  bar_bg="#34495e", bar_fill="#4cc9f0", text_color="white"):
         Flowable.__init__(self)
         self.name = name
         self.level = level_percent / 100.0
         self.width = width
-        self.height = height
+        self.height = height          # total flowable height (name row + gap + bar)
         self.bar_bg = bar_bg
         self.bar_fill = bar_fill
         self.text_color = text_color
@@ -113,20 +120,23 @@ class ProSkillBar(Flowable):
 
     def draw(self):
         c = self.canv
-        c.setFont("Helvetica-Bold", 10)
+        # --- name label (top row) ---
+        c.setFont("Helvetica-Bold", 9)
         c.setFillColor(colors.HexColor("#ffffff") if self.text_color == "white"
                        else colors.HexColor(self.text_color))
-        c.drawString(0, 7, self.name)
+        c.drawString(0, 12, self.name)          # 12 pts above bottom = above bar+gap
 
-        c.setFont("Helvetica", 8)
+        # --- level badge (right-aligned, same row) ---
+        c.setFont("Helvetica", 7.5)
         c.setFillColor(colors.HexColor("#bdc3c7"))
-        c.drawRightString(self.width, 7, self.txt)
+        c.drawRightString(self.width, 12, self.txt)
 
+        # --- bar track (bottom, 5 pts tall with 4 pt gap above baseline) ---
         c.setFillColor(colors.HexColor(self.bar_bg))
-        c.roundRect(0, 0, self.width, 4, 2, fill=1, stroke=0)
+        c.roundRect(0, 2, self.width, 5, 2, fill=1, stroke=0)
 
         c.setFillColor(colors.HexColor(self.bar_fill))
-        c.roundRect(0, 0, self.width * self.level, 4, 2, fill=1, stroke=0)
+        c.roundRect(0, 2, self.width * self.level, 5, 2, fill=1, stroke=0)
 
 
 def _process_photo(photo_file) -> str | None:
@@ -187,29 +197,50 @@ def _build_classic_navy(req, buf):
         canvas.rect(0, 0, 80 * mm, 297 * mm, fill=1, stroke=0)
         canvas.restoreState()
 
+    # ── Frames ────────────────────────────────────────────────────────────────
+    # topPadding=40*mm gives the sidebar breathing room so SKILLS/CONTACTS
+    # never collide with the top edge of the navy panel.
     frame_sb   = Frame(0, 0, 80*mm, 297*mm, id='sb',
-                       leftPadding=20, rightPadding=20, topPadding=30, bottomPadding=30)
+                       leftPadding=20, rightPadding=20,
+                       topPadding=int(40*mm), bottomPadding=20)
     frame_main = Frame(80*mm, 0, 130*mm, 297*mm, id='main',
                        leftPadding=25, rightPadding=25, topPadding=30, bottomPadding=30)
     doc.addPageTemplates([PageTemplate(id='L', frames=[frame_sb, frame_main], onPage=draw_bg)])
 
-    s_sb_h = ParagraphStyle('SH', fontName='Helvetica-Bold', fontSize=12,
-                             textColor=C_ACC, spaceBefore=20, spaceAfter=8, textTransform='uppercase')
+    # ── Sidebar styles ────────────────────────────────────────────────────────
+    s_sb_h = ParagraphStyle('SH', fontName='Helvetica-Bold', fontSize=11,
+                             textColor=C_ACC, spaceBefore=22, spaceAfter=10,
+                             textTransform='uppercase', letterSpacing=1)
     s_sb_t = ParagraphStyle('ST', fontName='Helvetica', fontSize=9.5,
                              textColor=colors.white, leading=14)
-    s_sb_l = ParagraphStyle('SL', fontName='Helvetica-Bold', fontSize=8,
-                             textColor=colors.HexColor("#bdc3c7"), spaceBefore=6)
+    s_sb_l = ParagraphStyle('SL', fontName='Helvetica-Bold', fontSize=7.5,
+                             textColor=colors.HexColor("#bdc3c7"), spaceBefore=8, spaceAfter=1)
+
+    # ── Main-column styles ────────────────────────────────────────────────────
     s_name  = ParagraphStyle('N', fontName='Helvetica-Bold', fontSize=32,
                               textColor=C_TEXT, leading=34, spaceAfter=5)
     s_role  = ParagraphStyle('R', fontName='Helvetica-Bold', fontSize=14,
                               textColor=C_ACC, textTransform='uppercase', spaceAfter=15)
+    # Section headers — increased spaceBefore for clear visual separation
     s_h2    = ParagraphStyle('H2', fontName='Helvetica-Bold', fontSize=13,
-                              textColor=C_TEXT, spaceBefore=18, spaceAfter=8, textTransform='uppercase')
+                              textColor=C_TEXT, spaceBefore=25, spaceAfter=12,
+                              textTransform='uppercase')
+    # Body — leading raised to 18 for better readability
     s_body  = ParagraphStyle('B', fontName='Helvetica', fontSize=10.5,
-                              textColor=colors.HexColor("#34495e"), leading=16, spaceAfter=8)
-    s_bullet = ParagraphStyle('Bullet', parent=s_body, bulletIndent=5, leftIndent=15, spaceBefore=2, spaceAfter=4)
-    s_job_title = ParagraphStyle('JT', parent=s_body, fontName='Helvetica-Bold', fontSize=11.5, spaceBefore=12, spaceAfter=2)
-    s_job_meta = ParagraphStyle('JM', parent=s_body, fontName='Helvetica', fontSize=10.5, textColor=colors.HexColor("#444444"), spaceBefore=0, spaceAfter=6)
+                              textColor=colors.HexColor("#34495e"), leading=18, spaceAfter=8)
+    # Bullet — hanging indent so wrapped lines don't overlap the bullet glyph
+    s_bullet = ParagraphStyle('Bullet', parent=s_body,
+                               leftIndent=20, bulletIndent=8,
+                               spaceBefore=2, spaceAfter=4)
+    # Job title row
+    s_job_title = ParagraphStyle('JT', parent=s_body,
+                                  fontName='Helvetica-Bold', fontSize=12,
+                                  spaceBefore=10, spaceAfter=2)
+    # Company & dates meta row
+    s_job_meta  = ParagraphStyle('JM', parent=s_body,
+                                  fontName='Helvetica', fontSize=10,
+                                  textColor=colors.HexColor("#555555"),
+                                  spaceBefore=0, spaceAfter=8)
 
     story = []
     photo_path = _process_photo(req.FILES.get('photo'))
@@ -217,26 +248,31 @@ def _build_classic_navy(req, buf):
         story.append(RLImage(photo_path, width=50*mm, height=50*mm))
         story.append(Spacer(1, 20))
 
+    # ── Sidebar content ───────────────────────────────────────────────────────
+    # CONTACTS: header is fully suppressed when no contact field is filled
     contacts_data = [
         ("LOCATION", req.POST.get('location')),
         ("EMAIL",    req.POST.get('email')),
         ("PHONE",    req.POST.get('phone')),
-        ("LINKEDIN", req.POST.get('linkedin'))
+        ("LINKEDIN", req.POST.get('linkedin')),
     ]
-    if any(val for lbl, val in contacts_data):
+    has_contacts = any(val for _, val in contacts_data)
+    if has_contacts:
         story.append(Paragraph("CONTACTS", s_sb_h))
         for lbl, val in contacts_data:
             if val:
                 story.append(Paragraph(lbl, s_sb_l))
                 story.append(Paragraph(val, s_sb_t))
-                story.append(Spacer(1, 2))
+                story.append(Spacer(1, 3))
 
+    # SKILLS: header is fully suppressed when skills list is empty
     skills = _parse_skills(req.POST.get('skills_list', ''))
     if skills:
         story.append(Paragraph("SKILLS", s_sb_h))
         for name, lvl in skills:
-            story.append(ProSkillBar(name, lvl, width=65*mm))
-            story.append(Spacer(1, 10))
+            # ProSkillBar now has a built-in gap between label and bar
+            story.append(ProSkillBar(name, lvl, width=int(58*mm)))
+            story.append(Spacer(1, 8))
 
     langs = req.POST.get('languages')
     if langs:
