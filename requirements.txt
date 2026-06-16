@@ -41,4 +41,4 @@ markdown>=3.6.0
 django-redis>=5.4.0
 redis[hiredis]>=5.0.0
 
-weasyprint>=60.0
+
