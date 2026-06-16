@@ -211,7 +211,7 @@ function switchTpl(btn) {
     const dividers = paper.querySelectorAll('.cv-section-divider');
     dividers.forEach(d => d.style.display = (tpl === 'tpl-executive') ? 'block' : 'none');
 
-    document.querySelectorAll('.tpl-pill').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.ctrl-tpl-pill').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
 
     renderCanvas();
@@ -315,7 +315,7 @@ async function studioAiFill() {
                 showToast('Resume generated! Edit inline on the canvas or use Quick Edit.', 'success');
 
                 if (window.innerWidth < 1100) {
-                    document.querySelector('.studio-right').scrollIntoView({ behavior: 'smooth' });
+                    document.getElementById('studioCanvasWrap').scrollIntoView({ behavior: 'smooth' });
                 }
             }
         }, 500);
@@ -335,8 +335,21 @@ function resetStudioBtn(btn, overlay, bar, pct) {
 }
 
 function showEditPanels() {
-    document.getElementById('studioEditPanel').style.display = 'block';
-    document.getElementById('studioSkillsPanel').style.display = 'block';
+    // Open the Personal Info accordion
+    const personalCollapse = document.getElementById('accBody-personal');
+    if (personalCollapse) {
+        const bsCollapse = bootstrap.Collapse.getOrCreateInstance(personalCollapse);
+        bsCollapse.show();
+    }
+    // Open the Skills accordion
+    const skillsCollapse = document.getElementById('accBody-skills');
+    if (skillsCollapse) {
+        // Short delay so Personal Info finishes first
+        setTimeout(() => {
+            const bsSkills = bootstrap.Collapse.getOrCreateInstance(skillsCollapse);
+            // Don't auto-show skills — accordion closes others in single-expand mode
+        }, 50);
+    }
 }
 
 // ── PDF Upload handler ───────────────────────────────────────
@@ -673,7 +686,7 @@ function resetDesignDefaults() {
 
 // ── Font chip visual selector ─────────────────────────────────
 function selectProFont(btn) {
-    document.querySelectorAll('#proFontGrid .pro-font-chip').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('#proFontGrid .ds-font-chip').forEach(c => c.classList.remove('active'));
     btn.classList.add('active');
     const fontStack = btn.dataset.font;
     applyDesignFont(fontStack);
@@ -787,7 +800,7 @@ function restoreSession() {
         if (paper) paper.className = 'a4-paper ' + tpl;
 
         // Re-activate the correct template pill
-        document.querySelectorAll('.tpl-pill').forEach(p => {
+        document.querySelectorAll('.ctrl-tpl-pill').forEach(p => {
             p.classList.toggle('active', p.dataset.tpl === tpl);
         });
 
