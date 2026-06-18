@@ -415,6 +415,220 @@
       color: var(--accent); background: rgba(76,201,240,.07);
       white-space: nowrap; flex-shrink: 0;
     }
+
+    /* ── ✨ Rewrite-with-AI micro-button ────────────────────── */
+    .rewrite-wrap {
+      position: relative;
+    }
+    .btn-rewrite-ai {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 10;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      font-size: .68rem;
+      font-weight: 700;
+      color: var(--accent);
+      background: rgba(13,17,32,.82);
+      border: 1px solid rgba(76,201,240,.22);
+      border-radius: 99px;
+      cursor: pointer;
+      /* glassmorphism */
+      backdrop-filter: blur(8px) saturate(160%);
+      -webkit-backdrop-filter: blur(8px) saturate(160%);
+      transition: background .2s, border-color .25s, box-shadow .25s,
+                  color .2s, transform .15s;
+      white-space: nowrap;
+      letter-spacing: .2px;
+      line-height: 1;
+    }
+    .btn-rewrite-ai:hover {
+      background: rgba(76,201,240,.12);
+      border-color: rgba(76,201,240,.5);
+      box-shadow: 0 0 12px rgba(76,201,240,.25),
+                  0 0  4px rgba(76,201,240,.15);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+    .btn-rewrite-ai:active {
+      transform: translateY(0);
+    }
+    .btn-rewrite-ai:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    /* Spinner inside the micro-button */
+    .btn-rewrite-ai .rw-spinner {
+      display: none;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(76,201,240,.3);
+      border-top-color: var(--accent);
+      animation: spin .6s linear infinite;
+      flex-shrink: 0;
+    }
+    .btn-rewrite-ai.rw-loading .rw-spinner { display: block; }
+    .btn-rewrite-ai.rw-loading .rw-label   { opacity: .65; }
+    /* Push the textarea's own top padding so text doesn't hide under the button */
+    .rewrite-wrap .vs-textarea {
+      padding-top: 32px;
+    }
+
+    /* ── Reset / Clear button ────────────────────────────────── */
+    .btn-reset-form {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px;
+      border: 1px solid rgba(248,113,113,.3);
+      border-radius: var(--radius-sm);
+      background: rgba(248,113,113,.08);
+      color: #f87171;
+      font-size: .78rem; font-weight: 700; cursor: pointer;
+      transition: background .2s, border-color .2s, transform .15s;
+    }
+    .btn-reset-form:hover {
+      background: rgba(248,113,113,.18);
+      border-color: rgba(248,113,113,.6);
+      transform: translateY(-1px);
+    }
+
+    /* ── Theme Customization panel ───────────────────────────── */
+    .theme-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .color-field {
+      display: flex; flex-direction: column; gap: 5px;
+    }
+    .color-field label {
+      font-size: .68rem; font-weight: 700;
+      color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px;
+    }
+    .color-row {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .color-row input[type="color"] {
+      width: 36px; height: 36px; border-radius: 8px;
+      border: 2px solid rgba(255,255,255,.12);
+      background: transparent; cursor: pointer; padding: 2px;
+      flex-shrink: 0;
+    }
+    .color-row input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; border-radius: 6px; }
+    .color-row input[type="color"]::-webkit-color-swatch         { border-radius: 6px; border: none; }
+    .color-hex-label {
+      font-size: .7rem; color: var(--text-muted); font-family: 'Courier New', monospace;
+    }
+    .font-select {
+      width: 100%; background: var(--input-bg);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary); font-size: .82rem;
+      padding: 8px 10px; outline: none; cursor: pointer;
+      transition: border-color .2s;
+    }
+    .font-select:focus { border-color: var(--accent); }
+
+    /* ── Dynamic Skills Builder ──────────────────────────────── */
+    .skill-builder {
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .skill-input-row {
+      display: flex; gap: 8px; align-items: center;
+    }
+    .skill-input-row .vs-input { flex: 1; }
+    .btn-add-skill {
+      flex-shrink: 0; padding: 8px 14px;
+      border: 1px solid var(--accent);
+      border-radius: var(--radius-sm);
+      background: rgba(76,201,240,.08);
+      color: var(--accent); font-weight: 800; font-size: .82rem;
+      cursor: pointer; white-space: nowrap;
+      transition: background .2s, transform .15s;
+    }
+    .btn-add-skill:hover {
+      background: rgba(76,201,240,.2);
+      transform: translateY(-1px);
+    }
+    .skill-level-wrap { display: flex; flex-direction: column; gap: 4px; }
+    .skill-level-header {
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .skill-level-label {
+      font-size: .7rem; font-weight: 700; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .5px;
+    }
+    .skill-level-badge {
+      font-size: .65rem; font-weight: 800; padding: 2px 8px;
+      border-radius: 99px; letter-spacing: .5px;
+      background: rgba(76,201,240,.12); color: var(--accent);
+      border: 1px solid rgba(76,201,240,.25);
+      transition: background .3s, color .3s;
+    }
+    .skill-level-badge.lvl-junior  { background: rgba(248,113,113,.12); color:#f87171; border-color:rgba(248,113,113,.25); }
+    .skill-level-badge.lvl-middle  { background: rgba(251,191,36,.12);  color:#fbbf24; border-color:rgba(251,191,36,.25); }
+    .skill-level-badge.lvl-senior  { background: rgba(34,197,94,.12);   color:#22c55e; border-color:rgba(34,197,94,.25); }
+    .skill-level-badge.lvl-expert  { background: rgba(139,92,246,.12);  color:#8b5cf6; border-color:rgba(139,92,246,.25); }
+    /* Gradient range track override */
+    .skill-range {
+      -webkit-appearance: none; appearance: none;
+      width: 100%; height: 5px; border-radius: 99px;
+      background: linear-gradient(
+        to right,
+        var(--accent) 0%,
+        var(--accent) var(--pct, 50%),
+        rgba(255,255,255,.1) var(--pct, 50%),
+        rgba(255,255,255,.1) 100%
+      );
+      outline: none; cursor: pointer;
+    }
+    .skill-range::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 16px; height: 16px;
+      border-radius: 50%; background: var(--accent);
+      box-shadow: 0 0 6px rgba(76,201,240,.5);
+      cursor: pointer; transition: transform .15s;
+    }
+    .skill-range::-webkit-slider-thumb:hover { transform: scale(1.2); }
+    /* Skill chip list */
+    .skill-chips {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      min-height: 32px;
+    }
+    .skill-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px 4px 12px;
+      background: rgba(76,201,240,.1);
+      border: 1px solid rgba(76,201,240,.22);
+      border-radius: 99px;
+      font-size: .75rem; font-weight: 600; color: var(--text-primary);
+      animation: chipIn .2s ease;
+    }
+    @keyframes chipIn {
+      from { opacity:0; transform: scale(.85); }
+      to   { opacity:1; transform: scale(1); }
+    }
+    .skill-chip .chip-level {
+      font-size: .6rem; color: var(--accent); font-weight: 800;
+    }
+    .skill-chip .chip-del {
+      width: 14px; height: 14px; border-radius: 50%;
+      background: rgba(248,113,113,.15);
+      border: none; cursor: pointer; display: flex;
+      align-items: center; justify-content: center;
+      font-size: .6rem; color: #f87171;
+      transition: background .2s;
+      padding: 0; line-height: 1;
+    }
+    .skill-chip .chip-del:hover { background: rgba(248,113,113,.4); }
+    .skill-empty-hint {
+      font-size: .72rem; color: var(--text-muted);
+      font-style: italic; align-self: center;
+    }
   </style>
 </head>
 
@@ -446,6 +660,10 @@
 
     <button class="vs-nav-btn-dl" id="btnDownloadPdf" onclick="downloadPdf()">
       <i class="fas fa-file-arrow-down me-1"></i>Download PDF
+    </button>
+    <button type="button" class="btn-reset-form" id="btnResetForm"
+            title="Clear all fields and start fresh">
+      <i class="fas fa-trash-can"></i> Clear
     </button>
   </nav>
 
@@ -953,9 +1171,20 @@
 
               <div class="mb-form">
                 <label class="vs-label" for="f_about_me">Professional Summary</label>
-                <textarea class="vs-textarea" id="f_about_me" name="about_me" rows="4"
-                          placeholder="A passionate engineer with 5+ years of experience…"
-                          oninput="scheduleLivePreview()"></textarea>
+                <div class="rewrite-wrap">
+                  <button type="button"
+                          class="btn-rewrite-ai"
+                          id="btnRewriteSummary"
+                          data-section="summary"
+                          data-target="f_about_me"
+                          title="Rewrite with AI (uses 1 generation)">
+                    <div class="rw-spinner"></div>
+                    <span class="rw-label">✨ Rewrite</span>
+                  </button>
+                  <textarea class="vs-textarea" id="f_about_me" name="about_me" rows="4"
+                            placeholder="A passionate engineer with 5+ years of experience…"
+                            oninput="scheduleLivePreview()"></textarea>
+                </div>
               </div>
             </div>
           </div><!-- /§2 -->
@@ -975,9 +1204,20 @@
               </p>
               <div class="mb-form">
                 <label class="vs-label" for="f_experience_text">Experience (free-form)</label>
-                <textarea class="vs-textarea" id="f_experience_text" name="experience_text" rows="7"
-                          placeholder="Software Engineer | Acme Corp | 2021–Present&#10;- Built REST APIs serving 2M daily users&#10;- Reduced latency by 40% via Redis caching"
-                          oninput="scheduleLivePreview()"></textarea>
+                <div class="rewrite-wrap">
+                  <button type="button"
+                          class="btn-rewrite-ai"
+                          id="btnRewriteExperience"
+                          data-section="experience"
+                          data-target="f_experience_text"
+                          title="Rewrite with AI using XYZ formula (uses 1 generation)">
+                    <div class="rw-spinner"></div>
+                    <span class="rw-label">✨ Rewrite</span>
+                  </button>
+                  <textarea class="vs-textarea" id="f_experience_text" name="experience_text" rows="7"
+                            placeholder="Software Engineer | Acme Corp | 2021–Present&#10;- Built REST APIs serving 2M daily users&#10;- Reduced latency by 40% via Redis caching"
+                            oninput="scheduleLivePreview()"></textarea>
+                </div>
               </div>
             </div>
           </div><!-- /§3 -->
@@ -1007,17 +1247,41 @@
               <i class="fas fa-chevron-down toggle-icon"></i>
             </button>
             <div class="vs-section-body" id="sec-skills">
-              <p style="font-size:.75rem;color:var(--text-muted);margin-bottom:10px;">
-                Format: <code style="color:var(--accent);">Python-85, Django-75, React-60</code>
-              </p>
-              <div class="mb-form">
-                <label class="vs-label" for="f_skills_list">Skills (name-level, …)</label>
-                <textarea class="vs-textarea" id="f_skills_list" name="skills_list" rows="3"
-                          placeholder="Python-85,Django-75,React-60,PostgreSQL-70"
-                          oninput="scheduleLivePreview()"></textarea>
-              </div>
+              <!-- Hidden compiled value sent to the backend -->
+              <input type="hidden" name="skills_list" id="f_skills_list">
+
+              <div class="skill-builder">
+
+                <!-- Add-skill row -->
+                <div class="skill-input-row">
+                  <input class="vs-input" type="text" id="skillNameInput"
+                         placeholder="Skill name (e.g. Python)" autocomplete="off"
+                         maxlength="40">
+                  <button type="button" class="btn-add-skill" id="btnAddSkill">
+                    <i class="fas fa-plus"></i> Add
+                  </button>
+                </div>
+
+                <!-- Slider -->
+                <div class="skill-level-wrap">
+                  <div class="skill-level-header">
+                    <span class="skill-level-label">Proficiency</span>
+                    <span class="skill-level-badge lvl-senior" id="skillLevelBadge">Senior · 70</span>
+                  </div>
+                  <input type="range" class="skill-range" id="skillLevelSlider"
+                         min="0" max="100" step="10" value="70"
+                         oninput="updateSkillSlider(this)">
+                </div>
+
+                <!-- Chips -->
+                <div class="skill-chips" id="skillChips">
+                  <span class="skill-empty-hint" id="skillEmptyHint">No skills yet — add one above ↑</span>
+                </div>
+
+              </div><!-- /.skill-builder -->
             </div>
           </div><!-- /§5 -->
+
 
           <!-- ── §6  CERTIFICATIONS ─────────────────────── -->
           <div class="vs-section">
@@ -1087,6 +1351,73 @@
               </div>
             </div>
           </div><!-- /§8 -->
+
+          <!-- ── §9  THEME CUSTOMIZATION ───────────────── -->
+          <div class="vs-section">
+            <button type="button" class="vs-section-toggle" data-target="sec-theme">
+              <i class="fas fa-palette" style="color:#e879f9;"></i>
+              Theme Customization
+              <span style="font-size:.62rem;font-weight:400;color:var(--text-muted);margin-left:4px;">override template colors</span>
+              <i class="fas fa-chevron-down toggle-icon"></i>
+            </button>
+            <div class="vs-section-body" id="sec-theme">
+
+              <div class="theme-grid" style="margin-bottom:12px;">
+
+                <!-- Primary Color -->
+                <div class="color-field">
+                  <label for="cp_primary">Primary Color</label>
+                  <div class="color-row">
+                    <input type="color" id="cp_primary" name="primary_color"
+                           value="#4cc9f0"
+                           oninput="document.getElementById('hex_primary').textContent=this.value; scheduleLivePreview();">
+                    <span class="color-hex-label" id="hex_primary">#4cc9f0</span>
+                  </div>
+                </div>
+
+                <!-- BG Color -->
+                <div class="color-field">
+                  <label for="cp_bg">Background</label>
+                  <div class="color-row">
+                    <input type="color" id="cp_bg" name="bg_color"
+                           value="#2c3e50"
+                           oninput="document.getElementById('hex_bg').textContent=this.value; scheduleLivePreview();">
+                    <span class="color-hex-label" id="hex_bg">#2c3e50</span>
+                  </div>
+                </div>
+
+                <!-- Accent Color -->
+                <div class="color-field">
+                  <label for="cp_accent">Accent Color</label>
+                  <div class="color-row">
+                    <input type="color" id="cp_accent" name="accent_color"
+                           value="#ecf0f1"
+                           oninput="document.getElementById('hex_accent').textContent=this.value; scheduleLivePreview();">
+                    <span class="color-hex-label" id="hex_accent">#ecf0f1</span>
+                  </div>
+                </div>
+
+                <!-- Font Family -->
+                <div class="color-field">
+                  <label for="cp_font">Font Style</label>
+                  <select class="font-select" id="cp_font" name="font_family"
+                          onchange="scheduleLivePreview()">
+                    <option value="Helvetica">Helvetica (Modern)</option>
+                    <option value="Times-Roman">Times (Classic)</option>
+                    <option value="Courier">Courier (Tech/Mono)</option>
+                  </select>
+                </div>
+
+              </div><!-- /.theme-grid -->
+
+              <p style="font-size:.68rem;color:var(--text-muted);">
+                <i class="fas fa-circle-info me-1" style="color:var(--accent);"></i>
+                These overrides apply on top of the selected template.
+                Reset to original by clicking <strong>Clear</strong>.
+              </p>
+
+            </div>
+          </div><!-- /§9 -->
 
         </form><!-- /#resume-form -->
       </div><!-- /.vs-left-scroll -->
@@ -1228,8 +1559,17 @@
         headers: { 'X-CSRFToken': CSRF_TOKEN },
       });
 
+      // ── Robust HTTP error check ─────────────────────────────
+      // NEVER attempt to render a blob if the response is not OK.
+      // A 500 from a bad photo upload would produce a Django error
+      // page blob that would break the iframe completely.
       if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
+        const httpMsg = res.status === 500
+          ? 'Preview failed: Server error. Try a different photo or check your inputs.'
+          : `Preview failed: HTTP ${res.status}.`;
+        showToast(httpMsg, 'danger');
+        status.textContent = '⚠ Preview error';
+        return;  // bail before touching the blob or iframe
       }
 
       const blob = await res.blob();
@@ -1245,6 +1585,7 @@
     } catch (err) {
       console.error('Live preview error:', err);
       status.textContent = 'Preview unavailable — download to view';
+      showToast('Preview error: ' + err.message, 'danger');
     } finally {
       spinner.style.display = 'none';
     }
@@ -1557,6 +1898,297 @@
       e.preventDefault();
       autoFillWithAI();
     }
+  });
+
+  /* ════════════════════════════════════════════════════════════════
+     ✨ SECTION REWRITER — wires .btn-rewrite-ai → /rewrite-section/
+     ════════════════════════════════════════════════════════════════
+
+     Architecture:
+       • One delegated click listener on the form catches both buttons.
+       • data-section  → 'summary' | 'experience'  (sent as section_type)
+       • data-target   → ID of the textarea to read from / write back to.
+       • Language is read from the shared #aiLang selector (same as AI fill).
+       • On success: textarea gets the rewritten text, ai-flash plays,
+         and a 'change' event triggers the live-preview debounce.
+  ════════════════════════════════════════════════════════════════ */
+
+  const REWRITE_URL = "{% url 'rewrite_section' %}";
+
+  /**
+   * Core async handler.
+   * @param {HTMLButtonElement} btn - The clicked .btn-rewrite-ai button.
+   */
+  async function rewriteSection(btn) {
+    const sectionType = btn.dataset.section;           // 'summary' | 'experience'
+    const targetId    = btn.dataset.target;            // 'f_about_me' | 'f_experience_text'
+    const textarea    = document.getElementById(targetId);
+    const rawText     = textarea ? textarea.value.trim() : '';
+
+    // ── Guard: need some text to rewrite ────────────────────────────────────
+    if (!rawText) {
+      showToast(
+        `Please write something in the ${sectionType === 'summary' ? 'Summary' : 'Experience'} field first.`,
+        'danger'
+      );
+      textarea && textarea.focus();
+      return;
+    }
+
+    // ── Enter loading state ──────────────────────────────────────────────────
+    const spinner    = btn.querySelector('.rw-spinner');
+    const labelEl    = btn.querySelector('.rw-label');
+    const origLabel  = labelEl.textContent;
+
+    btn.disabled         = true;
+    btn.classList.add('rw-loading');
+    if (spinner)  spinner.style.display = 'block';
+    if (labelEl)  labelEl.textContent   = 'Rewriting…';
+    if (textarea) textarea.disabled     = true;
+
+    // ── Status bar feedback ──────────────────────────────────────────────────
+    const previewStatus = document.getElementById('previewStatus');
+    const prevStatus    = previewStatus ? previewStatus.textContent : '';
+    if (previewStatus)
+      previewStatus.textContent =
+        `✦ AI rewriting ${sectionType === 'summary' ? 'summary' : 'experience'}…`;
+
+    try {
+      // ── Build POST body ────────────────────────────────────────────────────
+      const fd = new FormData();
+      fd.append('text',         rawText);
+      fd.append('section_type', sectionType);
+      fd.append('language',
+        (document.getElementById('aiLang') || { value: 'English' }).value
+      );
+
+      // ── Fetch ──────────────────────────────────────────────────────────────
+      const res  = await fetch(REWRITE_URL, {
+        method:  'POST',
+        body:    fd,
+        headers: { 'X-CSRFToken': CSRF_TOKEN },
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      // ── HTTP-level errors ──────────────────────────────────────────────────
+      if (!res.ok) {
+        // 402 → out of generations (server sends a friendly message)
+        // 429 → rate-limited
+        // 503 → AI service down
+        const msg = data.error
+          || (res.status === 402 ? "You've run out of generations. Upgrade to Pro!"
+            : res.status === 429 ? 'Too many requests — please wait a moment.'
+            : `Server error ${res.status}.`);
+        showToast(msg, 'danger');
+        return;
+      }
+
+      // ── Application-level error ────────────────────────────────────────────
+      if (data.error) {
+        showToast(data.error, 'danger');
+        return;
+      }
+
+      const rewritten = (data.rewritten_text || '').trim();
+      if (!rewritten) {
+        showToast('AI returned an empty response — please try again.', 'danger');
+        return;
+      }
+
+      // ── Write result back into the textarea ────────────────────────────────
+      textarea.value = rewritten;
+      _flashField(textarea);   // reuse the cyan-flash helper from AI Auto-Fill
+
+      // Dispatch events so scheduleLivePreview fires immediately
+      textarea.dispatchEvent(new Event('input',  { bubbles: true }));
+      textarea.dispatchEvent(new Event('change', { bubbles: true }));
+
+      // Trigger PDF preview (short delay so all event handlers settle)
+      scheduleLivePreview(300);
+
+      // Auto-save draft with the new text
+      saveDraft();
+
+      showToast(
+        sectionType === 'summary'
+          ? '✨ Summary rewritten! Preview updating…'
+          : '✨ Experience rewritten with XYZ formula! Preview updating…',
+        'success'
+      );
+
+    } catch (err) {
+      console.error('rewriteSection error:', err);
+      showToast('Network error: ' + err.message, 'danger');
+
+    } finally {
+      // ── Always restore UI state ────────────────────────────────────────────
+      btn.disabled         = false;
+      btn.classList.remove('rw-loading');
+      if (spinner)  spinner.style.display = 'none';
+      if (labelEl)  labelEl.textContent   = origLabel;
+      if (textarea) textarea.disabled     = false;
+      if (previewStatus) previewStatus.textContent = prevStatus;
+    }
+  }
+
+  // ── Delegated event listener on the form ────────────────────────────────
+  // Catches clicks on any .btn-rewrite-ai inside #resume-form regardless of
+  // when the DOM was stamped — future-proof if more sections are added.
+  document.getElementById('resume-form').addEventListener('click', e => {
+    const btn = e.target.closest('.btn-rewrite-ai');
+    if (btn) {
+      e.preventDefault();
+      rewriteSection(btn);
+    }
+  });
+
+  /* ════════════════════════════════════════════════════════════
+     DYNAMIC SKILLS BUILDER
+     Manages an in-memory array of {name, level} objects,
+     renders them as removable chips, and compiles a hidden
+     "skills_list" input (Python-85,Django-70) after every change.
+  ════════════════════════════════════════════════════════════ */
+
+  let _skills = [];   // [{name: 'Python', level: 85}, ...]
+
+  /** Map slider value → CSS class + label text */
+  function _skillLabel(v) {
+    const n = parseInt(v, 10);
+    if (n <= 30) return { cls: 'lvl-junior', txt: 'Junior' };
+    if (n <= 60) return { cls: 'lvl-middle', txt: 'Middle' };
+    if (n <= 80) return { cls: 'lvl-senior', txt: 'Senior' };
+    return              { cls: 'lvl-expert', txt: 'Expert' };
+  }
+
+  /** Update the slider gradient fill and badge text live */
+  function updateSkillSlider(input) {
+    const pct   = input.value + '%';
+    input.style.setProperty('--pct', pct);
+    const badge = document.getElementById('skillLevelBadge');
+    const { cls, txt } = _skillLabel(input.value);
+    badge.className = 'skill-level-badge ' + cls;
+    badge.textContent = txt + ' · ' + input.value;
+  }
+
+  /** Re-render all chips from the _skills array */
+  function _renderChips() {
+    const container = document.getElementById('skillChips');
+    const hint      = document.getElementById('skillEmptyHint');
+
+    // Remove all existing chips (not the hint span)
+    container.querySelectorAll('.skill-chip').forEach(c => c.remove());
+
+    if (_skills.length === 0) {
+      hint && (hint.style.display = '');
+      return;
+    }
+    hint && (hint.style.display = 'none');
+
+    _skills.forEach((sk, idx) => {
+      const { cls, txt } = _skillLabel(sk.level);
+      const chip = document.createElement('span');
+      chip.className = 'skill-chip';
+      chip.innerHTML = `
+        <span>${sk.name}</span>
+        <span class="chip-level">${sk.level}</span>
+        <button class="chip-del" type="button"
+                aria-label="Remove ${sk.name}"
+                onclick="deleteSkill(${idx})">&times;</button>`;
+      container.appendChild(chip);
+    });
+  }
+
+  /** Compile _skills → hidden input + trigger preview */
+  function _compileSkills() {
+    const hidden = document.getElementById('f_skills_list');
+    hidden.value = _skills.map(s => `${s.name}-${s.level}`).join(',');
+    hidden.dispatchEvent(new Event('change', { bubbles: true }));
+    scheduleLivePreview(400);
+  }
+
+  /** Add a skill from the input row */
+  function addSkill() {
+    const nameEl  = document.getElementById('skillNameInput');
+    const levelEl = document.getElementById('skillLevelSlider');
+    const name    = (nameEl.value || '').trim();
+    const level   = parseInt(levelEl.value, 10);
+
+    if (!name) {
+      nameEl.focus();
+      nameEl.style.borderColor = '#f87171';
+      setTimeout(() => nameEl.style.borderColor = '', 800);
+      return;
+    }
+    // Prevent duplicates (case-insensitive)
+    if (_skills.some(s => s.name.toLowerCase() === name.toLowerCase())) {
+      showToast(`"${name}" is already in your skills list.`, 'danger');
+      nameEl.select();
+      return;
+    }
+
+    _skills.push({ name, level });
+    _renderChips();
+    _compileSkills();
+
+    // Reset input
+    nameEl.value = '';
+    nameEl.focus();
+  }
+
+  /** Delete a skill by index */
+  function deleteSkill(idx) {
+    _skills.splice(idx, 1);
+    _renderChips();
+    _compileSkills();
+  }
+
+  // Wire up the Add button
+  document.getElementById('btnAddSkill').addEventListener('click', addSkill);
+
+  // Enter key in skill name input triggers add
+  document.getElementById('skillNameInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); addSkill(); }
+  });
+
+  // Initialize slider gradient on page load
+  updateSkillSlider(document.getElementById('skillLevelSlider'));
+
+  /* ════════════════════════════════════════════════════════════
+     CLEAR / RESET BUTTON
+     Resets all form inputs, clears the skills chip list,
+     resets color pickers to defaults, then refreshes preview.
+  ════════════════════════════════════════════════════════════ */
+
+  document.getElementById('btnResetForm').addEventListener('click', () => {
+    if (!confirm('Clear all fields and start a fresh resume?')) return;
+
+    // Native form reset (text inputs, selects, textareas)
+    document.getElementById('resume-form').reset();
+
+    // Clear the dynamic skills builder
+    _skills = [];
+    _renderChips();
+    document.getElementById('f_skills_list').value = '';
+
+    // Reset color picker hex labels to match their default values
+    const pickers = [
+      ['cp_primary', 'hex_primary'],
+      ['cp_bg',      'hex_bg'],
+      ['cp_accent',  'hex_accent'],
+    ];
+    pickers.forEach(([cpId, hexId]) => {
+      const cp  = document.getElementById(cpId);
+      const hex = document.getElementById(hexId);
+      if (cp && hex) hex.textContent = cp.value;
+    });
+
+    // Clear localStorage draft
+    localStorage.removeItem('cvai_draft_v2');
+
+    // Refresh preview to show blank template
+    scheduleLivePreview(300);
+    showToast('Form cleared!', 'success');
   });
   </script>
 

@@ -380,6 +380,127 @@ Generate the structured JSON resume now."""
     })
 
 
+# === SECTION REWRITER (Visual Resume Studio — micro-AI per field) ===
+@login_required
+@require_POST
+async def rewrite_section(request):
+    """
+    Async view — rewrites a single resume section with AI.
+
+    POST fields
+    -----------
+    text          : str   The raw section text to rewrite (max 5 000 chars).
+    section_type  : str   'summary' | 'experience'
+    language      : str   Output language (fallback if auto-detect is ambiguous).
+
+    Returns
+    -------
+    200  { "rewritten_text": "..." }
+    400  { "error": "..." }         — bad input
+    429  { "error": "..." }         — rate-limited
+    402  { "error": "..." }         — out of generations
+    """
+    profile, _ = await Profile.objects.aget_or_create(user=request.user)
+
+    # ── Rate-limit ────────────────────────────────────────────────────────────
+    throttled = await sync_to_async(_check_rate_limit)(request.user, profile.plan)
+    if throttled:
+        return throttled
+
+    # ── Generation quota guard ────────────────────────────────────────────────
+    has_left = await sync_to_async(profile.has_generations_left)()
+    if not has_left:
+        return JsonResponse(
+            {'error': "You've used all free generations! Upgrade to Pro for unlimited rewrites."},
+            status=402,
+        )
+
+    # ── Input validation ──────────────────────────────────────────────────────
+    raw_text     = (request.POST.get('text') or '').strip()[:5000]
+    section_type = (request.POST.get('section_type') or '').strip().lower()
+    language     = (request.POST.get('language') or 'English').strip()[:50]
+
+    if not raw_text:
+        return JsonResponse({'error': 'No text provided to rewrite.'}, status=400)
+
+    if section_type not in ('summary', 'experience'):
+        return JsonResponse(
+            {'error': f"Unknown section_type '{section_type}'. Must be 'summary' or 'experience'."},
+            status=400,
+        )
+
+    # ── Build prompts ─────────────────────────────────────────────────────────
+    LANG_RULE = (
+        "⚠️ ABSOLUTE LANGUAGE RULE ⚠️\n"
+        "Automatically detect the language of the INPUT TEXT. "
+        "Your ENTIRE output MUST be in that same language — not a single word in any other language. "
+        f"The user's selected language is '{language}'; use it as a tiebreaker only.\n\n"
+    )
+
+    if section_type == 'summary':
+        system_prompt = (
+            "You are an elite executive career coach and personal branding expert.\n\n"
+            + LANG_RULE
+            + "Your task: Transform the candidate's draft professional summary into a "
+            "POWERFUL, ATS-optimised 2–3 sentence executive summary.\n\n"
+            "RULES:\n"
+            "- Open with the candidate's seniority level and core identity (e.g. 'Senior Backend Engineer').\n"
+            "- Sentence 2: quantified career achievement using concrete numbers/metrics.\n"
+            "- Sentence 3: forward-looking value proposition or unique edge.\n"
+            "- Use active voice. Zero filler words ('passionate', 'hard-working', 'dynamic').\n"
+            "- Maximum 60 words. Output ONLY the summary — no labels, no explanations."
+        )
+        user_prompt = f"Candidate's draft summary:\n\n{raw_text}"
+
+    else:  # experience
+        system_prompt = (
+            "You are a senior technical recruiter who specialises in ATS optimisation "
+            "and achievement-based resume writing.\n\n"
+            + LANG_RULE
+            + "Your task: Rewrite the candidate's work experience section using Google's XYZ formula:\n"
+            "  'Accomplished [X] as measured by [Y] by doing [Z].'\n\n"
+            "RULES:\n"
+            "- Start every bullet with a strong past-tense action verb "
+            "(Engineered, Reduced, Scaled, Delivered, Architected…).\n"
+            "- Each bullet MUST contain at least one concrete metric or business outcome "
+            "(%, $, x, users, hours saved, etc.).\n"
+            "- Ruthlessly remove vague duties. Replace with achievements.\n"
+            "- Preserve the original job titles, company names, and date ranges exactly.\n"
+            "- Keep the same plain-text structure as the input "
+            "(title line, company|dates line, then bullet lines starting with '- ').\n"
+            "- Output ONLY the rewritten experience block — no labels, no preamble."
+        )
+        user_prompt = f"Candidate's experience text:\n\n{raw_text}"
+
+    # ── Call AI service ───────────────────────────────────────────────────────
+    rewritten, error = await _call_ai_service(
+        system_prompt, user_prompt, temperature=0.55
+    )
+
+    if error or not rewritten:
+        return JsonResponse(
+            {'error': error or 'AI returned an empty response. Please try again.'},
+            status=503,
+        )
+
+    # ── Deduct generation ─────────────────────────────────────────────────────
+    await sync_to_async(profile.use_generation)()
+
+    # ── Log the rewrite (reuse Generation model; store concisely) ────────────
+    await Generation.objects.acreate(
+        user=request.user,
+        resume_text=raw_text[:500],
+        job_description=f'[Section Rewrite — {section_type}]',
+        company_name='',
+        job_title='',
+        tone='Professional',
+        language=language,
+        result=rewritten,
+    )
+
+    return JsonResponse({'rewritten_text': rewritten.strip()})
+
+
 # === GENERATION HISTORY ===
 @login_required
 def history(request):

@@ -531,10 +531,18 @@ def _render_portfolio(story, req, s_body, s_h2=None,
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _build_sidebar_layout(req, buf, cfg: dict):
-    C_SIDE = _safe_hex(cfg["bg_color"])
-    C_ACC  = _safe_hex(cfg["primary_color"])
-    C_TEXT = colors.HexColor("#2c3e50")
-    C_MAIN_BG = colors.HexColor(cfg.get("accent_color", "#ffffff"))
+    # POST overrides take priority over template defaults — allow live customisation
+    _pc   = req.POST.get('primary_color') or cfg['primary_color']
+    _bg   = req.POST.get('bg_color')      or cfg['bg_color']
+    _acc  = req.POST.get('accent_color')  or cfg.get('accent_color', '#ecf0f1')
+    _font = req.POST.get('font_family')   or cfg.get('font_family', 'Helvetica')
+
+    C_SIDE    = _safe_hex(_bg)
+    C_ACC     = _safe_hex(_pc)
+    C_TEXT    = colors.HexColor("#2c3e50")
+    C_MAIN_BG = _safe_hex(_acc)
+    font      = _font
+    font_b    = "Times-Bold" if "Times" in font else "Helvetica-Bold"
 
     doc = BaseDocTemplate(buf, pagesize=A4,
                           rightMargin=0, leftMargin=0,
@@ -555,9 +563,6 @@ def _build_sidebar_layout(req, buf, cfg: dict):
     doc.addPageTemplates([PageTemplate(id='L',
                                        frames=[frame_sb, frame_main],
                                        onPage=draw_bg)])
-
-    font = cfg.get("font_family", "Helvetica")
-    font_b = "Times-Bold" if "Times" in font else "Helvetica-Bold"
 
     s_sb_h = ParagraphStyle('SH', fontName=font_b, fontSize=10,
                              textColor=C_ACC, spaceBefore=22, spaceAfter=8,
@@ -618,7 +623,7 @@ def _build_sidebar_layout(req, buf, cfg: dict):
         for name, lvl in skills:
             story.append(ProSkillBar(name, lvl, width=int(58*mm),
                                      bar_bg="#34495e",
-                                     bar_fill=cfg["primary_color"],
+                                     bar_fill=_pc,
                                      text_color="white"))
             story.append(Spacer(1, 6))
 
@@ -638,10 +643,10 @@ def _build_sidebar_layout(req, buf, cfg: dict):
     story.append(Paragraph(req.POST.get('full_name', 'Your Name'), s_name))
     story.append(Paragraph(req.POST.get('target_role', 'Professional'), s_role))
 
-    line = Drawing(130*mm, 2)
-    line.add(Line(0, 0, 130*mm, 0,
-                  strokeColor=_safe_hex(cfg["accent_color"]), strokeWidth=1.5))
-    story.append(line)
+    _divider = Drawing(130*mm, 2)
+    _divider.add(Line(0, 0, 130*mm, 0,
+                      strokeColor=_safe_hex(_acc), strokeWidth=1.5))
+    story.append(_divider)
     story.append(Spacer(1, 10))
 
     if req.POST.get('about_me'):
@@ -672,16 +677,26 @@ def _build_sidebar_layout(req, buf, cfg: dict):
 
 def _build_minimal_layout(req, buf, cfg: dict):
     W, H = A4
-    C_BG   = _safe_hex(cfg["bg_color"])
-    C_ACC  = _safe_hex(cfg["primary_color"])
-    C_LINE = _safe_hex(cfg["accent_color"])
+    # POST overrides take priority — allow live customisation from the Studio UI
+    _pc   = req.POST.get('primary_color') or cfg['primary_color']
+    _bg   = req.POST.get('bg_color')      or cfg['bg_color']
+    _acc  = req.POST.get('accent_color')  or cfg.get('accent_color', '#e2e8f0')
+    _font = req.POST.get('font_family')   or cfg.get('font_family', 'Helvetica')
 
-    # Determine ink color from bg brightness (dark bg → white text)
-    dark_bg = cfg["bg_color"].lower() in (
+    C_BG   = _safe_hex(_bg)
+    C_ACC  = _safe_hex(_pc)
+    C_LINE = _safe_hex(_acc)
+
+    # Determine ink color from bg (dark bg → white text)
+    dark_bg = _bg.lower() in (
         "#1a1a2e", "#000000", "#0d1117", "#0f172a", "#13001e"
     )
     C_INK  = colors.white if dark_bg else colors.HexColor("#1a1a2e")
     C_MID  = colors.HexColor("#aaaaaa") if dark_bg else colors.HexColor("#4a5568")
+
+    font   = _font
+    font_b = "Times-Bold" if "Times" in font else "Helvetica-Bold"
+    font_i = "Times-Italic" if "Times" in font else "Helvetica-Oblique"
 
     doc = BaseDocTemplate(buf, pagesize=A4,
                           rightMargin=20*mm, leftMargin=20*mm,
@@ -697,10 +712,6 @@ def _build_minimal_layout(req, buf, cfg: dict):
                   leftPadding=0, rightPadding=0,
                   topPadding=0, bottomPadding=0)
     doc.addPageTemplates([PageTemplate(id='L', frames=[frame], onPage=draw_bg)])
-
-    font   = cfg.get("font_family", "Helvetica")
-    font_b = "Times-Bold" if "Times" in font else "Helvetica-Bold"
-    font_i = "Times-Italic" if "Times" in font else "Helvetica-Oblique"
 
     s_name = ParagraphStyle('N', fontName=font_b, fontSize=34,
                              textColor=C_INK, leading=38, spaceAfter=4)
@@ -781,11 +792,20 @@ def _build_minimal_layout(req, buf, cfg: dict):
 
 def _build_split_header_layout(req, buf, cfg: dict):
     W, H = A4
-    C_HDR   = _safe_hex(cfg["bg_color"])
-    C_ACC1  = _safe_hex(cfg["primary_color"])
-    C_ACC2  = _safe_hex(cfg["accent_color"])
+    # POST overrides take priority — allow live customisation from the Studio UI
+    _pc   = req.POST.get('primary_color') or cfg['primary_color']
+    _bg   = req.POST.get('bg_color')      or cfg['bg_color']
+    _acc  = req.POST.get('accent_color')  or cfg.get('accent_color', '#4ecdc4')
+    _font = req.POST.get('font_family')   or cfg.get('font_family', 'Helvetica')
+
+    C_HDR   = _safe_hex(_bg)
+    C_ACC1  = _safe_hex(_pc)
+    C_ACC2  = _safe_hex(_acc)
     C_LIGHT = colors.HexColor("#f7fafc")
     C_BODY  = colors.HexColor("#2d3748")
+
+    font   = _font
+    font_b = "Times-Bold" if "Times" in font else "Helvetica-Bold"
 
     doc = BaseDocTemplate(buf, pagesize=A4,
                           rightMargin=0, leftMargin=0,
@@ -814,9 +834,6 @@ def _build_split_header_layout(req, buf, cfg: dict):
     doc.addPageTemplates([PageTemplate(id='L',
                                        frames=[frame_header, frame_body],
                                        onPage=draw_bg)])
-
-    font   = cfg.get("font_family", "Helvetica")
-    font_b = "Times-Bold" if "Times" in font else "Helvetica-Bold"
 
     s_name = ParagraphStyle('N', fontName=font_b, fontSize=28,
                              textColor=colors.white, leading=32, spaceAfter=4)
@@ -877,7 +894,7 @@ def _build_split_header_layout(req, buf, cfg: dict):
         for name, lvl in skills:
             story.append(ProSkillBar(name, lvl, width=150*mm,
                                      bar_bg="#e2e8f0",
-                                     bar_fill=cfg["primary_color"],
+                                     bar_fill=_pc,
                                      text_color="#2d3748"))
             story.append(Spacer(1, 6))
 
@@ -902,13 +919,19 @@ def _build_split_header_layout(req, buf, cfg: dict):
 
 def _build_modern_columns(req, buf, cfg: dict):
     W, H = A4
-    C_BG    = _safe_hex(cfg["bg_color"])
-    C_GREEN = _safe_hex(cfg["primary_color"])
-    C_PUR   = _safe_hex(cfg["accent_color"])
+    # POST overrides take priority — allow live customisation from the Studio UI
+    _pc   = req.POST.get('primary_color') or cfg['primary_color']
+    _bg   = req.POST.get('bg_color')      or cfg['bg_color']
+    _acc  = req.POST.get('accent_color')  or cfg.get('accent_color', '#a855f7')
+    _font = req.POST.get('font_family')   or cfg.get('font_family', 'Helvetica')
+
+    C_BG    = _safe_hex(_bg)
+    C_GREEN = _safe_hex(_pc)
+    C_PUR   = _safe_hex(_acc)
     C_TEXT  = colors.HexColor("#c9d1d9")
     C_MUTED = colors.HexColor("#8b949e")
 
-    font   = cfg.get("font_family", "Helvetica")
+    font   = _font
     font_b = "Courier-Bold" if "Courier" in font else "Helvetica-Bold"
 
     doc = BaseDocTemplate(buf, pagesize=A4,
@@ -985,7 +1008,7 @@ def _build_modern_columns(req, buf, cfg: dict):
         for name, lvl in skills:
             story.append(ProSkillBar(name, lvl, width=int(150*mm),
                                      bar_bg="#21262d",
-                                     bar_fill=cfg["primary_color"],
+                                     bar_fill=_pc,
                                      text_color="#c9d1d9"))
             story.append(Spacer(1, 6))
 
