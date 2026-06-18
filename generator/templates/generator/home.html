@@ -317,6 +317,104 @@
       .vs-right  { min-height: 60vh; }
       html, body  { overflow: auto; }
     }
+
+    /* ── AI Magic Box ───────────────────────────────────────── */
+    .ai-magic-box {
+      margin: 0;
+      background: linear-gradient(135deg,
+        rgba(67,97,238,.12) 0%,
+        rgba(247,37,133,.08) 100%);
+      border-bottom: 1px solid rgba(76,201,240,.15);
+      padding: 14px 20px 16px;
+    }
+    .ai-magic-header {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 10px;
+    }
+    .ai-magic-header .ai-icon {
+      width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+      background: linear-gradient(135deg,#4361ee,#f72585);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .82rem; color: #fff;
+    }
+    .ai-magic-header h3 {
+      font-size: .82rem; font-weight: 800; color: var(--text-primary);
+      margin: 0; letter-spacing: -.2px;
+    }
+    .ai-magic-header p {
+      font-size: .68rem; color: var(--text-muted); margin: 0;
+    }
+    .ai-magic-textarea {
+      width: 100%; min-height: 90px; max-height: 200px;
+      background: rgba(0,0,0,.25);
+      border: 1px solid rgba(76,201,240,.15);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary); font-size: .82rem;
+      padding: 9px 12px; line-height: 1.55;
+      resize: vertical; font-family: inherit; outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .ai-magic-textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(76,201,240,.18);
+    }
+    .ai-magic-textarea::placeholder { color: var(--text-muted); }
+    .ai-magic-row {
+      display: flex; gap: 8px; align-items: center; margin-top: 8px;
+    }
+    .ai-magic-lang {
+      background: rgba(0,0,0,.25);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary); font-size: .78rem;
+      padding: 7px 10px; outline: none; cursor: pointer;
+      flex-shrink: 0;
+    }
+    .btn-ai-magic {
+      flex: 1; padding: 9px 14px;
+      border: none; border-radius: var(--radius-sm);
+      background: linear-gradient(135deg,#4361ee,#f72585);
+      color: #fff; font-weight: 800; font-size: .82rem;
+      cursor: pointer; display: flex; align-items: center;
+      justify-content: center; gap: 7px;
+      transition: opacity .2s, transform .15s;
+      position: relative; overflow: hidden;
+    }
+    .btn-ai-magic::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);
+      transform: translateX(-100%);
+      transition: transform .4s;
+    }
+    .btn-ai-magic:hover::before { transform: translateX(100%); }
+    .btn-ai-magic:hover { opacity: .9; transform: translateY(-1px); }
+    .btn-ai-magic:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+    .btn-ai-magic .ai-spinner {
+      width: 14px; height: 14px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      animation: spin .65s linear infinite;
+      display: none;
+    }
+    .btn-ai-magic.loading .ai-spinner { display: block; }
+    .btn-ai-magic.loading .ai-btn-text { opacity: .7; }
+    /* Shimmer on AI-populated fields */
+    @keyframes ai-flash {
+      0%   { background: rgba(76,201,240,.18); }
+      100% { background: var(--input-bg); }
+    }
+    .ai-populated {
+      animation: ai-flash .8s ease forwards;
+    }
+    /* Generations counter pill inside magic box */
+    .ai-gens-pill {
+      font-size: .65rem; font-weight: 700;
+      padding: 2px 8px; border-radius: 99px;
+      border: 1px solid rgba(76,201,240,.25);
+      color: var(--accent); background: rgba(76,201,240,.07);
+      white-space: nowrap; flex-shrink: 0;
+    }
   </style>
 </head>
 
@@ -372,6 +470,61 @@
 
           <!-- Hidden: selected template slug -->
           <input type="hidden" name="template_name" id="selectedTemplate" value="classic_navy">
+
+          <!-- ══════════════════════════════════════════════════
+               AI MAGIC BOX — Auto-fill from raw text / PDF
+               ══════════════════════════════════════════════════ -->
+          <div class="ai-magic-box">
+            <div class="ai-magic-header">
+              <div class="ai-icon"><i class="fas fa-sparkles"></i></div>
+              <div>
+                <h3>AI Auto-Fill</h3>
+                <p>Paste your old resume or LinkedIn — AI fills every field instantly</p>
+              </div>
+              {% if user.is_authenticated %}
+              <span class="ai-gens-pill ms-auto" id="aiGensPill">
+                {% if user.profile.plan == 'free' %}
+                  <i class="fas fa-bolt me-1"></i>{{ user.profile.generations_count }} left
+                {% else %}
+                  <i class="fas fa-infinity me-1"></i>{{ user.profile.plan|upper }}
+                {% endif %}
+              </span>
+              {% endif %}
+            </div>
+
+            <textarea
+              id="raw-resume-text"
+              class="ai-magic-textarea"
+              placeholder="Paste your old resume, LinkedIn summary, or career history here…&#10;&#10;Example: 'I worked at Google for 5 years as a backend engineer, built APIs serving 10M users, Python/Django/GCP…'"
+            ></textarea>
+
+            <div class="ai-magic-row">
+              <select class="ai-magic-lang" id="aiLang" title="Output language">
+                <option value="English">🇺🇸 English</option>
+                <option value="Russian">🇷🇺 Russian</option>
+                <option value="German">🇩🇪 German</option>
+                <option value="French">🇫🇷 French</option>
+                <option value="Spanish">🇪🇸 Spanish</option>
+                <option value="Portuguese">🇵🇹 Portuguese</option>
+                <option value="Italian">🇮🇹 Italian</option>
+                <option value="Turkish">🇹🇷 Turkish</option>
+                <option value="Chinese">🇨🇳 Chinese</option>
+                <option value="Japanese">🇯🇵 Japanese</option>
+                <option value="Korean">🇰🇷 Korean</option>
+                <option value="Arabic">🇸🇦 Arabic</option>
+                <option value="Hindi">🇮🇳 Hindi</option>
+              </select>
+
+              <button type="button" class="btn-ai-magic"
+                      id="btnAiFill" onclick="autoFillWithAI()">
+                <div class="ai-spinner" id="aiBtnSpinner"></div>
+                <span class="ai-btn-text" id="aiBtnText">
+                  <i class="fas fa-wand-magic-sparkles"></i>
+                  &nbsp;Auto-Fill with AI
+                </span>
+              </button>
+            </div>
+          </div><!-- /.ai-magic-box -->
 
           <!-- ── §1  TEMPLATE GALLERY ─────────────────────── -->
           <div class="vs-section">
@@ -1181,6 +1334,230 @@
     new FormData(form).forEach((v, k) => { if (typeof v === 'string') data[k] = v; });
     localStorage.setItem('cvai_draft_v2', JSON.stringify(data));
   }
+
+  /* ════════════════════════════════════════════════════════════
+     AI AUTO-FILL — wires /generate-resume/ to every form field
+     ════════════════════════════════════════════════════════════ */
+
+  const AI_RESUME_URL = "{% url 'generate_resume' %}";
+
+  /**
+   * Flash a brief highlight on a field to signal it was AI-populated.
+   * Works for both <input> and <textarea>.
+   */
+  function _flashField(el) {
+    if (!el) return;
+    el.classList.remove('ai-populated');
+    // Force reflow so the animation restarts even if called twice
+    void el.offsetWidth;
+    el.classList.add('ai-populated');
+  }
+
+  /**
+   * Set an input/textarea value and dispatch input + change events
+   * so the live-preview debounce picks it up.
+   */
+  function _setField(selector, value) {
+    const el = typeof selector === 'string'
+      ? document.querySelector(selector)
+      : selector;
+    if (!el || value === undefined || value === null) return;
+    el.value = String(value);
+    _flashField(el);
+    // Dispatch both so all listeners fire
+    el.dispatchEvent(new Event('input',  { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  /**
+   * Convert the structured experience array from the AI JSON into
+   * the plain-text format the pdf_engine expects:
+   *   Job Title
+   *   Company | Dates
+   *   - Bullet 1
+   *   - Bullet 2
+   */
+  function _experienceToText(expArray) {
+    if (!Array.isArray(expArray) || expArray.length === 0) return '';
+    return expArray.map(job => {
+      const lines = [];
+      if (job.title)   lines.push(job.title);
+      const meta = [job.company, job.dates].filter(Boolean).join(' | ');
+      if (meta)        lines.push(meta);
+      if (Array.isArray(job.bullets)) {
+        job.bullets.forEach(b => lines.push(`- ${b}`));
+      }
+      return lines.join('\n');
+    }).join('\n\n');
+  }
+
+  /**
+   * Convert the skills array [{name, level}, ...] into the
+   * "Python-85,Django-70" format expected by the pdf_engine.
+   */
+  function _skillsToText(skillsArray) {
+    if (!Array.isArray(skillsArray) || skillsArray.length === 0) return '';
+    return skillsArray
+      .map(s => `${s.name}-${Math.round(s.level ?? 50)}`)
+      .join(',');
+  }
+
+  /**
+   * Convert the education array [{degree, school, dates}, ...]
+   * into one line per entry.
+   */
+  function _educationToText(eduArray) {
+    if (!Array.isArray(eduArray) || eduArray.length === 0) return '';
+    return eduArray
+      .map(e => [e.degree, e.school, e.dates].filter(Boolean).join(' — '))
+      .join('\n');
+  }
+
+  /**
+   * Main handler — called when the user clicks "Auto-Fill with AI".
+   */
+  async function autoFillWithAI() {
+    const rawText = document.getElementById('raw-resume-text').value.trim();
+    if (!rawText) {
+      showToast('Please paste some resume text first.', 'danger');
+      document.getElementById('raw-resume-text').focus();
+      return;
+    }
+
+    // ── Button: loading state ────────────────────────────────
+    const btn     = document.getElementById('btnAiFill');
+    const spinner = document.getElementById('aiBtnSpinner');
+    const btnText = document.getElementById('aiBtnText');
+    btn.disabled  = true;
+    btn.classList.add('loading');
+    spinner.style.display = 'block';
+    btnText.innerHTML = '&nbsp;Generating…';
+
+    // Show preview-bar status
+    const previewStatus  = document.getElementById('previewStatus');
+    const prevStatusText = previewStatus.textContent;
+    previewStatus.textContent = '✦ AI is writing your resume…';
+
+    try {
+      // ── Build FormData for the AI endpoint ──────────────────
+      const fd = new FormData();
+      fd.append('resume',   rawText);
+      fd.append('language', document.getElementById('aiLang').value);
+      // Pass name fields if the user already filled them
+      const nameEl = document.getElementById('f_full_name');
+      if (nameEl && nameEl.value.trim()) {
+        const parts = nameEl.value.trim().split(' ');
+        fd.append('first_name', parts[0] || '');
+        fd.append('last_name',  parts.slice(1).join(' ') || '');
+      }
+
+      // ── Call the backend ─────────────────────────────────────
+      const res = await fetch(AI_RESUME_URL, {
+        method:  'POST',
+        body:    fd,
+        headers: { 'X-CSRFToken': CSRF_TOKEN },
+      });
+
+      if (!res.ok) {
+        throw new Error(`Server error ${res.status}`);
+      }
+
+      const data = await res.json();
+
+      // ── Error from server / AI service ──────────────────────
+      if (data.error) {
+        showToast(data.error, 'danger');
+        return;
+      }
+
+      const r = data.resume;
+      if (!r) {
+        showToast('AI returned an empty response. Please try again.', 'danger');
+        return;
+      }
+
+      // ── Handle raw fallback (AI returned non-JSON) ───────────
+      if (r._raw) {
+        // Put the raw text into the experience area so nothing is lost
+        _setField('#f_experience_text', r._raw);
+        showToast('AI returned unstructured text — placed in Experience field.', 'success');
+        scheduleLivePreview(300);
+        return;
+      }
+
+      // ── Populate every matching form field ───────────────────
+
+      // Personal info
+      _setField('#f_full_name',     r.full_name);
+      _setField('#f_target_role',   r.target_role);
+      _setField('#f_email',         r.email);
+      _setField('#f_phone',         r.phone);
+      _setField('#f_location',      r.location);
+      _setField('#f_linkedin',      r.linkedin);
+
+      // Professional summary
+      _setField('#f_about_me',      r.summary);
+
+      // Work experience → reconstructed plain-text block
+      const expText = _experienceToText(r.experience);
+      if (expText) _setField('#f_experience_text', expText);
+
+      // Skills → "Name-Level," format
+      const skillsText = _skillsToText(r.skills);
+      if (skillsText) _setField('#f_skills_list', skillsText);
+
+      // Education → one entry per line
+      const eduText = _educationToText(r.education);
+      if (eduText) _setField('#f_education', eduText);
+
+      // Languages → comma-joined list
+      if (Array.isArray(r.languages) && r.languages.length) {
+        _setField('#f_languages', r.languages.join(', '));
+      }
+
+      // ── Open key accordion sections that were closed ─────────
+      ['sec-personal', 'sec-exp', 'sec-skills', 'sec-edu'].forEach(id => {
+        const body   = document.getElementById(id);
+        const toggle = document.querySelector(`[data-target="${id}"]`);
+        if (body && !body.classList.contains('open')) {
+          body.classList.add('open');
+          toggle && toggle.classList.add('open');
+        }
+      });
+
+      // ── Trigger live preview immediately ─────────────────────
+      // Dispatch a change event on the form so scheduleLivePreview fires.
+      document.getElementById('resume-form').dispatchEvent(
+        new Event('change', { bubbles: true })
+      );
+      // Also call directly with a short delay so all _setField events settle
+      scheduleLivePreview(300);
+
+      // ── Auto-save the new data ───────────────────────────────
+      saveDraft();
+
+      showToast('✨ Resume auto-filled! Preview updating…', 'success');
+
+    } catch (err) {
+      console.error('AI auto-fill error:', err);
+      showToast('AI error: ' + err.message, 'danger');
+    } finally {
+      // ── Restore button state ──────────────────────────────────
+      btn.disabled = false;
+      btn.classList.remove('loading');
+      spinner.style.display = 'none';
+      btnText.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i>&nbsp;Auto-Fill with AI';
+      previewStatus.textContent = prevStatusText;
+    }
+  }
+
+  /* Allow pressing Ctrl+Enter inside the textarea to trigger AI fill */
+  document.getElementById('raw-resume-text').addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      autoFillWithAI();
+    }
+  });
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
