@@ -1,50 +1,40 @@
 """
-pdf_engine.py — Scalable ReportLab PDF CV Factory  (v2.0)
-==========================================================
-Architecture
-------------
-4 reusable BASE LAYOUT BUILDERS:
-  _build_sidebar_layout       → navy sidebar + main column
-  _build_minimal_layout       → full-width single-column, clean
-  _build_split_header_layout  → coloured header band + body
-  _build_modern_columns       → dark full-bleed + top accent bar
+pdf_engine.py — Visual Resume Studio PDF Factory  (v3.0)
+=========================================================
+10 TRULY DISTINCT layout builders:
+  1. _build_minimal_centered       — single-column, centred serif elegance
+  2. _build_left_sidebar_dark      — 25% dark photo/skills sidebar, 75% light main
+  3. _build_right_sidebar_light    — 70% main + 30% light-colour right sidebar
+  4. _build_split_header           — full-width colour top band + 2-column body
+  5. _build_timeline_modern        — 1-column with a vertical timeline line on left
+  6. _build_two_column_equal       — 50/50 equal-width split
+  7. _build_hacker_terminal        — black bg, green monospace, no photo
+  8. _build_academic_classic       — ultra-dense, strict HR rules, ATS-optimised
+  9. _build_top_bottom_split       — 30% coloured header + 70% white main body
+ 10. _build_creative_masonry       — asymmetric left 65% + right 35% creative layout
 
-20 TEMPLATE CONFIGS (5 categories × 4 templates each) each contains:
-  slug          str   URL-safe identifier
-  name          str   Human label shown in UI
-  image_url     str   /static/img/templates/<slug>.jpg
-  desc          str   One-line description
-  category      str   classic | minimalist | tech | creative | executive
-  layout        str   sidebar | minimal | split_header | modern_columns
-  primary_color str   Hex accent colour
-  bg_color      str   Page/panel background
-  accent_color  str   Secondary accent
-  font_family   str   'Helvetica' | 'Times-Roman' | 'Courier'
-  dark_sidebar  bool  (sidebar only) paint sidebar dark?
-
-New fields supported by all builders:
-  education       str   free-text education block
-  certifications  str   comma/newline separated certs
-  portfolio_url   str   Portfolio / GitHub URL
+All builders support: experience_text, projects_text, skills_list, education,
+certifications, portfolio_url, languages, photo, full_name, target_role, about_me,
+email, phone, location, linkedin. POST overrides (primary_color, bg_color,
+accent_color, font_family) are honoured everywhere.
 """
 
 import io
 import os
 import logging
 import tempfile
-import contextlib
 
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.platypus import (
     BaseDocTemplate, PageTemplate, Frame, Paragraph,
     Spacer, Image as RLImage, FrameBreak, Flowable,
     HRFlowable,
 )
-from reportlab.graphics.shapes import Drawing, Line
-from PIL import Image, ImageOps, ImageDraw
+from reportlab.graphics.shapes import Drawing, Line, Rect
+from PIL import Image, ImageOps, ImageDraw as PILDraw
 
 logger = logging.getLogger(__name__)
 
@@ -52,324 +42,135 @@ W_A4, H_A4 = A4   # 595.27 × 841.89 pts
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TEMPLATE REGISTRY  — 20 templates across 5 categories
+# TEMPLATE REGISTRY — 10 templates, each using a distinct layout builder
 # ─────────────────────────────────────────────────────────────────────────────
+
 TEMPLATES = [
-
-    # ── CLASSIC (sidebar layout) ─────────────────────────────────────────────
     {
-        "slug":          "classic_navy",
-        "name":          "Classic Navy",
-        "image_url":     "/static/img/templates/classic_navy.jpg",
-        "desc":          "Navy sidebar, cyan accents — timeless & professional",
-        "category":      "classic",
-        "layout":        "sidebar",
-        "primary_color": "#4cc9f0",
-        "bg_color":      "#2c3e50",
-        "accent_color":  "#ecf0f1",
-        "font_family":   "Helvetica",
-        "dark_sidebar":  True,
-    },
-    {
-        "slug":          "classic_burgundy",
-        "name":          "Classic Burgundy",
-        "image_url":     "/static/img/templates/classic_burgundy.jpg",
-        "desc":          "Deep burgundy sidebar, warm ivory tones — authoritative",
-        "category":      "classic",
-        "layout":        "sidebar",
-        "primary_color": "#f7c59f",
-        "bg_color":      "#6d2b3d",
-        "accent_color":  "#fdf6ec",
-        "font_family":   "Times-Roman",
-        "dark_sidebar":  True,
-    },
-    {
-        "slug":          "classic_forest",
-        "name":          "Classic Forest",
-        "image_url":     "/static/img/templates/classic_forest.jpg",
-        "desc":          "Forest green sidebar with warm sand accents",
-        "category":      "classic",
-        "layout":        "sidebar",
-        "primary_color": "#a8d5ba",
-        "bg_color":      "#2d6a4f",
-        "accent_color":  "#fefae0",
-        "font_family":   "Helvetica",
-        "dark_sidebar":  True,
-    },
-    {
-        "slug":          "classic_slate",
-        "name":          "Classic Slate",
-        "image_url":     "/static/img/templates/classic_slate.jpg",
-        "desc":          "Steel-slate sidebar, light lavender accents — balanced",
-        "category":      "classic",
-        "layout":        "sidebar",
-        "primary_color": "#b8c5d6",
-        "bg_color":      "#4a5568",
-        "accent_color":  "#edf2f7",
-        "font_family":   "Helvetica",
-        "dark_sidebar":  True,
-    },
-
-    # ── MINIMALIST (minimal layout) ───────────────────────────────────────────
-    {
-        "slug":          "minimalist_white",
-        "name":          "Pure White",
-        "image_url":     "/static/img/templates/minimalist_white.jpg",
-        "desc":          "Ultra-clean white, zero decoration — ATS optimised",
+        "slug":          "minimal_centered",
+        "name":          "Minimal Centered",
+        "image_url":     "/static/img/templates/minimal_centered.jpg",
+        "desc":          "Single-column centred serif — timeless & ATS-friendly",
         "category":      "minimalist",
-        "layout":        "minimal",
-        "primary_color": "#667eea",
+        "layout":        "minimal_centered",
+        "primary_color": "#1a1a2e",
         "bg_color":      "#ffffff",
-        "accent_color":  "#e2e8f0",
-        "font_family":   "Helvetica",
-        "dark_sidebar":  False,
+        "accent_color":  "#c9a84c",
+        "font_family":   "Times-Roman",
     },
     {
-        "slug":          "minimalist_onyx",
-        "name":          "Onyx Dark",
-        "image_url":     "/static/img/templates/minimalist_onyx.jpg",
-        "desc":          "Near-black background, white text — bold minimalism",
+        "slug":          "left_sidebar_dark",
+        "name":          "Dark Sidebar",
+        "image_url":     "/static/img/templates/left_sidebar_dark.jpg",
+        "desc":          "25% dark photo/skills sidebar — bold & professional",
+        "category":      "classic",
+        "layout":        "left_sidebar_dark",
+        "primary_color": "#4cc9f0",
+        "bg_color":      "#1e2a38",
+        "accent_color":  "#f0f4f8",
+        "font_family":   "Helvetica",
+    },
+    {
+        "slug":          "right_sidebar_light",
+        "name":          "Light Right Panel",
+        "image_url":     "/static/img/templates/right_sidebar_light.jpg",
+        "desc":          "70% main area + 30% soft-colour right panel",
         "category":      "minimalist",
-        "layout":        "minimal",
-        "primary_color": "#a78bfa",
-        "bg_color":      "#1a1a2e",
-        "accent_color":  "#e2e8f0",
+        "layout":        "right_sidebar_light",
+        "primary_color": "#7c3aed",
+        "bg_color":      "#f3f0ff",
+        "accent_color":  "#ede9fe",
         "font_family":   "Helvetica",
-        "dark_sidebar":  False,
     },
     {
-        "slug":          "minimalist_soft_gray",
-        "name":          "Soft Gray",
-        "image_url":     "/static/img/templates/minimalist_soft_gray.jpg",
-        "desc":          "Warm light gray, clean Inter layout — calm & readable",
-        "category":      "minimalist",
-        "layout":        "minimal",
-        "primary_color": "#4a5568",
-        "bg_color":      "#f7f8fc",
-        "accent_color":  "#cbd5e0",
-        "font_family":   "Helvetica",
-        "dark_sidebar":  False,
-    },
-    {
-        "slug":          "minimalist_ice_blue",
-        "name":          "Ice Blue",
-        "image_url":     "/static/img/templates/minimalist_ice_blue.jpg",
-        "desc":          "Frosty light blue, cool & modern single-column",
-        "category":      "minimalist",
-        "layout":        "minimal",
-        "primary_color": "#0ea5e9",
-        "bg_color":      "#f0f9ff",
-        "accent_color":  "#bae6fd",
-        "font_family":   "Helvetica",
-        "dark_sidebar":  False,
-    },
-
-    # ── TECH / STARTUP (modern_columns layout) ───────────────────────────────
-    {
-        "slug":          "tech_dark_neon",
-        "name":          "Dark Neon",
-        "image_url":     "/static/img/templates/tech_dark_neon.jpg",
-        "desc":          "Dark charcoal + neon green — built for tech roles",
-        "category":      "tech",
-        "layout":        "modern_columns",
-        "primary_color": "#39d353",
-        "bg_color":      "#0d1117",
-        "accent_color":  "#a855f7",
-        "font_family":   "Helvetica",
-        "dark_sidebar":  False,
-    },
-    {
-        "slug":          "tech_hacker_terminal",
-        "name":          "Hacker Terminal",
-        "image_url":     "/static/img/templates/tech_hacker_terminal.jpg",
-        "desc":          "Matrix-green on pitch-black, monospace — hacker aesthetic",
-        "category":      "tech",
-        "layout":        "modern_columns",
-        "primary_color": "#00ff41",
-        "bg_color":      "#000000",
-        "accent_color":  "#008f11",
-        "font_family":   "Courier",
-        "dark_sidebar":  False,
-    },
-    {
-        "slug":          "tech_fintech_blue",
-        "name":          "Fintech Blue",
-        "image_url":     "/static/img/templates/tech_fintech_blue.jpg",
-        "desc":          "Deep navy + electric blue — finance and banking ready",
-        "category":      "tech",
-        "layout":        "modern_columns",
-        "primary_color": "#3b82f6",
-        "bg_color":      "#0f172a",
-        "accent_color":  "#06b6d4",
-        "font_family":   "Helvetica",
-        "dark_sidebar":  False,
-    },
-    {
-        "slug":          "tech_cyber_purple",
-        "name":          "Cyber Purple",
-        "image_url":     "/static/img/templates/tech_cyber_purple.jpg",
-        "desc":          "Deep space purple + magenta flares — cutting-edge",
-        "category":      "tech",
-        "layout":        "modern_columns",
-        "primary_color": "#e879f9",
-        "bg_color":      "#13001e",
-        "accent_color":  "#818cf8",
-        "font_family":   "Helvetica",
-        "dark_sidebar":  False,
-    },
-
-    # ── CREATIVE (split_header layout) ───────────────────────────────────────
-    {
-        "slug":          "creative_coral",
-        "name":          "Coral Accent",
-        "image_url":     "/static/img/templates/creative_coral.jpg",
-        "desc":          "Coral/teal split header — ideal for design & creative",
+        "slug":          "split_header",
+        "name":          "Bold Split Header",
+        "image_url":     "/static/img/templates/split_header.jpg",
+        "desc":          "Full-width colour header band + 2-column body",
         "category":      "creative",
         "layout":        "split_header",
         "primary_color": "#ff6b6b",
-        "bg_color":      "#1a1a2e",
-        "accent_color":  "#4ecdc4",
+        "bg_color":      "#2d3436",
+        "accent_color":  "#fdcb6e",
         "font_family":   "Helvetica",
-        "dark_sidebar":  False,
     },
     {
-        "slug":          "creative_sunset",
-        "name":          "Sunset Orange",
-        "image_url":     "/static/img/templates/creative_sunset.jpg",
-        "desc":          "Warm sunset gradient header — vibrant and energetic",
-        "category":      "creative",
-        "layout":        "split_header",
-        "primary_color": "#f97316",
-        "bg_color":      "#1c1410",
-        "accent_color":  "#fbbf24",
-        "font_family":   "Helvetica",
-        "dark_sidebar":  False,
-    },
-    {
-        "slug":          "creative_mint",
-        "name":          "Mint Crisp",
-        "image_url":     "/static/img/templates/creative_mint.jpg",
-        "desc":          "Fresh mint header on white — clean and creative",
-        "category":      "creative",
-        "layout":        "split_header",
-        "primary_color": "#06d6a0",
-        "bg_color":      "#073b4c",
-        "accent_color":  "#80ffdb",
-        "font_family":   "Helvetica",
-        "dark_sidebar":  False,
-    },
-    {
-        "slug":          "creative_pastel_pink",
-        "name":          "Pastel Pink",
-        "image_url":     "/static/img/templates/creative_pastel_pink.jpg",
-        "desc":          "Blush pink header, soft lavender body — editorial style",
-        "category":      "creative",
-        "layout":        "split_header",
-        "primary_color": "#f9a8d4",
-        "bg_color":      "#831843",
-        "accent_color":  "#c084fc",
-        "font_family":   "Helvetica",
-        "dark_sidebar":  False,
-    },
-
-    # ── EXECUTIVE (minimal layout with serif/gold) ────────────────────────────
-    {
-        "slug":          "executive_gold",
-        "name":          "Gold Standard",
-        "image_url":     "/static/img/templates/executive_gold.jpg",
-        "desc":          "Ivory background, serif fonts, gold rule dividers",
-        "category":      "executive",
-        "layout":        "minimal",
-        "primary_color": "#b45309",
-        "bg_color":      "#fafaf7",
-        "accent_color":  "#d4a853",
-        "font_family":   "Times-Roman",
-        "dark_sidebar":  False,
-    },
-    {
-        "slug":          "executive_silver",
-        "name":          "Silver Serif",
-        "image_url":     "/static/img/templates/executive_silver.jpg",
-        "desc":          "Cool silver on off-white — understated executive gravitas",
-        "category":      "executive",
-        "layout":        "minimal",
-        "primary_color": "#94a3b8",
-        "bg_color":      "#f8fafc",
-        "accent_color":  "#64748b",
-        "font_family":   "Times-Roman",
-        "dark_sidebar":  False,
-    },
-    {
-        "slug":          "executive_bronze",
-        "name":          "Bronze Minimal",
-        "image_url":     "/static/img/templates/executive_bronze.jpg",
-        "desc":          "Warm bronze accents on cream — refined and minimal",
-        "category":      "executive",
-        "layout":        "minimal",
-        "primary_color": "#92400e",
-        "bg_color":      "#fffbf5",
-        "accent_color":  "#c2956c",
-        "font_family":   "Times-Roman",
-        "dark_sidebar":  False,
-    },
-    {
-        "slug":          "executive_platinum",
-        "name":          "Platinum",
-        "image_url":     "/static/img/templates/executive_platinum.jpg",
-        "desc":          "Ultra-premium platinum grey with deep charcoal text",
-        "category":      "executive",
-        "layout":        "minimal",
-        "primary_color": "#9ca3af",
-        "bg_color":      "#f9fafb",
-        "accent_color":  "#374151",
-        "font_family":   "Times-Roman",
-        "dark_sidebar":  False,
-    },
-    # ── GRID LAYOUT (clean 2-column, white-background) ──────────────────────────
-    {
-        "slug":          "grid_clean_blue",
-        "name":          "Clean Grid Blue",
-        "image_url":     "/static/img/templates/grid_clean_blue.jpg",
-        "desc":          "Modern 2-column grid, white bg, blue accents — ATS-friendly",
-        "category":      "minimalist",
-        "layout":        "grid",
-        "primary_color": "#2563eb",
+        "slug":          "timeline_modern",
+        "name":          "Timeline Modern",
+        "image_url":     "/static/img/templates/timeline_modern.jpg",
+        "desc":          "Vertical timeline line down the left side",
+        "category":      "tech",
+        "layout":        "timeline_modern",
+        "primary_color": "#00b4d8",
         "bg_color":      "#ffffff",
-        "accent_color":  "#dbeafe",
+        "accent_color":  "#caf0f8",
         "font_family":   "Helvetica",
-        "dark_sidebar":  False,
     },
     {
-        "slug":          "grid_emerald",
-        "name":          "Grid Emerald",
-        "image_url":     "/static/img/templates/grid_emerald.jpg",
-        "desc":          "2-column grid, crisp white, emerald headings — fresh & modern",
+        "slug":          "two_column_equal",
+        "name":          "50/50 Grid",
+        "image_url":     "/static/img/templates/two_column_equal.jpg",
+        "desc":          "Equal 50/50 two-column split — balanced & clean",
         "category":      "minimalist",
-        "layout":        "grid",
+        "layout":        "two_column_equal",
         "primary_color": "#059669",
-        "bg_color":      "#ffffff",
+        "bg_color":      "#f8fafb",
         "accent_color":  "#d1fae5",
         "font_family":   "Helvetica",
-        "dark_sidebar":  False,
     },
     {
-        "slug":          "grid_slate_pro",
-        "name":          "Slate Pro",
-        "image_url":     "/static/img/templates/grid_slate_pro.jpg",
-        "desc":          "2-column grid, warm white, deep slate headings — executive grid",
+        "slug":          "hacker_terminal",
+        "name":          "Hacker Terminal",
+        "image_url":     "/static/img/templates/hacker_terminal.jpg",
+        "desc":          "Black bg, green monospace text — developer aesthetic",
+        "category":      "tech",
+        "layout":        "hacker_terminal",
+        "primary_color": "#00ff41",
+        "bg_color":      "#0d0d0d",
+        "accent_color":  "#008f11",
+        "font_family":   "Courier",
+    },
+    {
+        "slug":          "academic_classic",
+        "name":          "Academic Classic",
+        "image_url":     "/static/img/templates/academic_classic.jpg",
+        "desc":          "Ultra-dense, strict HR rules, ATS-optimised",
         "category":      "executive",
-        "layout":        "grid",
-        "primary_color": "#334155",
-        "bg_color":      "#f8fafc",
-        "accent_color":  "#94a3b8",
+        "layout":        "academic_classic",
+        "primary_color": "#1a1a1a",
+        "bg_color":      "#ffffff",
+        "accent_color":  "#555555",
         "font_family":   "Times-Roman",
-        "dark_sidebar":  False,
+    },
+    {
+        "slug":          "top_bottom_split",
+        "name":          "Top/Bottom Split",
+        "image_url":     "/static/img/templates/top_bottom_split.jpg",
+        "desc":          "30% coloured top header + 70% white content area",
+        "category":      "classic",
+        "layout":        "top_bottom_split",
+        "primary_color": "#2563eb",
+        "bg_color":      "#1e3a5f",
+        "accent_color":  "#dbeafe",
+        "font_family":   "Helvetica",
+    },
+    {
+        "slug":          "creative_masonry",
+        "name":          "Creative Masonry",
+        "image_url":     "/static/img/templates/creative_masonry.jpg",
+        "desc":          "Asymmetric layout with scattered skills and bold accents",
+        "category":      "creative",
+        "layout":        "creative_masonry",
+        "primary_color": "#e879f9",
+        "bg_color":      "#0f0f1a",
+        "accent_color":  "#818cf8",
+        "font_family":   "Helvetica",
     },
 ]
 
 
 def get_template_by_slug(slug: str) -> dict:
-    """Return template meta dict or fall back to classic_navy."""
+    """Return template meta dict or fall back to first template."""
     for t in TEMPLATES:
         if t["slug"] == slug:
             return t
@@ -386,25 +187,20 @@ def get_templates_for_plan(pdf_limit: int) -> list:
 # ─────────────────────────────────────────────────────────────────────────────
 
 class ProSkillBar(Flowable):
-    """Horizontal skill bar — reusable across all templates.
-
-    Layout (bottom-up, all coords in points):
-      0–5   : bar track
-      5–9   : gap between bar and label
-      9–19  : skill name + level badge row
-    Total height = 22 pts (self.height).
-    """
+    """Horizontal skill progress bar — reusable across all templates."""
 
     def __init__(self, name, level_percent, width=150, height=22,
-                 bar_bg="#34495e", bar_fill="#4cc9f0", text_color="white"):
+                 bar_bg="#34495e", bar_fill="#4cc9f0", text_color="white",
+                 label_color=None):
         Flowable.__init__(self)
         self.name = name
-        self.level = level_percent / 100.0
+        self.level = min(max(float(level_percent), 0), 100) / 100.0
         self.width = width
         self.height = height
         self.bar_bg = bar_bg
         self.bar_fill = bar_fill
         self.text_color = text_color
+        self.label_color = label_color or text_color
 
         if self.level >= 0.9:
             self.txt = "EXPERT"
@@ -417,76 +213,98 @@ class ProSkillBar(Flowable):
 
     def draw(self):
         c = self.canv
-        c.setFont("Helvetica-Bold", 9)
-        c.setFillColor(colors.HexColor("#ffffff") if self.text_color == "white"
-                       else colors.HexColor(self.text_color))
+        tc = (colors.HexColor("#ffffff") if self.text_color == "white"
+              else colors.HexColor(self.text_color)
+              if isinstance(self.text_color, str) else self.text_color)
+        lc = (colors.HexColor("#aaaaaa") if self.label_color == "white"
+              else colors.HexColor(self.label_color)
+              if isinstance(self.label_color, str) else tc)
+        c.setFont("Helvetica-Bold", 8.5)
+        c.setFillColor(tc)
         c.drawString(0, 12, self.name)
-        c.setFont("Helvetica", 7.5)
-        c.setFillColor(colors.HexColor("#bdc3c7"))
+        c.setFont("Helvetica", 7)
+        c.setFillColor(lc)
         c.drawRightString(self.width, 12, self.txt)
         c.setFillColor(colors.HexColor(self.bar_bg))
         c.roundRect(0, 2, self.width, 5, 2, fill=1, stroke=0)
         c.setFillColor(colors.HexColor(self.bar_fill))
-        c.roundRect(0, 2, self.width * self.level, 5, 2, fill=1, stroke=0)
+        fill_w = max(4, self.width * self.level)
+        c.roundRect(0, 2, fill_w, 5, 2, fill=1, stroke=0)
 
 
-@contextlib.contextmanager
 def _process_photo(photo_file):
     """
-    Context manager: process the uploaded photo into a circular-masked PNG
-    temp file, yield its path, then ALWAYS delete it — even if the PDF
-    builder raises an exception mid-way.
+    Process an uploaded photo into a circular-masked PNG temp file.
+    Returns the temp file path (str) on success, or None if the photo
+    is absent, corrupt, or otherwise unusable.
+
+    IMPORTANT — caller must clean up after doc.build():
+      ReportLab evaluates RLImage flowables lazily inside doc.build().
+      A contextmanager would delete the file before doc.build() reads it,
+      causing OSError: Cannot open resource '/tmp/...'.  Instead, every
+      layout builder must follow this pattern::
+
+          pp = _process_photo(req.FILES.get('photo'))
+          try:
+              doc.build(story)
+          finally:
+              if pp and os.path.exists(pp):
+                  os.unlink(pp)
 
     Robust to:
-      - InMemoryUploadedFile whose pointer may have been read once already.
-      - Corrupt / unsupported image formats (logs clearly, yields None).
+      - InMemoryUploadedFile whose pointer may be at EOF (seeks to 0 first).
+      - Corrupt/unsupported image formats (logs and returns None, never crashes).
+      - Any unexpected PIL exception (returns None safely).
     """
     if not photo_file:
-        yield None
-        return
+        return None
 
     path = None
     try:
-        # Reset pointer: InMemoryUploadedFile may already be at EOF
-        # after Django's multipart parser or a previous read.
+        # Reset file pointer — InMemoryUploadedFile may be at EOF after
+        # Django's multipart parser or a previous read in the same request.
         try:
             photo_file.seek(0)
         except (AttributeError, OSError):
             pass
 
+        # Attempt to open and fully decode before any processing.
+        # img.load() forces decompression so format errors surface here,
+        # not inside doc.build() where they are much harder to handle.
         try:
             img = Image.open(photo_file)
-            img.load()          # force decode so errors surface here, not later
+            img.load()
             img = img.convert("RGBA")
         except Exception as img_exc:
-            logger.warning("Photo open/decode failed — skipping photo: %s", img_exc)
-            yield None
-            return
+            logger.warning("_process_photo: Image.open/decode failed — skipping: %s", img_exc)
+            return None
 
-        mask = Image.new('L', (500, 500), 0)
-        draw = ImageDraw.Draw(mask)
-        draw.ellipse((0, 0, 500, 500), fill=255)
+        # Circular crop mask (500×500 px working resolution)
+        mask   = Image.new('L', (500, 500), 0)
+        mask_d = PILDraw.Draw(mask)
+        mask_d.ellipse((0, 0, 500, 500), fill=255)
         output = ImageOps.fit(img.convert("RGB"), (500, 500), centering=(0.5, 0.5))
         output.putalpha(mask)
 
-        tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
+        tmp  = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
         path = tmp.name
         output.save(tmp, format='PNG')
         tmp.close()
-        yield path
+        return path
+
     except Exception as exc:
-        logger.warning("Photo processing failed: %s", exc)
-        yield None
-    finally:
+        logger.warning("_process_photo: unexpected error — skipping photo: %s", exc)
+        # Clean up any partially created temp file before returning None
         if path:
             try:
                 os.unlink(path)
             except OSError:
                 pass
+        return None
 
 
 def _parse_skills(skills_str: str):
-    """Parse 'Python-80,Django-70' → [(name, level), ...]"""
+    """Parse 'Python-80,Django-70' → [(name, level_float), ...]"""
     result = []
     for item in (skills_str or "").split(','):
         parts = item.strip().split('-')
@@ -496,328 +314,170 @@ def _parse_skills(skills_str: str):
         try:
             lvl = float(parts[1])
         except (IndexError, ValueError):
-            lvl = 50
+            lvl = 50.0
         result.append((name, lvl))
     return result
 
 
 def _safe_hex(color_str: str) -> colors.Color:
-    """Return a ReportLab HexColor, falling back to black on bad input."""
+    """Convert a hex string to a ReportLab Color, falling back to black."""
     try:
-        return colors.HexColor(color_str)
+        s = color_str.strip()
+        if not s.startswith('#'):
+            s = '#' + s
+        return colors.HexColor(s)
     except Exception:
         return colors.black
 
 
-def _render_experience(story, req, s_job_title, s_job_meta, s_bullet, s_body):
-    """Shared experience renderer used by all builders."""
-    exp = req.POST.get('experience_text') or req.POST.get('resume', '')
-    if not exp:
-        return
-    for t in exp.split('\n'):
+def _post_colors(req, cfg: dict):
+    """
+    Extract primary/bg/accent/font from POST (user overrides),
+    falling back to the template config defaults.
+    Returns (_pc, _bg, _acc, _font) as raw strings.
+    """
+    return (
+        req.POST.get('primary_color') or cfg.get('primary_color', '#333333'),
+        req.POST.get('bg_color')      or cfg.get('bg_color',      '#ffffff'),
+        req.POST.get('accent_color')  or cfg.get('accent_color',  '#888888'),
+        req.POST.get('font_family')   or cfg.get('font_family',   'Helvetica'),
+    )
+
+
+def _font_variants(font: str):
+    """Return (regular, bold, italic) font names for a base font."""
+    if 'Times' in font:
+        return ('Times-Roman', 'Times-Bold', 'Times-Italic')
+    if 'Courier' in font:
+        return ('Courier', 'Courier-Bold', 'Courier-Oblique')
+    return ('Helvetica', 'Helvetica-Bold', 'Helvetica-Oblique')
+
+
+def _render_text_block(story, text, s_title, s_meta, s_bullet, s_body):
+    """
+    Parse free-form text (experience / projects) and append styled paragraphs.
+    Rules:
+      - Lines starting with - or * → bulleted paragraph
+      - Short lines with | or digits → grey meta line (dates/company)
+      - Other short lines → bold title
+      - Long lines → body paragraph
+    """
+    for t in (text or "").split('\n'):
         t = t.strip()
         if not t:
             continue
         if t.startswith('-') or t.startswith('*'):
             story.append(Paragraph(t[1:].strip(), s_bullet, bulletText='•'))
-        elif len(t) < 100 and ('|' in t or any(char.isdigit() for char in t)):
-            story.append(Paragraph(f'<font color="#888888">{t}</font>', s_job_meta))
+        elif len(t) < 100 and ('|' in t or any(ch.isdigit() for ch in t)):
+            story.append(Paragraph(f'<font color="#888888">{t}</font>', s_meta))
         elif len(t) < 100:
-            story.append(Paragraph(f"<b>{t}</b>", s_job_title))
+            story.append(Paragraph(f'<b>{t}</b>', s_title))
         else:
             story.append(Paragraph(t, s_body))
 
 
-def _render_projects(story, req, s_h2, s_job_title, s_job_meta, s_bullet, s_body,
-                     hr_color=None, hr_width="100%", section_label="PROJECTS"):
-    """Render the Projects section using the same formatting rules as Experience."""
-    projects = req.POST.get('projects_text', '').strip()
-    if not projects:
-        return
-    story.append(Paragraph(section_label, s_h2))
-    if hr_color:
-        story.append(HRFlowable(width=hr_width, thickness=0.5,
-                                color=hr_color, spaceAfter=6))
-    for t in projects.split('\n'):
-        t = t.strip()
-        if not t:
-            continue
-        if t.startswith('-') or t.startswith('*'):
-            story.append(Paragraph(t[1:].strip(), s_bullet, bulletText='•'))
-        elif len(t) < 100 and ('|' in t or any(char.isdigit() for char in t)):
-            story.append(Paragraph(f'<font color="#888888">{t}</font>', s_job_meta))
-        elif len(t) < 100:
-            story.append(Paragraph(f"<b>{t}</b>", s_job_title))
-        else:
-            story.append(Paragraph(t, s_body))
+def _render_edu_certs_lang(story, req, s_h2, s_body, s_sub=None,
+                            hr_color=None, w="100%"):
+    """Append Education, Certifications, and Languages blocks if filled."""
+    s_sub = s_sub or s_body
 
-
-def _render_education(story, req, s_h2, s_body, s_job_title=None, s_job_meta=None,
-                      hr_color=None, hr_width="100%", centered=False):
-    """Render the Education section if the field is filled."""
     edu = req.POST.get('education', '').strip()
-    if not edu:
-        return
-    story.append(Paragraph("EDUCATION", s_h2))
-    if hr_color:
-        kw = {"hAlign": "CENTER"} if centered else {}
-        story.append(HRFlowable(width=hr_width, thickness=0.5,
-                                color=hr_color, spaceAfter=6, **kw))
-    for line in edu.split('\n'):
-        line = line.strip()
-        if line:
-            style = s_job_title if (s_job_title and len(line) < 80) else s_body
-            story.append(Paragraph(line, style))
-
-
-def _render_certifications(story, req, s_h2, s_body,
-                            hr_color=None, hr_width="100%", centered=False):
-    """Render the Certifications section if the field is filled."""
-    certs = req.POST.get('certifications', '').strip()
-    if not certs:
-        return
-    story.append(Paragraph("CERTIFICATIONS", s_h2))
-    if hr_color:
-        kw = {"hAlign": "CENTER"} if centered else {}
-        story.append(HRFlowable(width=hr_width, thickness=0.5,
-                                color=hr_color, spaceAfter=6, **kw))
-    for line in certs.replace(',', '\n').split('\n'):
-        line = line.strip()
-        if line:
-            story.append(Paragraph(f"• {line}", s_body))
-
-
-def _render_portfolio(story, req, s_body, s_h2=None,
-                      hr_color=None, hr_width="100%"):
-    """Render Portfolio / GitHub URL if provided."""
-    url = req.POST.get('portfolio_url', '').strip()
-    if not url:
-        return
-    if s_h2:
-        story.append(Paragraph("PORTFOLIO / GITHUB", s_h2))
+    if edu:
+        story.append(Paragraph("EDUCATION", s_h2))
         if hr_color:
-            story.append(HRFlowable(width=hr_width, thickness=0.5,
-                                    color=hr_color, spaceAfter=6))
-    story.append(Paragraph(f'<link href="{url}">{url}</link>', s_body))
+            story.append(HRFlowable(width=w, thickness=0.5,
+                                    color=hr_color, spaceAfter=5))
+        for line in edu.split('\n'):
+            line = line.strip()
+            if line:
+                story.append(Paragraph(line, s_sub))
 
+    certs = req.POST.get('certifications', '').strip()
+    if certs:
+        story.append(Paragraph("CERTIFICATIONS", s_h2))
+        if hr_color:
+            story.append(HRFlowable(width=w, thickness=0.5,
+                                    color=hr_color, spaceAfter=5))
+        for line in certs.replace(',', '\n').split('\n'):
+            line = line.strip()
+            if line:
+                story.append(Paragraph(f"• {line}", s_body))
 
-# ─────────────────────────────────────────────────────────────────────────────
-# BASE LAYOUT BUILDER 1 — SIDEBAR
-# Two-column: coloured sidebar (left) + white/light main (right).
-# Used by: classic_navy, classic_burgundy, classic_forest, classic_slate
-# ─────────────────────────────────────────────────────────────────────────────
+    lang = req.POST.get('languages', '').strip()
+    if lang:
+        story.append(Paragraph("LANGUAGES", s_h2))
+        if hr_color:
+            story.append(HRFlowable(width=w, thickness=0.5,
+                                    color=hr_color, spaceAfter=5))
+        story.append(Paragraph(lang, s_body))
 
-def _build_sidebar_layout(req, buf, cfg: dict):
-    # POST overrides take priority over template defaults — allow live customisation
-    _pc   = req.POST.get('primary_color') or cfg['primary_color']
-    _bg   = req.POST.get('bg_color')      or cfg['bg_color']
-    _acc  = req.POST.get('accent_color')  or cfg.get('accent_color', '#ecf0f1')
-    _font = req.POST.get('font_family')   or cfg.get('font_family', 'Helvetica')
-
-    C_SIDE    = _safe_hex(_bg)
-    C_ACC     = _safe_hex(_pc)
-    C_TEXT    = colors.HexColor("#2c3e50")
-    C_MAIN_BG = _safe_hex(_acc)
-    font      = _font
-    font_b    = "Times-Bold" if "Times" in font else "Helvetica-Bold"
-
-    doc = BaseDocTemplate(buf, pagesize=A4,
-                          rightMargin=0, leftMargin=0,
-                          topMargin=0, bottomMargin=0)
-
-    def draw_bg(canvas, doc):
-        canvas.saveState()
-        canvas.setFillColor(C_SIDE)
-        canvas.rect(0, 0, 80 * mm, 297 * mm, fill=1, stroke=0)
-        canvas.restoreState()
-
-    frame_sb   = Frame(0, 0, 80*mm, 297*mm, id='sb',
-                       leftPadding=20, rightPadding=20,
-                       topPadding=int(40*mm), bottomPadding=20)
-    frame_main = Frame(80*mm, 0, 130*mm, 297*mm, id='main',
-                       leftPadding=25, rightPadding=25,
-                       topPadding=30, bottomPadding=30)
-    doc.addPageTemplates([PageTemplate(id='L',
-                                       frames=[frame_sb, frame_main],
-                                       onPage=draw_bg)])
-
-    s_sb_h = ParagraphStyle('SH', fontName=font_b, fontSize=10,
-                             textColor=C_ACC, spaceBefore=22, spaceAfter=8,
-                             textTransform='uppercase', letterSpacing=1)
-    s_sb_t = ParagraphStyle('ST', fontName=font, fontSize=9.5,
-                             textColor=colors.white, leading=14)
-    s_sb_l = ParagraphStyle('SL', fontName=font_b, fontSize=7.5,
-                             textColor=colors.HexColor("#bdc3c7"),
-                             spaceBefore=8, spaceAfter=1)
-    s_name  = ParagraphStyle('N', fontName=font_b, fontSize=30,
-                              textColor=C_TEXT, leading=32, spaceAfter=4)
-    s_role  = ParagraphStyle('R', fontName=font_b, fontSize=13,
-                              textColor=C_ACC, textTransform='uppercase',
-                              spaceAfter=14)
-    s_h2    = ParagraphStyle('H2', fontName=font_b, fontSize=12,
-                              textColor=C_TEXT, spaceBefore=22, spaceAfter=10,
-                              textTransform='uppercase')
-    s_body  = ParagraphStyle('B', fontName=font, fontSize=10,
-                              textColor=colors.HexColor("#34495e"),
-                              leading=16, spaceAfter=6)
-    s_bullet = ParagraphStyle('Bul', parent=s_body,
-                               leftIndent=16, bulletIndent=6,
-                               spaceBefore=2, spaceAfter=4)
-    s_job_title = ParagraphStyle('JT', parent=s_body,
-                                  fontName=font_b, fontSize=11,
-                                  spaceBefore=8, spaceAfter=2)
-    s_job_meta  = ParagraphStyle('JM', parent=s_body, fontSize=9.5,
-                                  textColor=colors.HexColor("#555555"),
-                                  spaceBefore=0, spaceAfter=6)
-
-    story = []
-
-    # ── Photo ──────────────────────────────────────────────────────────────
-    with _process_photo(req.FILES.get('photo')) as photo_path:
-        if photo_path:
-            story.append(RLImage(photo_path, width=50*mm, height=50*mm))
-            story.append(Spacer(1, 16))
-
-    # ── Sidebar: Contacts ──────────────────────────────────────────────────
-    contacts_data = [
-        ("LOCATION", req.POST.get('location')),
-        ("EMAIL",    req.POST.get('email')),
-        ("PHONE",    req.POST.get('phone')),
-        ("LINKEDIN", req.POST.get('linkedin')),
-    ]
-    if any(v for _, v in contacts_data):
-        story.append(Paragraph("CONTACTS", s_sb_h))
-        for lbl, val in contacts_data:
-            if val:
-                story.append(Paragraph(lbl, s_sb_l))
-                story.append(Paragraph(val, s_sb_t))
-                story.append(Spacer(1, 3))
-
-    # ── Sidebar: Skills ────────────────────────────────────────────────────
-    skills = _parse_skills(req.POST.get('skills_list', ''))
-    if skills:
-        story.append(Paragraph("SKILLS", s_sb_h))
-        for name, lvl in skills:
-            story.append(ProSkillBar(name, lvl, width=int(58*mm),
-                                     bar_bg="#34495e",
-                                     bar_fill=_pc,
-                                     text_color="white"))
-            story.append(Spacer(1, 6))
-
-    if req.POST.get('languages'):
-        story.append(Paragraph("LANGUAGES", s_sb_h))
-        story.append(Paragraph(req.POST.get('languages'), s_sb_t))
-
-    # ── Sidebar: Portfolio ─────────────────────────────────────────────────
     port = req.POST.get('portfolio_url', '').strip()
     if port:
-        story.append(Paragraph("PORTFOLIO", s_sb_h))
-        story.append(Paragraph(port, s_sb_t))
-
-    story.append(FrameBreak())
-
-    # ── Main: Header ───────────────────────────────────────────────────────
-    story.append(Paragraph(req.POST.get('full_name', 'Your Name'), s_name))
-    story.append(Paragraph(req.POST.get('target_role', 'Professional'), s_role))
-
-    _divider = Drawing(130*mm, 2)
-    _divider.add(Line(0, 0, 130*mm, 0,
-                      strokeColor=_safe_hex(_acc), strokeWidth=1.5))
-    story.append(_divider)
-    story.append(Spacer(1, 10))
-
-    if req.POST.get('about_me'):
-        story.append(Paragraph("PROFILE", s_h2))
-        story.append(Paragraph(req.POST.get('about_me'), s_body))
-        story.append(Spacer(1, 4))
-
-    exp = req.POST.get('experience_text') or req.POST.get('resume', '')
-    if exp:
-        story.append(Paragraph("WORK EXPERIENCE", s_h2))
-        _render_experience(story, req, s_job_title, s_job_meta, s_bullet, s_body)
-
-    _render_projects(story, req, s_h2, s_job_title, s_job_meta, s_bullet, s_body)
-    _render_education(story, req, s_h2, s_body, s_job_title, s_job_meta)
-    _render_certifications(story, req, s_h2, s_body)
-
-    if req.POST.get('references'):
-        story.append(Paragraph("REFERENCES", s_h2))
-        story.append(Paragraph(req.POST.get('references'), s_body))
-
-    doc.build(story)
+        story.append(Paragraph("PORTFOLIO / GITHUB", s_h2))
+        if hr_color:
+            story.append(HRFlowable(width=w, thickness=0.5,
+                                    color=hr_color, spaceAfter=5))
+        story.append(Paragraph(f'<link href="{port}">{port}</link>', s_body))
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# BASE LAYOUT BUILDER 2 — MINIMAL
-# Full-width single-column with optional coloured background.
-# Used by: minimalist_*, executive_*
+# LAYOUT 1 — MINIMAL CENTERED
+# Single-column, heavily centred, serif elegance. Name in large caps centred.
+# All section headers centred with decorative HR. Photo centred at top.
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _build_minimal_layout(req, buf, cfg: dict):
-    W, H = A4
-    # POST overrides take priority — allow live customisation from the Studio UI
-    _pc   = req.POST.get('primary_color') or cfg['primary_color']
-    _bg   = req.POST.get('bg_color')      or cfg['bg_color']
-    _acc  = req.POST.get('accent_color')  or cfg.get('accent_color', '#e2e8f0')
-    _font = req.POST.get('font_family')   or cfg.get('font_family', 'Helvetica')
-
+def _build_minimal_centered(req, buf, cfg: dict):
+    _pc, _bg, _acc, _font = _post_colors(req, cfg)
     C_BG   = _safe_hex(_bg)
-    C_ACC  = _safe_hex(_pc)
-    C_LINE = _safe_hex(_acc)
+    C_HEAD = _safe_hex(_pc)
+    C_ACC  = _safe_hex(_acc)
+    C_TEXT = colors.HexColor('#1a1a2e') if _bg == '#ffffff' else colors.HexColor('#1a1a2e')
+    fn, fb, fi = _font_variants(_font)
 
-    # Determine ink color from bg (dark bg → white text)
-    dark_bg = _bg.lower() in (
-        "#1a1a2e", "#000000", "#0d1117", "#0f172a", "#13001e"
-    )
-    C_INK  = colors.white if dark_bg else colors.HexColor("#1a1a2e")
-    C_MID  = colors.HexColor("#aaaaaa") if dark_bg else colors.HexColor("#4a5568")
-
-    font   = _font
-    font_b = "Times-Bold" if "Times" in font else "Helvetica-Bold"
-    font_i = "Times-Italic" if "Times" in font else "Helvetica-Oblique"
-
+    M = 22 * mm
     doc = BaseDocTemplate(buf, pagesize=A4,
-                          rightMargin=20*mm, leftMargin=20*mm,
-                          topMargin=20*mm, bottomMargin=20*mm)
+                          leftMargin=M, rightMargin=M,
+                          topMargin=M, bottomMargin=M)
 
     def draw_bg(canvas, doc):
         canvas.saveState()
         canvas.setFillColor(C_BG)
-        canvas.rect(0, 0, W, H, fill=1, stroke=0)
+        canvas.rect(0, 0, W_A4, H_A4, fill=1, stroke=0)
+        # Gold bottom rule
+        canvas.setFillColor(C_ACC)
+        canvas.rect(0, 0, W_A4, 3, fill=1, stroke=0)
         canvas.restoreState()
 
-    frame = Frame(20*mm, 20*mm, W - 40*mm, H - 40*mm, id='main',
-                  leftPadding=0, rightPadding=0,
-                  topPadding=0, bottomPadding=0)
-    doc.addPageTemplates([PageTemplate(id='L', frames=[frame], onPage=draw_bg)])
+    frame = Frame(M, M, W_A4 - 2*M, H_A4 - 2*M, id='main',
+                  leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0)
+    doc.addPageTemplates([PageTemplate(id='P', frames=[frame], onPage=draw_bg)])
 
-    s_name = ParagraphStyle('N', fontName=font_b, fontSize=34,
-                             textColor=C_INK, leading=38, spaceAfter=4)
-    s_role = ParagraphStyle('R', fontName=font_i, fontSize=13,
-                             textColor=C_ACC, spaceAfter=8)
-    s_h2   = ParagraphStyle('H2', fontName=font_b, fontSize=10,
-                             textColor=C_ACC, spaceBefore=18, spaceAfter=6,
-                             textTransform='uppercase', letterSpacing=2)
-    s_body = ParagraphStyle('B', fontName=font, fontSize=10,
-                             textColor=C_MID, leading=15, spaceAfter=6)
-    s_info = ParagraphStyle('I', fontName=font, fontSize=9,
-                             textColor=C_MID, leading=13)
-    s_bullet = ParagraphStyle('Bul', parent=s_body,
-                               leftIndent=14, bulletIndent=5,
-                               spaceBefore=2, spaceAfter=4)
-    s_job_title = ParagraphStyle('JT', parent=s_body,
-                                  fontName=font_b, fontSize=11,
-                                  spaceBefore=8, spaceAfter=2)
-    s_job_meta  = ParagraphStyle('JM', parent=s_body, fontSize=9.5,
-                                  spaceBefore=0, spaceAfter=6)
+    CW = W_A4 - 2*M  # usable content width
+
+    s_name   = ParagraphStyle('N',  fontName=fb, fontSize=30, textColor=C_HEAD,
+                               leading=34, spaceAfter=2, alignment=1)
+    s_role   = ParagraphStyle('R',  fontName=fi, fontSize=13, textColor=C_ACC,
+                               spaceAfter=6, alignment=1)
+    s_info   = ParagraphStyle('I',  fontName=fn, fontSize=9,  textColor=colors.HexColor('#555555'),
+                               leading=13, spaceAfter=8, alignment=1)
+    s_h2     = ParagraphStyle('H2', fontName=fb, fontSize=9,  textColor=C_HEAD,
+                               spaceBefore=18, spaceAfter=4, alignment=1,
+                               textTransform='uppercase', letterSpacing=2)
+    s_body   = ParagraphStyle('B',  fontName=fn, fontSize=9.5, textColor=C_TEXT,
+                               leading=14, spaceAfter=5)
+    s_bullet = ParagraphStyle('Bul', parent=s_body, leftIndent=14, bulletIndent=4,
+                               spaceBefore=1, spaceAfter=3)
+    s_title  = ParagraphStyle('T',  fontName=fb, fontSize=10.5, textColor=C_TEXT,
+                               spaceBefore=8, spaceAfter=2)
+    s_meta   = ParagraphStyle('M',  fontName=fn, fontSize=9, textColor=colors.HexColor('#888888'),
+                               spaceAfter=4)
 
     story = []
 
-    # Photo (top-right conceptually — just inlined at top for single-col)
-    with _process_photo(req.FILES.get('photo')) as photo_path:
-        if photo_path:
-            story.append(RLImage(photo_path, width=36*mm, height=36*mm))
-            story.append(Spacer(1, 6))
+    pp = _process_photo(req.FILES.get('photo'))
+    if pp:
+            story.append(RLImage(pp, width=28*mm, height=28*mm, hAlign='CENTER'))
+            story.append(Spacer(1, 8))
 
     story.append(Paragraph(req.POST.get('full_name', 'Your Name'), s_name))
     story.append(Paragraph(req.POST.get('target_role', 'Professional'), s_role))
@@ -828,459 +488,1131 @@ def _build_minimal_layout(req, buf, cfg: dict):
     ]))
     if contacts:
         story.append(Paragraph(contacts, s_info))
-    story.append(HRFlowable(width="100%", thickness=1.5, color=C_LINE,
-                             spaceAfter=12, spaceBefore=6))
+
+    story.append(HRFlowable(width="60%", thickness=1, color=C_ACC,
+                             hAlign='CENTER', spaceAfter=10))
 
     if req.POST.get('about_me'):
         story.append(Paragraph("SUMMARY", s_h2))
-        story.append(HRFlowable(width="100%", thickness=0.5, color=C_LINE, spaceAfter=6))
+        story.append(HRFlowable(width="40%", thickness=0.5, color=C_ACC,
+                                 hAlign='CENTER', spaceAfter=6))
         story.append(Paragraph(req.POST.get('about_me'), s_body))
 
-    exp = req.POST.get('experience_text') or req.POST.get('resume', '')
+    exp = req.POST.get('experience_text', '').strip()
     if exp:
         story.append(Paragraph("EXPERIENCE", s_h2))
-        story.append(HRFlowable(width="100%", thickness=0.5, color=C_LINE, spaceAfter=6))
-        _render_experience(story, req, s_job_title, s_job_meta, s_bullet, s_body)
+        story.append(HRFlowable(width="40%", thickness=0.5, color=C_ACC,
+                                 hAlign='CENTER', spaceAfter=6))
+        _render_text_block(story, exp, s_title, s_meta, s_bullet, s_body)
 
-    _render_projects(story, req, s_h2, s_job_title, s_job_meta, s_bullet, s_body,
-                     hr_color=C_LINE)
+    proj = req.POST.get('projects_text', '').strip()
+    if proj:
+        story.append(Paragraph("PROJECTS", s_h2))
+        story.append(HRFlowable(width="40%", thickness=0.5, color=C_ACC,
+                                 hAlign='CENTER', spaceAfter=6))
+        _render_text_block(story, proj, s_title, s_meta, s_bullet, s_body)
+
     skills = _parse_skills(req.POST.get('skills_list', ''))
     if skills:
         story.append(Paragraph("SKILLS", s_h2))
-        story.append(HRFlowable(width="100%", thickness=0.5, color=C_LINE, spaceAfter=6))
-        skill_text = "  ·  ".join([f"<b>{n}</b>" for n, _ in skills])
-        story.append(Paragraph(skill_text, s_body))
+        story.append(HRFlowable(width="40%", thickness=0.5, color=C_ACC,
+                                 hAlign='CENTER', spaceAfter=6))
+        skill_txt = "  ·  ".join(f"<b>{n}</b>" for n, _ in skills)
+        story.append(Paragraph(skill_txt, s_body))
 
-    _render_education(story, req, s_h2, s_body, s_job_title, s_job_meta,
-                      hr_color=C_LINE)
-    _render_certifications(story, req, s_h2, s_body, hr_color=C_LINE)
-    _render_portfolio(story, req, s_body, s_h2=s_h2, hr_color=C_LINE)
-
-    if req.POST.get('languages'):
-        story.append(Paragraph("LANGUAGES", s_h2))
-        story.append(HRFlowable(width="100%", thickness=0.5, color=C_LINE, spaceAfter=6))
-        story.append(Paragraph(req.POST.get('languages'), s_body))
-
-    doc.build(story)
+    _render_edu_certs_lang(story, req, s_h2, s_body, hr_color=C_ACC, w="40%")
+    try:
+        doc.build(story)
+    finally:
+        if pp and os.path.exists(pp):
+            os.unlink(pp)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# BASE LAYOUT BUILDER 3 — SPLIT HEADER
-# Coloured header band on top, light body below.
-# Used by: creative_coral, creative_sunset, creative_mint, creative_pastel_pink
+# LAYOUT 2 — LEFT SIDEBAR DARK
+# 25% dark left sidebar: photo, name, contacts, skills bars.
+# 75% light main: role/summary/experience/projects/education.
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _build_split_header_layout(req, buf, cfg: dict):
-    W, H = A4
-    # POST overrides take priority — allow live customisation from the Studio UI
-    _pc   = req.POST.get('primary_color') or cfg['primary_color']
-    _bg   = req.POST.get('bg_color')      or cfg['bg_color']
-    _acc  = req.POST.get('accent_color')  or cfg.get('accent_color', '#4ecdc4')
-    _font = req.POST.get('font_family')   or cfg.get('font_family', 'Helvetica')
+def _build_left_sidebar_dark(req, buf, cfg: dict):
+    _pc, _bg, _acc, _font = _post_colors(req, cfg)
+    C_SIDE = _safe_hex(_bg)
+    C_ACC  = _safe_hex(_pc)
+    C_MAIN = _safe_hex(_acc)
+    fn, fb, fi = _font_variants(_font)
 
-    C_HDR   = _safe_hex(_bg)
-    C_ACC1  = _safe_hex(_pc)
-    C_ACC2  = _safe_hex(_acc)
-    C_LIGHT = colors.HexColor("#f7fafc")
-    C_BODY  = colors.HexColor("#2d3748")
-
-    font   = _font
-    font_b = "Times-Bold" if "Times" in font else "Helvetica-Bold"
+    SB_W = int(W_A4 * 0.27)
+    MAIN_W = W_A4 - SB_W
+    PAD = 16
 
     doc = BaseDocTemplate(buf, pagesize=A4,
-                          rightMargin=0, leftMargin=0,
+                          leftMargin=0, rightMargin=0,
                           topMargin=0, bottomMargin=0)
 
     def draw_bg(canvas, doc):
         canvas.saveState()
-        canvas.setFillColor(C_LIGHT)
-        canvas.rect(0, 0, W, H, fill=1, stroke=0)
-        canvas.setFillColor(C_HDR)
-        canvas.rect(0, H - 70*mm, W, 70*mm, fill=1, stroke=0)
-        # Left accent stripe inside header
-        canvas.setFillColor(C_ACC1)
-        canvas.rect(0, H - 70*mm, 8*mm, 70*mm, fill=1, stroke=0)
-        # Bottom accent line
-        canvas.setFillColor(C_ACC2)
-        canvas.rect(0, 0, W, 4, fill=1, stroke=0)
+        canvas.setFillColor(C_SIDE)
+        canvas.rect(0, 0, SB_W, H_A4, fill=1, stroke=0)
+        canvas.setFillColor(C_MAIN)
+        canvas.rect(SB_W, 0, MAIN_W, H_A4, fill=1, stroke=0)
         canvas.restoreState()
 
-    frame_header = Frame(10*mm, H - 68*mm, W - 20*mm, 64*mm, id='hdr',
-                         leftPadding=20, rightPadding=10,
-                         topPadding=10, bottomPadding=10)
-    frame_body   = Frame(15*mm, 10*mm, W - 30*mm, H - 85*mm, id='body',
-                         leftPadding=0, rightPadding=0,
-                         topPadding=0, bottomPadding=0)
-    doc.addPageTemplates([PageTemplate(id='L',
-                                       frames=[frame_header, frame_body],
+    frame_sb   = Frame(0, 0, SB_W, H_A4, id='sb',
+                       leftPadding=PAD, rightPadding=PAD,
+                       topPadding=int(34*mm), bottomPadding=PAD)
+    frame_main = Frame(SB_W, 0, MAIN_W, H_A4, id='main',
+                       leftPadding=PAD+4, rightPadding=PAD+4,
+                       topPadding=PAD*2, bottomPadding=PAD)
+    doc.addPageTemplates([PageTemplate(id='P',
+                                       frames=[frame_sb, frame_main],
                                        onPage=draw_bg)])
 
-    s_name = ParagraphStyle('N', fontName=font_b, fontSize=28,
-                             textColor=colors.white, leading=32, spaceAfter=4)
-    s_role = ParagraphStyle('R', fontName=font, fontSize=13,
-                             textColor=C_ACC2, spaceAfter=6)
-    s_info = ParagraphStyle('I', fontName=font, fontSize=9,
-                             textColor=colors.HexColor("#a0aec0"), leading=13)
-    s_h2   = ParagraphStyle('H2', fontName=font_b, fontSize=10,
-                             textColor=C_ACC1, spaceBefore=14, spaceAfter=6,
-                             textTransform='uppercase', letterSpacing=1.5)
-    s_body = ParagraphStyle('B', fontName=font, fontSize=10,
-                             textColor=C_BODY, leading=16, spaceAfter=6)
-    s_bullet = ParagraphStyle('Bul', parent=s_body,
-                               leftIndent=14, bulletIndent=5,
-                               spaceBefore=2, spaceAfter=4)
-    s_job_title = ParagraphStyle('JT', parent=s_body,
-                                  fontName=font_b, fontSize=11,
-                                  spaceBefore=8, spaceAfter=2)
-    s_job_meta  = ParagraphStyle('JM', parent=s_body, fontSize=9.5,
-                                  textColor=colors.HexColor("#718096"),
-                                  spaceBefore=0, spaceAfter=6)
+    C_W   = colors.white
+    C_DIM = colors.HexColor('#99aabb')
+    C_TEXT = colors.HexColor('#1e2a38') if _acc.startswith('#f') else colors.HexColor('#2d3748')
+
+    s_sb_name = ParagraphStyle('SN', fontName=fb, fontSize=15, textColor=C_W,
+                                leading=18, spaceAfter=3)
+    s_sb_role = ParagraphStyle('SR', fontName=fn, fontSize=9, textColor=C_ACC,
+                                spaceAfter=14)
+    s_sb_h    = ParagraphStyle('SH', fontName=fb, fontSize=8, textColor=C_ACC,
+                                spaceBefore=18, spaceAfter=6,
+                                textTransform='uppercase', letterSpacing=1.2)
+    s_sb_t    = ParagraphStyle('ST', fontName=fn, fontSize=8.5, textColor=C_W,
+                                leading=13, spaceAfter=3)
+    s_sb_dim  = ParagraphStyle('SD', fontName=fn, fontSize=7, textColor=C_DIM,
+                                spaceAfter=1)
+    s_h2      = ParagraphStyle('H2', fontName=fb, fontSize=10, textColor=C_TEXT,
+                                spaceBefore=16, spaceAfter=6,
+                                textTransform='uppercase')
+    s_body    = ParagraphStyle('B',  fontName=fn, fontSize=9.5, textColor=C_TEXT,
+                                leading=14, spaceAfter=5)
+    s_bullet  = ParagraphStyle('Bul', parent=s_body, leftIndent=14, bulletIndent=4,
+                                spaceBefore=1, spaceAfter=3)
+    s_title   = ParagraphStyle('T',  fontName=fb, fontSize=10.5, textColor=C_TEXT,
+                                spaceBefore=8, spaceAfter=2)
+    s_meta    = ParagraphStyle('M',  fontName=fn, fontSize=8.5,
+                                textColor=colors.HexColor('#666666'), spaceAfter=4)
 
     story = []
 
-    # ── Header frame ────────────────────────────────────────────────────────
-    with _process_photo(req.FILES.get('photo')) as photo_path:
-        if photo_path:
-            story.append(RLImage(photo_path, width=40*mm, height=40*mm))
+    # ── SIDEBAR ──────────────────────────────────────────────────────────────
+    pp = _process_photo(req.FILES.get('photo'))
+    if pp:
+            story.append(RLImage(pp, width=40*mm, height=40*mm, hAlign='CENTER'))
+            story.append(Spacer(1, 10))
+
+    story.append(Paragraph(req.POST.get('full_name', 'Your Name'), s_sb_name))
+    story.append(Paragraph(req.POST.get('target_role', 'Professional'), s_sb_role))
+
+    for lbl, val in [("LOCATION", req.POST.get('location')),
+                     ("EMAIL",    req.POST.get('email')),
+                     ("PHONE",    req.POST.get('phone')),
+                     ("LINKEDIN", req.POST.get('linkedin'))]:
+        if val:
+            story.append(Paragraph(lbl, s_sb_dim))
+            story.append(Paragraph(val, s_sb_t))
+
+    skills = _parse_skills(req.POST.get('skills_list', ''))
+    if skills:
+        story.append(Paragraph("SKILLS", s_sb_h))
+        for name, lvl in skills:
+            story.append(ProSkillBar(name, lvl, width=SB_W - 2*PAD,
+                                     bar_bg='#2c3e50', bar_fill=_pc,
+                                     text_color='white'))
             story.append(Spacer(1, 6))
 
+    lang = req.POST.get('languages', '').strip()
+    if lang:
+        story.append(Paragraph("LANGUAGES", s_sb_h))
+        story.append(Paragraph(lang, s_sb_t))
+
+    story.append(FrameBreak())
+
+    # ── MAIN ─────────────────────────────────────────────────────────────────
+    if req.POST.get('about_me'):
+        story.append(Paragraph("PROFILE", s_h2))
+        story.append(HRFlowable(width="100%", thickness=0.5,
+                                 color=_safe_hex(_pc), spaceAfter=6))
+        story.append(Paragraph(req.POST.get('about_me'), s_body))
+
+    exp = req.POST.get('experience_text', '').strip()
+    if exp:
+        story.append(Paragraph("EXPERIENCE", s_h2))
+        story.append(HRFlowable(width="100%", thickness=0.5,
+                                 color=_safe_hex(_pc), spaceAfter=6))
+        _render_text_block(story, exp, s_title, s_meta, s_bullet, s_body)
+
+    proj = req.POST.get('projects_text', '').strip()
+    if proj:
+        story.append(Paragraph("PROJECTS", s_h2))
+        story.append(HRFlowable(width="100%", thickness=0.5,
+                                 color=_safe_hex(_pc), spaceAfter=6))
+        _render_text_block(story, proj, s_title, s_meta, s_bullet, s_body)
+
+    _render_edu_certs_lang(story, req, s_h2, s_body, s_sub=s_meta,
+                           hr_color=_safe_hex(_pc))
+    try:
+        doc.build(story)
+    finally:
+        if pp and os.path.exists(pp):
+            os.unlink(pp)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# LAYOUT 3 — RIGHT SIDEBAR LIGHT
+# 70% main (white) on left, 30% tinted-colour right panel for skills/contacts.
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _build_right_sidebar_light(req, buf, cfg: dict):
+    _pc, _bg, _acc, _font = _post_colors(req, cfg)
+    C_SIDE = _safe_hex(_bg)
+    C_ACC  = _safe_hex(_pc)
+    fn, fb, fi = _font_variants(_font)
+
+    MAIN_W = int(W_A4 * 0.67)
+    SB_W   = W_A4 - MAIN_W
+    PAD    = 16
+
+    doc = BaseDocTemplate(buf, pagesize=A4,
+                          leftMargin=0, rightMargin=0,
+                          topMargin=0, bottomMargin=0)
+
+    def draw_bg(canvas, doc):
+        canvas.saveState()
+        canvas.setFillColor(colors.white)
+        canvas.rect(0, 0, MAIN_W, H_A4, fill=1, stroke=0)
+        canvas.setFillColor(C_SIDE)
+        canvas.rect(MAIN_W, 0, SB_W, H_A4, fill=1, stroke=0)
+        # Accent top bar
+        canvas.setFillColor(C_ACC)
+        canvas.rect(0, H_A4 - 4, W_A4, 4, fill=1, stroke=0)
+        canvas.restoreState()
+
+    frame_main = Frame(0, 0, MAIN_W, H_A4, id='main',
+                       leftPadding=PAD+8, rightPadding=PAD,
+                       topPadding=PAD+10, bottomPadding=PAD)
+    frame_sb   = Frame(MAIN_W, 0, SB_W, H_A4, id='sb',
+                       leftPadding=PAD, rightPadding=PAD,
+                       topPadding=PAD+10, bottomPadding=PAD)
+    doc.addPageTemplates([PageTemplate(id='P',
+                                       frames=[frame_main, frame_sb],
+                                       onPage=draw_bg)])
+
+    C_TEXT = colors.HexColor('#1e1e2e')
+    C_MUTED = colors.HexColor('#6b7280')
+
+    s_name   = ParagraphStyle('N',  fontName=fb, fontSize=26, textColor=C_ACC,
+                               leading=30, spaceAfter=2)
+    s_role   = ParagraphStyle('R',  fontName=fi, fontSize=12, textColor=C_TEXT,
+                               spaceAfter=10)
+    s_h2     = ParagraphStyle('H2', fontName=fb, fontSize=9.5, textColor=C_ACC,
+                               spaceBefore=16, spaceAfter=5,
+                               textTransform='uppercase', letterSpacing=1.5)
+    s_body   = ParagraphStyle('B',  fontName=fn, fontSize=9.5, textColor=C_TEXT,
+                               leading=14, spaceAfter=5)
+    s_bullet = ParagraphStyle('Bul', parent=s_body, leftIndent=14, bulletIndent=4,
+                               spaceBefore=1, spaceAfter=3)
+    s_title  = ParagraphStyle('T',  fontName=fb, fontSize=10.5, textColor=C_TEXT,
+                               spaceBefore=8, spaceAfter=2)
+    s_meta   = ParagraphStyle('M',  fontName=fn, fontSize=8.5, textColor=C_MUTED,
+                               spaceAfter=4)
+    s_sb_h   = ParagraphStyle('SH', fontName=fb, fontSize=8, textColor=C_ACC,
+                               spaceBefore=16, spaceAfter=5,
+                               textTransform='uppercase', letterSpacing=1)
+    s_sb_t   = ParagraphStyle('ST', fontName=fn, fontSize=8.5, textColor=C_TEXT,
+                               leading=13, spaceAfter=3)
+
+    story = []
+
+    # ── MAIN COLUMN ──────────────────────────────────────────────────────────
     story.append(Paragraph(req.POST.get('full_name', 'Your Name'), s_name))
-    story.append(Paragraph(req.POST.get('target_role', 'Creative Professional'), s_role))
-    contacts = "  |  ".join(filter(None, [
+    story.append(Paragraph(req.POST.get('target_role', 'Professional'), s_role))
+    story.append(HRFlowable(width="100%", thickness=1.5, color=C_ACC, spaceAfter=10))
+
+    if req.POST.get('about_me'):
+        story.append(Paragraph("PROFILE", s_h2))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=C_SIDE, spaceAfter=5))
+        story.append(Paragraph(req.POST.get('about_me'), s_body))
+
+    exp = req.POST.get('experience_text', '').strip()
+    if exp:
+        story.append(Paragraph("EXPERIENCE", s_h2))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=C_SIDE, spaceAfter=5))
+        _render_text_block(story, exp, s_title, s_meta, s_bullet, s_body)
+
+    proj = req.POST.get('projects_text', '').strip()
+    if proj:
+        story.append(Paragraph("PROJECTS", s_h2))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=C_SIDE, spaceAfter=5))
+        _render_text_block(story, proj, s_title, s_meta, s_bullet, s_body)
+
+    story.append(FrameBreak())
+
+    # ── RIGHT SIDEBAR ────────────────────────────────────────────────────────
+    pp = _process_photo(req.FILES.get('photo'))
+    if pp:
+            story.append(RLImage(pp, width=32*mm, height=32*mm, hAlign='CENTER'))
+            story.append(Spacer(1, 10))
+
+    for lbl, val in [("Location", req.POST.get('location')),
+                     ("Email",    req.POST.get('email')),
+                     ("Phone",    req.POST.get('phone')),
+                     ("LinkedIn", req.POST.get('linkedin'))]:
+        if val:
+            story.append(Paragraph(f'<b><font color="{_pc}">{lbl}</font></b>', s_sb_h))
+            story.append(Paragraph(val, s_sb_t))
+
+    skills = _parse_skills(req.POST.get('skills_list', ''))
+    if skills:
+        story.append(Paragraph("SKILLS", s_sb_h))
+        for name, lvl in skills:
+            story.append(ProSkillBar(name, lvl, width=SB_W - 2*PAD,
+                                     bar_bg='#e2e8f0', bar_fill=_pc,
+                                     text_color='#1e1e2e'))
+            story.append(Spacer(1, 5))
+
+    _render_edu_certs_lang(story, req, s_sb_h, s_sb_t)
+    try:
+        doc.build(story)
+    finally:
+        if pp and os.path.exists(pp):
+            os.unlink(pp)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# LAYOUT 4 — SPLIT HEADER
+# Full-width dark top band (35mm) with Name + Role + photo.
+# Below: 2-column body — left 55% for experience/projects, right 45% for rest.
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _build_split_header(req, buf, cfg: dict):
+    _pc, _bg, _acc, _font = _post_colors(req, cfg)
+    C_HDR  = _safe_hex(_bg)
+    C_ACC1 = _safe_hex(_pc)
+    C_ACC2 = _safe_hex(_acc)
+    fn, fb, fi = _font_variants(_font)
+
+    HDR_H = int(62 * mm)
+    PAD = 16
+
+    doc = BaseDocTemplate(buf, pagesize=A4,
+                          leftMargin=0, rightMargin=0,
+                          topMargin=0, bottomMargin=0)
+
+    def draw_bg(canvas, doc):
+        canvas.saveState()
+        canvas.setFillColor(C_HDR)
+        canvas.rect(0, H_A4 - HDR_H, W_A4, HDR_H, fill=1, stroke=0)
+        canvas.setFillColor(colors.HexColor('#f7f9fc'))
+        canvas.rect(0, 0, W_A4, H_A4 - HDR_H, fill=1, stroke=0)
+        canvas.setFillColor(C_ACC2)
+        canvas.rect(0, 0, W_A4, 3, fill=1, stroke=0)
+        canvas.restoreState()
+
+    f_hdr   = Frame(PAD, H_A4 - HDR_H, W_A4 - 2*PAD, HDR_H - PAD, id='hdr',
+                    leftPadding=PAD, rightPadding=PAD,
+                    topPadding=PAD, bottomPadding=0)
+    LEFT_W  = int((W_A4 - 2*PAD) * 0.55)
+    RIGHT_W = W_A4 - 2*PAD - LEFT_W - 8
+    BODY_H  = H_A4 - HDR_H - PAD
+    f_left  = Frame(PAD, PAD, LEFT_W, BODY_H, id='left',
+                    leftPadding=0, rightPadding=6,
+                    topPadding=PAD, bottomPadding=0)
+    f_right = Frame(PAD + LEFT_W + 8, PAD, RIGHT_W, BODY_H, id='right',
+                    leftPadding=6, rightPadding=0,
+                    topPadding=PAD, bottomPadding=0)
+    doc.addPageTemplates([PageTemplate(id='P',
+                                       frames=[f_hdr, f_left, f_right],
+                                       onPage=draw_bg)])
+
+    s_name   = ParagraphStyle('N',  fontName=fb, fontSize=28, textColor=colors.white,
+                               leading=32, spaceAfter=3)
+    s_role   = ParagraphStyle('R',  fontName=fn, fontSize=12, textColor=C_ACC2,
+                               spaceAfter=4)
+    s_info   = ParagraphStyle('I',  fontName=fn, fontSize=8.5,
+                               textColor=colors.HexColor('#a0aec0'), leading=13)
+    s_h2     = ParagraphStyle('H2', fontName=fb, fontSize=9.5,
+                               textColor=C_ACC1, spaceBefore=16, spaceAfter=5,
+                               textTransform='uppercase', letterSpacing=1.2)
+    C_TEXT   = colors.HexColor('#2d3748')
+    s_body   = ParagraphStyle('B',  fontName=fn, fontSize=9.5, textColor=C_TEXT,
+                               leading=14, spaceAfter=5)
+    s_bullet = ParagraphStyle('Bul', parent=s_body, leftIndent=14, bulletIndent=4,
+                               spaceBefore=1, spaceAfter=3)
+    s_title  = ParagraphStyle('T',  fontName=fb, fontSize=10.5, textColor=C_TEXT,
+                               spaceBefore=8, spaceAfter=2)
+    s_meta   = ParagraphStyle('M',  fontName=fn, fontSize=8.5,
+                               textColor=colors.HexColor('#718096'), spaceAfter=4)
+    s_sb_h   = ParagraphStyle('SH', fontName=fb, fontSize=8, textColor=C_ACC1,
+                               spaceBefore=14, spaceAfter=4,
+                               textTransform='uppercase', letterSpacing=1)
+    s_sb_t   = ParagraphStyle('ST', fontName=fn, fontSize=8.5, textColor=C_TEXT,
+                               leading=13, spaceAfter=2)
+
+    story = []
+
+    # ── HEADER FRAME ─────────────────────────────────────────────────────────
+    pp = _process_photo(req.FILES.get('photo'))
+    if pp:
+            story.append(RLImage(pp, width=38*mm, height=38*mm, hAlign='RIGHT'))
+
+    story.append(Paragraph(req.POST.get('full_name', 'Your Name'), s_name))
+    story.append(Paragraph(req.POST.get('target_role', 'Professional'), s_role))
+    contacts = " · ".join(filter(None, [
         req.POST.get('email'), req.POST.get('phone'),
-        req.POST.get('location'), req.POST.get('linkedin'),
+        req.POST.get('location'),
     ]))
     if contacts:
         story.append(Paragraph(contacts, s_info))
 
     story.append(FrameBreak())
 
-    # ── Body frame ──────────────────────────────────────────────────────────
+    # ── LEFT BODY ────────────────────────────────────────────────────────────
     if req.POST.get('about_me'):
-        story.append(Paragraph("About Me", s_h2))
-        story.append(HRFlowable(width="100%", thickness=1, color=C_ACC2, spaceAfter=8))
+        story.append(Paragraph("PROFILE", s_h2))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=C_ACC1, spaceAfter=5))
         story.append(Paragraph(req.POST.get('about_me'), s_body))
 
-    exp = req.POST.get('experience_text') or req.POST.get('resume', '')
+    exp = req.POST.get('experience_text', '').strip()
     if exp:
-        story.append(Paragraph("Experience", s_h2))
-        story.append(HRFlowable(width="100%", thickness=1, color=C_ACC2, spaceAfter=8))
-        _render_experience(story, req, s_job_title, s_job_meta, s_bullet, s_body)
+        story.append(Paragraph("EXPERIENCE", s_h2))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=C_ACC1, spaceAfter=5))
+        _render_text_block(story, exp, s_title, s_meta, s_bullet, s_body)
 
-    _render_projects(story, req, s_h2, s_job_title, s_job_meta, s_bullet, s_body,
-                     hr_color=C_ACC2, section_label="Projects")
+    proj = req.POST.get('projects_text', '').strip()
+    if proj:
+        story.append(Paragraph("PROJECTS", s_h2))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=C_ACC1, spaceAfter=5))
+        _render_text_block(story, proj, s_title, s_meta, s_bullet, s_body)
+
+    story.append(FrameBreak())
+
+    # ── RIGHT BODY ───────────────────────────────────────────────────────────
     skills = _parse_skills(req.POST.get('skills_list', ''))
     if skills:
-        story.append(Paragraph("Skills", s_h2))
-        story.append(HRFlowable(width="100%", thickness=1, color=C_ACC2, spaceAfter=8))
+        story.append(Paragraph("SKILLS", s_sb_h))
         for name, lvl in skills:
-            story.append(ProSkillBar(name, lvl, width=150*mm,
-                                     bar_bg="#e2e8f0",
-                                     bar_fill=_pc,
-                                     text_color="#2d3748"))
-            story.append(Spacer(1, 6))
+            story.append(ProSkillBar(name, lvl, width=RIGHT_W - 6,
+                                     bar_bg='#e2e8f0', bar_fill=_pc,
+                                     text_color='#2d3748'))
+            story.append(Spacer(1, 5))
 
-    _render_education(story, req, s_h2, s_body, s_job_title, s_job_meta,
-                      hr_color=C_ACC2)
-    _render_certifications(story, req, s_h2, s_body, hr_color=C_ACC2)
-    _render_portfolio(story, req, s_body, s_h2=s_h2, hr_color=C_ACC2)
-
-    if req.POST.get('languages'):
-        story.append(Paragraph("Languages", s_h2))
-        story.append(HRFlowable(width="100%", thickness=1, color=C_ACC2, spaceAfter=8))
-        story.append(Paragraph(req.POST.get('languages'), s_body))
-
-    doc.build(story)
+    _render_edu_certs_lang(story, req, s_sb_h, s_sb_t)
+    try:
+        doc.build(story)
+    finally:
+        if pp and os.path.exists(pp):
+            os.unlink(pp)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# BASE LAYOUT BUILDER 4 — MODERN COLUMNS (full-bleed dark + top accent bar)
-# Single column, dark background, terminal/tech aesthetic.
-# Used by: tech_dark_neon, tech_hacker_terminal, tech_fintech_blue, tech_cyber_purple
+# LAYOUT 5 — TIMELINE MODERN
+# Single-column. A vertical accent line runs down the left margin.
+# Each experience block gets a dot on the timeline.
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _build_modern_columns(req, buf, cfg: dict):
-    W, H = A4
-    # POST overrides take priority — allow live customisation from the Studio UI
-    _pc   = req.POST.get('primary_color') or cfg['primary_color']
-    _bg   = req.POST.get('bg_color')      or cfg['bg_color']
-    _acc  = req.POST.get('accent_color')  or cfg.get('accent_color', '#a855f7')
-    _font = req.POST.get('font_family')   or cfg.get('font_family', 'Helvetica')
+class _TimelineDot(Flowable):
+    """Draws a small circle dot for the timeline column."""
+    def __init__(self, color, size=6):
+        Flowable.__init__(self)
+        self.color = color
+        self.size  = size
+        self.width = size
+        self.height = size
 
-    C_BG    = _safe_hex(_bg)
-    C_GREEN = _safe_hex(_pc)
-    C_PUR   = _safe_hex(_acc)
-    C_TEXT  = colors.HexColor("#c9d1d9")
-    C_MUTED = colors.HexColor("#8b949e")
+    def draw(self):
+        self.canv.setFillColor(self.color)
+        self.canv.circle(self.size/2, self.size/2, self.size/2, fill=1, stroke=0)
 
-    font   = _font
-    font_b = "Courier-Bold" if "Courier" in font else "Helvetica-Bold"
+
+def _build_timeline_modern(req, buf, cfg: dict):
+    pp = None  # layout does not render photo
+    _pc, _bg, _acc, _font = _post_colors(req, cfg)
+    C_BG   = _safe_hex(_bg)
+    C_LINE = _safe_hex(_pc)
+    C_ACC  = _safe_hex(_acc)
+    fn, fb, fi = _font_variants(_font)
+
+    TL_X = int(18 * mm)   # x-position of timeline line
+    M_L  = int(28 * mm)   # left margin (content starts after timeline)
+    M_R  = int(18 * mm)
+    M_T  = int(18 * mm)
+    M_B  = int(18 * mm)
 
     doc = BaseDocTemplate(buf, pagesize=A4,
-                          rightMargin=0, leftMargin=0,
+                          leftMargin=0, rightMargin=0,
                           topMargin=0, bottomMargin=0)
 
     def draw_bg(canvas, doc):
         canvas.saveState()
         canvas.setFillColor(C_BG)
-        canvas.rect(0, 0, W, H, fill=1, stroke=0)
-        canvas.setFillColor(C_GREEN)
-        canvas.rect(0, H - 4, W, 4, fill=1, stroke=0)
+        canvas.rect(0, 0, W_A4, H_A4, fill=1, stroke=0)
+        # Vertical timeline bar (left side)
+        canvas.setFillColor(C_LINE)
+        canvas.rect(TL_X - 1, M_B, 2, H_A4 - M_T - M_B, fill=1, stroke=0)
         canvas.restoreState()
 
-    frame = Frame(15*mm, 15*mm, W - 30*mm, H - 30*mm, id='main',
-                  leftPadding=0, rightPadding=0,
-                  topPadding=0, bottomPadding=0)
-    doc.addPageTemplates([PageTemplate(id='L', frames=[frame], onPage=draw_bg)])
+    frame = Frame(M_L, M_B, W_A4 - M_L - M_R, H_A4 - M_T - M_B, id='main',
+                  leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0)
+    doc.addPageTemplates([PageTemplate(id='P', frames=[frame], onPage=draw_bg)])
 
-    prefix = "//" if "Courier" not in font else ">>>"
+    C_TEXT  = colors.HexColor('#1e293b')
+    C_MUTED = colors.HexColor('#64748b')
 
-    s_name = ParagraphStyle('N', fontName=font_b, fontSize=32,
-                             textColor=C_GREEN, leading=34, spaceAfter=4)
-    s_role = ParagraphStyle('R', fontName=font, fontSize=13,
-                             textColor=C_PUR, spaceAfter=12)
-    s_h2   = ParagraphStyle('H2', fontName=font_b, fontSize=10,
-                             textColor=C_GREEN, spaceBefore=18, spaceAfter=6,
-                             textTransform='uppercase', letterSpacing=2)
-    s_body = ParagraphStyle('B', fontName=font, fontSize=10,
-                             textColor=C_TEXT, leading=15, spaceAfter=5)
-    s_info = ParagraphStyle('I', fontName=font, fontSize=9,
-                             textColor=C_MUTED, leading=13)
-    s_bullet = ParagraphStyle('Bul', parent=s_body,
-                               leftIndent=14, bulletIndent=5,
-                               spaceBefore=2, spaceAfter=4)
-    s_job_title = ParagraphStyle('JT', parent=s_body,
-                                  fontName=font_b, fontSize=11,
-                                  spaceBefore=8, spaceAfter=2)
-    s_job_meta  = ParagraphStyle('JM', parent=s_body, fontSize=9.5,
-                                  textColor=C_MUTED,
-                                  spaceBefore=0, spaceAfter=6)
+    s_name   = ParagraphStyle('N',  fontName=fb, fontSize=26, textColor=C_LINE,
+                               leading=30, spaceAfter=2)
+    s_role   = ParagraphStyle('R',  fontName=fi, fontSize=12, textColor=C_TEXT,
+                               spaceAfter=6)
+    s_info   = ParagraphStyle('I',  fontName=fn, fontSize=8.5, textColor=C_MUTED,
+                               leading=13, spaceAfter=10)
+    s_h2     = ParagraphStyle('H2', fontName=fb, fontSize=10, textColor=C_LINE,
+                               spaceBefore=18, spaceAfter=4,
+                               textTransform='uppercase', letterSpacing=1.5)
+    s_body   = ParagraphStyle('B',  fontName=fn, fontSize=9.5, textColor=C_TEXT,
+                               leading=14, spaceAfter=5)
+    s_bullet = ParagraphStyle('Bul', parent=s_body, leftIndent=14, bulletIndent=4,
+                               spaceBefore=1, spaceAfter=3)
+    s_title  = ParagraphStyle('T',  fontName=fb, fontSize=10.5, textColor=C_TEXT,
+                               spaceBefore=8, spaceAfter=2)
+    s_meta   = ParagraphStyle('M',  fontName=fn, fontSize=8.5, textColor=C_MUTED,
+                               spaceAfter=4)
 
     story = []
 
-    with _process_photo(req.FILES.get('photo')) as photo_path:
-        if photo_path:
-            story.append(RLImage(photo_path, width=40*mm, height=40*mm))
-            story.append(Spacer(1, 10))
+    story.append(Paragraph(req.POST.get('full_name', 'Your Name'), s_name))
+    story.append(Paragraph(req.POST.get('target_role', 'Professional'), s_role))
+    contacts = " · ".join(filter(None, [
+        req.POST.get('email'), req.POST.get('phone'),
+        req.POST.get('location'), req.POST.get('linkedin'),
+    ]))
+    if contacts:
+        story.append(Paragraph(contacts, s_info))
+
+    pp = _process_photo(req.FILES.get('photo'))
+    if pp:
+            story.append(RLImage(pp, width=26*mm, height=26*mm))
+            story.append(Spacer(1, 8))
+
+    if req.POST.get('about_me'):
+        story.append(Paragraph("PROFILE", s_h2))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=C_ACC, spaceAfter=5))
+        story.append(Paragraph(req.POST.get('about_me'), s_body))
+
+    exp = req.POST.get('experience_text', '').strip()
+    if exp:
+        story.append(Paragraph("EXPERIENCE", s_h2))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=C_ACC, spaceAfter=5))
+        _render_text_block(story, exp, s_title, s_meta, s_bullet, s_body)
+
+    proj = req.POST.get('projects_text', '').strip()
+    if proj:
+        story.append(Paragraph("PROJECTS", s_h2))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=C_ACC, spaceAfter=5))
+        _render_text_block(story, proj, s_title, s_meta, s_bullet, s_body)
+
+    skills = _parse_skills(req.POST.get('skills_list', ''))
+    if skills:
+        story.append(Paragraph("SKILLS", s_h2))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=C_ACC, spaceAfter=5))
+        skill_txt = "  ·  ".join(f"<b>{n}</b>  <font color='#64748b'>{int(l)}%</font>"
+                                  for n, l in skills)
+        story.append(Paragraph(skill_txt, s_body))
+
+    _render_edu_certs_lang(story, req, s_h2, s_body, hr_color=C_ACC)
+    try:
+        doc.build(story)
+    finally:
+        if pp and os.path.exists(pp):
+            os.unlink(pp)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# LAYOUT 6 — TWO COLUMN EQUAL
+# Exactly 50/50 split. Left: name/summary/experience. Right: skills/edu/certs.
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _build_two_column_equal(req, buf, cfg: dict):
+    _pc, _bg, _acc, _font = _post_colors(req, cfg)
+    C_BG   = _safe_hex(_bg)
+    C_ACC  = _safe_hex(_pc)
+    C_RULE = _safe_hex(_acc)
+    fn, fb, fi = _font_variants(_font)
+
+    COL_W = W_A4 / 2
+    PAD   = 16
+    M     = int(12 * mm)
+
+    doc = BaseDocTemplate(buf, pagesize=A4,
+                          leftMargin=0, rightMargin=0,
+                          topMargin=0, bottomMargin=0)
+
+    def draw_bg(canvas, doc):
+        canvas.saveState()
+        canvas.setFillColor(C_BG)
+        canvas.rect(0, 0, W_A4, H_A4, fill=1, stroke=0)
+        # Accent top bar
+        canvas.setFillColor(C_ACC)
+        canvas.rect(0, H_A4 - 4, W_A4, 4, fill=1, stroke=0)
+        # Mid separator
+        canvas.setStrokeColor(C_RULE)
+        canvas.setLineWidth(0.75)
+        canvas.line(COL_W, M, COL_W, H_A4 - M)
+        canvas.restoreState()
+
+    f_left  = Frame(0, M, COL_W, H_A4 - 2*M, id='left',
+                    leftPadding=PAD, rightPadding=PAD//2,
+                    topPadding=PAD, bottomPadding=0)
+    f_right = Frame(COL_W, M, COL_W, H_A4 - 2*M, id='right',
+                    leftPadding=PAD//2, rightPadding=PAD,
+                    topPadding=PAD, bottomPadding=0)
+    doc.addPageTemplates([PageTemplate(id='P',
+                                       frames=[f_left, f_right],
+                                       onPage=draw_bg)])
+
+    C_TEXT  = colors.HexColor('#1a2e1a') if '#f' in _bg else colors.HexColor('#1e293b')
+    C_MUTED = colors.HexColor('#4b5563')
+
+    s_name   = ParagraphStyle('N',  fontName=fb, fontSize=22, textColor=C_ACC,
+                               leading=26, spaceAfter=2)
+    s_role   = ParagraphStyle('R',  fontName=fi, fontSize=11, textColor=C_TEXT,
+                               spaceAfter=8)
+    s_info   = ParagraphStyle('I',  fontName=fn, fontSize=8, textColor=C_MUTED,
+                               leading=12, spaceAfter=8)
+    s_h2     = ParagraphStyle('H2', fontName=fb, fontSize=9, textColor=C_ACC,
+                               spaceBefore=16, spaceAfter=5,
+                               textTransform='uppercase', letterSpacing=1.5)
+    s_body   = ParagraphStyle('B',  fontName=fn, fontSize=9, textColor=C_TEXT,
+                               leading=13, spaceAfter=5)
+    s_bullet = ParagraphStyle('Bul', parent=s_body, leftIndent=12, bulletIndent=4,
+                               spaceBefore=1, spaceAfter=3)
+    s_title  = ParagraphStyle('T',  fontName=fb, fontSize=10, textColor=C_TEXT,
+                               spaceBefore=8, spaceAfter=2)
+    s_meta   = ParagraphStyle('M',  fontName=fn, fontSize=8, textColor=C_MUTED,
+                               spaceAfter=4)
+
+    story = []
+
+    # ── LEFT COLUMN ──────────────────────────────────────────────────────────
+    pp = _process_photo(req.FILES.get('photo'))
+    if pp:
+            story.append(RLImage(pp, width=26*mm, height=26*mm))
+            story.append(Spacer(1, 6))
 
     story.append(Paragraph(req.POST.get('full_name', 'Your Name'), s_name))
-    story.append(Paragraph(req.POST.get('target_role', 'Developer'), s_role))
+    story.append(Paragraph(req.POST.get('target_role', 'Professional'), s_role))
+    contacts = " · ".join(filter(None, [
+        req.POST.get('email'), req.POST.get('phone'), req.POST.get('location'),
+    ]))
+    if contacts:
+        story.append(Paragraph(contacts, s_info))
 
+    if req.POST.get('about_me'):
+        story.append(Paragraph("PROFILE", s_h2))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=C_RULE, spaceAfter=5))
+        story.append(Paragraph(req.POST.get('about_me'), s_body))
+
+    exp = req.POST.get('experience_text', '').strip()
+    if exp:
+        story.append(Paragraph("EXPERIENCE", s_h2))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=C_RULE, spaceAfter=5))
+        _render_text_block(story, exp, s_title, s_meta, s_bullet, s_body)
+
+    proj = req.POST.get('projects_text', '').strip()
+    if proj:
+        story.append(Paragraph("PROJECTS", s_h2))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=C_RULE, spaceAfter=5))
+        _render_text_block(story, proj, s_title, s_meta, s_bullet, s_body)
+
+    story.append(FrameBreak())
+
+    # ── RIGHT COLUMN ─────────────────────────────────────────────────────────
+    skills = _parse_skills(req.POST.get('skills_list', ''))
+    if skills:
+        story.append(Paragraph("SKILLS", s_h2))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=C_RULE, spaceAfter=5))
+        for name, lvl in skills:
+            story.append(ProSkillBar(name, lvl, width=COL_W - PAD,
+                                     bar_bg='#d1fae5', bar_fill=_pc,
+                                     text_color='#1e293b'))
+            story.append(Spacer(1, 5))
+
+    _render_edu_certs_lang(story, req, s_h2, s_body, hr_color=C_RULE)
+    try:
+        doc.build(story)
+    finally:
+        if pp and os.path.exists(pp):
+            os.unlink(pp)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# LAYOUT 7 — HACKER TERMINAL
+# Black background, green monospace font. No circular photo (renders flat).
+# Uses a custom ASCII-art style header box.
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _build_hacker_terminal(req, buf, cfg: dict):
+    pp = None  # layout does not render photo
+    _pc, _bg, _acc, _font = _post_colors(req, cfg)
+    C_BG   = _safe_hex(_bg)
+    C_GRN  = _safe_hex(_pc)
+    C_DIM  = _safe_hex(_acc)
+    fn, fb, fi = 'Courier', 'Courier-Bold', 'Courier-Oblique'
+
+    M = int(14 * mm)
+    doc = BaseDocTemplate(buf, pagesize=A4,
+                          leftMargin=M, rightMargin=M,
+                          topMargin=M, bottomMargin=M)
+
+    def draw_bg(canvas, doc):
+        canvas.saveState()
+        canvas.setFillColor(C_BG)
+        canvas.rect(0, 0, W_A4, H_A4, fill=1, stroke=0)
+        canvas.restoreState()
+
+    frame = Frame(M, M, W_A4 - 2*M, H_A4 - 2*M, id='main',
+                  leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0)
+    doc.addPageTemplates([PageTemplate(id='P', frames=[frame], onPage=draw_bg)])
+
+    s_prompt = ParagraphStyle('P',  fontName=fb, fontSize=11, textColor=C_GRN,
+                               leading=14, spaceAfter=2)
+    s_cmd    = ParagraphStyle('C',  fontName=fb, fontSize=14, textColor=C_GRN,
+                               leading=17, spaceAfter=6)
+    s_role   = ParagraphStyle('R',  fontName=fn, fontSize=10, textColor=C_DIM,
+                               spaceAfter=10)
+    s_h2     = ParagraphStyle('H2', fontName=fb, fontSize=10, textColor=C_GRN,
+                               spaceBefore=16, spaceAfter=4)
+    s_body   = ParagraphStyle('B',  fontName=fn, fontSize=9, textColor=C_GRN,
+                               leading=13, spaceAfter=4)
+    s_bullet = ParagraphStyle('Bul', parent=s_body, leftIndent=16, bulletIndent=4,
+                               spaceBefore=1, spaceAfter=2)
+    s_title  = ParagraphStyle('T',  fontName=fb, fontSize=10, textColor=C_GRN,
+                               spaceBefore=8, spaceAfter=2)
+    s_meta   = ParagraphStyle('M',  fontName=fn, fontSize=8.5, textColor=C_DIM,
+                               spaceAfter=3)
+    s_dim    = ParagraphStyle('D',  fontName=fn, fontSize=8.5, textColor=C_DIM,
+                               leading=12, spaceAfter=6)
+
+    story = []
+
+    name = req.POST.get('full_name', 'User')
+    role = req.POST.get('target_role', 'Developer')
+    story.append(Paragraph("$ whoami", s_prompt))
+    story.append(Paragraph(name.upper(), s_cmd))
+    story.append(Paragraph(f"// {role}", s_role))
+
+    contacts = "  ".join(filter(None, [
+        req.POST.get('email'), req.POST.get('phone'),
+        req.POST.get('location'), req.POST.get('linkedin'),
+    ]))
+    if contacts:
+        story.append(Paragraph(f"$ contact  {contacts}", s_dim))
+
+    story.append(Paragraph("─" * 72, s_dim))
+
+    if req.POST.get('about_me'):
+        story.append(Paragraph("$ cat about.txt", s_h2))
+        story.append(Paragraph(req.POST.get('about_me'), s_body))
+
+    exp = req.POST.get('experience_text', '').strip()
+    if exp:
+        story.append(Paragraph("$ git log --experience", s_h2))
+        _render_text_block(story, exp, s_title, s_meta, s_bullet, s_body)
+
+    proj = req.POST.get('projects_text', '').strip()
+    if proj:
+        story.append(Paragraph("$ ls ~/projects/", s_h2))
+        _render_text_block(story, proj, s_title, s_meta, s_bullet, s_body)
+
+    skills = _parse_skills(req.POST.get('skills_list', ''))
+    if skills:
+        story.append(Paragraph("$ pip list --installed", s_h2))
+        for name_s, lvl in skills:
+            bar = '█' * int(lvl / 10) + '░' * (10 - int(lvl / 10))
+            story.append(Paragraph(f"{name_s:<20} [{bar}] {int(lvl)}%", s_body))
+
+    edu = req.POST.get('education', '').strip()
+    if edu:
+        story.append(Paragraph("$ cat education.txt", s_h2))
+        for line in edu.split('\n'):
+            if line.strip():
+                story.append(Paragraph(line.strip(), s_body))
+
+    port = req.POST.get('portfolio_url', '').strip()
+    if port:
+        story.append(Paragraph(f"$ open {port}", s_dim))
+
+    try:
+        doc.build(story)
+    finally:
+        if pp and os.path.exists(pp):
+            os.unlink(pp)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# LAYOUT 8 — ACADEMIC CLASSIC
+# Ultra-dense single-column. Name centred in CAPS. Strict full-width HR rules
+# above every section. No decoration. ATS-optimised.
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _build_academic_classic(req, buf, cfg: dict):
+    pp = None  # layout does not render photo
+    _pc, _bg, _acc, _font = _post_colors(req, cfg)
+    fn, fb, fi = _font_variants(_font)
+
+    M = int(20 * mm)
+    doc = BaseDocTemplate(buf, pagesize=A4,
+                          leftMargin=M, rightMargin=M,
+                          topMargin=M, bottomMargin=M)
+
+    def draw_bg(canvas, doc):
+        canvas.saveState()
+        canvas.setFillColor(colors.white)
+        canvas.rect(0, 0, W_A4, H_A4, fill=1, stroke=0)
+        canvas.restoreState()
+
+    frame = Frame(M, M, W_A4 - 2*M, H_A4 - 2*M, id='main',
+                  leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0)
+    doc.addPageTemplates([PageTemplate(id='P', frames=[frame], onPage=draw_bg)])
+
+    C_BLACK = colors.HexColor('#0a0a0a')
+    C_GREY  = colors.HexColor('#333333')
+
+    s_name   = ParagraphStyle('N',  fontName=fb, fontSize=18, textColor=C_BLACK,
+                               leading=22, spaceAfter=1, alignment=1)
+    s_role   = ParagraphStyle('R',  fontName=fn, fontSize=11, textColor=C_GREY,
+                               spaceAfter=3, alignment=1)
+    s_info   = ParagraphStyle('I',  fontName=fn, fontSize=9, textColor=C_GREY,
+                               leading=13, spaceAfter=6, alignment=1)
+    s_h2     = ParagraphStyle('H2', fontName=fb, fontSize=10, textColor=C_BLACK,
+                               spaceBefore=12, spaceAfter=2,
+                               textTransform='uppercase')
+    s_body   = ParagraphStyle('B',  fontName=fn, fontSize=9.5, textColor=C_BLACK,
+                               leading=14, spaceAfter=4)
+    s_bullet = ParagraphStyle('Bul', parent=s_body, leftIndent=16, bulletIndent=5,
+                               spaceBefore=1, spaceAfter=2)
+    s_title  = ParagraphStyle('T',  fontName=fb, fontSize=10, textColor=C_BLACK,
+                               spaceBefore=6, spaceAfter=1)
+    s_meta   = ParagraphStyle('M',  fontName=fi, fontSize=9, textColor=C_GREY,
+                               spaceAfter=3)
+
+    HR = lambda: HRFlowable(width="100%", thickness=0.8, color=C_BLACK, spaceAfter=5)
+
+    story = []
+
+    story.append(Paragraph(req.POST.get('full_name', 'Your Name').upper(), s_name))
+    story.append(Paragraph(req.POST.get('target_role', ''), s_role))
     contacts = " | ".join(filter(None, [
         req.POST.get('email'), req.POST.get('phone'),
         req.POST.get('location'), req.POST.get('linkedin'),
     ]))
     if contacts:
         story.append(Paragraph(contacts, s_info))
-    story.append(HRFlowable(width="100%", thickness=1,
-                             color=C_GREEN, spaceAfter=10, spaceBefore=8))
+    story.append(HRFlowable(width="100%", thickness=1.2, color=C_BLACK, spaceAfter=4))
 
     if req.POST.get('about_me'):
-        story.append(Paragraph(f"{prefix} ABOUT", s_h2))
+        story.append(Paragraph("OBJECTIVE / SUMMARY", s_h2))
+        story.append(HR())
         story.append(Paragraph(req.POST.get('about_me'), s_body))
 
-    exp = req.POST.get('experience_text') or req.POST.get('resume', '')
+    exp = req.POST.get('experience_text', '').strip()
     if exp:
-        story.append(Paragraph(f"{prefix} EXPERIENCE", s_h2))
-        _render_experience(story, req, s_job_title, s_job_meta, s_bullet, s_body)
+        story.append(Paragraph("PROFESSIONAL EXPERIENCE", s_h2))
+        story.append(HR())
+        _render_text_block(story, exp, s_title, s_meta, s_bullet, s_body)
 
-    _render_projects(story, req, s_h2, s_job_title, s_job_meta, s_bullet, s_body,
-                     hr_color=C_GREEN,
-                     section_label=f"{prefix} PROJECTS")
+    proj = req.POST.get('projects_text', '').strip()
+    if proj:
+        story.append(Paragraph("RESEARCH / PROJECTS", s_h2))
+        story.append(HR())
+        _render_text_block(story, proj, s_title, s_meta, s_bullet, s_body)
+
     skills = _parse_skills(req.POST.get('skills_list', ''))
     if skills:
-        story.append(Paragraph(f"{prefix} TECH STACK", s_h2))
-        for name, lvl in skills:
-            story.append(ProSkillBar(name, lvl, width=int(150*mm),
-                                     bar_bg="#21262d",
-                                     bar_fill=_pc,
-                                     text_color="#c9d1d9"))
-            story.append(Spacer(1, 6))
+        story.append(Paragraph("SKILLS & COMPETENCIES", s_h2))
+        story.append(HR())
+        skill_txt = ", ".join(f"{n} ({int(l)}%)" for n, l in skills)
+        story.append(Paragraph(skill_txt, s_body))
 
-    _render_education(story, req, s_h2, s_body, s_job_title, s_job_meta,
-                      hr_color=C_GREEN)
-    _render_certifications(story, req, s_h2, s_body, hr_color=C_GREEN)
-    _render_portfolio(story, req, s_body, s_h2=s_h2, hr_color=C_GREEN)
+    edu = req.POST.get('education', '').strip()
+    if edu:
+        story.append(Paragraph("EDUCATION", s_h2))
+        story.append(HR())
+        for line in edu.split('\n'):
+            if line.strip():
+                story.append(Paragraph(line.strip(), s_body))
 
-    if req.POST.get('languages'):
-        story.append(Paragraph(f"{prefix} LANGUAGES", s_h2))
-        story.append(Paragraph(req.POST.get('languages'), s_body))
+    certs = req.POST.get('certifications', '').strip()
+    if certs:
+        story.append(Paragraph("CERTIFICATIONS & AWARDS", s_h2))
+        story.append(HR())
+        for line in certs.replace(',', '\n').split('\n'):
+            if line.strip():
+                story.append(Paragraph(f"• {line.strip()}", s_body))
 
-    doc.build(story)
+    lang = req.POST.get('languages', '').strip()
+    if lang:
+        story.append(Paragraph("LANGUAGES", s_h2))
+        story.append(HR())
+        story.append(Paragraph(lang, s_body))
+
+    port = req.POST.get('portfolio_url', '').strip()
+    if port:
+        story.append(Paragraph("PORTFOLIO / PUBLICATIONS", s_h2))
+        story.append(HR())
+        story.append(Paragraph(f'<link href="{port}">{port}</link>', s_body))
+
+    try:
+        doc.build(story)
+    finally:
+        if pp and os.path.exists(pp):
+            os.unlink(pp)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# BASE LAYOUT BUILDER 5 — GRID (clean 2-column, white background)
-# Left  60 % : Name/Role header + Summary + Experience + Projects
-# Right 40 % : Photo + Contacts + Skills + Education + Certs + Languages
-# Used by: grid_clean_blue, grid_emerald, grid_slate_pro
+# LAYOUT 9 — TOP/BOTTOM SPLIT
+# ~30% coloured header panel at top (Name, Role, Photo, Contacts).
+# ~70% white body below for Experience, Projects, Skills, Education.
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _build_grid_layout(req, buf, cfg: dict):
-    W, H = A4
-    # POST overrides take priority — allow live customisation from the Studio UI
-    _pc   = req.POST.get('primary_color') or cfg['primary_color']
-    _bg   = req.POST.get('bg_color')      or cfg['bg_color']
-    _acc  = req.POST.get('accent_color')  or cfg.get('accent_color', '#dbeafe')
-    _font = req.POST.get('font_family')   or cfg.get('font_family', 'Helvetica')
+def _build_top_bottom_split(req, buf, cfg: dict):
+    _pc, _bg, _acc, _font = _post_colors(req, cfg)
+    C_TOP  = _safe_hex(_bg)
+    C_ACC  = _safe_hex(_pc)
+    C_PALE = _safe_hex(_acc)
+    fn, fb, fi = _font_variants(_font)
 
-    C_BG    = _safe_hex(_bg)
-    C_HEAD  = _safe_hex(_pc)
-    C_LINE  = _safe_hex(_acc)
+    TOP_H = int(H_A4 * 0.30)
+    M     = int(16 * mm)
+
+    doc = BaseDocTemplate(buf, pagesize=A4,
+                          leftMargin=0, rightMargin=0,
+                          topMargin=0, bottomMargin=0)
+
+    def draw_bg(canvas, doc):
+        canvas.saveState()
+        canvas.setFillColor(C_TOP)
+        canvas.rect(0, H_A4 - TOP_H, W_A4, TOP_H, fill=1, stroke=0)
+        canvas.setFillColor(colors.white)
+        canvas.rect(0, 0, W_A4, H_A4 - TOP_H, fill=1, stroke=0)
+        # Accent separator line
+        canvas.setFillColor(C_ACC)
+        canvas.rect(0, H_A4 - TOP_H - 4, W_A4, 4, fill=1, stroke=0)
+        canvas.restoreState()
+
+    f_top  = Frame(M, H_A4 - TOP_H, W_A4 - 2*M, TOP_H - M//2, id='top',
+                   leftPadding=0, rightPadding=0,
+                   topPadding=M, bottomPadding=0)
+    f_body = Frame(M, M, W_A4 - 2*M, H_A4 - TOP_H - M*2, id='body',
+                   leftPadding=0, rightPadding=0,
+                   topPadding=M//2, bottomPadding=0)
+    doc.addPageTemplates([PageTemplate(id='P',
+                                       frames=[f_top, f_body],
+                                       onPage=draw_bg)])
+
     C_TEXT  = colors.HexColor('#1e293b')
     C_MUTED = colors.HexColor('#64748b')
 
-    font   = _font
-    font_b = 'Times-Bold'   if 'Times'   in font else 'Helvetica-Bold'
-    font_i = 'Times-Italic' if 'Times'   in font else 'Helvetica-Oblique'
+    s_name   = ParagraphStyle('N',  fontName=fb, fontSize=28, textColor=colors.white,
+                               leading=32, spaceAfter=2)
+    s_role   = ParagraphStyle('R',  fontName=fn, fontSize=12, textColor=C_PALE,
+                               spaceAfter=6)
+    s_info   = ParagraphStyle('I',  fontName=fn, fontSize=8.5,
+                               textColor=colors.HexColor('#a0c4d8'), leading=13)
+    s_h2     = ParagraphStyle('H2', fontName=fb, fontSize=10, textColor=C_ACC,
+                               spaceBefore=16, spaceAfter=5,
+                               textTransform='uppercase', letterSpacing=1.2)
+    s_body   = ParagraphStyle('B',  fontName=fn, fontSize=9.5, textColor=C_TEXT,
+                               leading=14, spaceAfter=5)
+    s_bullet = ParagraphStyle('Bul', parent=s_body, leftIndent=14, bulletIndent=4,
+                               spaceBefore=1, spaceAfter=3)
+    s_title  = ParagraphStyle('T',  fontName=fb, fontSize=10.5, textColor=C_TEXT,
+                               spaceBefore=8, spaceAfter=2)
+    s_meta   = ParagraphStyle('M',  fontName=fn, fontSize=8.5, textColor=C_MUTED,
+                               spaceAfter=4)
 
-    MARGIN   = 12 * mm
-    COL_GAP  = 8  * mm
-    LEFT_W   = (W - 2 * MARGIN - COL_GAP) * 0.60
-    RIGHT_W  = (W - 2 * MARGIN - COL_GAP) * 0.40
-    LEFT_X   = MARGIN
-    RIGHT_X  = MARGIN + LEFT_W + COL_GAP
-    COL_H    = H - 2 * MARGIN
+    story = []
+
+    # ── TOP PANEL ────────────────────────────────────────────────────────────
+    pp = _process_photo(req.FILES.get('photo'))
+    if pp:
+            story.append(RLImage(pp, width=36*mm, height=36*mm, hAlign='RIGHT'))
+
+    story.append(Paragraph(req.POST.get('full_name', 'Your Name'), s_name))
+    story.append(Paragraph(req.POST.get('target_role', 'Professional'), s_role))
+    contacts = " · ".join(filter(None, [
+        req.POST.get('email'), req.POST.get('phone'),
+        req.POST.get('location'), req.POST.get('linkedin'),
+    ]))
+    if contacts:
+        story.append(Paragraph(contacts, s_info))
+
+    story.append(FrameBreak())
+
+    # ── BODY ─────────────────────────────────────────────────────────────────
+    if req.POST.get('about_me'):
+        story.append(Paragraph("SUMMARY", s_h2))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=C_PALE, spaceAfter=5))
+        story.append(Paragraph(req.POST.get('about_me'), s_body))
+
+    exp = req.POST.get('experience_text', '').strip()
+    if exp:
+        story.append(Paragraph("EXPERIENCE", s_h2))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=C_PALE, spaceAfter=5))
+        _render_text_block(story, exp, s_title, s_meta, s_bullet, s_body)
+
+    proj = req.POST.get('projects_text', '').strip()
+    if proj:
+        story.append(Paragraph("PROJECTS", s_h2))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=C_PALE, spaceAfter=5))
+        _render_text_block(story, proj, s_title, s_meta, s_bullet, s_body)
+
+    skills = _parse_skills(req.POST.get('skills_list', ''))
+    if skills:
+        story.append(Paragraph("SKILLS", s_h2))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=C_PALE, spaceAfter=5))
+        for name, lvl in skills:
+            story.append(ProSkillBar(name, lvl, width=W_A4 - 2*M,
+                                     bar_bg='#e2e8f0', bar_fill=_pc,
+                                     text_color='#1e293b'))
+            story.append(Spacer(1, 5))
+
+    _render_edu_certs_lang(story, req, s_h2, s_body, hr_color=C_PALE)
+    try:
+        doc.build(story)
+    finally:
+        if pp and os.path.exists(pp):
+            os.unlink(pp)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# LAYOUT 10 — CREATIVE MASONRY
+# Dark full-bleed background. Asymmetric: 62% left for main text, 38% right
+# for creative skill/contact cards. Bold coloured name on left.
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _build_creative_masonry(req, buf, cfg: dict):
+    _pc, _bg, _acc, _font = _post_colors(req, cfg)
+    C_BG   = _safe_hex(_bg)
+    C_ACC  = _safe_hex(_pc)
+    C_SEC  = _safe_hex(_acc)
+    fn, fb, fi = _font_variants(_font)
+
+    MAIN_W = int(W_A4 * 0.62)
+    SIDE_W = W_A4 - MAIN_W
+    M      = int(14 * mm)
+    PAD    = 14
 
     doc = BaseDocTemplate(buf, pagesize=A4,
-                          rightMargin=0, leftMargin=0,
+                          leftMargin=0, rightMargin=0,
                           topMargin=0, bottomMargin=0)
 
     def draw_bg(canvas, doc):
         canvas.saveState()
         canvas.setFillColor(C_BG)
-        canvas.rect(0, 0, W, H, fill=1, stroke=0)
-        # Thin top accent bar
-        canvas.setFillColor(C_HEAD)
-        canvas.rect(0, H - 3, W, 3, fill=1, stroke=0)
-        # Vertical separator between columns
-        canvas.setStrokeColor(C_LINE)
-        canvas.setLineWidth(1)
-        canvas.line(RIGHT_X - COL_GAP * 0.5, MARGIN,
-                    RIGHT_X - COL_GAP * 0.5, H - MARGIN)
+        canvas.rect(0, 0, W_A4, H_A4, fill=1, stroke=0)
+        # Right panel slightly lighter
+        canvas.setFillColor(colors.HexColor('#16161f'))
+        canvas.rect(MAIN_W, 0, SIDE_W, H_A4, fill=1, stroke=0)
+        # Top accent stripe
+        canvas.setFillColor(C_ACC)
+        canvas.rect(0, H_A4 - 5, W_A4, 5, fill=1, stroke=0)
+        # Left margin accent strip
+        canvas.setFillColor(C_ACC)
+        canvas.rect(0, 0, 4, H_A4, fill=1, stroke=0)
         canvas.restoreState()
 
-    frame_left  = Frame(LEFT_X,  MARGIN, LEFT_W,  COL_H, id='left',
-                        leftPadding=0, rightPadding=6,
-                        topPadding=16, bottomPadding=0)
-    frame_right = Frame(RIGHT_X, MARGIN, RIGHT_W, COL_H, id='right',
-                        leftPadding=6, rightPadding=0,
-                        topPadding=16, bottomPadding=0)
-    doc.addPageTemplates([PageTemplate(id='G',
-                                       frames=[frame_left, frame_right],
+    f_main = Frame(8, M, MAIN_W - 8, H_A4 - 2*M, id='main',
+                   leftPadding=PAD, rightPadding=PAD,
+                   topPadding=PAD, bottomPadding=0)
+    f_side = Frame(MAIN_W, M, SIDE_W, H_A4 - 2*M, id='side',
+                   leftPadding=PAD, rightPadding=PAD,
+                   topPadding=PAD, bottomPadding=0)
+    doc.addPageTemplates([PageTemplate(id='P',
+                                       frames=[f_main, f_side],
                                        onPage=draw_bg)])
 
-    s_name = ParagraphStyle('N', fontName=font_b, fontSize=28,
-                             textColor=C_TEXT, leading=30, spaceAfter=2)
-    s_role = ParagraphStyle('R', fontName=font_i, fontSize=13,
-                             textColor=C_HEAD, spaceAfter=10)
-    s_h2   = ParagraphStyle('H2', fontName=font_b, fontSize=9,
-                             textColor=C_HEAD, spaceBefore=16, spaceAfter=5,
-                             textTransform='uppercase', letterSpacing=1.5)
-    s_body = ParagraphStyle('B', fontName=font, fontSize=9.5,
-                             textColor=C_TEXT, leading=14, spaceAfter=5)
-    s_bullet = ParagraphStyle('Bul', parent=s_body,
-                               leftIndent=12, bulletIndent=4,
-                               spaceBefore=2, spaceAfter=3)
-    s_job_title = ParagraphStyle('JT', parent=s_body,
-                                  fontName=font_b, fontSize=10,
-                                  spaceBefore=8, spaceAfter=2)
-    s_job_meta  = ParagraphStyle('JM', parent=s_body, fontSize=8.5,
-                                  textColor=C_MUTED, spaceBefore=0, spaceAfter=5)
-    s_sb_h = ParagraphStyle('SH', fontName=font_b, fontSize=8,
-                              textColor=C_HEAD, spaceBefore=14, spaceAfter=4,
-                              textTransform='uppercase', letterSpacing=1)
-    s_sb_t = ParagraphStyle('ST', fontName=font, fontSize=8.5,
-                              textColor=C_TEXT, leading=13)
+    C_W    = colors.white
+    C_DIM  = colors.HexColor('#9ca3af')
+    C_CARD = colors.HexColor('#1f1f2e')
+
+    s_name   = ParagraphStyle('N',  fontName=fb, fontSize=28, textColor=C_ACC,
+                               leading=32, spaceAfter=2)
+    s_role   = ParagraphStyle('R',  fontName=fi, fontSize=12, textColor=C_SEC,
+                               spaceAfter=10)
+    s_h2     = ParagraphStyle('H2', fontName=fb, fontSize=9, textColor=C_ACC,
+                               spaceBefore=16, spaceAfter=4,
+                               textTransform='uppercase', letterSpacing=2)
+    s_body   = ParagraphStyle('B',  fontName=fn, fontSize=9.5, textColor=C_W,
+                               leading=14, spaceAfter=5)
+    s_bullet = ParagraphStyle('Bul', parent=s_body, leftIndent=14, bulletIndent=4,
+                               spaceBefore=1, spaceAfter=3)
+    s_title  = ParagraphStyle('T',  fontName=fb, fontSize=10.5, textColor=C_W,
+                               spaceBefore=8, spaceAfter=2)
+    s_meta   = ParagraphStyle('M',  fontName=fn, fontSize=8.5, textColor=C_DIM,
+                               spaceAfter=4)
+    s_sb_h   = ParagraphStyle('SH', fontName=fb, fontSize=8, textColor=C_ACC,
+                               spaceBefore=14, spaceAfter=4,
+                               textTransform='uppercase', letterSpacing=1.2)
+    s_sb_t   = ParagraphStyle('ST', fontName=fn, fontSize=8.5, textColor=C_W,
+                               leading=13, spaceAfter=3)
+    s_dim    = ParagraphStyle('D',  fontName=fn, fontSize=7.5, textColor=C_DIM,
+                               leading=11)
 
     story = []
 
-    # ── LEFT COLUMN ─────────────────────────────────────────────────────────
-    full_name = req.POST.get('full_name', 'Your Name')
-    parts = full_name.split(' ', 1)
-    if len(parts) == 2:
-        name_html = f'<font color="{_pc}">{parts[0]}</font> {parts[1]}'
-    else:
-        name_html = f'<font color="{_pc}">{full_name}</font>'
-    story.append(Paragraph(name_html, s_name))
-    story.append(Paragraph(req.POST.get('target_role', 'Professional'), s_role))
-    story.append(HRFlowable(width='100%', thickness=1.5, color=C_HEAD,
-                             spaceAfter=8, spaceBefore=0))
+    # ── MAIN LEFT ────────────────────────────────────────────────────────────
+    story.append(Paragraph(req.POST.get('full_name', 'Your Name'), s_name))
+    story.append(Paragraph(req.POST.get('target_role', 'Creative Professional'), s_role))
 
     if req.POST.get('about_me'):
-        story.append(Paragraph('PROFILE', s_h2))
-        story.append(HRFlowable(width='100%', thickness=0.5, color=C_LINE, spaceAfter=5))
+        story.append(Paragraph("ABOUT", s_h2))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=C_SEC, spaceAfter=5))
         story.append(Paragraph(req.POST.get('about_me'), s_body))
 
-    exp = req.POST.get('experience_text') or req.POST.get('resume', '')
+    exp = req.POST.get('experience_text', '').strip()
     if exp:
-        story.append(Paragraph('EXPERIENCE', s_h2))
-        story.append(HRFlowable(width='100%', thickness=0.5, color=C_LINE, spaceAfter=5))
-        _render_experience(story, req, s_job_title, s_job_meta, s_bullet, s_body)
+        story.append(Paragraph("EXPERIENCE", s_h2))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=C_SEC, spaceAfter=5))
+        _render_text_block(story, exp, s_title, s_meta, s_bullet, s_body)
 
-    _render_projects(story, req, s_h2, s_job_title, s_job_meta, s_bullet, s_body,
-                     hr_color=C_LINE)
+    proj = req.POST.get('projects_text', '').strip()
+    if proj:
+        story.append(Paragraph("PROJECTS", s_h2))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=C_SEC, spaceAfter=5))
+        _render_text_block(story, proj, s_title, s_meta, s_bullet, s_body)
 
     story.append(FrameBreak())
 
-    # ── RIGHT COLUMN ────────────────────────────────────────────────────────
-    with _process_photo(req.FILES.get('photo')) as photo_path:
-        if photo_path:
-            story.append(RLImage(photo_path, width=30*mm, height=30*mm))
-            story.append(Spacer(1, 10))
+    # ── SIDE RIGHT ───────────────────────────────────────────────────────────
+    pp = _process_photo(req.FILES.get('photo'))
+    if pp:
+            story.append(RLImage(pp, width=30*mm, height=30*mm, hAlign='CENTER'))
+            story.append(Spacer(1, 8))
 
-    contacts_data = [
-        ('Location', req.POST.get('location')),
-        ('Email',    req.POST.get('email')),
-        ('Phone',    req.POST.get('phone')),
-        ('LinkedIn', req.POST.get('linkedin')),
-    ]
-    if any(v for _, v in contacts_data):
-        story.append(Paragraph('CONTACT', s_sb_h))
-        for lbl, val in contacts_data:
-            if val:
-                story.append(Paragraph(
-                    f'<font color="{_pc}"><b>{lbl}</b></font>  {val}', s_sb_t))
-                story.append(Spacer(1, 2))
+    for lbl, val in [("Location", req.POST.get('location')),
+                     ("Email",    req.POST.get('email')),
+                     ("Phone",    req.POST.get('phone')),
+                     ("LinkedIn", req.POST.get('linkedin'))]:
+        if val:
+            story.append(Paragraph(lbl.upper(), s_sb_h))
+            story.append(Paragraph(val, s_sb_t))
 
     skills = _parse_skills(req.POST.get('skills_list', ''))
     if skills:
-        story.append(Paragraph('SKILLS', s_sb_h))
+        story.append(Paragraph("SKILLS", s_sb_h))
         for name, lvl in skills:
-            story.append(ProSkillBar(name, lvl,
-                                     width=int(RIGHT_W - 12),
-                                     bar_bg='#e2e8f0',
-                                     bar_fill=_pc,
-                                     text_color='#1e293b'))
+            story.append(ProSkillBar(name, lvl, width=SIDE_W - 2*PAD,
+                                     bar_bg='#2d2d3e', bar_fill=_pc,
+                                     text_color='white'))
             story.append(Spacer(1, 5))
 
-    edu = req.POST.get('education', '').strip()
-    if edu:
-        story.append(Paragraph('EDUCATION', s_sb_h))
-        for line in edu.split('\n'):
-            line = line.strip()
-            if line:
-                story.append(Paragraph(line, s_sb_t))
-                story.append(Spacer(1, 2))
-
-    certs = req.POST.get('certifications', '').strip()
-    if certs:
-        story.append(Paragraph('CERTIFICATIONS', s_sb_h))
-        for line in certs.replace(',', '\n').split('\n'):
-            line = line.strip()
-            if line:
-                story.append(Paragraph(f'• {line}', s_sb_t))
-
-    if req.POST.get('languages'):
-        story.append(Paragraph('LANGUAGES', s_sb_h))
-        story.append(Paragraph(req.POST.get('languages'), s_sb_t))
-
-    port = req.POST.get('portfolio_url', '').strip()
-    if port:
-        story.append(Paragraph('PORTFOLIO', s_sb_h))
-        story.append(Paragraph(f'<link href="{port}">{port}</link>', s_sb_t))
-
-    doc.build(story)
+    _render_edu_certs_lang(story, req, s_sb_h, s_sb_t)
+    try:
+        doc.build(story)
+    finally:
+        if pp and os.path.exists(pp):
+            os.unlink(pp)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1288,11 +1620,16 @@ def _build_grid_layout(req, buf, cfg: dict):
 # ─────────────────────────────────────────────────────────────────────────────
 
 _LAYOUT_BUILDERS = {
-    "sidebar":        _build_sidebar_layout,
-    "minimal":        _build_minimal_layout,
-    "split_header":   _build_split_header_layout,
-    "modern_columns": _build_modern_columns,
-    "grid":           _build_grid_layout,
+    "minimal_centered":    _build_minimal_centered,
+    "left_sidebar_dark":   _build_left_sidebar_dark,
+    "right_sidebar_light": _build_right_sidebar_light,
+    "split_header":        _build_split_header,
+    "timeline_modern":     _build_timeline_modern,
+    "two_column_equal":    _build_two_column_equal,
+    "hacker_terminal":     _build_hacker_terminal,
+    "academic_classic":    _build_academic_classic,
+    "top_bottom_split":    _build_top_bottom_split,
+    "creative_masonry":    _build_creative_masonry,
 }
 
 
@@ -1303,20 +1640,22 @@ _LAYOUT_BUILDERS = {
 def build_pdf(template_slug: str, request) -> io.BytesIO:
     """
     Build and return a BytesIO PDF for the given template slug.
-    Looks up the template config, dispatches to the correct base layout
-    builder passing the config dict, falls back to classic_navy on error.
+    Dispatches to the correct layout builder; falls back to minimal_centered
+    on any unrecoverable error.
     """
     buf = io.BytesIO()
     cfg = get_template_by_slug(template_slug)
-    layout_key = cfg.get("layout", "sidebar")
-    builder = _LAYOUT_BUILDERS.get(layout_key, _build_sidebar_layout)
+    layout_key = cfg.get("layout", "minimal_centered")
+    builder = _LAYOUT_BUILDERS.get(layout_key, _build_minimal_centered)
     try:
         builder(request, buf, cfg)
     except Exception as exc:
-        logger.exception("PDF build failed for slug=%s layout=%s: %s",
+        logger.exception("PDF build failed slug=%s layout=%s: %s",
                          template_slug, layout_key, exc)
-        # Fallback: re-render with the first template
         buf = io.BytesIO()
-        _build_sidebar_layout(request, buf, TEMPLATES[0])
+        try:
+            _build_minimal_centered(request, buf, TEMPLATES[0])
+        except Exception:
+            pass
     buf.seek(0)
     return buf

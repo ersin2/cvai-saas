@@ -687,7 +687,7 @@
           {% csrf_token %}
 
           <!-- Hidden: selected template slug -->
-          <input type="hidden" name="template_name" id="selectedTemplate" value="classic_navy">
+          <input type="hidden" name="template_name" id="selectedTemplate" value="minimal_centered">
 
           <!-- ══════════════════════════════════════════════════
                AI MAGIC BOX — Auto-fill from raw text / PDF
@@ -754,396 +754,169 @@
             </button>
             <div class="vs-section-body open" id="sec-templates">
 
-              <!-- Classic -->
-              <span class="cat-badge cat-classic">Classic</span>
-              <div class="tpl-gallery">
-                <div class="tpl-card active" data-slug="classic_navy" onclick="selectTemplate(this)">
+              <!-- All 10 Unique Layouts -->
+              <div class="tpl-gallery" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
+
+                <div class="tpl-card active" data-slug="minimal_centered" onclick="selectTemplate(this)">
                   <div class="tpl-thumb">
-                    <img src="/static/img/templates/classic_navy.jpg" alt="Classic Navy"
+                    <img src="/static/img/templates/minimal_centered.jpg" alt="Minimal Centered"
                          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#2c3e50;">
+                    <div class="tpl-fallback" style="display:none;background:#ffffff;border:1px solid #c9a84c;">
+                      <div class="tpl-swatch" style="background:#1a1a2e;"></div>
+                      📄
+                    </div>
+                  </div>
+                  <div class="tpl-info">
+                    <div class="tpl-name">Minimal Centered</div>
+                    <div class="tpl-cat">1-Col · Serif Elegance</div>
+                  </div>
+                  <div class="tpl-check"><i class="fas fa-check"></i></div>
+                </div>
+
+                <div class="tpl-card" data-slug="left_sidebar_dark" onclick="selectTemplate(this)">
+                  <div class="tpl-thumb">
+                    <img src="/static/img/templates/left_sidebar_dark.jpg" alt="Dark Sidebar"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="tpl-fallback" style="display:none;background:#1e2a38;">
                       <div class="tpl-swatch" style="background:#4cc9f0;"></div>
-                      🔷
+                      🌑
                     </div>
                   </div>
                   <div class="tpl-info">
-                    <div class="tpl-name">Classic Navy</div>
-                    <div class="tpl-cat">Sidebar · Cyan</div>
+                    <div class="tpl-name">Dark Sidebar</div>
+                    <div class="tpl-cat">25% Dark Left Sidebar</div>
                   </div>
                   <div class="tpl-check"><i class="fas fa-check"></i></div>
                 </div>
 
-                <div class="tpl-card" data-slug="classic_burgundy" onclick="selectTemplate(this)">
+                <div class="tpl-card" data-slug="right_sidebar_light" onclick="selectTemplate(this)">
                   <div class="tpl-thumb">
-                    <img src="/static/img/templates/classic_burgundy.jpg" alt="Classic Burgundy"
+                    <img src="/static/img/templates/right_sidebar_light.jpg" alt="Light Right Panel"
                          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#6d2b3d;">
-                      <div class="tpl-swatch" style="background:#f7c59f;"></div>
-                      🍷
+                    <div class="tpl-fallback" style="display:none;background:#f3f0ff;">
+                      <div class="tpl-swatch" style="background:#7c3aed;"></div>
+                      💜
                     </div>
                   </div>
                   <div class="tpl-info">
-                    <div class="tpl-name">Burgundy</div>
-                    <div class="tpl-cat">Sidebar · Warm</div>
+                    <div class="tpl-name">Light Right Panel</div>
+                    <div class="tpl-cat">70% Main + 30% Right</div>
                   </div>
                   <div class="tpl-check"><i class="fas fa-check"></i></div>
                 </div>
 
-                <div class="tpl-card" data-slug="classic_forest" onclick="selectTemplate(this)">
+                <div class="tpl-card" data-slug="split_header" onclick="selectTemplate(this)">
                   <div class="tpl-thumb">
-                    <img src="/static/img/templates/classic_forest.jpg" alt="Classic Forest"
+                    <img src="/static/img/templates/split_header.jpg" alt="Bold Split Header"
                          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#2d6a4f;">
-                      <div class="tpl-swatch" style="background:#a8d5ba;"></div>
-                      🌲
+                    <div class="tpl-fallback" style="display:none;background:#2d3436;">
+                      <div class="tpl-swatch" style="background:#ff6b6b;"></div>
+                      🎨
                     </div>
                   </div>
                   <div class="tpl-info">
-                    <div class="tpl-name">Forest Green</div>
-                    <div class="tpl-cat">Sidebar · Nature</div>
+                    <div class="tpl-name">Bold Split Header</div>
+                    <div class="tpl-cat">Full-Width Color Band</div>
                   </div>
                   <div class="tpl-check"><i class="fas fa-check"></i></div>
                 </div>
 
-                <div class="tpl-card" data-slug="classic_slate" onclick="selectTemplate(this)">
+                <div class="tpl-card" data-slug="timeline_modern" onclick="selectTemplate(this)">
                   <div class="tpl-thumb">
-                    <img src="/static/img/templates/classic_slate.jpg" alt="Classic Slate"
+                    <img src="/static/img/templates/timeline_modern.jpg" alt="Timeline Modern"
                          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#4a5568;">
-                      <div class="tpl-swatch" style="background:#b8c5d6;"></div>
-                      🩶
+                    <div class="tpl-fallback" style="display:none;background:#ffffff;border:1px solid #caf0f8;">
+                      <div class="tpl-swatch" style="background:#00b4d8;"></div>
+                      ⏱️
                     </div>
                   </div>
                   <div class="tpl-info">
-                    <div class="tpl-name">Slate</div>
-                    <div class="tpl-cat">Sidebar · Steel</div>
-                  </div>
-                  <div class="tpl-check"><i class="fas fa-check"></i></div>
-                </div>
-              </div>
-
-              <!-- Minimalist -->
-              <span class="cat-badge cat-minimalist" style="margin-top:12px;">Minimalist</span>
-              <div class="tpl-gallery">
-                <div class="tpl-card" data-slug="minimalist_white" onclick="selectTemplate(this)">
-                  <div class="tpl-thumb">
-                    <img src="/static/img/templates/minimalist_white.jpg" alt="Pure White"
-                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#f5f5f5;">
-                      <div class="tpl-swatch" style="background:#667eea;"></div>
-                      ⬜
-                    </div>
-                  </div>
-                  <div class="tpl-info">
-                    <div class="tpl-name">Pure White</div>
-                    <div class="tpl-cat">Single-col · Clean</div>
+                    <div class="tpl-name">Timeline Modern</div>
+                    <div class="tpl-cat">Left Timeline Line</div>
                   </div>
                   <div class="tpl-check"><i class="fas fa-check"></i></div>
                 </div>
 
-                <div class="tpl-card" data-slug="minimalist_onyx" onclick="selectTemplate(this)">
+                <div class="tpl-card" data-slug="two_column_equal" onclick="selectTemplate(this)">
                   <div class="tpl-thumb">
-                    <img src="/static/img/templates/minimalist_onyx.jpg" alt="Onyx Dark"
+                    <img src="/static/img/templates/two_column_equal.jpg" alt="50/50 Grid"
                          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#1a1a2e;">
-                      <div class="tpl-swatch" style="background:#a78bfa;"></div>
-                      ⬛
+                    <div class="tpl-fallback" style="display:none;background:#f8fafb;border:1px solid #d1fae5;">
+                      <div class="tpl-swatch" style="background:#059669;"></div>
+                      ⚖️
                     </div>
                   </div>
                   <div class="tpl-info">
-                    <div class="tpl-name">Onyx Dark</div>
-                    <div class="tpl-cat">Single-col · Dark</div>
+                    <div class="tpl-name">50/50 Grid</div>
+                    <div class="tpl-cat">Equal Two-Column Split</div>
                   </div>
                   <div class="tpl-check"><i class="fas fa-check"></i></div>
                 </div>
 
-                <div class="tpl-card" data-slug="minimalist_soft_gray" onclick="selectTemplate(this)">
+                <div class="tpl-card" data-slug="hacker_terminal" onclick="selectTemplate(this)">
                   <div class="tpl-thumb">
-                    <img src="/static/img/templates/minimalist_soft_gray.jpg" alt="Soft Gray"
+                    <img src="/static/img/templates/hacker_terminal.jpg" alt="Hacker Terminal"
                          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#f0f0f5;">
-                      <div class="tpl-swatch" style="background:#4a5568;"></div>
-                      🩶
-                    </div>
-                  </div>
-                  <div class="tpl-info">
-                    <div class="tpl-name">Soft Gray</div>
-                    <div class="tpl-cat">Single-col · Calm</div>
-                  </div>
-                  <div class="tpl-check"><i class="fas fa-check"></i></div>
-                </div>
-
-                <div class="tpl-card" data-slug="minimalist_ice_blue" onclick="selectTemplate(this)">
-                  <div class="tpl-thumb">
-                    <img src="/static/img/templates/minimalist_ice_blue.jpg" alt="Ice Blue"
-                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#f0f9ff;">
-                      <div class="tpl-swatch" style="background:#0ea5e9;"></div>
-                      🧊
-                    </div>
-                  </div>
-                  <div class="tpl-info">
-                    <div class="tpl-name">Ice Blue</div>
-                    <div class="tpl-cat">Single-col · Cool</div>
-                  </div>
-                  <div class="tpl-check"><i class="fas fa-check"></i></div>
-                </div>
-              </div>
-
-              <!-- Tech/Startup -->
-              <span class="cat-badge cat-tech" style="margin-top:12px;">Tech / Startup</span>
-              <div class="tpl-gallery">
-                <div class="tpl-card" data-slug="tech_dark_neon" onclick="selectTemplate(this)">
-                  <div class="tpl-thumb">
-                    <img src="/static/img/templates/tech_dark_neon.jpg" alt="Dark Neon"
-                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#0d1117;">
-                      <div class="tpl-swatch" style="background:#39d353;"></div>
-                      🟢
-                    </div>
-                  </div>
-                  <div class="tpl-info">
-                    <div class="tpl-name">Dark Neon</div>
-                    <div class="tpl-cat">Full-bleed · Tech</div>
-                  </div>
-                  <div class="tpl-check"><i class="fas fa-check"></i></div>
-                </div>
-
-                <div class="tpl-card" data-slug="tech_hacker_terminal" onclick="selectTemplate(this)">
-                  <div class="tpl-thumb">
-                    <img src="/static/img/templates/tech_hacker_terminal.jpg" alt="Hacker Terminal"
-                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#000;">
+                    <div class="tpl-fallback" style="display:none;background:#0d0d0d;">
                       <div class="tpl-swatch" style="background:#00ff41;"></div>
                       💻
                     </div>
                   </div>
                   <div class="tpl-info">
                     <div class="tpl-name">Hacker Terminal</div>
-                    <div class="tpl-cat">Monospace · Matrix</div>
+                    <div class="tpl-cat">Green Monospace · Dev</div>
                   </div>
                   <div class="tpl-check"><i class="fas fa-check"></i></div>
                 </div>
 
-                <div class="tpl-card" data-slug="tech_fintech_blue" onclick="selectTemplate(this)">
+                <div class="tpl-card" data-slug="academic_classic" onclick="selectTemplate(this)">
                   <div class="tpl-thumb">
-                    <img src="/static/img/templates/tech_fintech_blue.jpg" alt="Fintech Blue"
+                    <img src="/static/img/templates/academic_classic.jpg" alt="Academic Classic"
                          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#0f172a;">
-                      <div class="tpl-swatch" style="background:#3b82f6;"></div>
-                      💳
+                    <div class="tpl-fallback" style="display:none;background:#ffffff;border:1px solid #333;">
+                      <div class="tpl-swatch" style="background:#1a1a1a;"></div>
+                      🎓
                     </div>
                   </div>
                   <div class="tpl-info">
-                    <div class="tpl-name">Fintech Blue</div>
-                    <div class="tpl-cat">Full-bleed · Finance</div>
+                    <div class="tpl-name">Academic Classic</div>
+                    <div class="tpl-cat">ATS-Optimised · Dense</div>
                   </div>
                   <div class="tpl-check"><i class="fas fa-check"></i></div>
                 </div>
 
-                <div class="tpl-card" data-slug="tech_cyber_purple" onclick="selectTemplate(this)">
+                <div class="tpl-card" data-slug="top_bottom_split" onclick="selectTemplate(this)">
                   <div class="tpl-thumb">
-                    <img src="/static/img/templates/tech_cyber_purple.jpg" alt="Cyber Purple"
+                    <img src="/static/img/templates/top_bottom_split.jpg" alt="Top/Bottom Split"
                          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#13001e;">
-                      <div class="tpl-swatch" style="background:#e879f9;"></div>
-                      🔮
-                    </div>
-                  </div>
-                  <div class="tpl-info">
-                    <div class="tpl-name">Cyber Purple</div>
-                    <div class="tpl-cat">Full-bleed · Cyber</div>
-                  </div>
-                  <div class="tpl-check"><i class="fas fa-check"></i></div>
-                </div>
-              </div>
-
-              <!-- Creative -->
-              <span class="cat-badge cat-creative" style="margin-top:12px;">Creative</span>
-              <div class="tpl-gallery">
-                <div class="tpl-card" data-slug="creative_coral" onclick="selectTemplate(this)">
-                  <div class="tpl-thumb">
-                    <img src="/static/img/templates/creative_coral.jpg" alt="Coral Accent"
-                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#1a1a2e;">
-                      <div class="tpl-swatch" style="background:#ff6b6b;"></div>
-                      🎨
-                    </div>
-                  </div>
-                  <div class="tpl-info">
-                    <div class="tpl-name">Coral Accent</div>
-                    <div class="tpl-cat">Split-header · Bold</div>
-                  </div>
-                  <div class="tpl-check"><i class="fas fa-check"></i></div>
-                </div>
-
-                <div class="tpl-card" data-slug="creative_sunset" onclick="selectTemplate(this)">
-                  <div class="tpl-thumb">
-                    <img src="/static/img/templates/creative_sunset.jpg" alt="Sunset Orange"
-                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#1c1410;">
-                      <div class="tpl-swatch" style="background:#f97316;"></div>
-                      🌅
-                    </div>
-                  </div>
-                  <div class="tpl-info">
-                    <div class="tpl-name">Sunset Orange</div>
-                    <div class="tpl-cat">Split-header · Warm</div>
-                  </div>
-                  <div class="tpl-check"><i class="fas fa-check"></i></div>
-                </div>
-
-                <div class="tpl-card" data-slug="creative_mint" onclick="selectTemplate(this)">
-                  <div class="tpl-thumb">
-                    <img src="/static/img/templates/creative_mint.jpg" alt="Mint Crisp"
-                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#073b4c;">
-                      <div class="tpl-swatch" style="background:#06d6a0;"></div>
-                      🌿
-                    </div>
-                  </div>
-                  <div class="tpl-info">
-                    <div class="tpl-name">Mint Crisp</div>
-                    <div class="tpl-cat">Split-header · Fresh</div>
-                  </div>
-                  <div class="tpl-check"><i class="fas fa-check"></i></div>
-                </div>
-
-                <div class="tpl-card" data-slug="creative_pastel_pink" onclick="selectTemplate(this)">
-                  <div class="tpl-thumb">
-                    <img src="/static/img/templates/creative_pastel_pink.jpg" alt="Pastel Pink"
-                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#831843;">
-                      <div class="tpl-swatch" style="background:#f9a8d4;"></div>
-                      🌸
-                    </div>
-                  </div>
-                  <div class="tpl-info">
-                    <div class="tpl-name">Pastel Pink</div>
-                    <div class="tpl-cat">Split-header · Soft</div>
-                  </div>
-                  <div class="tpl-check"><i class="fas fa-check"></i></div>
-                </div>
-              </div>
-
-              <!-- Executive -->
-              <span class="cat-badge cat-executive" style="margin-top:12px;">Executive</span>
-              <div class="tpl-gallery">
-                <div class="tpl-card" data-slug="executive_gold" onclick="selectTemplate(this)">
-                  <div class="tpl-thumb">
-                    <img src="/static/img/templates/executive_gold.jpg" alt="Gold Standard"
-                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#fafaf7;">
-                      <div class="tpl-swatch" style="background:#b45309;"></div>
-                      🏆
-                    </div>
-                  </div>
-                  <div class="tpl-info">
-                    <div class="tpl-name">Gold Standard</div>
-                    <div class="tpl-cat">Serif · Premium</div>
-                  </div>
-                  <div class="tpl-check"><i class="fas fa-check"></i></div>
-                </div>
-
-                <div class="tpl-card" data-slug="executive_silver" onclick="selectTemplate(this)">
-                  <div class="tpl-thumb">
-                    <img src="/static/img/templates/executive_silver.jpg" alt="Silver Serif"
-                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#f8fafc;">
-                      <div class="tpl-swatch" style="background:#94a3b8;"></div>
-                      🥈
-                    </div>
-                  </div>
-                  <div class="tpl-info">
-                    <div class="tpl-name">Silver Serif</div>
-                    <div class="tpl-cat">Serif · Elegant</div>
-                  </div>
-                  <div class="tpl-check"><i class="fas fa-check"></i></div>
-                </div>
-
-                <div class="tpl-card" data-slug="executive_bronze" onclick="selectTemplate(this)">
-                  <div class="tpl-thumb">
-                    <img src="/static/img/templates/executive_bronze.jpg" alt="Bronze Minimal"
-                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#fffbf5;">
-                      <div class="tpl-swatch" style="background:#92400e;"></div>
-                      🥉
-                    </div>
-                  </div>
-                  <div class="tpl-info">
-                    <div class="tpl-name">Bronze Minimal</div>
-                    <div class="tpl-cat">Serif · Warm</div>
-                  </div>
-                  <div class="tpl-check"><i class="fas fa-check"></i></div>
-                </div>
-
-                <div class="tpl-card" data-slug="executive_platinum" onclick="selectTemplate(this)">
-                  <div class="tpl-thumb">
-                    <img src="/static/img/templates/executive_platinum.jpg" alt="Platinum"
-                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#f9fafb;">
-                      <div class="tpl-swatch" style="background:#9ca3af;"></div>
-                      💎
-                    </div>
-                  </div>
-                  <div class="tpl-info">
-                    <div class="tpl-name">Platinum</div>
-                    <div class="tpl-cat">Serif · Ultra</div>
-                  </div>
-                  <div class="tpl-check"><i class="fas fa-check"></i></div>
-                </div>
-              </div>
-
-              <!-- Grid 2-Column -->
-              <span class="cat-badge" style="background:rgba(37,99,235,.15);color:#60a5fa;border-color:rgba(37,99,235,.3);">Grid 2-Col</span>
-              <div class="tpl-gallery">
-                <div class="tpl-card" data-slug="grid_clean_blue" onclick="selectTemplate(this)">
-                  <div class="tpl-thumb">
-                    <img src="/static/img/templates/grid_clean_blue.jpg" alt="Clean Grid Blue"
-                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#ffffff;border:1px solid #dbeafe;">
+                    <div class="tpl-fallback" style="display:none;background:#1e3a5f;">
                       <div class="tpl-swatch" style="background:#2563eb;"></div>
-                      🔵
+                      🔷
                     </div>
                   </div>
                   <div class="tpl-info">
-                    <div class="tpl-name">Clean Grid Blue</div>
-                    <div class="tpl-cat">Grid · ATS-Friendly</div>
+                    <div class="tpl-name">Top/Bottom Split</div>
+                    <div class="tpl-cat">30% Color Top Header</div>
                   </div>
                   <div class="tpl-check"><i class="fas fa-check"></i></div>
                 </div>
 
-                <div class="tpl-card" data-slug="grid_emerald" onclick="selectTemplate(this)">
+                <div class="tpl-card" data-slug="creative_masonry" onclick="selectTemplate(this)">
                   <div class="tpl-thumb">
-                    <img src="/static/img/templates/grid_emerald.jpg" alt="Grid Emerald"
+                    <img src="/static/img/templates/creative_masonry.jpg" alt="Creative Masonry"
                          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#ffffff;border:1px solid #d1fae5;">
-                      <div class="tpl-swatch" style="background:#059669;"></div>
-                      🟢
+                    <div class="tpl-fallback" style="display:none;background:#0f0f1a;">
+                      <div class="tpl-swatch" style="background:#e879f9;"></div>
+                      ✨
                     </div>
                   </div>
                   <div class="tpl-info">
-                    <div class="tpl-name">Grid Emerald</div>
-                    <div class="tpl-cat">Grid · Fresh</div>
+                    <div class="tpl-name">Creative Masonry</div>
+                    <div class="tpl-cat">Dark · Asymmetric</div>
                   </div>
                   <div class="tpl-check"><i class="fas fa-check"></i></div>
                 </div>
 
-                <div class="tpl-card" data-slug="grid_slate_pro" onclick="selectTemplate(this)">
-                  <div class="tpl-thumb">
-                    <img src="/static/img/templates/grid_slate_pro.jpg" alt="Slate Pro"
-                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#f8fafc;border:1px solid #94a3b8;">
-                      <div class="tpl-swatch" style="background:#334155;"></div>
-                      🩶
-                    </div>
-                  </div>
-                  <div class="tpl-info">
-                    <div class="tpl-name">Slate Pro</div>
-                    <div class="tpl-cat">Grid · Executive</div>
-                  </div>
-                  <div class="tpl-check"><i class="fas fa-check"></i></div>
-                </div>
               </div>
             </div><!-- /sec-templates -->
           </div><!-- /§1 -->
@@ -1566,29 +1339,16 @@
      switching templates, preventing color bleed.
   ──────────────────────────────────────────────────────── */
   const TEMPLATE_DEFAULTS = {
-    classic_navy:          { primary: '#4cc9f0', bg: '#2c3e50', accent: '#ecf0f1', font: 'Helvetica' },
-    classic_burgundy:      { primary: '#f7c59f', bg: '#6d2b3d', accent: '#fdf6ec', font: 'Times-Roman' },
-    classic_forest:        { primary: '#a8d5ba', bg: '#2d6a4f', accent: '#fefae0', font: 'Helvetica' },
-    classic_slate:         { primary: '#b8c5d6', bg: '#4a5568', accent: '#edf2f7', font: 'Helvetica' },
-    minimalist_white:      { primary: '#667eea', bg: '#ffffff', accent: '#e2e8f0', font: 'Helvetica' },
-    minimalist_onyx:       { primary: '#a78bfa', bg: '#1a1a2e', accent: '#e2e8f0', font: 'Helvetica' },
-    minimalist_soft_gray:  { primary: '#4a5568', bg: '#f7f8fc', accent: '#cbd5e0', font: 'Helvetica' },
-    minimalist_ice_blue:   { primary: '#0ea5e9', bg: '#f0f9ff', accent: '#bae6fd', font: 'Helvetica' },
-    tech_dark_neon:        { primary: '#39d353', bg: '#0d1117', accent: '#a855f7', font: 'Helvetica' },
-    tech_hacker_terminal:  { primary: '#00ff41', bg: '#000000', accent: '#008f11', font: 'Courier' },
-    tech_fintech_blue:     { primary: '#3b82f6', bg: '#0f172a', accent: '#06b6d4', font: 'Helvetica' },
-    tech_cyber_purple:     { primary: '#e879f9', bg: '#13001e', accent: '#818cf8', font: 'Helvetica' },
-    creative_coral:        { primary: '#ff6b6b', bg: '#1a1a2e', accent: '#4ecdc4', font: 'Helvetica' },
-    creative_sunset:       { primary: '#f97316', bg: '#1c1410', accent: '#fbbf24', font: 'Helvetica' },
-    creative_mint:         { primary: '#06d6a0', bg: '#073b4c', accent: '#80ffdb', font: 'Helvetica' },
-    creative_pastel_pink:  { primary: '#f9a8d4', bg: '#831843', accent: '#c084fc', font: 'Helvetica' },
-    executive_gold:        { primary: '#b45309', bg: '#fafaf7', accent: '#d4a853', font: 'Times-Roman' },
-    executive_silver:      { primary: '#94a3b8', bg: '#f8fafc', accent: '#64748b', font: 'Times-Roman' },
-    executive_bronze:      { primary: '#92400e', bg: '#fffbf5', accent: '#c2956c', font: 'Times-Roman' },
-    executive_platinum:    { primary: '#9ca3af', bg: '#f9fafb', accent: '#374151', font: 'Times-Roman' },
-    grid_clean_blue:       { primary: '#2563eb', bg: '#ffffff', accent: '#dbeafe', font: 'Helvetica' },
-    grid_emerald:          { primary: '#059669', bg: '#ffffff', accent: '#d1fae5', font: 'Helvetica' },
-    grid_slate_pro:        { primary: '#334155', bg: '#f8fafc', accent: '#94a3b8', font: 'Times-Roman' },
+    minimal_centered:    { primary: '#1a1a2e', bg: '#ffffff', accent: '#c9a84c', font: 'Times-Roman' },
+    left_sidebar_dark:   { primary: '#4cc9f0', bg: '#1e2a38', accent: '#f0f4f8', font: 'Helvetica' },
+    right_sidebar_light: { primary: '#7c3aed', bg: '#f3f0ff', accent: '#ede9fe', font: 'Helvetica' },
+    split_header:        { primary: '#ff6b6b', bg: '#2d3436', accent: '#fdcb6e', font: 'Helvetica' },
+    timeline_modern:     { primary: '#00b4d8', bg: '#ffffff', accent: '#caf0f8', font: 'Helvetica' },
+    two_column_equal:    { primary: '#059669', bg: '#f8fafb', accent: '#d1fae5', font: 'Helvetica' },
+    hacker_terminal:     { primary: '#00ff41', bg: '#0d0d0d', accent: '#008f11', font: 'Courier' },
+    academic_classic:    { primary: '#1a1a1a', bg: '#ffffff', accent: '#555555', font: 'Times-Roman' },
+    top_bottom_split:    { primary: '#2563eb', bg: '#1e3a5f', accent: '#dbeafe', font: 'Helvetica' },
+    creative_masonry:    { primary: '#e879f9', bg: '#0f0f1a', accent: '#818cf8', font: 'Helvetica' },
   };
 
   /**
@@ -1697,17 +1457,15 @@
         headers: { 'X-CSRFToken': CSRF_TOKEN },
       });
 
-      // ── Robust HTTP error check ─────────────────────────────
-      // NEVER attempt to render a blob if the response is not OK.
-      // A 500 from a bad photo upload would produce a Django error
-      // page blob that would break the iframe completely.
+      // ── Robust HTTP error check ─────────────────────────────────────────
+      // FormData(form) automatically captures the file input (photo).
+      // We NEVER render a blob if the server returned an error — a 500
+      // would produce a Django HTML error page rendered as garbled PDF.
       if (!res.ok) {
-        const httpMsg = res.status === 500
-          ? 'Preview failed: Server error. Try a different photo or check your inputs.'
-          : `Preview failed: HTTP ${res.status}.`;
+        const httpMsg = 'Preview failed. Please check inputs or try a smaller photo.';
         showToast(httpMsg, 'danger');
-        status.textContent = '⚠ Preview error';
-        return;  // bail before touching the blob or iframe
+        status.textContent = '⚠ Preview unavailable';
+        return;  // bail — do NOT touch blob or iframe
       }
 
       const blob = await res.blob();
