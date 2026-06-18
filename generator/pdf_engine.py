@@ -325,6 +325,46 @@ TEMPLATES = [
         "font_family":   "Times-Roman",
         "dark_sidebar":  False,
     },
+    # ── GRID LAYOUT (clean 2-column, white-background) ──────────────────────────
+    {
+        "slug":          "grid_clean_blue",
+        "name":          "Clean Grid Blue",
+        "image_url":     "/static/img/templates/grid_clean_blue.jpg",
+        "desc":          "Modern 2-column grid, white bg, blue accents — ATS-friendly",
+        "category":      "minimalist",
+        "layout":        "grid",
+        "primary_color": "#2563eb",
+        "bg_color":      "#ffffff",
+        "accent_color":  "#dbeafe",
+        "font_family":   "Helvetica",
+        "dark_sidebar":  False,
+    },
+    {
+        "slug":          "grid_emerald",
+        "name":          "Grid Emerald",
+        "image_url":     "/static/img/templates/grid_emerald.jpg",
+        "desc":          "2-column grid, crisp white, emerald headings — fresh & modern",
+        "category":      "minimalist",
+        "layout":        "grid",
+        "primary_color": "#059669",
+        "bg_color":      "#ffffff",
+        "accent_color":  "#d1fae5",
+        "font_family":   "Helvetica",
+        "dark_sidebar":  False,
+    },
+    {
+        "slug":          "grid_slate_pro",
+        "name":          "Slate Pro",
+        "image_url":     "/static/img/templates/grid_slate_pro.jpg",
+        "desc":          "2-column grid, warm white, deep slate headings — executive grid",
+        "category":      "executive",
+        "layout":        "grid",
+        "primary_color": "#334155",
+        "bg_color":      "#f8fafc",
+        "accent_color":  "#94a3b8",
+        "font_family":   "Times-Roman",
+        "dark_sidebar":  False,
+    },
 ]
 
 
@@ -397,11 +437,9 @@ def _process_photo(photo_file):
     temp file, yield its path, then ALWAYS delete it — even if the PDF
     builder raises an exception mid-way.
 
-    Usage::
-
-        with _process_photo(req.FILES.get('photo')) as photo_path:
-            if photo_path:
-                story.append(RLImage(photo_path, ...))
+    Robust to:
+      - InMemoryUploadedFile whose pointer may have been read once already.
+      - Corrupt / unsupported image formats (logs clearly, yields None).
     """
     if not photo_file:
         yield None
@@ -409,7 +447,22 @@ def _process_photo(photo_file):
 
     path = None
     try:
-        img = Image.open(photo_file).convert("RGBA")
+        # Reset pointer: InMemoryUploadedFile may already be at EOF
+        # after Django's multipart parser or a previous read.
+        try:
+            photo_file.seek(0)
+        except (AttributeError, OSError):
+            pass
+
+        try:
+            img = Image.open(photo_file)
+            img.load()          # force decode so errors surface here, not later
+            img = img.convert("RGBA")
+        except Exception as img_exc:
+            logger.warning("Photo open/decode failed — skipping photo: %s", img_exc)
+            yield None
+            return
+
         mask = Image.new('L', (500, 500), 0)
         draw = ImageDraw.Draw(mask)
         draw.ellipse((0, 0, 500, 500), fill=255)
@@ -462,6 +515,30 @@ def _render_experience(story, req, s_job_title, s_job_meta, s_bullet, s_body):
     if not exp:
         return
     for t in exp.split('\n'):
+        t = t.strip()
+        if not t:
+            continue
+        if t.startswith('-') or t.startswith('*'):
+            story.append(Paragraph(t[1:].strip(), s_bullet, bulletText='•'))
+        elif len(t) < 100 and ('|' in t or any(char.isdigit() for char in t)):
+            story.append(Paragraph(f'<font color="#888888">{t}</font>', s_job_meta))
+        elif len(t) < 100:
+            story.append(Paragraph(f"<b>{t}</b>", s_job_title))
+        else:
+            story.append(Paragraph(t, s_body))
+
+
+def _render_projects(story, req, s_h2, s_job_title, s_job_meta, s_bullet, s_body,
+                     hr_color=None, hr_width="100%", section_label="PROJECTS"):
+    """Render the Projects section using the same formatting rules as Experience."""
+    projects = req.POST.get('projects_text', '').strip()
+    if not projects:
+        return
+    story.append(Paragraph(section_label, s_h2))
+    if hr_color:
+        story.append(HRFlowable(width=hr_width, thickness=0.5,
+                                color=hr_color, spaceAfter=6))
+    for t in projects.split('\n'):
         t = t.strip()
         if not t:
             continue
@@ -659,6 +736,7 @@ def _build_sidebar_layout(req, buf, cfg: dict):
         story.append(Paragraph("WORK EXPERIENCE", s_h2))
         _render_experience(story, req, s_job_title, s_job_meta, s_bullet, s_body)
 
+    _render_projects(story, req, s_h2, s_job_title, s_job_meta, s_bullet, s_body)
     _render_education(story, req, s_h2, s_body, s_job_title, s_job_meta)
     _render_certifications(story, req, s_h2, s_body)
 
@@ -764,6 +842,8 @@ def _build_minimal_layout(req, buf, cfg: dict):
         story.append(HRFlowable(width="100%", thickness=0.5, color=C_LINE, spaceAfter=6))
         _render_experience(story, req, s_job_title, s_job_meta, s_bullet, s_body)
 
+    _render_projects(story, req, s_h2, s_job_title, s_job_meta, s_bullet, s_body,
+                     hr_color=C_LINE)
     skills = _parse_skills(req.POST.get('skills_list', ''))
     if skills:
         story.append(Paragraph("SKILLS", s_h2))
@@ -887,6 +967,8 @@ def _build_split_header_layout(req, buf, cfg: dict):
         story.append(HRFlowable(width="100%", thickness=1, color=C_ACC2, spaceAfter=8))
         _render_experience(story, req, s_job_title, s_job_meta, s_bullet, s_body)
 
+    _render_projects(story, req, s_h2, s_job_title, s_job_meta, s_bullet, s_body,
+                     hr_color=C_ACC2, section_label="Projects")
     skills = _parse_skills(req.POST.get('skills_list', ''))
     if skills:
         story.append(Paragraph("Skills", s_h2))
@@ -1002,6 +1084,9 @@ def _build_modern_columns(req, buf, cfg: dict):
         story.append(Paragraph(f"{prefix} EXPERIENCE", s_h2))
         _render_experience(story, req, s_job_title, s_job_meta, s_bullet, s_body)
 
+    _render_projects(story, req, s_h2, s_job_title, s_job_meta, s_bullet, s_body,
+                     hr_color=C_GREEN,
+                     section_label=f"{prefix} PROJECTS")
     skills = _parse_skills(req.POST.get('skills_list', ''))
     if skills:
         story.append(Paragraph(f"{prefix} TECH STACK", s_h2))
@@ -1025,6 +1110,180 @@ def _build_modern_columns(req, buf, cfg: dict):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# BASE LAYOUT BUILDER 5 — GRID (clean 2-column, white background)
+# Left  60 % : Name/Role header + Summary + Experience + Projects
+# Right 40 % : Photo + Contacts + Skills + Education + Certs + Languages
+# Used by: grid_clean_blue, grid_emerald, grid_slate_pro
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _build_grid_layout(req, buf, cfg: dict):
+    W, H = A4
+    # POST overrides take priority — allow live customisation from the Studio UI
+    _pc   = req.POST.get('primary_color') or cfg['primary_color']
+    _bg   = req.POST.get('bg_color')      or cfg['bg_color']
+    _acc  = req.POST.get('accent_color')  or cfg.get('accent_color', '#dbeafe')
+    _font = req.POST.get('font_family')   or cfg.get('font_family', 'Helvetica')
+
+    C_BG    = _safe_hex(_bg)
+    C_HEAD  = _safe_hex(_pc)
+    C_LINE  = _safe_hex(_acc)
+    C_TEXT  = colors.HexColor('#1e293b')
+    C_MUTED = colors.HexColor('#64748b')
+
+    font   = _font
+    font_b = 'Times-Bold'   if 'Times'   in font else 'Helvetica-Bold'
+    font_i = 'Times-Italic' if 'Times'   in font else 'Helvetica-Oblique'
+
+    MARGIN   = 12 * mm
+    COL_GAP  = 8  * mm
+    LEFT_W   = (W - 2 * MARGIN - COL_GAP) * 0.60
+    RIGHT_W  = (W - 2 * MARGIN - COL_GAP) * 0.40
+    LEFT_X   = MARGIN
+    RIGHT_X  = MARGIN + LEFT_W + COL_GAP
+    COL_H    = H - 2 * MARGIN
+
+    doc = BaseDocTemplate(buf, pagesize=A4,
+                          rightMargin=0, leftMargin=0,
+                          topMargin=0, bottomMargin=0)
+
+    def draw_bg(canvas, doc):
+        canvas.saveState()
+        canvas.setFillColor(C_BG)
+        canvas.rect(0, 0, W, H, fill=1, stroke=0)
+        # Thin top accent bar
+        canvas.setFillColor(C_HEAD)
+        canvas.rect(0, H - 3, W, 3, fill=1, stroke=0)
+        # Vertical separator between columns
+        canvas.setStrokeColor(C_LINE)
+        canvas.setLineWidth(1)
+        canvas.line(RIGHT_X - COL_GAP * 0.5, MARGIN,
+                    RIGHT_X - COL_GAP * 0.5, H - MARGIN)
+        canvas.restoreState()
+
+    frame_left  = Frame(LEFT_X,  MARGIN, LEFT_W,  COL_H, id='left',
+                        leftPadding=0, rightPadding=6,
+                        topPadding=16, bottomPadding=0)
+    frame_right = Frame(RIGHT_X, MARGIN, RIGHT_W, COL_H, id='right',
+                        leftPadding=6, rightPadding=0,
+                        topPadding=16, bottomPadding=0)
+    doc.addPageTemplates([PageTemplate(id='G',
+                                       frames=[frame_left, frame_right],
+                                       onPage=draw_bg)])
+
+    s_name = ParagraphStyle('N', fontName=font_b, fontSize=28,
+                             textColor=C_TEXT, leading=30, spaceAfter=2)
+    s_role = ParagraphStyle('R', fontName=font_i, fontSize=13,
+                             textColor=C_HEAD, spaceAfter=10)
+    s_h2   = ParagraphStyle('H2', fontName=font_b, fontSize=9,
+                             textColor=C_HEAD, spaceBefore=16, spaceAfter=5,
+                             textTransform='uppercase', letterSpacing=1.5)
+    s_body = ParagraphStyle('B', fontName=font, fontSize=9.5,
+                             textColor=C_TEXT, leading=14, spaceAfter=5)
+    s_bullet = ParagraphStyle('Bul', parent=s_body,
+                               leftIndent=12, bulletIndent=4,
+                               spaceBefore=2, spaceAfter=3)
+    s_job_title = ParagraphStyle('JT', parent=s_body,
+                                  fontName=font_b, fontSize=10,
+                                  spaceBefore=8, spaceAfter=2)
+    s_job_meta  = ParagraphStyle('JM', parent=s_body, fontSize=8.5,
+                                  textColor=C_MUTED, spaceBefore=0, spaceAfter=5)
+    s_sb_h = ParagraphStyle('SH', fontName=font_b, fontSize=8,
+                              textColor=C_HEAD, spaceBefore=14, spaceAfter=4,
+                              textTransform='uppercase', letterSpacing=1)
+    s_sb_t = ParagraphStyle('ST', fontName=font, fontSize=8.5,
+                              textColor=C_TEXT, leading=13)
+
+    story = []
+
+    # ── LEFT COLUMN ─────────────────────────────────────────────────────────
+    full_name = req.POST.get('full_name', 'Your Name')
+    parts = full_name.split(' ', 1)
+    if len(parts) == 2:
+        name_html = f'<font color="{_pc}">{parts[0]}</font> {parts[1]}'
+    else:
+        name_html = f'<font color="{_pc}">{full_name}</font>'
+    story.append(Paragraph(name_html, s_name))
+    story.append(Paragraph(req.POST.get('target_role', 'Professional'), s_role))
+    story.append(HRFlowable(width='100%', thickness=1.5, color=C_HEAD,
+                             spaceAfter=8, spaceBefore=0))
+
+    if req.POST.get('about_me'):
+        story.append(Paragraph('PROFILE', s_h2))
+        story.append(HRFlowable(width='100%', thickness=0.5, color=C_LINE, spaceAfter=5))
+        story.append(Paragraph(req.POST.get('about_me'), s_body))
+
+    exp = req.POST.get('experience_text') or req.POST.get('resume', '')
+    if exp:
+        story.append(Paragraph('EXPERIENCE', s_h2))
+        story.append(HRFlowable(width='100%', thickness=0.5, color=C_LINE, spaceAfter=5))
+        _render_experience(story, req, s_job_title, s_job_meta, s_bullet, s_body)
+
+    _render_projects(story, req, s_h2, s_job_title, s_job_meta, s_bullet, s_body,
+                     hr_color=C_LINE)
+
+    story.append(FrameBreak())
+
+    # ── RIGHT COLUMN ────────────────────────────────────────────────────────
+    with _process_photo(req.FILES.get('photo')) as photo_path:
+        if photo_path:
+            story.append(RLImage(photo_path, width=30*mm, height=30*mm))
+            story.append(Spacer(1, 10))
+
+    contacts_data = [
+        ('Location', req.POST.get('location')),
+        ('Email',    req.POST.get('email')),
+        ('Phone',    req.POST.get('phone')),
+        ('LinkedIn', req.POST.get('linkedin')),
+    ]
+    if any(v for _, v in contacts_data):
+        story.append(Paragraph('CONTACT', s_sb_h))
+        for lbl, val in contacts_data:
+            if val:
+                story.append(Paragraph(
+                    f'<font color="{_pc}"><b>{lbl}</b></font>  {val}', s_sb_t))
+                story.append(Spacer(1, 2))
+
+    skills = _parse_skills(req.POST.get('skills_list', ''))
+    if skills:
+        story.append(Paragraph('SKILLS', s_sb_h))
+        for name, lvl in skills:
+            story.append(ProSkillBar(name, lvl,
+                                     width=int(RIGHT_W - 12),
+                                     bar_bg='#e2e8f0',
+                                     bar_fill=_pc,
+                                     text_color='#1e293b'))
+            story.append(Spacer(1, 5))
+
+    edu = req.POST.get('education', '').strip()
+    if edu:
+        story.append(Paragraph('EDUCATION', s_sb_h))
+        for line in edu.split('\n'):
+            line = line.strip()
+            if line:
+                story.append(Paragraph(line, s_sb_t))
+                story.append(Spacer(1, 2))
+
+    certs = req.POST.get('certifications', '').strip()
+    if certs:
+        story.append(Paragraph('CERTIFICATIONS', s_sb_h))
+        for line in certs.replace(',', '\n').split('\n'):
+            line = line.strip()
+            if line:
+                story.append(Paragraph(f'• {line}', s_sb_t))
+
+    if req.POST.get('languages'):
+        story.append(Paragraph('LANGUAGES', s_sb_h))
+        story.append(Paragraph(req.POST.get('languages'), s_sb_t))
+
+    port = req.POST.get('portfolio_url', '').strip()
+    if port:
+        story.append(Paragraph('PORTFOLIO', s_sb_h))
+        story.append(Paragraph(f'<link href="{port}">{port}</link>', s_sb_t))
+
+    doc.build(story)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # LAYOUT DISPATCH MAP
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -1033,6 +1292,7 @@ _LAYOUT_BUILDERS = {
     "minimal":        _build_minimal_layout,
     "split_header":   _build_split_header_layout,
     "modern_columns": _build_modern_columns,
+    "grid":           _build_grid_layout,
 }
 
 

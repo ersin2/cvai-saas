@@ -1093,6 +1093,58 @@
                   <div class="tpl-check"><i class="fas fa-check"></i></div>
                 </div>
               </div>
+
+              <!-- Grid 2-Column -->
+              <span class="cat-badge" style="background:rgba(37,99,235,.15);color:#60a5fa;border-color:rgba(37,99,235,.3);">Grid 2-Col</span>
+              <div class="tpl-gallery">
+                <div class="tpl-card" data-slug="grid_clean_blue" onclick="selectTemplate(this)">
+                  <div class="tpl-thumb">
+                    <img src="/static/img/templates/grid_clean_blue.jpg" alt="Clean Grid Blue"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="tpl-fallback" style="display:none;background:#ffffff;border:1px solid #dbeafe;">
+                      <div class="tpl-swatch" style="background:#2563eb;"></div>
+                      🔵
+                    </div>
+                  </div>
+                  <div class="tpl-info">
+                    <div class="tpl-name">Clean Grid Blue</div>
+                    <div class="tpl-cat">Grid · ATS-Friendly</div>
+                  </div>
+                  <div class="tpl-check"><i class="fas fa-check"></i></div>
+                </div>
+
+                <div class="tpl-card" data-slug="grid_emerald" onclick="selectTemplate(this)">
+                  <div class="tpl-thumb">
+                    <img src="/static/img/templates/grid_emerald.jpg" alt="Grid Emerald"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="tpl-fallback" style="display:none;background:#ffffff;border:1px solid #d1fae5;">
+                      <div class="tpl-swatch" style="background:#059669;"></div>
+                      🟢
+                    </div>
+                  </div>
+                  <div class="tpl-info">
+                    <div class="tpl-name">Grid Emerald</div>
+                    <div class="tpl-cat">Grid · Fresh</div>
+                  </div>
+                  <div class="tpl-check"><i class="fas fa-check"></i></div>
+                </div>
+
+                <div class="tpl-card" data-slug="grid_slate_pro" onclick="selectTemplate(this)">
+                  <div class="tpl-thumb">
+                    <img src="/static/img/templates/grid_slate_pro.jpg" alt="Slate Pro"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="tpl-fallback" style="display:none;background:#f8fafc;border:1px solid #94a3b8;">
+                      <div class="tpl-swatch" style="background:#334155;"></div>
+                      🩶
+                    </div>
+                  </div>
+                  <div class="tpl-info">
+                    <div class="tpl-name">Slate Pro</div>
+                    <div class="tpl-cat">Grid · Executive</div>
+                  </div>
+                  <div class="tpl-check"><i class="fas fa-check"></i></div>
+                </div>
+              </div>
             </div><!-- /sec-templates -->
           </div><!-- /§1 -->
 
@@ -1221,6 +1273,27 @@
               </div>
             </div>
           </div><!-- /§3 -->
+
+          <!-- ── §3b  PROJECTS ───────────────────────────────── -->
+          <div class="vs-section">
+            <button type="button" class="vs-section-toggle" data-target="sec-projects">
+              <i class="fas fa-code-branch" style="color:#f59e0b;"></i>
+              Projects
+              <i class="fas fa-chevron-down toggle-icon"></i>
+            </button>
+            <div class="vs-section-body" id="sec-projects">
+              <p style="font-size:.75rem;color:var(--text-muted);margin-bottom:10px;">
+                <i class="fas fa-circle-info me-1" style="color:var(--accent);"></i>
+                Same format as Experience: bold titles, <code style="color:var(--accent);">-</code> for bullets.
+              </p>
+              <div class="mb-form">
+                <label class="vs-label" for="f_projects_text">Projects (free-form)</label>
+                <textarea class="vs-textarea" id="f_projects_text" name="projects_text" rows="5"
+                          placeholder="Open Source CV Builder | github.com/me/cvai | 2024&#10;- Built with Django + ReportLab, 500+ GitHub stars&#10;- Integrated OpenAI GPT-4 for AI auto-fill"
+                          oninput="scheduleLivePreview()"></textarea>
+              </div>
+            </div>
+          </div><!-- /§3b -->
 
           <!-- ── §4  EDUCATION ───────────────────────────── -->
           <div class="vs-section">
@@ -1489,6 +1562,55 @@
   });
 
   /* ────────────────────────────────────────────────────────
+     TEMPLATE DEFAULTS — used to reset color pickers when
+     switching templates, preventing color bleed.
+  ──────────────────────────────────────────────────────── */
+  const TEMPLATE_DEFAULTS = {
+    classic_navy:          { primary: '#4cc9f0', bg: '#2c3e50', accent: '#ecf0f1', font: 'Helvetica' },
+    classic_burgundy:      { primary: '#f7c59f', bg: '#6d2b3d', accent: '#fdf6ec', font: 'Times-Roman' },
+    classic_forest:        { primary: '#a8d5ba', bg: '#2d6a4f', accent: '#fefae0', font: 'Helvetica' },
+    classic_slate:         { primary: '#b8c5d6', bg: '#4a5568', accent: '#edf2f7', font: 'Helvetica' },
+    minimalist_white:      { primary: '#667eea', bg: '#ffffff', accent: '#e2e8f0', font: 'Helvetica' },
+    minimalist_onyx:       { primary: '#a78bfa', bg: '#1a1a2e', accent: '#e2e8f0', font: 'Helvetica' },
+    minimalist_soft_gray:  { primary: '#4a5568', bg: '#f7f8fc', accent: '#cbd5e0', font: 'Helvetica' },
+    minimalist_ice_blue:   { primary: '#0ea5e9', bg: '#f0f9ff', accent: '#bae6fd', font: 'Helvetica' },
+    tech_dark_neon:        { primary: '#39d353', bg: '#0d1117', accent: '#a855f7', font: 'Helvetica' },
+    tech_hacker_terminal:  { primary: '#00ff41', bg: '#000000', accent: '#008f11', font: 'Courier' },
+    tech_fintech_blue:     { primary: '#3b82f6', bg: '#0f172a', accent: '#06b6d4', font: 'Helvetica' },
+    tech_cyber_purple:     { primary: '#e879f9', bg: '#13001e', accent: '#818cf8', font: 'Helvetica' },
+    creative_coral:        { primary: '#ff6b6b', bg: '#1a1a2e', accent: '#4ecdc4', font: 'Helvetica' },
+    creative_sunset:       { primary: '#f97316', bg: '#1c1410', accent: '#fbbf24', font: 'Helvetica' },
+    creative_mint:         { primary: '#06d6a0', bg: '#073b4c', accent: '#80ffdb', font: 'Helvetica' },
+    creative_pastel_pink:  { primary: '#f9a8d4', bg: '#831843', accent: '#c084fc', font: 'Helvetica' },
+    executive_gold:        { primary: '#b45309', bg: '#fafaf7', accent: '#d4a853', font: 'Times-Roman' },
+    executive_silver:      { primary: '#94a3b8', bg: '#f8fafc', accent: '#64748b', font: 'Times-Roman' },
+    executive_bronze:      { primary: '#92400e', bg: '#fffbf5', accent: '#c2956c', font: 'Times-Roman' },
+    executive_platinum:    { primary: '#9ca3af', bg: '#f9fafb', accent: '#374151', font: 'Times-Roman' },
+    grid_clean_blue:       { primary: '#2563eb', bg: '#ffffff', accent: '#dbeafe', font: 'Helvetica' },
+    grid_emerald:          { primary: '#059669', bg: '#ffffff', accent: '#d1fae5', font: 'Helvetica' },
+    grid_slate_pro:        { primary: '#334155', bg: '#f8fafc', accent: '#94a3b8', font: 'Times-Roman' },
+  };
+
+  /**
+   * Sync the Theme Customization color pickers to a template's defaults.
+   * This prevents color bleed when switching templates.
+   */
+  function _syncPickersToTemplate(slug) {
+    const defaults = TEMPLATE_DEFAULTS[slug];
+    if (!defaults) return;
+
+    const cpPrimary = document.getElementById('cp_primary');
+    const cpBg      = document.getElementById('cp_bg');
+    const cpAccent  = document.getElementById('cp_accent');
+    const cpFont    = document.getElementById('cp_font');
+
+    if (cpPrimary) { cpPrimary.value = defaults.primary; document.getElementById('hex_primary').textContent = defaults.primary; }
+    if (cpBg)      { cpBg.value      = defaults.bg;      document.getElementById('hex_bg').textContent      = defaults.bg; }
+    if (cpAccent)  { cpAccent.value  = defaults.accent;  document.getElementById('hex_accent').textContent  = defaults.accent; }
+    if (cpFont)    { cpFont.value    = defaults.font; }
+  }
+
+  /* ────────────────────────────────────────────────────────
      TEMPLATE SELECTION
   ──────────────────────────────────────────────────────── */
   function selectTemplate(card) {
@@ -1496,6 +1618,10 @@
     card.classList.add('active');
     const slug = card.dataset.slug;
     document.getElementById('selectedTemplate').value = slug;
+    // ── KEY FIX: reset color pickers to the new template's defaults ──
+    // This prevents previously-set custom colors from bleeding into
+    // the newly selected template's preview.
+    _syncPickersToTemplate(slug);
     scheduleLivePreview();
     showToast('Template: ' + card.querySelector('.tpl-name').textContent, 'success');
   }
@@ -1506,6 +1632,18 @@
   function handlePhotoChange(input) {
     const file = input.files[0];
     if (!file) return;
+
+    // ── 5 MB guard ────────────────────────────────────────────
+    const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
+    if (file.size > MAX_BYTES) {
+      showToast(
+        `Photo too large (${(file.size / 1048576).toFixed(1)} MB). Max is 5 MB.`,
+        'danger'
+      );
+      input.value = '';   // clear the bad selection
+      return;
+    }
+
     const preview = document.getElementById('photoPreview');
     const icon    = document.getElementById('photoIcon');
     const label   = document.getElementById('photoLabel');
@@ -1514,7 +1652,7 @@
       preview.src = e.target.result;
       preview.style.display = 'block';
       icon.style.display    = 'none';
-      label.textContent     = file.name;
+      label.textContent     = file.name + ' (' + (file.size / 1024).toFixed(0) + ' KB)';
     };
     reader.readAsDataURL(file);
     scheduleLivePreview();
