@@ -3,251 +3,1186 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resume Studio | CVAI — AI-Powered Visual Resume Builder</title>
-    <meta name="description"
-        content="Build a stunning, ATS-optimized resume with AI. Upload your old PDF or paste your story — get a professionally structured A4 resume in seconds.">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Montserrat:wght@300;400;600;700;800&family=Merriweather:wght@300;400;700&family=Playfair+Display:wght@400;600;700;800&family=Lora:wght@400;500;600;700&family=Raleway:wght@300;400;600;700;800&family=Nunito:wght@300;400;600;700;800&family=EB+Garamond:wght@400;500;600;700&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
-    <!-- Global Design System -->
-    <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}">
-    <!-- Resume Studio Styles -->
-    {% include 'generator/partials/studio_styles.html' %}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visual Resume Studio | CVAI — AI-Powered Resume Builder</title>
+  <meta name="description"
+    content="Build a stunning, ATS-optimized resume with AI. Pick from 20 premium templates, upload a photo, and preview your PDF live — no page reload needed.">
 
-    <style>
-        /* ── Studio page: body clips at viewport, studio-root manages scroll ── */
-        body.studio-page-active { overflow: hidden; }
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <!-- Global Design System -->
+  <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}">
+  <!-- Existing Studio Styles (keep design tokens intact) -->
+  {% include 'generator/partials/studio_styles.html' %}
 
-        /* ── Loading overlay modal ── */
-        .loading-overlay { display:none; position:fixed; inset:0; z-index:99999;
-            background:rgba(7,10,20,0.78); backdrop-filter:blur(18px) saturate(180%);
-            align-items:center; justify-content:center; }
-        .loading-overlay.active { display:flex; }
-        .loading-modal {
-            background:rgba(16,22,40,0.94); border:1px solid rgba(76,201,240,0.2);
-            border-radius:28px; padding:48px 56px; text-align:center;
-            width:min(480px,90vw); position:relative;
-            box-shadow:0 40px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04);
-            animation:modal-in 0.35s cubic-bezier(0.34,1.56,0.64,1) both;
-        }
-        @keyframes modal-in { from{opacity:0;transform:translateY(20px) scale(0.96)} to{opacity:1;transform:translateY(0) scale(1)} }
-        .loading-modal::before { content:''; position:absolute; inset:0; border-radius:28px;
-            background:radial-gradient(ellipse at 50% 0%,rgba(76,201,240,0.08) 0%,transparent 60%); pointer-events:none; }
-        .loading-modal-bar-top { position:absolute; top:0; left:0; right:0; height:2px;
-            background:linear-gradient(90deg,#4361ee,#4cc9f0,#f72585,#4cc9f0,#4361ee);
-            background-size:300% 100%; border-radius:28px 28px 0 0;
-            animation:bar-slide 2.5s linear infinite; }
-        @keyframes bar-slide { to { background-position:-300% 0; } }
-        .rings-wrap { position:relative; width:80px; height:80px; margin:0 auto 28px; }
-        .ring-outer { position:absolute; inset:0; border-radius:50%;
-            border:3px solid rgba(76,201,240,0.12); border-top-color:var(--primary);
-            animation:spin-ring 1s linear infinite; }
-        .ring-inner { position:absolute; inset:12px; border-radius:50%;
-            border:2px solid rgba(247,37,133,0.12); border-top-color:var(--secondary);
-            animation:spin-ring 0.65s linear infinite reverse; }
-        @keyframes spin-ring { to { transform:rotate(360deg); } }
-        .ring-dot { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
-        .ring-dot::after { content:''; width:10px; height:10px; border-radius:50%;
-            background:var(--primary); box-shadow:0 0 12px var(--primary);
-            animation:pulse-dot 1s ease-in-out infinite; }
-        @keyframes pulse-dot { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(0.6);opacity:0.4} }
-        .loading-step-text { font-weight:700; font-size:1rem; color:#e2e8f0; margin-bottom:6px; min-height:1.4em; transition:opacity 0.3s; }
-        .loading-sub-text  { color:#475569; font-size:0.82rem; margin-bottom:24px; }
-        .loading-progress-wrap { background:rgba(255,255,255,0.05); border-radius:99px; height:6px; overflow:hidden; margin-bottom:10px; }
-        .loading-progress-bar  { height:100%; width:0%;
-            background:linear-gradient(90deg,#4361ee,#4cc9f0,#f72585);
-            background-size:200% 100%; border-radius:99px; transition:width 0.5s ease;
-            animation:bar-color 3s linear infinite; }
-        @keyframes bar-color { to { background-position:-200% 0; } }
-        .loading-percent { font-family:'JetBrains Mono',monospace; font-size:0.78rem; color:#4cc9f0; text-align:right; }
-    </style>
+  <style>
+    /* ═══════════════════════════════════════════════════════════
+       VISUAL RESUME STUDIO — SPLIT-SCREEN LAYOUT
+       ═══════════════════════════════════════════════════════════ */
+    :root {
+      --studio-bg:       #070a14;
+      --panel-bg:        #0d1120;
+      --panel-border:    rgba(76,201,240,0.10);
+      --input-bg:        rgba(255,255,255,0.04);
+      --input-border:    rgba(255,255,255,0.10);
+      --input-focus:     rgba(76,201,240,0.30);
+      --accent:          #4cc9f0;
+      --accent2:         #f72585;
+      --text-primary:    #e2e8f0;
+      --text-muted:      #64748b;
+      --radius:          12px;
+      --radius-sm:       8px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body { background: var(--studio-bg); color: var(--text-primary);
+           font-family: 'Inter', system-ui, sans-serif; }
+
+    /* ── Navbar ─────────────────────────────────────────────── */
+    .vs-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      height: 52px;
+      background: rgba(7,10,20,0.92);
+      border-bottom: 1px solid var(--panel-border);
+      backdrop-filter: blur(20px) saturate(180%);
+      display: flex; align-items: center; padding: 0 20px; gap: 16px;
+    }
+    .vs-nav-logo { font-size: 1.15rem; font-weight: 800; color: #fff;
+                   text-decoration: none; letter-spacing: -0.5px; }
+    .vs-nav-logo span { color: var(--accent); }
+    .vs-nav-spacer { flex: 1; }
+    .vs-nav-link { font-size: 0.8rem; color: var(--text-muted);
+                   text-decoration: none; transition: color .2s; }
+    .vs-nav-link:hover { color: var(--text-primary); }
+    .vs-nav-badge {
+      font-size: 0.72rem; font-weight: 700; padding: 3px 10px;
+      border-radius: 99px; border: 1px solid rgba(76,201,240,0.25);
+      color: var(--accent); background: rgba(76,201,240,0.07);
+    }
+    .vs-nav-btn-dl {
+      font-size: 0.8rem; font-weight: 700; padding: 6px 18px;
+      background: linear-gradient(135deg,#4361ee,#4cc9f0);
+      border: none; border-radius: 99px; color: #fff; cursor: pointer;
+      transition: opacity .2s, transform .15s; white-space: nowrap;
+    }
+    .vs-nav-btn-dl:hover { opacity: .88; transform: translateY(-1px); }
+
+    /* ── Studio Root — two-column split below nav ──────────── */
+    .vs-studio {
+      position: fixed; inset: 52px 0 0 0;
+      display: flex; overflow: hidden;
+    }
+
+    /* ── LEFT PANEL — Form ─────────────────────────────────── */
+    .vs-left {
+      width: 400px; min-width: 320px; max-width: 460px;
+      flex-shrink: 0;
+      background: var(--panel-bg);
+      border-right: 1px solid var(--panel-border);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .vs-left-header {
+      padding: 14px 20px 10px;
+      border-bottom: 1px solid var(--panel-border);
+      flex-shrink: 0;
+    }
+    .vs-left-header h2 { font-size: .85rem; font-weight: 700;
+                          color: var(--text-primary); margin-bottom: 2px; }
+    .vs-left-header p  { font-size: .72rem; color: var(--text-muted); }
+    .vs-left-scroll { flex: 1; overflow-y: auto; padding: 0;
+                      scrollbar-width: thin;
+                      scrollbar-color: rgba(76,201,240,0.2) transparent; }
+
+    /* ── Form sections / accordion ──────────────────────────── */
+    .vs-section { border-bottom: 1px solid var(--panel-border); }
+    .vs-section-toggle {
+      width: 100%; display: flex; align-items: center; gap: 10px;
+      padding: 12px 20px; background: none; border: none;
+      color: var(--text-primary); font-size: .82rem; font-weight: 600;
+      cursor: pointer; text-align: left; transition: background .2s;
+    }
+    .vs-section-toggle:hover { background: rgba(255,255,255,.03); }
+    .vs-section-toggle i.toggle-icon { margin-left: auto; color: var(--text-muted);
+                                        font-size: .75rem; transition: transform .25s; }
+    .vs-section-toggle.open .toggle-icon { transform: rotate(180deg); }
+    .vs-section-body { display: none; padding: 4px 20px 16px; }
+    .vs-section-body.open { display: block; }
+
+    /* ── Form inputs ──────────────────────────────────────────  */
+    .vs-label { font-size: .72rem; font-weight: 600; color: var(--text-muted);
+                text-transform: uppercase; letter-spacing: .5px;
+                margin-bottom: 4px; display: block; }
+    .vs-input, .vs-textarea, .vs-select {
+      width: 100%; background: var(--input-bg);
+      border: 1px solid var(--input-border); border-radius: var(--radius-sm);
+      color: var(--text-primary); font-size: .85rem; padding: 8px 12px;
+      outline: none; transition: border-color .2s, box-shadow .2s;
+      font-family: inherit;
+    }
+    .vs-input:focus, .vs-textarea:focus, .vs-select:focus {
+      border-color: var(--accent); box-shadow: 0 0 0 3px var(--input-focus);
+    }
+    .vs-textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+    .vs-select { cursor: pointer; }
+    .vs-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .mb-form { margin-bottom: 12px; }
+
+    /* ── Photo upload zone ────────────────────────────────── */
+    .photo-zone {
+      border: 2px dashed var(--input-border); border-radius: var(--radius);
+      padding: 16px; text-align: center; cursor: pointer;
+      transition: border-color .25s, background .25s; position: relative;
+    }
+    .photo-zone:hover, .photo-zone.drag-over {
+      border-color: var(--accent); background: rgba(76,201,240,.04);
+    }
+    .photo-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%;
+    }
+    .photo-zone-icon { font-size: 1.6rem; color: var(--text-muted); margin-bottom: 6px; }
+    .photo-zone-label { font-size: .78rem; color: var(--text-muted); }
+    .photo-preview {
+      width: 64px; height: 64px; border-radius: 50%;
+      object-fit: cover; border: 2px solid var(--accent);
+      display: none; margin: 0 auto 8px;
+    }
+
+    /* ── Sliders ──────────────────────────────────────────── */
+    .slider-wrap { margin-bottom: 14px; }
+    .slider-header { display: flex; justify-content: space-between;
+                     align-items: center; margin-bottom: 6px; }
+    .slider-name { font-size: .78rem; color: var(--text-muted); }
+    .slider-val  { font-size: .72rem; font-weight: 700; color: var(--accent);
+                   font-family: 'JetBrains Mono', monospace; }
+    input[type="range"].vs-range {
+      -webkit-appearance: none; width: 100%; height: 4px;
+      background: var(--input-border); border-radius: 99px; outline: none; cursor: pointer;
+    }
+    input[type="range"].vs-range::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 16px; height: 16px;
+      border-radius: 50%; background: var(--accent);
+      box-shadow: 0 0 8px rgba(76,201,240,.5); cursor: pointer;
+      transition: transform .15s;
+    }
+    input[type="range"].vs-range::-webkit-slider-thumb:active { transform: scale(1.2); }
+
+    /* ── Template Gallery ─────────────────────────────────── */
+    .tpl-gallery {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+      padding: 4px 0;
+    }
+    .tpl-card {
+      border: 2px solid var(--input-border); border-radius: var(--radius-sm);
+      overflow: hidden; cursor: pointer; transition: border-color .2s, transform .2s;
+      position: relative;
+    }
+    .tpl-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .tpl-card.active { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(76,201,240,.2); }
+    .tpl-card .tpl-thumb {
+      width: 100%; aspect-ratio: 3/4; background: #1a1f35;
+      display: flex; align-items: center; justify-content: center;
+      position: relative; overflow: hidden;
+    }
+    .tpl-card .tpl-thumb img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    /* Colour swatch fallback when image doesn't exist yet */
+    .tpl-card .tpl-thumb .tpl-fallback {
+      position: absolute; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; font-size: 1.6rem; gap: 4px;
+    }
+    .tpl-card .tpl-thumb .tpl-swatch {
+      width: 100%; height: 8px; position: absolute; top: 0; left: 0;
+    }
+    .tpl-card .tpl-info { padding: 6px 8px 7px; }
+    .tpl-card .tpl-name { font-size: .72rem; font-weight: 700; color: var(--text-primary);
+                           white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tpl-card .tpl-cat  { font-size: .65rem; color: var(--text-muted); margin-top: 1px; }
+    .tpl-card .tpl-check {
+      position: absolute; top: 6px; right: 6px;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--accent); display: none;
+      align-items: center; justify-content: center; font-size: .65rem; color: #000;
+    }
+    .tpl-card.active .tpl-check { display: flex; }
+    .cat-badge {
+      display: inline-block; font-size: .65rem; font-weight: 700; padding: 2px 8px;
+      border-radius: 99px; margin-bottom: 8px; margin-top: 4px; text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+    .cat-classic    { background: rgba(76,201,240,.12);   color: #4cc9f0; }
+    .cat-minimalist { background: rgba(255,255,255,.08);   color: #cbd5e0; }
+    .cat-tech       { background: rgba(57,211,83,.10);     color: #39d353; }
+    .cat-creative   { background: rgba(255,107,107,.10);   color: #ff6b6b; }
+    .cat-executive  { background: rgba(212,168,83,.10);    color: #d4a853; }
+
+    /* ── AI Fill button ──────────────────────────────────── */
+    .btn-ai-fill {
+      width: 100%; padding: 10px; border-radius: var(--radius-sm); border: none;
+      background: linear-gradient(135deg,#4361ee,#f72585);
+      color: #fff; font-weight: 700; font-size: .85rem; cursor: pointer;
+      transition: opacity .2s, transform .15s; margin-top: 6px;
+    }
+    .btn-ai-fill:hover { opacity: .88; transform: translateY(-1px); }
+
+    /* ── RIGHT PANEL — Live Preview ──────────────────────── */
+    .vs-right {
+      flex: 1; background: #111827; display: flex;
+      flex-direction: column; overflow: hidden;
+      position: relative;
+    }
+    .vs-preview-bar {
+      height: 48px; flex-shrink: 0;
+      background: rgba(13,17,32,.9);
+      border-bottom: 1px solid var(--panel-border);
+      display: flex; align-items: center; padding: 0 20px; gap: 12px;
+    }
+    .vs-preview-label { font-size: .72rem; font-weight: 700;
+                         color: var(--text-muted); text-transform: uppercase;
+                         letter-spacing: 1px; }
+    .vs-preview-spinner {
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 2px solid rgba(76,201,240,.2);
+      border-top-color: var(--accent);
+      animation: spin .7s linear infinite; display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .vs-preview-status { font-size: .72rem; color: var(--text-muted); }
+    .vs-preview-spacer { flex: 1; }
+
+    /* PDF iframe */
+    #pdf-preview {
+      flex: 1; width: 100%; border: none; background: #1a202c;
+      display: block;
+    }
+    .vs-preview-placeholder {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 16px;
+      color: var(--text-muted);
+    }
+    .vs-preview-placeholder i { font-size: 3rem; opacity: .3; }
+    .vs-preview-placeholder p { font-size: .85rem; }
+
+    /* ── Loading overlay ─────────────────────────────────── */
+    .vs-loading-overlay {
+      display: none; position: fixed; inset: 0; z-index: 99999;
+      background: rgba(7,10,20,0.75); backdrop-filter: blur(16px);
+      align-items: center; justify-content: center;
+    }
+    .vs-loading-overlay.show { display: flex; }
+    .vs-loading-card {
+      background: rgba(13,17,32,.96); border: 1px solid rgba(76,201,240,.2);
+      border-radius: 24px; padding: 44px 52px; text-align: center;
+      width: min(440px,90vw);
+      box-shadow: 0 40px 80px rgba(0,0,0,.6);
+      animation: fadeUp .35s ease both;
+    }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
+    .vs-spinner-rings { position: relative; width: 72px; height: 72px; margin: 0 auto 24px; }
+    .ring-o { position: absolute; inset: 0; border-radius: 50%;
+               border: 3px solid rgba(76,201,240,.12); border-top-color: var(--accent);
+               animation: spin 1s linear infinite; }
+    .ring-i { position: absolute; inset: 12px; border-radius: 50%;
+               border: 2px solid rgba(247,37,133,.12); border-top-color: var(--accent2);
+               animation: spin .65s linear infinite reverse; }
+    .vs-loading-title { font-weight: 700; color: var(--text-primary);
+                         margin-bottom: 6px; font-size: 1rem; }
+    .vs-loading-sub   { color: var(--text-muted); font-size: .78rem; }
+
+    /* ── Toast ───────────────────────────────────────────── */
+    .vs-toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+      background: rgba(13,17,32,.96); border: 1px solid rgba(76,201,240,.2);
+      border-radius: var(--radius); padding: 12px 20px;
+      font-size: .82rem; color: var(--text-primary);
+      box-shadow: 0 12px 40px rgba(0,0,0,.5);
+      transform: translateY(120%); transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .vs-toast.show { transform: translateY(0); }
+    .vs-toast.success i { color: #22c55e; }
+    .vs-toast.danger  i { color: #f72585; }
+
+    /* ── Responsive ──────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .vs-studio { flex-direction: column; overflow-y: auto; }
+      .vs-left   { width: 100%; max-width: 100%; border-right: none;
+                   border-bottom: 1px solid var(--panel-border); }
+      .vs-right  { min-height: 60vh; }
+      html, body  { overflow: auto; }
+    }
+  </style>
 </head>
 
-<body class="studio-page-active">
+<body>
 
-    <!-- PREMIUM FULL-SCREEN LOADING OVERLAY -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-modal">
-            <div class="loading-modal-bar-top"></div>
-            <div class="rings-wrap">
-                <div class="ring-outer"></div>
-                <div class="ring-inner"></div>
-                <div class="ring-dot"></div>
-            </div>
-            <div class="loading-step-text" id="loadingStep">Analyzing your resume...</div>
-            <div class="loading-sub-text">Elite AI — usually 5–15 seconds</div>
-            <div class="loading-progress-wrap">
-                <div class="loading-progress-bar" id="loadingBar"></div>
-            </div>
-            <div class="loading-percent" id="loadingPercent">0%</div>
-        </div>
-    </div>
+  <!-- ══════════════════════════════════════════════════════
+       TOP NAV
+       ══════════════════════════════════════════════════════ -->
+  <nav class="vs-nav" id="mainNav">
+    <a href="{% url 'home' %}" class="vs-nav-logo">CV<span>AI</span></a>
 
-    <!-- STICKY NAVBAR -->
-    <nav class="navbar-custom">
-        <a href="{% url 'home' %}" class="logo-text">
-            <i class="fas fa-cube"></i>
-            CV<span style="-webkit-text-fill-color: var(--secondary);">AI</span>
-        </a>
-
-        {% if user.is_authenticated %}
-        <div class="nav-group nav-actions">
-            {% if user.profile.plan == 'free' %}
-            <span class="gen-counter">
-                <i class="fas fa-bolt me-1"></i>
-                {{ user.profile.generations_count }} / {{ user.profile.get_limit }} gens · Free
-            </span>
-            <a href="{% url 'pricing' %}" class="btn-upgrade">Upgrade ⚡</a>
-            {% else %}
-            <span class="gen-counter"
-                style="border-color: rgba(245,158,11,0.4); color: #fcd34d; background: rgba(245,158,11,0.08);">
-                <i class="fas fa-crown me-1"></i> {{ user.profile.plan|upper }}
-            </span>
-            {% endif %}
-            <a href="{% url 'dashboard' %}" class="nav-link-item">Dashboard</a>
-            <a href="{% url 'tools' %}" class="nav-link-item">AI Tools</a>
-            <a href="{% url 'tracker' %}" class="nav-link-item">Tracker</a>
-            <a href="{% url 'history' %}" class="nav-link-item">History</a>
-            <a href="{% url 'pricing' %}" class="nav-link-item">Pricing</a>
-            <a href="{% url 'profile' %}" class="user-badge">
-                <i class="fas fa-user"></i>{{ user.username }}
-            </a>
-        </div>
-        <button class="hamburger-btn" onclick="toggleMobileNav()">
-            <i class="fas fa-bars"></i>
-        </button>
-        {% endif %}
-    </nav>
-
-    <!-- MOBILE DRAWER -->
     {% if user.is_authenticated %}
-    <div class="mobile-backdrop" id="mobileBackdrop" onclick="toggleMobileNav()"></div>
-    <div class="mobile-drawer" id="mobileDrawer">
-        <div class="drawer-header">
-            <span class="logo-text" style="font-size:1.1rem;">CV<span style="-webkit-text-fill-color:var(--secondary);">AI</span></span>
-            <button class="drawer-close-btn" onclick="toggleMobileNav()"><i class="fas fa-times"></i></button>
-        </div>
-        <div class="drawer-nav-section">
-            {% if user.profile.plan == 'free' %}
-            <div class="drawer-plan-badge"><i class="fas fa-bolt me-1"></i>{{ user.profile.generations_count }} / {{ user.profile.get_limit }} · Free</div>
-            {% else %}
-            <div class="drawer-plan-badge" style="color: var(--gold); background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.2);"><i class="fas fa-crown me-1"></i>{{ user.profile.plan|upper }} Plan</div>
-            {% endif %}
-            <a href="{% url 'home' %}" class="nav-link-item active"><i class="fas fa-pen-ruler"></i>Resume Studio</a>
-            <a href="{% url 'dashboard' %}" class="nav-link-item"><i class="fas fa-chart-pie"></i>Dashboard</a>
-            <a href="{% url 'tools' %}" class="nav-link-item"><i class="fas fa-wand-magic-sparkles"></i>AI Tools</a>
-            <a href="{% url 'tracker' %}" class="nav-link-item"><i class="fas fa-briefcase"></i>Tracker</a>
-            <a href="{% url 'history' %}" class="nav-link-item"><i class="fas fa-clock-rotate-left"></i>History</a>
-            <div class="drawer-divider"></div>
-            <a href="{% url 'pricing' %}" class="nav-link-item"><i class="fas fa-tags"></i>Pricing</a>
-            <a href="{% url 'profile' %}" class="nav-link-item"><i class="fas fa-user"></i>{{ user.username }}</a>
-            {% if user.profile.plan == 'free' %}
-            <a href="{% url 'pricing' %}" class="btn-upgrade mt-2" style="display:flex; justify-content:center; border-radius:var(--radius-sm); text-decoration:none; padding:11px;">Upgrade to Pro ⚡</a>
-            {% endif %}
-        </div>
+    <div class="vs-nav-badge">
+      {% if user.profile.plan == 'free' %}
+        <i class="fas fa-bolt me-1"></i>{{ user.profile.generations_count }}/{{ user.profile.get_limit }} Free
+      {% else %}
+        <i class="fas fa-crown me-1"></i>{{ user.profile.plan|upper }}
+      {% endif %}
     </div>
+    <div class="vs-nav-spacer"></div>
+    <a href="{% url 'dashboard' %}" class="vs-nav-link">Dashboard</a>
+    <a href="{% url 'tools' %}"     class="vs-nav-link">AI Tools</a>
+    <a href="{% url 'history' %}"   class="vs-nav-link">History</a>
+    <a href="{% url 'pricing' %}"   class="vs-nav-link">Pricing</a>
+    <a href="{% url 'profile' %}"   class="vs-nav-link">{{ user.username }}</a>
+    {% else %}
+    <div class="vs-nav-spacer"></div>
     {% endif %}
 
-    <!-- ════════════════════════════════════════════════════════════ -->
-    <!-- UNIFIED RESUME STUDIO — Full Page Split Panel               -->
-    <!-- ════════════════════════════════════════════════════════════ -->
-    {% include 'generator/partials/studio_content.html' %}
+    <button class="vs-nav-btn-dl" id="btnDownloadPdf" onclick="downloadPdf()">
+      <i class="fas fa-file-arrow-down me-1"></i>Download PDF
+    </button>
+  </nav>
 
-    <script>
-        // TOAST NOTIFICATION
-        function showToast(message, type) {
-            const toast = document.createElement('div');
-            const icons = {success:'check-circle', warning:'exclamation-triangle', danger:'times-circle'};
-            toast.className = 'toast-notification toast-' + type;
-            toast.innerHTML = '<i class="fas fa-' + (icons[type] || 'info-circle') + ' me-2"></i>' + message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.classList.add('show'), 10);
-            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 4000);
-        }
+  <!-- ══════════════════════════════════════════════════════
+       SPLIT-SCREEN STUDIO
+       ══════════════════════════════════════════════════════ -->
+  <div class="vs-studio" id="vsStudio">
 
-        // MOBILE NAV TOGGLE
-        function toggleMobileNav() {
-            document.getElementById('mobileDrawer').classList.toggle('open');
-            document.getElementById('mobileBackdrop').classList.toggle('open');
-        }
-    </script>
+    <!-- ────── LEFT: THE FORM ────── -->
+    <aside class="vs-left">
+      <div class="vs-left-header">
+        <h2><i class="fas fa-pen-ruler me-2" style="color:var(--accent);"></i>Resume Builder</h2>
+        <p>Fill in your details — PDF updates live ↗</p>
+      </div>
 
-    <!-- ONBOARDING OVERLAY (first-time users only) -->
-    <div id="onboardingOverlay"
-        style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(6px); z-index:9999; justify-content:center; align-items:center;">
-        <div
-            style="background:rgba(16,20,35,0.98); border:1px solid rgba(255,255,255,0.1); border-radius:24px; max-width:480px; width:90%; padding:40px; text-align:center; position:relative; box-shadow:0 30px 60px rgba(0,0,0,0.6);">
-            <div
-                style="position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,#4361ee,#4cc9f0,#f72585); border-radius:24px 24px 0 0;">
-            </div>
+      <div class="vs-left-scroll">
 
-            <div style="font-size:2.5rem; margin-bottom:16px;">🚀</div>
-            <h3 style="color:white; font-weight:800; margin-bottom:6px;">Welcome to CVAI Resume Studio!</h3>
-            <p style="color:#64748b; font-size:0.9rem; margin-bottom:28px;">Build a stunning resume in 3 easy steps
-            </p>
+        <!-- The master form (multipart for photo upload) -->
+        <form id="resume-form" enctype="multipart/form-data" method="post"
+              action="{% url 'download_pdf' %}">
+          {% csrf_token %}
 
-            <div style="display:flex; flex-direction:column; gap:14px; text-align:left; margin-bottom:28px;">
-                <div
-                    style="display:flex; align-items:center; gap:14px; background:rgba(76,201,240,0.05); border:1px solid rgba(76,201,240,0.1); border-radius:14px; padding:14px 18px;">
-                    <div
-                        style="min-width:36px; height:36px; background:linear-gradient(135deg,#4361ee,#4cc9f0); border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; color:white; font-size:0.9rem;">
-                        1</div>
-                    <div>
-                        <div style="color:white; font-weight:700; font-size:0.92rem;">Upload or paste your resume</div>
-                        <div style="color:#64748b; font-size:0.78rem;">Drop a PDF or paste your raw career story</div>
-                    </div>
-                </div>
-                <div
-                    style="display:flex; align-items:center; gap:14px; background:rgba(247,37,133,0.04); border:1px solid rgba(247,37,133,0.1); border-radius:14px; padding:14px 18px;">
-                    <div
-                        style="min-width:36px; height:36px; background:linear-gradient(135deg,#f72585,#ff6b6b); border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; color:white; font-size:0.9rem;">
-                        2</div>
-                    <div>
-                        <div style="color:white; font-weight:700; font-size:0.92rem;">AI enhances & structures it</div>
-                        <div style="color:#64748b; font-size:0.78rem;">Instant JSON extraction with ATS optimization</div>
-                    </div>
-                </div>
-                <div
-                    style="display:flex; align-items:center; gap:14px; background:rgba(34,197,94,0.04); border:1px solid rgba(34,197,94,0.1); border-radius:14px; padding:14px 18px;">
-                    <div
-                        style="min-width:36px; height:36px; background:linear-gradient(135deg,#22c55e,#4cc9f0); border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; color:white; font-size:0.9rem;">
-                        3</div>
-                    <div>
-                        <div style="color:white; font-weight:700; font-size:0.92rem;">Edit inline & download PDF</div>
-                        <div style="color:#64748b; font-size:0.78rem;">Click on the A4 canvas to edit, pick a template, export</div>
-                    </div>
-                </div>
-            </div>
+          <!-- Hidden: selected template slug -->
+          <input type="hidden" name="template_name" id="selectedTemplate" value="classic_navy">
 
-            <button onclick="dismissOnboarding()"
-                style="background:linear-gradient(135deg,#4361ee,#f72585); border:none; color:white; padding:14px 40px; border-radius:14px; font-weight:700; font-size:1rem; cursor:pointer; transition:0.3s; width:100%;">
-                Get Started <i class="fas fa-arrow-right ms-2"></i>
+          <!-- ── §1  TEMPLATE GALLERY ─────────────────────── -->
+          <div class="vs-section">
+            <button type="button" class="vs-section-toggle open" data-target="sec-templates">
+              <i class="fas fa-palette" style="color:var(--accent);"></i>
+              Template Gallery
+              <span style="font-size:.65rem;font-weight:400;color:var(--text-muted);margin-left:4px;">(20 designs)</span>
+              <i class="fas fa-chevron-down toggle-icon"></i>
             </button>
-        </div>
+            <div class="vs-section-body open" id="sec-templates">
+
+              <!-- Classic -->
+              <span class="cat-badge cat-classic">Classic</span>
+              <div class="tpl-gallery">
+                <div class="tpl-card active" data-slug="classic_navy" onclick="selectTemplate(this)">
+                  <div class="tpl-thumb">
+                    <img src="/static/img/templates/classic_navy.jpg" alt="Classic Navy"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="tpl-fallback" style="display:none;background:#2c3e50;">
+                      <div class="tpl-swatch" style="background:#4cc9f0;"></div>
+                      🔷
+                    </div>
+                  </div>
+                  <div class="tpl-info">
+                    <div class="tpl-name">Classic Navy</div>
+                    <div class="tpl-cat">Sidebar · Cyan</div>
+                  </div>
+                  <div class="tpl-check"><i class="fas fa-check"></i></div>
+                </div>
+
+                <div class="tpl-card" data-slug="classic_burgundy" onclick="selectTemplate(this)">
+                  <div class="tpl-thumb">
+                    <img src="/static/img/templates/classic_burgundy.jpg" alt="Classic Burgundy"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="tpl-fallback" style="display:none;background:#6d2b3d;">
+                      <div class="tpl-swatch" style="background:#f7c59f;"></div>
+                      🍷
+                    </div>
+                  </div>
+                  <div class="tpl-info">
+                    <div class="tpl-name">Burgundy</div>
+                    <div class="tpl-cat">Sidebar · Warm</div>
+                  </div>
+                  <div class="tpl-check"><i class="fas fa-check"></i></div>
+                </div>
+
+                <div class="tpl-card" data-slug="classic_forest" onclick="selectTemplate(this)">
+                  <div class="tpl-thumb">
+                    <img src="/static/img/templates/classic_forest.jpg" alt="Classic Forest"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="tpl-fallback" style="display:none;background:#2d6a4f;">
+                      <div class="tpl-swatch" style="background:#a8d5ba;"></div>
+                      🌲
+                    </div>
+                  </div>
+                  <div class="tpl-info">
+                    <div class="tpl-name">Forest Green</div>
+                    <div class="tpl-cat">Sidebar · Nature</div>
+                  </div>
+                  <div class="tpl-check"><i class="fas fa-check"></i></div>
+                </div>
+
+                <div class="tpl-card" data-slug="classic_slate" onclick="selectTemplate(this)">
+                  <div class="tpl-thumb">
+                    <img src="/static/img/templates/classic_slate.jpg" alt="Classic Slate"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="tpl-fallback" style="display:none;background:#4a5568;">
+                      <div class="tpl-swatch" style="background:#b8c5d6;"></div>
+                      🩶
+                    </div>
+                  </div>
+                  <div class="tpl-info">
+                    <div class="tpl-name">Slate</div>
+                    <div class="tpl-cat">Sidebar · Steel</div>
+                  </div>
+                  <div class="tpl-check"><i class="fas fa-check"></i></div>
+                </div>
+              </div>
+
+              <!-- Minimalist -->
+              <span class="cat-badge cat-minimalist" style="margin-top:12px;">Minimalist</span>
+              <div class="tpl-gallery">
+                <div class="tpl-card" data-slug="minimalist_white" onclick="selectTemplate(this)">
+                  <div class="tpl-thumb">
+                    <img src="/static/img/templates/minimalist_white.jpg" alt="Pure White"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="tpl-fallback" style="display:none;background:#f5f5f5;">
+                      <div class="tpl-swatch" style="background:#667eea;"></div>
+                      ⬜
+                    </div>
+                  </div>
+                  <div class="tpl-info">
+                    <div class="tpl-name">Pure White</div>
+                    <div class="tpl-cat">Single-col · Clean</div>
+                  </div>
+                  <div class="tpl-check"><i class="fas fa-check"></i></div>
+                </div>
+
+                <div class="tpl-card" data-slug="minimalist_onyx" onclick="selectTemplate(this)">
+                  <div class="tpl-thumb">
+                    <img src="/static/img/templates/minimalist_onyx.jpg" alt="Onyx Dark"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="tpl-fallback" style="display:none;background:#1a1a2e;">
+                      <div class="tpl-swatch" style="background:#a78bfa;"></div>
+                      ⬛
+                    </div>
+                  </div>
+                  <div class="tpl-info">
+                    <div class="tpl-name">Onyx Dark</div>
+                    <div class="tpl-cat">Single-col · Dark</div>
+                  </div>
+                  <div class="tpl-check"><i class="fas fa-check"></i></div>
+                </div>
+
+                <div class="tpl-card" data-slug="minimalist_soft_gray" onclick="selectTemplate(this)">
+                  <div class="tpl-thumb">
+                    <img src="/static/img/templates/minimalist_soft_gray.jpg" alt="Soft Gray"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="tpl-fallback" style="display:none;background:#f0f0f5;">
+                      <div class="tpl-swatch" style="background:#4a5568;"></div>
+                      🩶
+                    </div>
+                  </div>
+                  <div class="tpl-info">
+                    <div class="tpl-name">Soft Gray</div>
+                    <div class="tpl-cat">Single-col · Calm</div>
+                  </div>
+                  <div class="tpl-check"><i class="fas fa-check"></i></div>
+                </div>
+
+                <div class="tpl-card" data-slug="minimalist_ice_blue" onclick="selectTemplate(this)">
+                  <div class="tpl-thumb">
+                    <img src="/static/img/templates/minimalist_ice_blue.jpg" alt="Ice Blue"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="tpl-fallback" style="display:none;background:#f0f9ff;">
+                      <div class="tpl-swatch" style="background:#0ea5e9;"></div>
+                      🧊
+                    </div>
+                  </div>
+                  <div class="tpl-info">
+                    <div class="tpl-name">Ice Blue</div>
+                    <div class="tpl-cat">Single-col · Cool</div>
+                  </div>
+                  <div class="tpl-check"><i class="fas fa-check"></i></div>
+                </div>
+              </div>
+
+              <!-- Tech/Startup -->
+              <span class="cat-badge cat-tech" style="margin-top:12px;">Tech / Startup</span>
+              <div class="tpl-gallery">
+                <div class="tpl-card" data-slug="tech_dark_neon" onclick="selectTemplate(this)">
+                  <div class="tpl-thumb">
+                    <img src="/static/img/templates/tech_dark_neon.jpg" alt="Dark Neon"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="tpl-fallback" style="display:none;background:#0d1117;">
+                      <div class="tpl-swatch" style="background:#39d353;"></div>
+                      🟢
+                    </div>
+                  </div>
+                  <div class="tpl-info">
+                    <div class="tpl-name">Dark Neon</div>
+                    <div class="tpl-cat">Full-bleed · Tech</div>
+                  </div>
+                  <div class="tpl-check"><i class="fas fa-check"></i></div>
+                </div>
+
+                <div class="tpl-card" data-slug="tech_hacker_terminal" onclick="selectTemplate(this)">
+                  <div class="tpl-thumb">
+                    <img src="/static/img/templates/tech_hacker_terminal.jpg" alt="Hacker Terminal"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="tpl-fallback" style="display:none;background:#000;">
+                      <div class="tpl-swatch" style="background:#00ff41;"></div>
+                      💻
+                    </div>
+                  </div>
+                  <div class="tpl-info">
+                    <div class="tpl-name">Hacker Terminal</div>
+                    <div class="tpl-cat">Monospace · Matrix</div>
+                  </div>
+                  <div class="tpl-check"><i class="fas fa-check"></i></div>
+                </div>
+
+                <div class="tpl-card" data-slug="tech_fintech_blue" onclick="selectTemplate(this)">
+                  <div class="tpl-thumb">
+                    <img src="/static/img/templates/tech_fintech_blue.jpg" alt="Fintech Blue"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="tpl-fallback" style="display:none;background:#0f172a;">
+                      <div class="tpl-swatch" style="background:#3b82f6;"></div>
+                      💳
+                    </div>
+                  </div>
+                  <div class="tpl-info">
+                    <div class="tpl-name">Fintech Blue</div>
+                    <div class="tpl-cat">Full-bleed · Finance</div>
+                  </div>
+                  <div class="tpl-check"><i class="fas fa-check"></i></div>
+                </div>
+
+                <div class="tpl-card" data-slug="tech_cyber_purple" onclick="selectTemplate(this)">
+                  <div class="tpl-thumb">
+                    <img src="/static/img/templates/tech_cyber_purple.jpg" alt="Cyber Purple"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="tpl-fallback" style="display:none;background:#13001e;">
+                      <div class="tpl-swatch" style="background:#e879f9;"></div>
+                      🔮
+                    </div>
+                  </div>
+                  <div class="tpl-info">
+                    <div class="tpl-name">Cyber Purple</div>
+                    <div class="tpl-cat">Full-bleed · Cyber</div>
+                  </div>
+                  <div class="tpl-check"><i class="fas fa-check"></i></div>
+                </div>
+              </div>
+
+              <!-- Creative -->
+              <span class="cat-badge cat-creative" style="margin-top:12px;">Creative</span>
+              <div class="tpl-gallery">
+                <div class="tpl-card" data-slug="creative_coral" onclick="selectTemplate(this)">
+                  <div class="tpl-thumb">
+                    <img src="/static/img/templates/creative_coral.jpg" alt="Coral Accent"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="tpl-fallback" style="display:none;background:#1a1a2e;">
+                      <div class="tpl-swatch" style="background:#ff6b6b;"></div>
+                      🎨
+                    </div>
+                  </div>
+                  <div class="tpl-info">
+                    <div class="tpl-name">Coral Accent</div>
+                    <div class="tpl-cat">Split-header · Bold</div>
+                  </div>
+                  <div class="tpl-check"><i class="fas fa-check"></i></div>
+                </div>
+
+                <div class="tpl-card" data-slug="creative_sunset" onclick="selectTemplate(this)">
+                  <div class="tpl-thumb">
+                    <img src="/static/img/templates/creative_sunset.jpg" alt="Sunset Orange"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="tpl-fallback" style="display:none;background:#1c1410;">
+                      <div class="tpl-swatch" style="background:#f97316;"></div>
+                      🌅
+                    </div>
+                  </div>
+                  <div class="tpl-info">
+                    <div class="tpl-name">Sunset Orange</div>
+                    <div class="tpl-cat">Split-header · Warm</div>
+                  </div>
+                  <div class="tpl-check"><i class="fas fa-check"></i></div>
+                </div>
+
+                <div class="tpl-card" data-slug="creative_mint" onclick="selectTemplate(this)">
+                  <div class="tpl-thumb">
+                    <img src="/static/img/templates/creative_mint.jpg" alt="Mint Crisp"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="tpl-fallback" style="display:none;background:#073b4c;">
+                      <div class="tpl-swatch" style="background:#06d6a0;"></div>
+                      🌿
+                    </div>
+                  </div>
+                  <div class="tpl-info">
+                    <div class="tpl-name">Mint Crisp</div>
+                    <div class="tpl-cat">Split-header · Fresh</div>
+                  </div>
+                  <div class="tpl-check"><i class="fas fa-check"></i></div>
+                </div>
+
+                <div class="tpl-card" data-slug="creative_pastel_pink" onclick="selectTemplate(this)">
+                  <div class="tpl-thumb">
+                    <img src="/static/img/templates/creative_pastel_pink.jpg" alt="Pastel Pink"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="tpl-fallback" style="display:none;background:#831843;">
+                      <div class="tpl-swatch" style="background:#f9a8d4;"></div>
+                      🌸
+                    </div>
+                  </div>
+                  <div class="tpl-info">
+                    <div class="tpl-name">Pastel Pink</div>
+                    <div class="tpl-cat">Split-header · Soft</div>
+                  </div>
+                  <div class="tpl-check"><i class="fas fa-check"></i></div>
+                </div>
+              </div>
+
+              <!-- Executive -->
+              <span class="cat-badge cat-executive" style="margin-top:12px;">Executive</span>
+              <div class="tpl-gallery">
+                <div class="tpl-card" data-slug="executive_gold" onclick="selectTemplate(this)">
+                  <div class="tpl-thumb">
+                    <img src="/static/img/templates/executive_gold.jpg" alt="Gold Standard"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="tpl-fallback" style="display:none;background:#fafaf7;">
+                      <div class="tpl-swatch" style="background:#b45309;"></div>
+                      🏆
+                    </div>
+                  </div>
+                  <div class="tpl-info">
+                    <div class="tpl-name">Gold Standard</div>
+                    <div class="tpl-cat">Serif · Premium</div>
+                  </div>
+                  <div class="tpl-check"><i class="fas fa-check"></i></div>
+                </div>
+
+                <div class="tpl-card" data-slug="executive_silver" onclick="selectTemplate(this)">
+                  <div class="tpl-thumb">
+                    <img src="/static/img/templates/executive_silver.jpg" alt="Silver Serif"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="tpl-fallback" style="display:none;background:#f8fafc;">
+                      <div class="tpl-swatch" style="background:#94a3b8;"></div>
+                      🥈
+                    </div>
+                  </div>
+                  <div class="tpl-info">
+                    <div class="tpl-name">Silver Serif</div>
+                    <div class="tpl-cat">Serif · Elegant</div>
+                  </div>
+                  <div class="tpl-check"><i class="fas fa-check"></i></div>
+                </div>
+
+                <div class="tpl-card" data-slug="executive_bronze" onclick="selectTemplate(this)">
+                  <div class="tpl-thumb">
+                    <img src="/static/img/templates/executive_bronze.jpg" alt="Bronze Minimal"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="tpl-fallback" style="display:none;background:#fffbf5;">
+                      <div class="tpl-swatch" style="background:#92400e;"></div>
+                      🥉
+                    </div>
+                  </div>
+                  <div class="tpl-info">
+                    <div class="tpl-name">Bronze Minimal</div>
+                    <div class="tpl-cat">Serif · Warm</div>
+                  </div>
+                  <div class="tpl-check"><i class="fas fa-check"></i></div>
+                </div>
+
+                <div class="tpl-card" data-slug="executive_platinum" onclick="selectTemplate(this)">
+                  <div class="tpl-thumb">
+                    <img src="/static/img/templates/executive_platinum.jpg" alt="Platinum"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="tpl-fallback" style="display:none;background:#f9fafb;">
+                      <div class="tpl-swatch" style="background:#9ca3af;"></div>
+                      💎
+                    </div>
+                  </div>
+                  <div class="tpl-info">
+                    <div class="tpl-name">Platinum</div>
+                    <div class="tpl-cat">Serif · Ultra</div>
+                  </div>
+                  <div class="tpl-check"><i class="fas fa-check"></i></div>
+                </div>
+              </div>
+            </div><!-- /sec-templates -->
+          </div><!-- /§1 -->
+
+          <!-- ── §2  PERSONAL INFO ────────────────────────── -->
+          <div class="vs-section">
+            <button type="button" class="vs-section-toggle open" data-target="sec-personal">
+              <i class="fas fa-id-card" style="color:#a78bfa;"></i>
+              Personal Info
+              <i class="fas fa-chevron-down toggle-icon"></i>
+            </button>
+            <div class="vs-section-body open" id="sec-personal">
+
+              <!-- Photo upload -->
+              <div class="mb-form">
+                <label class="vs-label">Profile Photo</label>
+                <div class="photo-zone" id="photoZone">
+                  <input type="file" name="photo" id="photoInput"
+                         accept="image/*" onchange="handlePhotoChange(this)">
+                  <img class="photo-preview" id="photoPreview" alt="Preview">
+                  <div class="photo-zone-icon" id="photoIcon"><i class="fas fa-camera"></i></div>
+                  <div class="photo-zone-label" id="photoLabel">Click to upload photo (optional)</div>
+                </div>
+              </div>
+
+              <div class="vs-row mb-form">
+                <div>
+                  <label class="vs-label" for="f_full_name">Full Name</label>
+                  <input class="vs-input" type="text" id="f_full_name"
+                         name="full_name" placeholder="John Smith"
+                         oninput="scheduleLivePreview()">
+                </div>
+                <div>
+                  <label class="vs-label" for="f_target_role">Job Title</label>
+                  <input class="vs-input" type="text" id="f_target_role"
+                         name="target_role" placeholder="Senior Engineer"
+                         oninput="scheduleLivePreview()">
+                </div>
+              </div>
+
+              <div class="vs-row mb-form">
+                <div>
+                  <label class="vs-label" for="f_email">Email</label>
+                  <input class="vs-input" type="email" id="f_email"
+                         name="email" placeholder="john@example.com"
+                         oninput="scheduleLivePreview()">
+                </div>
+                <div>
+                  <label class="vs-label" for="f_phone">Phone</label>
+                  <input class="vs-input" type="text" id="f_phone"
+                         name="phone" placeholder="+1 555 0000"
+                         oninput="scheduleLivePreview()">
+                </div>
+              </div>
+
+              <div class="vs-row mb-form">
+                <div>
+                  <label class="vs-label" for="f_location">Location</label>
+                  <input class="vs-input" type="text" id="f_location"
+                         name="location" placeholder="New York, NY"
+                         oninput="scheduleLivePreview()">
+                </div>
+                <div>
+                  <label class="vs-label" for="f_linkedin">LinkedIn</label>
+                  <input class="vs-input" type="text" id="f_linkedin"
+                         name="linkedin" placeholder="linkedin.com/in/john"
+                         oninput="scheduleLivePreview()">
+                </div>
+              </div>
+
+              <div class="mb-form">
+                <label class="vs-label" for="f_portfolio_url">Portfolio / GitHub URL</label>
+                <input class="vs-input" type="url" id="f_portfolio_url"
+                       name="portfolio_url" placeholder="https://github.com/yourname"
+                       oninput="scheduleLivePreview()">
+              </div>
+
+              <div class="mb-form">
+                <label class="vs-label" for="f_about_me">Professional Summary</label>
+                <textarea class="vs-textarea" id="f_about_me" name="about_me" rows="4"
+                          placeholder="A passionate engineer with 5+ years of experience…"
+                          oninput="scheduleLivePreview()"></textarea>
+              </div>
+            </div>
+          </div><!-- /§2 -->
+
+          <!-- ── §3  EXPERIENCE ──────────────────────────── -->
+          <div class="vs-section">
+            <button type="button" class="vs-section-toggle" data-target="sec-exp">
+              <i class="fas fa-briefcase" style="color:#f59e0b;"></i>
+              Work Experience
+              <i class="fas fa-chevron-down toggle-icon"></i>
+            </button>
+            <div class="vs-section-body" id="sec-exp">
+              <p style="font-size:.75rem;color:var(--text-muted);margin-bottom:10px;">
+                <i class="fas fa-circle-info me-1" style="color:var(--accent);"></i>
+                Use lines starting with <code style="color:var(--accent);">-</code> for bullet points.
+                Short lines become job titles/meta rows.
+              </p>
+              <div class="mb-form">
+                <label class="vs-label" for="f_experience_text">Experience (free-form)</label>
+                <textarea class="vs-textarea" id="f_experience_text" name="experience_text" rows="7"
+                          placeholder="Software Engineer | Acme Corp | 2021–Present&#10;- Built REST APIs serving 2M daily users&#10;- Reduced latency by 40% via Redis caching"
+                          oninput="scheduleLivePreview()"></textarea>
+              </div>
+            </div>
+          </div><!-- /§3 -->
+
+          <!-- ── §4  EDUCATION ───────────────────────────── -->
+          <div class="vs-section">
+            <button type="button" class="vs-section-toggle" data-target="sec-edu">
+              <i class="fas fa-graduation-cap" style="color:#22c55e;"></i>
+              Education
+              <i class="fas fa-chevron-down toggle-icon"></i>
+            </button>
+            <div class="vs-section-body" id="sec-edu">
+              <div class="mb-form">
+                <label class="vs-label" for="f_education">Education (one entry per line)</label>
+                <textarea class="vs-textarea" id="f_education" name="education" rows="4"
+                          placeholder="B.Sc. Computer Science — MIT — 2018&#10;M.Sc. Machine Learning — Stanford — 2020"
+                          oninput="scheduleLivePreview()"></textarea>
+              </div>
+            </div>
+          </div><!-- /§4 -->
+
+          <!-- ── §5  SKILLS ──────────────────────────────── -->
+          <div class="vs-section">
+            <button type="button" class="vs-section-toggle" data-target="sec-skills">
+              <i class="fas fa-chart-bar" style="color:#818cf8;"></i>
+              Skills
+              <i class="fas fa-chevron-down toggle-icon"></i>
+            </button>
+            <div class="vs-section-body" id="sec-skills">
+              <p style="font-size:.75rem;color:var(--text-muted);margin-bottom:10px;">
+                Format: <code style="color:var(--accent);">Python-85, Django-75, React-60</code>
+              </p>
+              <div class="mb-form">
+                <label class="vs-label" for="f_skills_list">Skills (name-level, …)</label>
+                <textarea class="vs-textarea" id="f_skills_list" name="skills_list" rows="3"
+                          placeholder="Python-85,Django-75,React-60,PostgreSQL-70"
+                          oninput="scheduleLivePreview()"></textarea>
+              </div>
+            </div>
+          </div><!-- /§5 -->
+
+          <!-- ── §6  CERTIFICATIONS ─────────────────────── -->
+          <div class="vs-section">
+            <button type="button" class="vs-section-toggle" data-target="sec-certs">
+              <i class="fas fa-certificate" style="color:#f97316;"></i>
+              Certifications / Courses
+              <i class="fas fa-chevron-down toggle-icon"></i>
+            </button>
+            <div class="vs-section-body" id="sec-certs">
+              <div class="mb-form">
+                <label class="vs-label" for="f_certifications">Certifications (comma or newline separated)</label>
+                <textarea class="vs-textarea" id="f_certifications" name="certifications" rows="3"
+                          placeholder="AWS Solutions Architect, Google Cloud Professional, PMP"
+                          oninput="scheduleLivePreview()"></textarea>
+              </div>
+            </div>
+          </div><!-- /§6 -->
+
+          <!-- ── §7  LANGUAGES ──────────────────────────── -->
+          <div class="vs-section">
+            <button type="button" class="vs-section-toggle" data-target="sec-lang">
+              <i class="fas fa-globe" style="color:#4ecdc4;"></i>
+              Languages
+              <i class="fas fa-chevron-down toggle-icon"></i>
+            </button>
+            <div class="vs-section-body" id="sec-lang">
+              <div class="mb-form">
+                <label class="vs-label" for="f_languages">Languages</label>
+                <input class="vs-input" type="text" id="f_languages" name="languages"
+                       placeholder="English (Native), Spanish (B2)"
+                       oninput="scheduleLivePreview()">
+              </div>
+              <div class="mb-form">
+                <label class="vs-label" for="f_references">References</label>
+                <textarea class="vs-textarea" id="f_references" name="references" rows="2"
+                          placeholder="Available on request"
+                          oninput="scheduleLivePreview()"></textarea>
+              </div>
+            </div>
+          </div><!-- /§7 -->
+
+          <!-- ── §8  DESIGN CONTROLS ────────────────────── -->
+          <div class="vs-section">
+            <button type="button" class="vs-section-toggle" data-target="sec-design">
+              <i class="fas fa-sliders" style="color:var(--accent2);"></i>
+              Text Size &amp; Spacing
+              <i class="fas fa-chevron-down toggle-icon"></i>
+            </button>
+            <div class="vs-section-body" id="sec-design">
+              <div class="slider-wrap">
+                <div class="slider-header">
+                  <span class="slider-name">Text Size</span>
+                  <span class="slider-val" id="valTextSize">10pt</span>
+                </div>
+                <input type="range" class="vs-range" id="sliderTextSize"
+                       name="text_size" min="8" max="13" value="10" step="0.5"
+                       oninput="document.getElementById('valTextSize').textContent=this.value+'pt'; scheduleLivePreview();">
+              </div>
+              <div class="slider-wrap">
+                <div class="slider-header">
+                  <span class="slider-name">Section Spacing</span>
+                  <span class="slider-val" id="valSpacing">1.50</span>
+                </div>
+                <input type="range" class="vs-range" id="sliderSpacing"
+                       name="section_spacing" min="1.0" max="2.2" value="1.5" step="0.05"
+                       oninput="document.getElementById('valSpacing').textContent=parseFloat(this.value).toFixed(2); scheduleLivePreview();">
+              </div>
+            </div>
+          </div><!-- /§8 -->
+
+        </form><!-- /#resume-form -->
+      </div><!-- /.vs-left-scroll -->
+    </aside><!-- /.vs-left -->
+
+
+    <!-- ────── RIGHT: LIVE PREVIEW ────── -->
+    <main class="vs-right" id="vsRight">
+      <div class="vs-preview-bar">
+        <span class="vs-preview-label"><i class="fas fa-eye me-1"></i>Live Preview</span>
+        <div class="vs-preview-spinner" id="previewSpinner"></div>
+        <span class="vs-preview-status" id="previewStatus">Select a template and fill in your details</span>
+        <div class="vs-preview-spacer"></div>
+        <button class="vs-nav-btn-dl" onclick="downloadPdf()" id="btnDlRight"
+                style="font-size:.78rem; padding:5px 14px;">
+          <i class="fas fa-download me-1"></i>Download PDF
+        </button>
+      </div>
+
+      <!-- PDF iframe — src is set by JS -->
+      <iframe id="pdf-preview" title="Live Resume Preview" class="w-100" style="flex:1;border:none;"></iframe>
+    </main><!-- /.vs-right -->
+
+  </div><!-- /.vs-studio -->
+
+
+  <!-- ══════════════════════════════════════════════════════
+       LOADING OVERLAY (AI fill)
+       ══════════════════════════════════════════════════════ -->
+  <div class="vs-loading-overlay" id="vsLoadingOverlay">
+    <div class="vs-loading-card">
+      <div class="vs-spinner-rings">
+        <div class="ring-o"></div>
+        <div class="ring-i"></div>
+      </div>
+      <div class="vs-loading-title" id="vsLoadingTitle">Generating your resume…</div>
+      <div class="vs-loading-sub">Elite AI • usually 5–15 seconds</div>
     </div>
+  </div>
 
-    <script>
-        (function () {
-            if (!localStorage.getItem('cvai_onboarded')) {
-                const overlay = document.getElementById('onboardingOverlay');
-                if (overlay) overlay.style.display = 'flex';
-            }
-        })();
-        function dismissOnboarding() {
-            localStorage.setItem('cvai_onboarded', '1');
-            document.getElementById('onboardingOverlay').style.display = 'none';
-        }
-    </script>
+  <!-- Toast -->
+  <div class="vs-toast" id="vsToast">
+    <i class="fas fa-circle-check"></i>
+    <span id="vsToastMsg"></span>
+  </div>
 
-    <!-- Resume Studio Scripts (html2pdf.js + reactive canvas) -->
-    {% include 'generator/partials/studio_scripts.html' %}
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- ══════════════════════════════════════════════════════
+       VANILLA JS — STUDIO LOGIC
+       ══════════════════════════════════════════════════════ -->
+  <script>
+  /* ────────────────────────────────────────────────────────
+     CONSTANTS
+  ──────────────────────────────────────────────────────── */
+  const DOWNLOAD_URL   = "{% url 'download_pdf' %}";
+  const PREVIEW_URL    = "{% url 'download_pdf' %}?mode=preview";
+  const CSRF_TOKEN     = "{{ csrf_token }}";
+
+  /* ────────────────────────────────────────────────────────
+     ACCORDION TOGGLES
+  ──────────────────────────────────────────────────────── */
+  document.querySelectorAll('.vs-section-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = document.getElementById(btn.dataset.target);
+      const isOpen = target.classList.contains('open');
+      target.classList.toggle('open', !isOpen);
+      btn.classList.toggle('open', !isOpen);
+    });
+  });
+
+  /* ────────────────────────────────────────────────────────
+     TEMPLATE SELECTION
+  ──────────────────────────────────────────────────────── */
+  function selectTemplate(card) {
+    document.querySelectorAll('.tpl-card').forEach(c => c.classList.remove('active'));
+    card.classList.add('active');
+    const slug = card.dataset.slug;
+    document.getElementById('selectedTemplate').value = slug;
+    scheduleLivePreview();
+    showToast('Template: ' + card.querySelector('.tpl-name').textContent, 'success');
+  }
+
+  /* ────────────────────────────────────────────────────────
+     PHOTO UPLOAD PREVIEW
+  ──────────────────────────────────────────────────────── */
+  function handlePhotoChange(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const preview = document.getElementById('photoPreview');
+    const icon    = document.getElementById('photoIcon');
+    const label   = document.getElementById('photoLabel');
+    const reader  = new FileReader();
+    reader.onload = e => {
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+      icon.style.display    = 'none';
+      label.textContent     = file.name;
+    };
+    reader.readAsDataURL(file);
+    scheduleLivePreview();
+  }
+
+  // Drag-over highlight
+  const photoZone = document.getElementById('photoZone');
+  ['dragenter','dragover'].forEach(ev => {
+    photoZone.addEventListener(ev, e => { e.preventDefault(); photoZone.classList.add('drag-over'); });
+  });
+  ['dragleave','drop'].forEach(ev => {
+    photoZone.addEventListener(ev, e => { e.preventDefault(); photoZone.classList.remove('drag-over'); });
+  });
+
+  /* ────────────────────────────────────────────────────────
+     DEBOUNCED LIVE PREVIEW
+     Fires 700ms after the last form change.
+     Silently POSTs the form data to /download-pdf/,
+     gets a PDF blob, creates an ObjectURL, and sets
+     it as the iframe src.
+  ──────────────────────────────────────────────────────── */
+  let _previewTimer = null;
+
+  function scheduleLivePreview(delay) {
+    clearTimeout(_previewTimer);
+    _previewTimer = setTimeout(triggerLivePreview, delay ?? 700);
+  }
+
+  async function triggerLivePreview() {
+    const form    = document.getElementById('resume-form');
+    const spinner = document.getElementById('previewSpinner');
+    const status  = document.getElementById('previewStatus');
+
+    spinner.style.display = 'block';
+    status.textContent = 'Rendering…';
+
+    try {
+      const fd = new FormData(form);
+      const res = await fetch(PREVIEW_URL, {
+        method: 'POST',
+        body: fd,
+        headers: { 'X-CSRFToken': CSRF_TOKEN },
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+
+      const iframe = document.getElementById('pdf-preview');
+      // Revoke previous blob URL to avoid memory leak
+      if (iframe._blobUrl) URL.revokeObjectURL(iframe._blobUrl);
+      iframe._blobUrl = url;
+      iframe.src      = url;
+
+      status.textContent = '✓ Preview updated';
+    } catch (err) {
+      console.error('Live preview error:', err);
+      status.textContent = 'Preview unavailable — download to view';
+    } finally {
+      spinner.style.display = 'none';
+    }
+  }
+
+  /* ────────────────────────────────────────────────────────
+     DOWNLOAD PDF (full download, not blob preview)
+  ──────────────────────────────────────────────────────── */
+  async function downloadPdf() {
+    const form   = document.getElementById('resume-form');
+    const btn    = document.getElementById('btnDownloadPdf');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Building…';
+
+    try {
+      const fd  = new FormData(form);
+      const res = await fetch(DOWNLOAD_URL, {
+        method: 'POST', body: fd,
+        headers: { 'X-CSRFToken': CSRF_TOKEN },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      const slug = document.getElementById('selectedTemplate').value;
+      a.href     = url;
+      a.download = `CVAI_${slug}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('PDF downloaded!', 'success');
+    } catch (err) {
+      showToast('Download failed — please try again.', 'danger');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-file-arrow-down me-1"></i>Download PDF';
+    }
+  }
+
+  /* ────────────────────────────────────────────────────────
+     TOAST NOTIFICATION
+  ──────────────────────────────────────────────────────── */
+  let _toastTimer = null;
+  function showToast(msg, type = 'success') {
+    const toast = document.getElementById('vsToast');
+    const icon  = toast.querySelector('i');
+    document.getElementById('vsToastMsg').textContent = msg;
+    icon.className = type === 'success' ? 'fas fa-circle-check' : 'fas fa-circle-exclamation';
+    toast.className = 'vs-toast ' + type + ' show';
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => { toast.classList.remove('show'); }, 3500);
+  }
+
+  /* ────────────────────────────────────────────────────────
+     LISTEN TO ALL FORM CHANGE EVENTS
+     (covers selects, checkboxes, file inputs not captured
+     by inline oninput handlers)
+  ──────────────────────────────────────────────────────── */
+  document.getElementById('resume-form').addEventListener('change', () => {
+    scheduleLivePreview(400);
+  });
+
+  /* ────────────────────────────────────────────────────────
+     INITIAL PREVIEW ON PAGE LOAD (if name already stored)
+  ──────────────────────────────────────────────────────── */
+  window.addEventListener('DOMContentLoaded', () => {
+    // Restore saved draft from localStorage
+    const draft = localStorage.getItem('cvai_draft_v2');
+    if (draft) {
+      try {
+        const d = JSON.parse(draft);
+        Object.entries(d).forEach(([k, v]) => {
+          const el = document.querySelector(`[name="${k}"]`);
+          if (el && el.type !== 'file') el.value = v;
+        });
+        scheduleLivePreview(1200);
+      } catch(_) {}
+    }
+
+    // Auto-save draft every 30 seconds
+    setInterval(saveDraft, 30000);
+  });
+
+  function saveDraft() {
+    const form = document.getElementById('resume-form');
+    const data = {};
+    new FormData(form).forEach((v, k) => { if (typeof v === 'string') data[k] = v; });
+    localStorage.setItem('cvai_draft_v2', JSON.stringify(data));
+  }
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-
 </html>

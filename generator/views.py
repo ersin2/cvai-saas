@@ -412,6 +412,10 @@ def generate_pdf(request):
     """
     Routes the request to the correct ReportLab template via pdf_engine.build_pdf().
     Validates the requested template against the user's plan limits.
+
+    Query-string modifier:
+      ?mode=preview  → Content-Disposition: inline  (for the live-preview <iframe>)
+      (default)      → Content-Disposition: attachment  (triggers browser download)
     """
     profile, _ = Profile.objects.get_or_create(user=request.user)
 
@@ -428,9 +432,25 @@ def generate_pdf(request):
         # Silently fall back to the first allowed template
         template_slug = allowed_slugs[0]
 
-    buffer = build_pdf(template_slug, request)
+    buffer   = build_pdf(template_slug, request)
     filename = f'CVAI_{template_slug}.pdf'
-    return FileResponse(buffer, as_attachment=True, filename=filename)
+
+    # Inline mode: used by the live-preview iframe in the Visual Resume Studio.
+    # The frontend appends ?mode=preview to the fetch URL so the browser can
+    # render the PDF directly inside the <iframe> without forcing a download.
+    is_preview = request.GET.get('mode') == 'preview'
+    response = FileResponse(
+        buffer,
+        content_type='application/pdf',
+        as_attachment=not is_preview,
+        filename=filename,
+    )
+    if is_preview:
+        # Allow the iframe to display the PDF; still keep it same-origin secure.
+        response['Content-Disposition'] = f'inline; filename="{filename}"'
+    return response
+
+
 
 
 # (export_resume_pdf removed — replaced by client-side html2pdf.js in Resume Studio)

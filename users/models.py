@@ -23,11 +23,11 @@ class Profile(models.Model):
     }
 
     # ── how many PDF templates each plan can access ─────────────────────────
-    # Free  → 1 template  |  Pro → 3 templates  |  Elite → 5 (all) templates
+    # Free → 2 templates | Pro → 10 templates | Elite → 20 (all) templates
     PDF_TEMPLATE_LIMITS = {
-        'free':  1,
-        'pro':   3,
-        'elite': 5,
+        'free':  2,
+        'pro':   10,
+        'elite': 20,
     }
 
     # ── how many tracked jobs each plan can store ────────────────────────────
