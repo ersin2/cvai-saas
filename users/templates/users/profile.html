@@ -13,6 +13,32 @@
     <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}">
 
     <style>
+
+        /* Vertical Tabs Styling */
+        .nav-pills.flex-column .nav-link {
+            color: #94a3b8 !important;
+            transition: all 0.2s ease;
+            background: transparent;
+        }
+        .nav-pills.flex-column .nav-link:hover:not(.active) {
+            background: rgba(255,255,255,0.04) !important;
+            color: #f1f5f9 !important;
+        }
+        .nav-pills.flex-column .nav-link.active {
+            background: rgba(76,201,240,0.1) !important;
+            color: var(--primary) !important;
+            border: 1px solid rgba(76,201,240,0.25);
+            box-shadow: inset 0 1px 0 rgba(76,201,240,0.1);
+        }
+        
+        /* Accordion Overrides */
+        .accordion-button::after {
+            filter: invert(1) grayscale(100%) brightness(200%);
+        }
+        .accordion-button:not(.collapsed) {
+            color: var(--primary) !important;
+        }
+
         /* ── PROFILE GRID ── */
         .profile-grid {
             display: grid;
@@ -131,7 +157,7 @@
             <a href="{% url 'history' %}"   class="nav-link-item">History</a>
             <a href="{% url 'pricing' %}"   class="nav-link-item">Pricing</a>
             <a href="{% url 'profile' %}"   class="user-badge" style="border-color: rgba(76,201,240,0.3);">
-                <i class="fas fa-user"></i>{{ user.username }}
+                {% if user.profile.avatar_url %}<img src="{{ user.profile.avatar_url }}" alt="Avatar" style="width: 22px; height: 22px; border-radius: 50%; object-fit: cover; margin-right: 6px;">{% else %}<i class="fas fa-user"></i>{% endif %}{{ user.username }}
             </a>
             <form action="{% url 'logout' %}" method="post" style="margin:0;">
                 {% csrf_token %}
@@ -175,7 +201,6 @@
 
     <!-- PAGE CONTENT -->
     <div class="container pb-5" style="max-width: 920px;">
-
         {% if messages %}
         <div class="mt-3">
             {% for message in messages %}
@@ -196,103 +221,304 @@
                 <span class="plan-pill free"><i class="fas fa-bolt"></i>Free</span>
                 {% endif %}
             </div>
-            <p class="page-subtitle">Manage your account and subscription.</p>
+            <p class="page-subtitle">Manage your account, defaults, and billing.</p>
         </div>
 
-        <!-- PROFILE GRID -->
-        <div class="profile-grid">
-
-            <!-- Generations -->
-            <div class="glass-card card-hoverable anim-fade-up anim-delay-1" style="position: relative; overflow: hidden;">
-                <div style="position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--primary), #4361ee); opacity: 0.7;"></div>
-                <div class="d-flex align-items-center gap-3 mb-4">
-                    <div style="width: 46px; height: 46px; border-radius: var(--radius-sm); background: var(--primary-dim); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.2rem;">
-                        <i class="fas fa-bolt"></i>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Generations Available</div>
-                    </div>
-                </div>
-                <div style="font-size: 3rem; font-weight: 800; font-family: var(--font-mono); color: var(--primary); line-height: 1; letter-spacing: -0.02em;">
-                    {% if user.profile.is_premium %}∞{% else %}{{ user.profile.generations_count }}{% endif %}
-                </div>
-                {% if not user.profile.is_premium %}
-                <div style="color: var(--text-muted); font-size: 0.8rem; margin-top: 6px;">
-                    of {{ user.profile.get_limit }} total
-                </div>
-                <div class="gen-progress-wrap">
-                    <div class="gen-progress-bar"
-                         style="width: {% widthratio user.profile.generations_count user.profile.get_limit 100 %}%;"></div>
-                </div>
-                {% else %}
-                <div style="color: var(--text-muted); font-size: 0.8rem; margin-top: 6px;">Unlimited generations</div>
-                {% endif %}
-            </div>
-
-            <!-- Account Status -->
-            <div class="glass-card card-hoverable anim-fade-up anim-delay-2" style="position: relative; overflow: hidden;">
-                <div style="position: absolute; top: 0; left: 0; right: 0; height: 2px; background: {% if user.profile.is_premium %}linear-gradient(90deg, var(--gold), #fbbf24){% else %}linear-gradient(90deg, var(--secondary), #ff6b6b){% endif %}; opacity: 0.7;"></div>
-                <div class="d-flex align-items-center gap-3 mb-4">
-                    <div style="width: 46px; height: 46px; border-radius: var(--radius-sm); background: {% if user.profile.is_premium %}rgba(245,158,11,0.1){% else %}rgba(255,255,255,0.05){% endif %}; display: flex; align-items: center; justify-content: center; color: {% if user.profile.is_premium %}var(--gold){% else %}var(--text-secondary){% endif %}; font-size: 1.2rem;">
-                        <i class="fas {% if user.profile.is_premium %}fa-crown{% else %}fa-user{% endif %}"></i>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Account Status</div>
-                    </div>
-                </div>
-                <div style="font-size: 2.5rem; font-weight: 800; font-family: var(--font-mono); color: {% if user.profile.is_premium %}var(--gold){% else %}var(--text-primary){% endif %}; line-height: 1; letter-spacing: -0.02em;">
-                    {% if user.profile.is_premium %}{{ user.profile.plan|upper }}{% else %}FREE{% endif %}
-                </div>
-                <div style="color: var(--text-muted); font-size: 0.8rem; margin-top: 6px;">
-                    @{{ user.username }}
+        <div class="row g-4">
+            <!-- SIDEBAR NAVIGATION -->
+            <div class="col-md-3">
+                <div class="glass-card p-3 anim-fade-up" style="position: sticky; top: 100px;">
+                    <ul class="nav nav-pills flex-column gap-2" id="profileTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active w-100 text-start d-flex align-items-center" id="account-tab" data-bs-toggle="pill" data-bs-target="#account" type="button" role="tab" style="font-weight: 600; border-radius: 10px; padding: 12px 16px;">
+                                <i class="fas fa-chart-pie me-3" style="width:20px;text-align:center;"></i>Overview
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link w-100 text-start d-flex align-items-center" id="defaults-tab" data-bs-toggle="pill" data-bs-target="#defaults" type="button" role="tab" style="font-weight: 600; border-radius: 10px; padding: 12px 16px;">
+                                <i class="fas fa-sliders-h me-3" style="width:20px;text-align:center;"></i>Global Defaults
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link w-100 text-start d-flex align-items-center" id="help-tab" data-bs-toggle="pill" data-bs-target="#help" type="button" role="tab" style="font-weight: 600; border-radius: 10px; padding: 12px 16px;">
+                                <i class="fas fa-life-ring me-3" style="width:20px;text-align:center;color:var(--primary);"></i>Help Center
+                            </button>
+                        </li>
+                    </ul>
                 </div>
             </div>
 
-            <!-- Quick Access -->
-            <div class="glass-card card-hoverable anim-fade-up anim-delay-3" style="position: relative; overflow: hidden;">
-                <div style="position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #22c55e, var(--primary)); opacity: 0.7;"></div>
-                <div class="d-flex align-items-center gap-3 mb-4">
-                    <div style="width: 46px; height: 46px; border-radius: var(--radius-sm); background: rgba(34,197,94,0.1); display: flex; align-items: center; justify-content: center; color: #22c55e; font-size: 1.2rem;">
-                        <i class="fas fa-rocket"></i>
+            <!-- TAB CONTENT -->
+            <div class="col-md-9">
+                <div class="tab-content" id="profileTabsContent">
+                    
+                    <!-- OVERVIEW TAB -->
+                    <div class="tab-pane fade show active" id="account" role="tabpanel">
+                        <div class="profile-grid">
+                            <!-- Generations -->
+                            <div class="glass-card card-hoverable anim-fade-up anim-delay-1" style="position: relative; overflow: hidden;">
+                                <div style="position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--primary), #4361ee); opacity: 0.7;"></div>
+                                <div class="d-flex align-items-center gap-3 mb-4">
+                                    <div style="width: 46px; height: 46px; border-radius: var(--radius-sm); background: var(--primary-dim); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.2rem;">
+                                        <i class="fas fa-bolt"></i>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Generations</div>
+                                    </div>
+                                </div>
+                                <div style="font-size: 3rem; font-weight: 800; font-family: var(--font-mono); color: var(--primary); line-height: 1; letter-spacing: -0.02em;">
+                                    {% if user.profile.is_premium %}∞{% else %}{{ user.profile.generations_count }}{% endif %}
+                                </div>
+                                {% if not user.profile.is_premium %}
+                                <div style="color: var(--text-muted); font-size: 0.8rem; margin-top: 6px;">of {{ user.profile.get_limit }} total</div>
+                                <div class="gen-progress-wrap">
+                                    <div class="gen-progress-bar" style="width: {% widthratio user.profile.generations_count user.profile.get_limit 100 %}%;"></div>
+                                </div>
+                                {% else %}
+                                <div style="color: var(--text-muted); font-size: 0.8rem; margin-top: 6px;">Unlimited generations</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Account Status -->
+                            <div class="glass-card card-hoverable anim-fade-up anim-delay-2" style="position: relative; overflow: hidden;">
+                                <div style="position: absolute; top: 0; left: 0; right: 0; height: 2px; background: {% if user.profile.is_premium %}linear-gradient(90deg, var(--gold), #fbbf24){% else %}linear-gradient(90deg, var(--secondary), #ff6b6b){% endif %}; opacity: 0.7;"></div>
+                                <div class="d-flex align-items-center gap-3 mb-4">
+                                    <div style="width: 46px; height: 46px; border-radius: var(--radius-sm); background: {% if user.profile.is_premium %}rgba(245,158,11,0.1){% else %}rgba(255,255,255,0.05){% endif %}; display: flex; align-items: center; justify-content: center; color: {% if user.profile.is_premium %}var(--gold){% else %}var(--text-secondary){% endif %}; font-size: 1.2rem;">
+                                        <i class="fas {% if user.profile.is_premium %}fa-crown{% else %}fa-user{% endif %}"></i>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Account Status</div>
+                                    </div>
+                                </div>
+                                <div style="font-size: 2.5rem; font-weight: 800; font-family: var(--font-mono); color: {% if user.profile.is_premium %}var(--gold){% else %}var(--text-primary){% endif %}; line-height: 1; letter-spacing: -0.02em;">
+                                    {% if user.profile.is_premium %}{{ user.profile.plan|upper }}{% else %}FREE{% endif %}
+                                </div>
+                                <div style="color: var(--text-muted); font-size: 0.8rem; margin-top: 6px;">@{{ user.username }}</div>
+                            </div>
+                        </div>
+
+                        <!-- UPGRADE BANNER -->
+                        {% if not user.profile.is_premium %}
+                        <div class="upgrade-banner anim-fade-up anim-delay-3 mt-2">
+                            <div class="row align-items-center g-4">
+                                <div class="col-md-8">
+                                    <div style="font-size: 0.78rem; color: var(--gold); font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">
+                                        <i class="fas fa-crown me-1"></i> Upgrade to Pro
+                                    </div>
+                                    <h3 style="font-size: 1.35rem; font-weight: 800; color: var(--text-primary); margin-bottom: 8px;">
+                                        Unlock unlimited AI generations
+                                    </h3>
+                                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.6;">
+                                        Get 50 generations/month, premium templates, ATS scoring, and priority models — for just $5/mo.
+                                    </p>
+                                </div>
+                                <div class="col-md-4 text-md-end">
+                                    <form action="{% url 'buy_premium' 'pro' %}" method="post" style="margin:0;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-go-pro w-100 justify-content-center">
+                                            <i class="fas fa-crown"></i>Get Pro Access
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <!-- BILLING PORTAL -->
+                        {% if user.profile.is_premium %}
+                        <div class="upgrade-banner anim-fade-up anim-delay-3 mt-4" style="background: rgba(124, 58, 237, 0.05); border-color: rgba(124, 58, 237, 0.2);">
+                            <div class="row align-items-center g-4">
+                                <div class="col-md-8">
+                                    <div style="font-size: 0.78rem; color: #a855f7; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">
+                                        <i class="fas fa-file-invoice-dollar me-1"></i> Subscription Management
+                                    </div>
+                                    <h3 style="font-size: 1.2rem; font-weight: 800; color: var(--text-primary); margin-bottom: 8px;">
+                                        Manage your billing & plan
+                                    </h3>
+                                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.6;">
+                                        Update your payment method, view invoices, or cancel your subscription securely via Stripe.
+                                    </p>
+                                </div>
+                                <div class="col-md-4 text-md-end">
+                                    <form action="{% url 'stripe_customer_portal' %}" method="post" style="margin:0;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-primary-grad w-100 justify-content-center" style="background: linear-gradient(135deg, #7c3aed, #a855f7);">
+                                            <i class="fas fa-external-link-alt"></i>Manage Billing
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
                     </div>
-                    <div>
-                        <div style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Quick Access</div>
+                    
+                    <!-- GLOBAL DEFAULTS TAB -->
+                    <div class="tab-pane fade" id="defaults" role="tabpanel">
+                        <div class="glass-card anim-fade-up">
+                            <div class="d-flex align-items-center gap-3 mb-4">
+                                <div style="width: 46px; height: 46px; border-radius: var(--radius-sm); background: rgba(76,201,240,0.1); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.2rem;">
+                                    <i class="fas fa-sliders-h"></i>
+                                </div>
+                                <div>
+                                    <h3 style="font-size: 1.2rem; font-weight: 800; color: #e2e8f0; margin: 0;">Studio Settings</h3>
+                                    <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0;">Save your preferences so the Generator automatically pre-fills them.</p>
+                                </div>
+                            </div>
+                            
+                            <form method="post" action="{% url 'profile' %}" class="mt-4">
+                                {% csrf_token %}
+                                <div class="row g-4">
+                                    <!-- Left Column: Base Resume -->
+                                    <div class="col-lg-12">
+                                        <label class="form-label" style="font-weight: 600; color: #cbd5e1;"><i class="fas fa-file-alt me-2" style="color:var(--primary);"></i>Base Career History</label>
+                                        <textarea name="base_resume" class="form-control" rows="8" placeholder="Paste your entire resume here. We will load this automatically into the Generator so you don't have to." style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); color: #f1f5f9; border-radius: 12px; padding: 16px; font-size: 0.9rem; resize: none;">{{ user.profile.base_resume }}</textarea>
+                                    </div>
+                                    
+                                    <!-- Fonts & Lang -->
+                                    <div class="col-lg-6">
+                                        <label class="form-label" style="font-weight: 600; color: #cbd5e1;"><i class="fas fa-font me-2" style="color:var(--secondary);"></i>Default Font</label>
+                                        <select name="default_font" class="form-select" style="background-color: var(--surface-1); color: white; border: 1px solid var(--border); border-radius: 10px;">
+                                            <option value="Inter" {% if user.profile.default_font == 'Inter' %}selected{% endif %}>Inter (Modern Sans)</option>
+                                            <option value="Outfit" {% if user.profile.default_font == 'Outfit' %}selected{% endif %}>Outfit (Clean Sans)</option>
+                                            <option value="Roboto" {% if user.profile.default_font == 'Roboto' %}selected{% endif %}>Roboto (Classic Sans)</option>
+                                            <option value="Montserrat" {% if user.profile.default_font == 'Montserrat' %}selected{% endif %}>Montserrat (Wide Sans)</option>
+                                            <option value="Merriweather" {% if user.profile.default_font == 'Merriweather' %}selected{% endif %}>Merriweather (Classic Serif)</option>
+                                            <option value="JetBrains Mono" {% if user.profile.default_font == 'JetBrains Mono' %}selected{% endif %}>JetBrains Mono (Tech/Code)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label class="form-label" style="font-weight: 600; color: #cbd5e1;"><i class="fas fa-globe me-2" style="color:#22c55e;"></i>Default Language</label>
+                                        <select name="default_language" class="form-select" style="background-color: var(--surface-1); color: white; border: 1px solid var(--border); border-radius: 10px;">
+                                            <option value="English" {% if user.profile.default_language == 'English' %}selected{% endif %}>English</option>
+                                            <option value="Spanish" {% if user.profile.default_language == 'Spanish' %}selected{% endif %}>Spanish</option>
+                                            <option value="French" {% if user.profile.default_language == 'French' %}selected{% endif %}>French</option>
+                                            <option value="German" {% if user.profile.default_language == 'German' %}selected{% endif %}>German</option>
+                                            <option value="Russian" {% if user.profile.default_language == 'Russian' %}selected{% endif %}>Russian</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-12">
+                                        <label class="form-label" style="font-weight: 600; color: #cbd5e1;"><i class="fas fa-image me-2" style="color:#a855f7;"></i>Avatar URL</label>
+                                        <input type="url" name="avatar_url" class="form-control" placeholder="https://..." value="{{ user.profile.avatar_url|default:'' }}" style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); color: #f1f5f9; border-radius: 10px;">
+                                    </div>
+                                    <div class="col-lg-12">
+                                        <button type="submit" class="btn-primary-grad w-100 mt-2" style="border-radius: 10px; padding: 12px; font-size: 0.95rem; justify-content: center;">
+                                            <i class="fas fa-save me-2"></i>Save Defaults
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
                     </div>
+
+                    <!-- HELP CENTER TAB -->
+                    <div class="tab-pane fade" id="help" role="tabpanel">
+                        
+                        <!-- Contact Card -->
+                        <div class="glass-card anim-fade-up mb-4" style="background: rgba(76, 201, 240, 0.03); border: 1px solid rgba(76, 201, 240, 0.15);">
+                            <div class="d-flex align-items-center gap-3 mb-4">
+                                <div style="width: 50px; height: 50px; border-radius: 14px; background: linear-gradient(135deg, var(--primary), #4361ee); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.4rem; box-shadow: 0 8px 20px rgba(76,201,240,0.3);">
+                                    <i class="fas fa-headset"></i>
+                                </div>
+                                <div>
+                                    <h3 style="font-size: 1.3rem; font-weight: 800; color: #e2e8f0; margin: 0;">How can we help?</h3>
+                                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">Our support team is ready to assist you.</p>
+                                </div>
+                            </div>
+                            <div class="p-4" style="background: rgba(15, 23, 42, 0.5); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); text-align: center;">
+                                <i class="fas fa-envelope-open-text mb-3" style="font-size: 2rem; color: var(--primary);"></i>
+                                <h4 style="font-size: 1.1rem; color: #fff; font-weight: 700; margin-bottom: 8px;">Direct Email Support</h4>
+                                <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 20px;">Email us directly and we'll get back to you within 24 hours.</p>
+                                <a href="mailto:uraiymoversin@gmail.com" class="btn-primary-grad" style="display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem; padding: 10px 24px;">
+                                    <i class="fas fa-paper-plane"></i> uraiymoversin@gmail.com
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- FAQ -->
+                        <h4 style="font-size: 1.1rem; font-weight: 800; color: #cbd5e1; margin-bottom: 16px; padding-left: 4px;">Frequently Asked Questions</h4>
+                        
+                        <div class="accordion custom-accordion anim-fade-up anim-delay-1" id="faqAccordion">
+                            <div class="accordion-item mb-3" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden;">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1" style="background: transparent; color: #f1f5f9; font-weight: 600; box-shadow: none;">
+                                        How does the ATS Score Checker work?
+                                    </button>
+                                </h2>
+                                <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body" style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6; border-top: 1px solid rgba(255,255,255,0.05);">
+                                        The ATS Score Checker analyzes your raw resume against a target job description using our AI models. It looks for keyword density, missing critical skills, and format readability to estimate how well it will pass an Applicant Tracking System.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="accordion-item mb-3" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden;">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2" style="background: transparent; color: #f1f5f9; font-weight: 600; box-shadow: none;">
+                                        How do I upgrade to Pro or Elite?
+                                    </button>
+                                </h2>
+                                <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body" style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6; border-top: 1px solid rgba(255,255,255,0.05);">
+                                        You can upgrade at any time by clicking the "Get Pro Access" button on the Overview tab or by visiting the <a href="{% url 'pricing' %}" style="color: var(--primary);">Pricing Page</a>. All payments are securely processed via Stripe.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item mb-3" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden;">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3" style="background: transparent; color: #f1f5f9; font-weight: 600; box-shadow: none;">
+                                        Can I save multiple resumes?
+                                    </button>
+                                </h2>
+                                <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body" style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6; border-top: 1px solid rgba(255,255,255,0.05);">
+                                        Currently, the Global Defaults allow you to save one master "Base Career History". We recommend pasting all your relevant work history here, and the Studio AI will automatically tailor it to extract the most relevant points for each specific job.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
-                <p style="color: var(--text-secondary); font-size: 0.88rem; margin-bottom: 20px;">Generate a new AI-powered cover letter now.</p>
-                <a href="{% url 'home' %}" class="btn-primary-grad" style="background: linear-gradient(135deg, #22c55e, #4cc9f0); width: 100%; justify-content: center;">
-                    Go to Generator <i class="fas fa-arrow-right ms-2"></i>
-                </a>
             </div>
         </div>
+    <style>
 
-        <!-- UPGRADE BANNER -->
-        {% if not user.profile.is_premium %}
-        <div class="upgrade-banner anim-fade-up anim-delay-4">
-            <div class="row align-items-center g-4">
-                <div class="col-md-8">
-                    <div style="font-size: 0.78rem; color: var(--gold); font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">
-                        <i class="fas fa-crown me-1"></i> Upgrade to Pro
-                    </div>
-                    <h3 style="font-size: 1.35rem; font-weight: 800; color: var(--text-primary); margin-bottom: 8px;">
-                        Unlock unlimited AI generations
-                    </h3>
-                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.6;">
-                        Get 50 generations/month, premium PDF templates, ATS scoring, and priority AI model — for just $5/mo.
-                    </p>
-                </div>
-                <div class="col-md-4 text-md-end">
-                    <form action="{% url 'buy_premium' 'pro' %}" method="post" style="margin:0;">
-                        {% csrf_token %}
-                        <button type="submit" class="btn-go-pro">
-                            <i class="fas fa-crown"></i>Get Pro Access 💎
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-    </div>
+        /* Vertical Tabs Styling */
+        .nav-pills.flex-column .nav-link {
+            color: #94a3b8 !important;
+            transition: all 0.2s ease;
+            background: transparent;
+        }
+        .nav-pills.flex-column .nav-link:hover:not(.active) {
+            background: rgba(255,255,255,0.04) !important;
+            color: #f1f5f9 !important;
+        }
+        .nav-pills.flex-column .nav-link.active {
+            background: rgba(76,201,240,0.1) !important;
+            color: var(--primary) !important;
+            border: 1px solid rgba(76,201,240,0.25);
+            box-shadow: inset 0 1px 0 rgba(76,201,240,0.1);
+        }
+        
+        /* Accordion Overrides */
+        .accordion-button::after {
+            filter: invert(1) grayscale(100%) brightness(200%);
+        }
+        .accordion-button:not(.collapsed) {
+            color: var(--primary) !important;
+        }
+
+        .nav-pills .nav-link.active {
+            background: rgba(255,255,255,0.08) !important;
+            color: #fff !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 4px 14px rgba(0,0,0,0.2);
+        }
+        .nav-pills .nav-link:hover:not(.active) {
+            background: rgba(255,255,255,0.03);
+            color: #e2e8f0 !important;
+        }
+    </style>
 
     <script>
         function toggleMobileNav() {

@@ -17,6 +17,7 @@ urlpatterns = [
     path('profile/', user_views.profile, name='profile'),
     path('pricing/', gen_views.pricing, name='pricing'),
     path('buy-premium/<str:plan>/', user_views.buy_premium, name='buy_premium'),
+    path('stripe-portal/', user_views.stripe_customer_portal, name='stripe_customer_portal'),
     path('payment-success/', user_views.payment_success, name='payment_success'),
     path('stripe-webhook/', user_views.stripe_webhook, name='stripe_webhook'),
     path('terms/', gen_views.terms, name='terms'),

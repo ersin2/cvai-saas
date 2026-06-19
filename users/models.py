@@ -15,6 +15,12 @@ class Profile(models.Model):
     is_premium = models.BooleanField(default=False)
     stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
 
+    # ── Global Defaults ─────────────────────────────────────────────────────
+    base_resume = models.TextField(blank=True, help_text="User's core career history")
+    default_font = models.CharField(max_length=50, default='Inter', help_text="Preferred Studio Font")
+    default_language = models.CharField(max_length=50, default='English', help_text="Preferred Output Language")
+    avatar_url = models.URLField(max_length=500, blank=True, null=True, help_text="Profile Image URL")
+
     # ── generation limits per plan ──────────────────────────────────────────
     PLAN_LIMITS = {
         'free':  3,

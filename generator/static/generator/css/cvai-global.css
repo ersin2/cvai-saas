@@ -925,3 +925,208 @@ body {
     max-width: unset;
   }
 }
+
+
+/* =========================================
+   Theme Presets & Custom Sliders
+   ========================================= */
+
+/* Theme Presets */
+.theme-presets-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.theme-preset-pill {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+
+.theme-preset-pill:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 10px rgba(255,255,255,0.2);
+}
+
+.theme-preset-pill.active {
+  border-color: #fff;
+  box-shadow: 0 0 12px rgba(255,255,255,0.4);
+}
+
+.theme-preset-pill .split-bg {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  position: absolute;
+}
+
+/* Tooltip for preset names */
+.theme-preset-pill::after {
+  content: attr(title);
+  position: absolute;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.8);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  z-index: 10;
+}
+
+.theme-preset-pill:hover::after {
+  opacity: 1;
+}
+
+/* Custom Range Sliders */
+.vs-range {
+  -webkit-appearance: none;
+  width: 100%;
+  background: transparent;
+  outline: none;
+  margin: 10px 0;
+}
+
+.vs-range::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 6px;
+  cursor: pointer;
+  background: rgba(255,255,255,0.1);
+  border-radius: 3px;
+  border: 1px solid rgba(0,0,0,0.3);
+}
+
+.vs-range::-webkit-slider-thumb {
+  border: 2px solid #fff;
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  -webkit-appearance: none;
+  margin-top: -6px;
+  box-shadow: 0 0 8px rgba(76,201,240,0.5);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.vs-range:hover::-webkit-slider-thumb {
+  transform: scale(1.15);
+  box-shadow: 0 0 12px rgba(76,201,240,0.8);
+}
+
+.vs-range:focus::-webkit-slider-runnable-track {
+  background: rgba(255,255,255,0.15);
+}
+
+/* ── Custom JS Font Dropdown ────────────────────── */
+.font-dropdown {
+  position: relative;
+  width: 100%;
+}
+.font-dropdown-toggle {
+  width: 100%;
+  background: rgba(0,0,0,.3);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: .8rem;
+  padding: 10px 30px 10px 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: all .2s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.font-dropdown-toggle:hover, .font-dropdown-toggle:focus {
+  border-color: var(--accent);
+  background: rgba(0,0,0,.4);
+  outline: none;
+}
+.font-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: #0d1120;
+  border: 1px solid rgba(76,201,240,.3);
+  border-radius: var(--radius-sm);
+  margin-top: 4px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+  z-index: 100;
+  display: none;
+  overflow: hidden;
+  animation: fadeInDown 0.2s ease;
+}
+.font-dropdown.open .font-dropdown-menu {
+  display: block;
+}
+.font-dropdown-option {
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: .85rem;
+  color: var(--text-primary);
+  transition: background .15s;
+}
+.font-dropdown-option:hover {
+  background: rgba(76,201,240,.15);
+}
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ── Sticky Form Nav ────────────────────────────── */
+.vs-left-nav {
+  position: sticky;
+  top: 0;
+  background: rgba(13,17,32,.95);
+  backdrop-filter: blur(8px);
+  z-index: 50;
+  padding: 8px 20px;
+  border-bottom: 1px solid rgba(76,201,240,0.10);
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.vs-left-nav::-webkit-scrollbar { display: none; }
+.vs-left-nav a {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-decoration: none;
+  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+.vs-left-nav a:hover, .vs-left-nav a.active {
+  color: #4cc9f0;
+  background: rgba(76,201,240,.1);
+}
+
+.table-responsive {
+    overflow: visible !important;
+}
+.app-table {
+    position: relative;
+    z-index: 1;
+}

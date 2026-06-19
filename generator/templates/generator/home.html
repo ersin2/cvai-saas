@@ -16,7 +16,7 @@
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   <!-- Global Design System -->
-  <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}">
+  <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}?v=2">
   <!-- Existing Studio Styles (keep design tokens intact) -->
   {% include 'generator/partials/studio_styles.html' %}
 
@@ -739,6 +739,15 @@
 
       <div class="vs-left-scroll">
 
+        <!-- Sticky Form Navigation -->
+        <nav class="vs-left-nav" id="stickyFormNav">
+          <a href="#sec-personal" onclick="event.preventDefault(); scrollToSection('sec-personal')">Profile</a>
+          <a href="#sec-exp" onclick="event.preventDefault(); scrollToSection('sec-exp')">Experience</a>
+          <a href="#sec-edu" onclick="event.preventDefault(); scrollToSection('sec-edu')">Education</a>
+          <a href="#sec-skills" onclick="event.preventDefault(); scrollToSection('sec-skills')">Skills</a>
+          <a href="#sec-theme" onclick="event.preventDefault(); scrollToSection('sec-theme')">Theme</a>
+        </nav>
+
         <!-- The master form (multipart for photo upload) -->
         <form id="resume-form" enctype="multipart/form-data" method="post"
               action="{% url 'download_pdf' %}">
@@ -1289,6 +1298,24 @@
                        name="section_spacing" min="1.0" max="2.2" value="1.5" step="0.05"
                        oninput="document.getElementById('valSpacing').textContent=parseFloat(this.value).toFixed(2); scheduleLivePreview();">
               </div>
+              <div class="slider-wrap">
+                <div class="slider-header">
+                  <span class="slider-name">Page Margins</span>
+                  <span class="slider-val" id="valMargin">22mm</span>
+                </div>
+                <input type="range" class="vs-range" id="sliderMargin"
+                       name="page_margin" min="10" max="35" value="22" step="1"
+                       oninput="document.getElementById('valMargin').textContent=this.value+'mm'; scheduleLivePreview();">
+              </div>
+              <div class="slider-wrap">
+                <div class="slider-header">
+                  <span class="slider-name">Line Spacing</span>
+                  <span class="slider-val" id="valLineHeight">1.20</span>
+                </div>
+                <input type="range" class="vs-range" id="sliderLineHeight"
+                       name="line_height" min="1.0" max="1.8" value="1.2" step="0.05"
+                       oninput="document.getElementById('valLineHeight').textContent=parseFloat(this.value).toFixed(2); scheduleLivePreview();">
+              </div>
             </div>
           </div><!-- /§8 -->
 
@@ -1301,6 +1328,28 @@
               <i class="fas fa-chevron-down toggle-icon"></i>
             </button>
             <div class="vs-section-body" id="sec-theme">
+
+              <!-- Theme Presets -->
+              <div style="margin-bottom: 12px;">
+                <label style="font-size:.75rem;font-weight:600;color:var(--text-secondary);margin-bottom:8px;display:block;">One-Click Presets</label>
+                <div class="theme-presets-row">
+                  <div class="theme-preset-pill" title="Midnight Neon" onclick="applyThemePreset('#4cc9f0', '#060810', '#f72585', this)">
+                    <div class="split-bg" style="background: linear-gradient(135deg, #4cc9f0 50%, #060810 50%);"></div>
+                  </div>
+                  <div class="theme-preset-pill" title="Executive Slate" onclick="applyThemePreset('#2c3e50', '#ffffff', '#95a5a6', this)">
+                    <div class="split-bg" style="background: linear-gradient(135deg, #2c3e50 50%, #ffffff 50%);"></div>
+                  </div>
+                  <div class="theme-preset-pill" title="Hacker Green" onclick="applyThemePreset('#00ff41', '#0d0d0d', '#008f11', this)">
+                    <div class="split-bg" style="background: linear-gradient(135deg, #00ff41 50%, #0d0d0d 50%);"></div>
+                  </div>
+                  <div class="theme-preset-pill" title="Crimson Minimal" onclick="applyThemePreset('#e63946', '#f1faee', '#a8dadc', this)">
+                    <div class="split-bg" style="background: linear-gradient(135deg, #e63946 50%, #f1faee 50%);"></div>
+                  </div>
+                  <div class="theme-preset-pill" title="Royal Gold" onclick="applyThemePreset('#d4af37', '#1a1a2e', '#c0c0c0', this)">
+                    <div class="split-bg" style="background: linear-gradient(135deg, #d4af37 50%, #1a1a2e 50%);"></div>
+                  </div>
+                </div>
+              </div>
 
               <div class="theme-grid" style="margin-bottom:12px;">
 
@@ -1338,14 +1387,24 @@
                 </div>
 
                 <!-- Font Family -->
-                <div class="color-field">
-                  <label for="cp_font">Font Style</label>
-                  <select class="font-select" id="cp_font" name="font_family"
-                          onchange="scheduleLivePreview()">
-                    <option value="Helvetica">Helvetica (Modern)</option>
-                    <option value="Times-Roman">Times (Classic)</option>
-                    <option value="Courier">Courier (Tech/Mono)</option>
-                  </select>
+                <div class="color-field" style="grid-column: span 3;">
+                  <label>Font Style</label>
+                  <div class="font-dropdown" id="customFontDropdown">
+                    <input type="hidden" id="cp_font" name="font_family" value="Helvetica">
+                    <div class="font-dropdown-toggle" onclick="this.parentElement.classList.toggle('open')">
+                      <span id="fontDropdownSelected">Helvetica (Modern Sans-Serif)</span>
+                      <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="font-dropdown-menu">
+                      <div class="font-dropdown-option" onclick="selectFont('Helvetica', 'Helvetica (Modern Sans-Serif)')" style="font-family: Helvetica, sans-serif;">Helvetica (Modern Sans-Serif)</div>
+                      <div class="font-dropdown-option" onclick="selectFont('Times-Roman', 'Times (Classic Serif)')" style="font-family: 'Times New Roman', serif;">Times (Classic Serif)</div>
+                      <div class="font-dropdown-option" onclick="selectFont('Courier', 'Courier (Tech/Monospace)')" style="font-family: Courier, monospace;">Courier (Tech/Monospace)</div>
+                      <div class="font-dropdown-option" onclick="selectFont('Inter', 'Inter (Clean Sans)')" style="font-family: 'Inter', sans-serif;">Inter (Clean Sans)</div>
+                      <div class="font-dropdown-option" onclick="selectFont('Outfit', 'Outfit (Geometric)')" style="font-family: 'Outfit', sans-serif;">Outfit (Geometric)</div>
+                      <div class="font-dropdown-option" onclick="selectFont('JetBrains Mono', 'JetBrains Mono (Tech)')" style="font-family: 'JetBrains Mono', monospace;">JetBrains Mono (Tech)</div>
+                      <div class="font-dropdown-option" onclick="selectFont('Merriweather', 'Merriweather (Elegant)')" style="font-family: 'Merriweather', serif;">Merriweather (Elegant)</div>
+                    </div>
+                  </div>
                 </div>
 
               </div><!-- /.theme-grid -->
@@ -2188,8 +2247,61 @@
     scheduleLivePreview(300);
     showToast('Form cleared!', 'success');
   });
+
+  function applyThemePreset(primary, bg, accent, el) {
+    document.getElementById('cp_primary').value = primary;
+    document.getElementById('hex_primary').textContent = primary;
+    document.getElementById('cp_bg').value = bg;
+    document.getElementById('hex_bg').textContent = bg;
+    document.getElementById('cp_accent').value = accent;
+    document.getElementById('hex_accent').textContent = accent;
+    
+    document.querySelectorAll('.theme-preset-pill').forEach(p => p.classList.remove('active'));
+    if (el) el.classList.add('active');
+    
+    scheduleLivePreview();
+  }
+
+  function scrollToSection(id) {
+    const el = document.getElementById(id);
+    if(el) {
+      if(!el.classList.contains('open')) {
+        el.classList.add('open');
+        const btn = document.querySelector(`button[data-target="${id}"]`);
+        if(btn) btn.classList.add('open');
+      }
+      el.scrollIntoView({behavior: 'smooth', block: 'start'});
+    }
+  }
+
+  function selectFont(value, label) {
+    document.getElementById('cp_font').value = value;
+    document.getElementById('fontDropdownSelected').textContent = label;
+    document.getElementById('customFontDropdown').classList.remove('open');
+    scheduleLivePreview();
+  }
+
+  document.addEventListener('click', function(e) {
+    const dropdown = document.getElementById('customFontDropdown');
+    if(dropdown && !dropdown.contains(e.target)) {
+      dropdown.classList.remove('open');
+    }
+  });
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Inject Global Profile Defaults into Studio -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const defaultFont = "{{ profile.default_font|default:'Inter' }}";
+        if (defaultFont && defaultFont !== 'Inter' && typeof changeFont === 'function') {
+            // Wait slightly for fonts to load
+            setTimeout(() => {
+                changeFont(defaultFont);
+            }, 100);
+        }
+    });
+  </script>
 </body>
 </html>

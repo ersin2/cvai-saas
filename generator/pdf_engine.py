@@ -346,6 +346,14 @@ def _post_colors(req, cfg: dict):
 
 def _font_variants(font: str):
     """Return (regular, bold, italic) font names for a base font."""
+    # Map custom fonts to standard fallbacks since we skipped TTF embedding
+    if font in ['Inter', 'Outfit']:
+        font = 'Helvetica'
+    elif font in ['JetBrains Mono']:
+        font = 'Courier'
+    elif font in ['Merriweather']:
+        font = 'Times-Roman'
+        
     if 'Times' in font:
         return ('Times-Roman', 'Times-Bold', 'Times-Italic')
     if 'Courier' in font:

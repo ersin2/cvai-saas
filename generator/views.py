@@ -123,7 +123,12 @@ def privacy(request):
 # === HOME PAGE — Unified Resume Studio ===
 @login_required
 def home(request):
-    return render(request, 'generator/home.html')
+    context = {}
+    if request.user.is_authenticated:
+        from users.models import Profile
+        profile, _ = Profile.objects.get_or_create(user=request.user)
+        context['profile'] = profile
+    return render(request, 'generator/home.html', context)
 
 
 
@@ -750,9 +755,12 @@ def dashboard(request):
 @login_required
 def tools(request):
     """Render the AI tools page with interview prep, follow-up, and ATS tools."""
+    from users.models import Profile
+    profile, _ = Profile.objects.get_or_create(user=request.user)
     recent_results = AIResult.objects.filter(user=request.user)[:10]
     return render(request, 'generator/tools.html', {
         'results': recent_results,
+        'profile': profile,
     })
 
 

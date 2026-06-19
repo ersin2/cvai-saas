@@ -2,6 +2,7 @@ import logging
 import stripe
 
 from django.shortcuts import render, redirect
+from django.urls import reverse
 from .forms import UserRegisterForm
 from django.contrib import messages
 from django.contrib.auth import login, logout
@@ -55,6 +56,16 @@ def register(request):
 def profile(request):
     from .models import Profile
     user_profile, created = Profile.objects.get_or_create(user=request.user)
+    
+    if request.method == 'POST':
+        user_profile.base_resume = request.POST.get('base_resume', '')
+        user_profile.default_font = request.POST.get('default_font', 'Inter')
+        user_profile.default_language = request.POST.get('default_language', 'English')
+        user_profile.avatar_url = request.POST.get('avatar_url', '')
+        user_profile.save()
+        messages.success(request, 'Your global defaults have been saved.')
+        return redirect('profile')
+
     request.user.profile = user_profile
     return render(request, 'users/profile.html')
 
@@ -339,3 +350,25 @@ def stripe_webhook(request):
         logger.debug('Stripe webhook: unhandled event type "%s".', event['type'])
 
     return HttpResponse(status=200)
+
+@login_required
+def stripe_customer_portal(request):
+    """Redirect to the Stripe Customer Portal so users can manage/cancel subscriptions."""
+    if not getattr(settings, 'STRIPE_SECRET_KEY', None):
+        from django.http import HttpResponse
+        return HttpResponse('Payment system is not configured. No STRIPE_SECRET_KEY found.', status=400)
+
+    user_profile = request.user.profile
+    if not user_profile.stripe_customer_id:
+        return render(request, 'users/billing_error.html')
+
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    try:
+        session = stripe.billing_portal.Session.create(
+            customer=user_profile.stripe_customer_id,
+            return_url=request.build_absolute_uri(reverse('profile')),
+        )
+        return redirect(session.url)
+    except Exception as e:
+        from django.http import HttpResponse
+        return HttpResponse(f'Error accessing billing portal: {str(e)}', status=400)

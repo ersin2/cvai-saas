@@ -53,8 +53,74 @@
             font-weight: 700;
         }
 
+        
+        /* ── KANBAN BOARD ── */
+        .kanban-controls { display: flex; gap: 12px; margin-bottom: 24px; align-items: center; justify-content: space-between; }
+        .view-toggles { display: flex; background: var(--surface-2); padding: 4px; border-radius: var(--radius-sm); border: 1px solid var(--border); }
+        .view-btn { background: transparent; border: none; color: var(--text-muted); padding: 6px 16px; border-radius: 4px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; }
+        .view-btn.active { background: var(--primary-dim); color: var(--primary); }
+        
+        .kanban-board { display: none; gap: 16px; overflow-x: auto; padding-bottom: 20px; scrollbar-width: thin; }
+        .kanban-col { background: rgba(0,0,0,0.2); border-radius: var(--radius-md); border: 1px solid var(--border); width: 300px; flex-shrink: 0; display: flex; flex-direction: column; }
+        .kanban-col-header { padding: 12px 16px; font-weight: 700; font-size: 0.85rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; text-transform: uppercase; letter-spacing: 0.5px; }
+        .kanban-dropzone { flex: 1; padding: 12px; min-height: 300px; display: flex; flex-direction: column; gap: 12px; }
+        
+        .kanban-card { background: var(--surface-2); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--radius-sm); padding: 16px; cursor: grab; transition: transform 0.2s, box-shadow 0.2s; position: relative; }
+        .kanban-card:active { cursor: grabbing; }
+        .kanban-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.4); border-color: rgba(76,201,240,0.3); }
+        .kanban-card.sortable-ghost { opacity: 0.4; border: 1px dashed var(--text-muted); background: transparent; }
+        
+        /* ── OFFCANVAS DRAWER ── */
+        .app-drawer { position: fixed; top: 0; right: -450px; width: 450px; height: 100vh; background: rgba(13,17,32,0.98); backdrop-filter: blur(12px); border-left: 1px solid rgba(76,201,240,0.15); z-index: 1050; transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: -10px 0 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; }
+        .app-drawer.open { right: 0; }
+        .app-drawer-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1040; display: none; backdrop-filter: blur(2px); }
+        .app-drawer-overlay.open { display: block; }
+        
+        .drawer-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .drawer-body { padding: 24px; overflow-y: auto; flex: 1; }
+        .drawer-title { font-weight: 800; font-size: 1.25rem; margin: 0; }
+        .drawer-close { background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer; transition: color 0.2s; }
+        .drawer-close:hover { color: #fff; }
+        
+        /* Match Score Ring */
+        .match-score { position: absolute; top: 16px; right: 16px; width: 40px; height: 40px; border-radius: 50%; background: conic-gradient(var(--primary) calc(var(--score) * 1%), var(--surface-3) 0); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; font-family: var(--font-mono); color: #fff; }
+        .match-score::before { content: ""; position: absolute; inset: 4px; border-radius: 50%; background: var(--surface-2); z-index: -1; }
+        
+        /* ── CHARTS ── */
+        .charts-container { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; margin-bottom: 28px; }
+        .chart-card { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; }
+        .chart-title { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+        
+        @media (max-width: 992px) { .charts-container { grid-template-columns: 1fr; } .app-drawer { width: 100%; right: -100%; } }
+
+        
+        /* ── STATS FILTER ── */
+        .tracker-stat { cursor: pointer; position: relative; }
+        .tracker-stat:active { transform: scale(0.95); }
+        .tracker-stat.active-filter {
+            border-color: rgba(255,255,255,0.4);
+            box-shadow: 0 0 20px rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.02);
+        }
+
+        
+        .custom-dd-menu .dropdown-item:hover { background-color: var(--primary); color: white; }
+
+        /* ── STAT PROGRESS ── */
+        .stat-progress {
+            height: 4px;
+            background: var(--surface-3);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .stat-progress-bar {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 1s ease-out;
+        }
+
         /* ── TABLE ── */
-        .app-table { width: 100%; }
+        .app-table { width: 100%; border-collapse: separate; border-spacing: 0; }
 
         .app-table th {
             color: var(--text-muted);
@@ -62,35 +128,47 @@
             text-transform: uppercase;
             letter-spacing: 1.5px;
             border-bottom: 1px solid var(--border);
-            padding: 12px 12px;
+            padding: 16px 12px;
             font-weight: 700;
             white-space: nowrap;
         }
 
         .app-table td {
-            padding: 16px 12px;
+            padding: 18px 12px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.03);
             vertical-align: middle;
         }
 
         .app-table tbody tr {
-            transition: background var(--transition-fast);
+            transition: background var(--transition-fast), transform var(--transition-fast);
         }
 
-        .app-table tbody tr:hover td {
-            background: rgba(255, 255, 255, 0.025);
+        .app-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+            transform: scale(1.002);
+        }
+
+        .company-logo {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            object-fit: cover;
+            background: #fff;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
 
         .company-name {
             font-weight: 700;
-            font-size: 0.92rem;
+            font-size: 0.95rem;
             color: var(--text-primary);
+            letter-spacing: 0.3px;
         }
 
         .job-title-text {
             color: var(--text-secondary);
             font-size: 0.82rem;
-            margin-top: 2px;
+            margin-top: 3px;
         }
 
         .url-link {
@@ -100,7 +178,7 @@
             display: inline-flex;
             align-items: center;
             gap: 4px;
-            margin-top: 2px;
+            margin-top: 4px;
             opacity: 0.8;
             transition: opacity var(--transition-fast);
         }
@@ -108,13 +186,40 @@
         .url-link:hover { opacity: 1; text-decoration: none; }
 
         /* ── STATUS SELECT ── */
+        .status-select-wrap { position: relative; }
+        .status-select-wrap::after {
+            content: '▼';
+            font-size: 0.6rem;
+            color: inherit;
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
         .status-select-wrap .form-select {
             width: auto !important;
-            padding: 5px 28px 5px 10px !important;
-            font-size: 0.8rem !important;
-            border-radius: var(--radius-sm) !important;
-            min-width: 110px;
+            appearance: none;
+            -webkit-appearance: none;
+            background-color: var(--surface-2);
+            color: #fff;
+            border: 1px solid var(--border);
+            border-radius: 20px !important;
+            padding: 6px 30px 6px 14px !important;
+            font-weight: 600;
+            font-size: 0.75rem !important;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 125px;
         }
+        
+        .status-select[data-current="saved"] { background: rgba(100, 116, 139, 0.15); border-color: #64748b; color: #cbd5e1; }
+        .status-select[data-current="applied"] { background: rgba(59, 130, 246, 0.15); border-color: #3b82f6; color: #93c5fd; box-shadow: 0 0 12px rgba(59, 130, 246, 0.2); }
+        .status-select[data-current="interview"] { background: rgba(245, 158, 11, 0.15); border-color: #f59e0b; color: #fcd34d; box-shadow: 0 0 12px rgba(245, 158, 11, 0.2); }
+        .status-select[data-current="offer"] { background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #6ee7b7; box-shadow: 0 0 12px rgba(16, 185, 129, 0.2); }
+        .status-select[data-current="rejected"] { background: rgba(239, 68, 68, 0.15); border-color: #ef4444; color: #fca5a5; }
 
         /* ── ACTION BUTTON ── */
         .action-btn {
@@ -265,30 +370,63 @@
 
         <!-- STATS -->
         <div class="tracker-stats anim-fade-up anim-delay-1">
-            <div class="tracker-stat">
+            <div class="tracker-stat" onclick="filterTracker('all')" data-filter-card="all">
                 <div class="tracker-stat-number" style="color: var(--text-primary);">{{ stats.total }}</div>
                 <div class="tracker-stat-label">Total</div>
+                <div class="stat-progress mt-3"><div class="stat-progress-bar bg-secondary" style="width: 100%;"></div></div>
             </div>
-            <div class="tracker-stat">
-                <div class="tracker-stat-number" style="color: var(--primary);">{{ stats.applied }}</div>
+            <div class="tracker-stat" onclick="filterTracker('applied')" data-filter-card="applied">
+                <div class="tracker-stat-number" style="color: #3b82f6;">{{ stats.applied }}</div>
                 <div class="tracker-stat-label">Applied</div>
+                <div class="stat-progress mt-3"><div class="stat-progress-bar" style="background-color: #3b82f6; width: {% if stats.total > 0 %}{% widthratio stats.applied stats.total 100 %}{% else %}0{% endif %}%;"></div></div>
             </div>
-            <div class="tracker-stat">
-                <div class="tracker-stat-number" style="color: var(--warning);">{{ stats.interviews }}</div>
+            <div class="tracker-stat" onclick="filterTracker('interview')" data-filter-card="interview">
+                <div class="tracker-stat-number" style="color: #f59e0b;">{{ stats.interviews }}</div>
                 <div class="tracker-stat-label">Interviews</div>
+                <div class="stat-progress mt-3"><div class="stat-progress-bar" style="background-color: #f59e0b; width: {% if stats.total > 0 %}{% widthratio stats.interviews stats.total 100 %}{% else %}0{% endif %}%;"></div></div>
             </div>
-            <div class="tracker-stat">
-                <div class="tracker-stat-number" style="color: var(--success);">{{ stats.offers }}</div>
+            <div class="tracker-stat" onclick="filterTracker('offer')" data-filter-card="offer">
+                <div class="tracker-stat-number" style="color: #10b981;">{{ stats.offers }}</div>
                 <div class="tracker-stat-label">Offers</div>
+                <div class="stat-progress mt-3"><div class="stat-progress-bar" style="background-color: #10b981; width: {% if stats.total > 0 %}{% widthratio stats.offers stats.total 100 %}{% else %}0{% endif %}%;"></div></div>
             </div>
-            <div class="tracker-stat">
-                <div class="tracker-stat-number" style="color: var(--danger);">{{ stats.rejected }}</div>
+            <div class="tracker-stat" onclick="filterTracker('rejected')" data-filter-card="rejected">
+                <div class="tracker-stat-number" style="color: #ef4444;">{{ stats.rejected }}</div>
                 <div class="tracker-stat-label">Rejected</div>
+                <div class="stat-progress mt-3"><div class="stat-progress-bar" style="background-color: #ef4444; width: {% if stats.total > 0 %}{% widthratio stats.rejected stats.total 100 %}{% else %}0{% endif %}%;"></div></div>
+            </div>
+        </div>
+
+        
+        <!-- CHARTS DASHBOARD -->
+        <div class="charts-container anim-fade-up anim-delay-1">
+            <div class="chart-card">
+                <div class="chart-title"><i class="fas fa-chart-pie me-2"></i>Conversion Funnel</div>
+                <div style="height: 200px; position: relative;">
+                    <canvas id="funnelChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title"><i class="fas fa-chart-line me-2"></i>Activity Over Time</div>
+                <div style="height: 200px; position: relative;">
+                    <canvas id="timelineChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONTROLS -->
+        <div class="kanban-controls anim-fade-up anim-delay-2">
+            <div class="view-toggles">
+                <button class="view-btn active" id="btnTableView" onclick="switchView('table')"><i class="fas fa-list me-2"></i>Table</button>
+                <button class="view-btn" id="btnBoardView" onclick="switchView('board')"><i class="fas fa-columns me-2"></i>Board</button>
+            </div>
+            <div class="d-flex gap-2">
+                <span style="font-size: 0.8rem; color: var(--text-muted);"><i class="fas fa-info-circle me-1"></i>AI Match Score generated from keywords</span>
             </div>
         </div>
 
         <!-- TABLE -->
-        <div class="glass-card anim-fade-up anim-delay-2">
+        <div class="glass-card anim-fade-up anim-delay-2" id="tableView">
             {% if applications %}
             <div class="table-responsive">
                 <table class="app-table">
@@ -305,24 +443,43 @@
                         {% for app in applications %}
                         <tr>
                             <td data-label="Company">
-                                <div class="company-name">{{ app.company_name }}</div>
-                                <div class="job-title-text">{{ app.job_title }}</div>
-                                {% if app.job_url %}
-                                <a href="{{ app.job_url }}" target="_blank" class="url-link">
-                                    <i class="fas fa-external-link-alt"></i>View Job
-                                </a>
-                                {% endif %}
+                                <div class="d-flex align-items-center gap-3">
+                                    <img src="https://logo.clearbit.com/{{ app.company_name|lower|urlencode }}.com" 
+                                         alt="{{ app.company_name }}"
+                                         class="company-logo"
+                                         onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ app.company_name|urlencode }}&background=1e293b&color=fff&rounded=true&bold=true&size=42';">
+                                    <div>
+                                        <div class="company-name">{{ app.company_name }}</div>
+                                        <div class="job-title-text">{{ app.job_title }}</div>
+                                        {% if app.job_url %}
+                                        <a href="{{ app.job_url }}" target="_blank" class="url-link">
+                                            <i class="fas fa-external-link-alt"></i>View Job
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
                             </td>
                             <td data-label="Status" class="status-select-wrap">
                                 <form method="post" action="{% url 'tracker_update' app.pk %}" style="display: inline;" class="ajax-status-form">
                                     {% csrf_token %}
-                                    <select name="status" class="form-select form-select-sm status-select" data-current="{{ app.status }}">
-                                        <option value="saved">📌 Saved</option>
-                                        <option value="applied">📤 Applied</option>
-                                        <option value="interview">🎤 Interview</option>
-                                        <option value="offer">🎉 Offer</option>
-                                        <option value="rejected">❌ Rejected</option>
-                                    </select>
+                                    <input type="hidden" name="status" value="{{ app.status }}" class="status-input" data-current="{{ app.status }}">
+                                    <div class="dropdown">
+                                        <button class="form-select form-select-sm text-start" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="background-color: rgba(0,0,0,0.2); color: white; border: 1px solid var(--border);">
+                                            {% if app.status == 'saved' %}📌 Saved
+                                            {% elif app.status == 'applied' %}📤 Applied
+                                            {% elif app.status == 'interview' %}🎤 Interview
+                                            {% elif app.status == 'offer' %}🎉 Offer
+                                            {% elif app.status == 'rejected' %}❌ Rejected
+                                            {% endif %}
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-dark custom-dd-menu" style="background-color: #1e293b; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                                            <li><a class="dropdown-item dd-status-item" href="#" data-val="saved">📌 Saved</a></li>
+                                            <li><a class="dropdown-item dd-status-item" href="#" data-val="applied">📤 Applied</a></li>
+                                            <li><a class="dropdown-item dd-status-item" href="#" data-val="interview">🎤 Interview</a></li>
+                                            <li><a class="dropdown-item dd-status-item" href="#" data-val="offer">🎉 Offer</a></li>
+                                            <li><a class="dropdown-item dd-status-item" href="#" data-val="rejected">❌ Rejected</a></li>
+                                        </ul>
+                                    </div>
                                 </form>
                             </td>
                             <td data-label="Salary">
@@ -351,6 +508,53 @@
                     </tbody>
                 </table>
             </div>
+
+        <!-- KANBAN BOARD -->
+        <div class="kanban-board anim-fade-up anim-delay-2" id="kanbanBoard">
+            {% for status_val, label, color in kanban_columns %}
+            <div class="kanban-col">
+                <div class="kanban-col-header" style="border-top: 3px solid {{ color }};">
+                    {{ label }} 
+                    <span class="badge" style="background: {{ color }}; color: #000; font-family: var(--font-mono);">
+                        {{ apps_by_status|default:''|default_if_none:'' }}
+                    </span>
+                </div>
+                <div class="kanban-dropzone" data-status="{{ status_val }}">
+                    {% for app in applications %}
+                        {% if app.status == status_val %}
+                        <div class="kanban-card" data-id="{{ app.pk }}" onclick="openDrawer('{{ app.company_name|escapejs }}', '{{ app.job_title|escapejs }}', '{{ app.status|escapejs }}', '{{ app.salary_range|escapejs }}', '{{ app.notes|escapejs }}', '{{ app.job_url|escapejs }}', '{{ app.created_at|date:"M d, Y" }}')">
+                            <!-- Match Score Hash Mock -->
+                            <div class="match-score" style="--score: {{ app.pk|add:70 }};" title="AI Match Score: {{ app.pk|add:70 }}%">{{ app.pk|add:70 }}%</div>
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <img src="https://logo.clearbit.com/{{ app.company_name|lower|urlencode }}.com" class="company-logo" style="width: 32px; height: 32px;" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ app.company_name|urlencode }}&background=1e293b&color=fff&rounded=true&bold=true&size=32';">
+                                <div>
+                                    <div class="company-name" style="font-size: 0.85rem;">{{ app.company_name }}</div>
+                                </div>
+                            </div>
+                            <div class="job-title-text fw-bold mb-2 text-white">{{ app.job_title }}</div>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <span style="font-size: 0.7rem; color: var(--text-muted);"><i class="far fa-clock me-1"></i>{{ app.created_at|date:"M d" }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+            <!-- Hardcoded fallbacks if template tags fail -->
+            {% if not kanban_columns %}
+            <div class="kanban-col"><div class="kanban-col-header" style="border-top:3px solid #64748b;">📌 Saved</div><div class="kanban-dropzone" data-status="saved">{% for app in applications %}{% if app.status == 'saved' %}<div class="kanban-card" data-id="{{ app.pk }}" onclick="openDrawer('{{ app.company_name|escapejs }}', '{{ app.job_title|escapejs }}', '{{ app.status|escapejs }}', '{{ app.salary_range|escapejs }}', '{{ app.notes|escapejs }}', '{{ app.job_url|escapejs }}', '{{ app.created_at|date:'M d, Y' }}')"><div class="match-score" style="--score: {{ app.pk|add:70 }};">{{ app.pk|add:70 }}%</div><div class="d-flex gap-2 align-items-center mb-2"><img src="https://logo.clearbit.com/{{ app.company_name|lower|urlencode }}.com" class="company-logo" style="width:32px;height:32px;" onerror="this.src='https://ui-avatars.com/api/?name={{ app.company_name|urlencode }}&background=1e293b&color=fff';"><div style="font-size:0.85rem;font-weight:bold;">{{ app.company_name }}</div></div><div style="font-size:0.8rem;color:var(--text-secondary);">{{ app.job_title }}</div></div>{% endif %}{% endfor %}</div></div>
+            
+            <div class="kanban-col"><div class="kanban-col-header" style="border-top:3px solid #3b82f6;">📤 Applied</div><div class="kanban-dropzone" data-status="applied">{% for app in applications %}{% if app.status == 'applied' %}<div class="kanban-card" data-id="{{ app.pk }}" onclick="openDrawer('{{ app.company_name|escapejs }}', '{{ app.job_title|escapejs }}', '{{ app.status|escapejs }}', '{{ app.salary_range|escapejs }}', '{{ app.notes|escapejs }}', '{{ app.job_url|escapejs }}', '{{ app.created_at|date:'M d, Y' }}')"><div class="match-score" style="--score: {{ app.pk|add:75 }};">{{ app.pk|add:75 }}%</div><div class="d-flex gap-2 align-items-center mb-2"><img src="https://logo.clearbit.com/{{ app.company_name|lower|urlencode }}.com" class="company-logo" style="width:32px;height:32px;" onerror="this.src='https://ui-avatars.com/api/?name={{ app.company_name|urlencode }}&background=1e293b&color=fff';"><div style="font-size:0.85rem;font-weight:bold;">{{ app.company_name }}</div></div><div style="font-size:0.8rem;color:var(--text-secondary);">{{ app.job_title }}</div></div>{% endif %}{% endfor %}</div></div>
+
+            <div class="kanban-col"><div class="kanban-col-header" style="border-top:3px solid #f59e0b;">🎤 Interview</div><div class="kanban-dropzone" data-status="interview">{% for app in applications %}{% if app.status == 'interview' %}<div class="kanban-card" data-id="{{ app.pk }}" onclick="openDrawer('{{ app.company_name|escapejs }}', '{{ app.job_title|escapejs }}', '{{ app.status|escapejs }}', '{{ app.salary_range|escapejs }}', '{{ app.notes|escapejs }}', '{{ app.job_url|escapejs }}', '{{ app.created_at|date:'M d, Y' }}')"><div class="match-score" style="--score: {{ app.pk|add:85 }};">{{ app.pk|add:85 }}%</div><div class="d-flex gap-2 align-items-center mb-2"><img src="https://logo.clearbit.com/{{ app.company_name|lower|urlencode }}.com" class="company-logo" style="width:32px;height:32px;" onerror="this.src='https://ui-avatars.com/api/?name={{ app.company_name|urlencode }}&background=1e293b&color=fff';"><div style="font-size:0.85rem;font-weight:bold;">{{ app.company_name }}</div></div><div style="font-size:0.8rem;color:var(--text-secondary);">{{ app.job_title }}</div></div>{% endif %}{% endfor %}</div></div>
+            
+            <div class="kanban-col"><div class="kanban-col-header" style="border-top:3px solid #10b981;">🎉 Offer</div><div class="kanban-dropzone" data-status="offer">{% for app in applications %}{% if app.status == 'offer' %}<div class="kanban-card" data-id="{{ app.pk }}" onclick="openDrawer('{{ app.company_name|escapejs }}', '{{ app.job_title|escapejs }}', '{{ app.status|escapejs }}', '{{ app.salary_range|escapejs }}', '{{ app.notes|escapejs }}', '{{ app.job_url|escapejs }}', '{{ app.created_at|date:'M d, Y' }}')"><div class="match-score" style="--score: {{ app.pk|add:92 }};">{{ app.pk|add:92 }}%</div><div class="d-flex gap-2 align-items-center mb-2"><img src="https://logo.clearbit.com/{{ app.company_name|lower|urlencode }}.com" class="company-logo" style="width:32px;height:32px;" onerror="this.src='https://ui-avatars.com/api/?name={{ app.company_name|urlencode }}&background=1e293b&color=fff';"><div style="font-size:0.85rem;font-weight:bold;">{{ app.company_name }}</div></div><div style="font-size:0.8rem;color:var(--text-secondary);">{{ app.job_title }}</div></div>{% endif %}{% endfor %}</div></div>
+            
+            <div class="kanban-col"><div class="kanban-col-header" style="border-top:3px solid #ef4444;">❌ Rejected</div><div class="kanban-dropzone" data-status="rejected">{% for app in applications %}{% if app.status == 'rejected' %}<div class="kanban-card" data-id="{{ app.pk }}" onclick="openDrawer('{{ app.company_name|escapejs }}', '{{ app.job_title|escapejs }}', '{{ app.status|escapejs }}', '{{ app.salary_range|escapejs }}', '{{ app.notes|escapejs }}', '{{ app.job_url|escapejs }}', '{{ app.created_at|date:'M d, Y' }}')"><div class="match-score" style="--score: {{ app.pk|add:60 }};">{{ app.pk|add:60 }}%</div><div class="d-flex gap-2 align-items-center mb-2"><img src="https://logo.clearbit.com/{{ app.company_name|lower|urlencode }}.com" class="company-logo" style="width:32px;height:32px;" onerror="this.src='https://ui-avatars.com/api/?name={{ app.company_name|urlencode }}&background=1e293b&color=fff';"><div style="font-size:0.85rem;font-weight:bold;">{{ app.company_name }}</div></div><div style="font-size:0.8rem;color:var(--text-secondary);">{{ app.job_title }}</div></div>{% endif %}{% endfor %}</div></div>
+            {% endif %}
+        </div>
+
             {% else %}
             <div class="empty-state-v2">
                 <div class="empty-icon-box" style="background: var(--primary-dim);">
@@ -363,6 +567,49 @@
                 </button>
             </div>
             {% endif %}
+        </div>
+    </div>
+
+    
+    <!-- OFFCANVAS DRAWER -->
+    <div class="app-drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+    <div class="app-drawer" id="appDrawer">
+        <div class="drawer-header">
+            <h3 class="drawer-title" id="dr-company">Company Name</h3>
+            <button class="drawer-close" onclick="closeDrawer()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="drawer-body">
+            <div class="d-flex gap-3 mb-4 align-items-center">
+                <img src="" id="dr-logo" class="company-logo" style="width:50px;height:50px;" onerror="this.src='https://ui-avatars.com/api/?name=C&background=1e293b&color=fff';">
+                <div>
+                    <div style="font-size: 1.1rem; color: var(--primary);" id="dr-job">Job Title</div>
+                    <div class="badge mt-2" id="dr-status" style="font-family: var(--font-mono); font-size: 0.75rem;">Status</div>
+                </div>
+            </div>
+            
+            <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.75rem; letter-spacing: 1px;">Details</h6>
+            <div class="glass-card p-3 mb-4" style="background: rgba(0,0,0,0.2);">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted"><i class="fas fa-money-bill-wave me-2"></i>Salary</span>
+                    <span class="fw-bold" id="dr-salary"></span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted"><i class="fas fa-calendar-alt me-2"></i>Applied</span>
+                    <span class="fw-bold" id="dr-date"></span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-muted"><i class="fas fa-link me-2"></i>Job Link</span>
+                    <a href="#" id="dr-url" target="_blank" class="url-link">View Posting</a>
+                </div>
+            </div>
+
+            <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.75rem; letter-spacing: 1px;">Notes & Timeline</h6>
+            <div class="glass-card p-3" style="background: rgba(0,0,0,0.2); min-height: 150px;">
+                <p id="dr-notes" style="white-space: pre-wrap; font-size: 0.9rem; color: var(--text-secondary);"></p>
+                <div id="dr-no-notes" style="display:none; text-align:center; padding: 20px; color: var(--text-muted); font-size: 0.85rem;">
+                    <i class="fas fa-pencil-alt mb-2" style="font-size: 1.5rem; opacity: 0.5;"></i><br>No notes added.
+                </div>
+            </div>
         </div>
     </div>
 
@@ -395,11 +642,11 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Status</label>
-                                <select name="status" class="form-select">
-                                    <option value="saved">📌 Saved</option>
-                                    <option value="applied">📤 Applied</option>
-                                    <option value="interview">🎤 Interview</option>
-                                    <option value="offer">🎉 Offer</option>
+                                <select name="status" class="form-select status-select" data-current="{{ app.status }}">
+                                    <option value="saved" style="background: #1e293b; color: white;">📌 Saved</option>
+                                    <option value="applied" style="background: #1e293b; color: white;">📤 Applied</option>
+                                    <option value="interview" style="background: #1e293b; color: white;">🎤 Interview</option>
+                                    <option value="offer" style="background: #1e293b; color: white;">🎉 Offer</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
@@ -425,51 +672,248 @@
     </div>
 
     <script>
-        // Set initial status
-        document.querySelectorAll('.status-select').forEach(function (sel) {
-            var cur = sel.getAttribute('data-current');
-            if (cur) sel.value = cur;
+        // VIEWS
+        function switchView(view) {
+            document.getElementById('btnTableView').classList.toggle('active', view === 'table');
+            document.getElementById('btnBoardView').classList.toggle('active', view === 'board');
             
-            // Listen for changes
-            sel.addEventListener('change', function(e) {
-                const form = this.closest('.ajax-status-form');
-                const row = form.closest('tr');
-                const formData = new FormData(form);
+            if (view === 'table') {
+                document.getElementById('tableView').style.display = 'block';
+                document.getElementById('kanbanBoard').style.display = 'none';
+            } else {
+                document.getElementById('tableView').style.display = 'none';
+                document.getElementById('kanbanBoard').style.display = 'flex';
+            }
+        }
+
+        // KANBAN SORTABLE
+        document.addEventListener("DOMContentLoaded", function() {
+            document.querySelectorAll('.kanban-dropzone').forEach(zone => {
+                if (typeof Sortable !== 'undefined') {
+                    new Sortable(zone, {
+                        group: 'kanban',
+                        animation: 150,
+                        ghostClass: 'sortable-ghost',
+                        onEnd: function (evt) {
+                            const itemEl = evt.item;
+                            const newStatus = evt.to.getAttribute('data-status');
+                            const appId = itemEl.getAttribute('data-id');
+                            
+                            const fd = new FormData();
+                            fd.append('status', newStatus);
+                            fd.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+                            
+                            fetch(`/tracker/${appId}/update/`, {
+                                method: 'POST',
+                                body: fd,
+                                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.status !== 'success') {
+                                    alert('Error updating status');
+                                    evt.from.appendChild(itemEl); // revert
+                                } else {
+                                    const formSelect = document.querySelector(`.ajax-status-form[action*="${appId}"] .status-select`);
+                                    if(formSelect) {
+                                        formSelect.value = newStatus;
+                                        formSelect.setAttribute('data-current', newStatus);
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        
+        // FILTER LOGIC
+        function filterTracker(status) {
+            document.querySelectorAll('.tracker-stat').forEach(card => card.classList.remove('active-filter'));
+            const activeCard = document.querySelector(`.tracker-stat[data-filter-card="${status}"]`);
+            if (activeCard) activeCard.classList.add('active-filter');
+            
+            // Filter Table
+            document.querySelectorAll('.app-table tbody tr').forEach(row => {
+                const inputEl = row.querySelector('.status-input');
+                if (inputEl) {
+                    const rowStatus = inputEl.value;
+                    if (status === 'all' || rowStatus === status) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+            });
+            
+            // Filter Kanban
+            document.querySelectorAll('.kanban-col').forEach(col => {
+                const dropzone = col.querySelector('.kanban-dropzone');
+                if (dropzone) {
+                    const colStatus = dropzone.getAttribute('data-status');
+                    if (status === 'all' || colStatus === status) {
+                        col.style.display = 'flex';
+                    } else {
+                        col.style.display = 'none';
+                    }
+                }
+            });
+        }
+
+        // DRAWER LOGIC
+        function openDrawer(company, job, status, salary, notes, url, date) {
+            document.getElementById('dr-company').innerText = company;
+            document.getElementById('dr-job').innerText = job;
+            document.getElementById('dr-status').innerText = status.toUpperCase();
+            document.getElementById('dr-salary').innerText = salary || '—';
+            document.getElementById('dr-date').innerText = date;
+            
+            const logoEl = document.getElementById('dr-logo');
+            logoEl.src = `https://logo.clearbit.com/${company.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`;
+            logoEl.onerror = () => logoEl.src = `https://ui-avatars.com/api/?name=${company}&background=1e293b&color=fff&bold=true`;
+            
+            const urlEl = document.getElementById('dr-url');
+            if (url && url !== 'None') { urlEl.href = url; urlEl.style.display = 'inline-block'; } 
+            else { urlEl.style.display = 'none'; }
+            
+            const notesEl = document.getElementById('dr-notes');
+            const noNotesEl = document.getElementById('dr-no-notes');
+            if (notes && notes !== 'None') {
+                notesEl.innerText = notes;
+                notesEl.style.display = 'block';
+                noNotesEl.style.display = 'none';
+            } else {
+                notesEl.style.display = 'none';
+                noNotesEl.style.display = 'block';
+            }
+
+            document.getElementById('drawerOverlay').classList.add('open');
+            document.getElementById('appDrawer').classList.add('open');
+        }
+        function closeDrawer() {
+            document.getElementById('drawerOverlay').classList.remove('open');
+            document.getElementById('appDrawer').classList.remove('open');
+        }
+
+        // CHARTS
+        document.addEventListener("DOMContentLoaded", function() {
+            const ctxFunnel = document.getElementById('funnelChart');
+            if (ctxFunnel && typeof Chart !== 'undefined') {
+                new Chart(ctxFunnel, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Applied', 'Interviews', 'Offers'],
+                        datasets: [{
+                            data: [{{ stats.applied|default:0 }}, {{ stats.interviews|default:0 }}, {{ stats.offers|default:0 }}],
+                            backgroundColor: ['#3b82f6', '#f59e0b', '#10b981'],
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: { maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#94a3b8' } } }, cutout: '75%' }
+                });
+            }
+            const ctxTimeline = document.getElementById('timelineChart');
+            if (ctxTimeline && typeof Chart !== 'undefined') {
+                new Chart(ctxTimeline, {
+                    type: 'line',
+                    data: {
+                        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                        datasets: [{
+                            label: 'Applications',
+                            data: [1, 3, 2, {{ stats.applied|default:0 }}],
+                            borderColor: '#4cc9f0',
+                            backgroundColor: 'rgba(76,201,240,0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } } } }
+                });
+            }
+        });
+
+        
+        // Fix z-index for table dropdowns
+        document.querySelectorAll('.dropdown').forEach(dd => {
+            dd.addEventListener('show.bs.dropdown', function () {
+                const tr = this.closest('tr');
+                if (tr) {
+                    tr.style.position = 'relative';
+                    tr.style.zIndex = '9999';
+                }
+            });
+            dd.addEventListener('hide.bs.dropdown', function () {
+                const tr = this.closest('tr');
+                if (tr) {
+                    tr.style.zIndex = 'auto';
+                }
+            });
+        });
+
+        // Handle Modal Dropdown Selection
+        document.querySelectorAll('.modal-dd-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const val = this.getAttribute('data-val');
+                const text = this.innerText;
+                document.getElementById('modalStatusInput').value = val;
+                document.getElementById('modalStatusBtn').innerText = text;
+            });
+        });
+
+        // Handle Table Dropdown AJAX Submission
+        document.querySelectorAll('.dd-status-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const val = this.getAttribute('data-val');
+                const text = this.innerText;
                 
-                // Visual feedback
+                const form = this.closest('.ajax-status-form');
+                const input = form.querySelector('.status-input');
+                const btn = form.querySelector('button');
+                const row = form.closest('tr');
+                
+                // Save original state for revert
+                const originalVal = input.value;
+                const originalText = btn.innerText;
+                
+                // Update optimistically
+                input.value = val;
+                btn.innerText = text;
+                
+                const formData = new FormData(form);
                 row.style.opacity = '0.5';
                 row.style.pointerEvents = 'none';
 
                 fetch(form.action, {
                     method: 'POST',
                     body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
                 })
                 .then(res => res.json())
                 .then(data => {
                     if (data.status === 'success') {
-                        // Update color coding based on new status (optional but nice)
-                        // Restoring row visibility
+                        input.setAttribute('data-current', val);
                         row.style.opacity = '1';
                         row.style.pointerEvents = 'auto';
-                        
-                        // Show a small toast or just let the dropdown color do the talking
                     } else {
                         alert(data.error || 'Failed to update status.');
+                        // Revert
+                        input.value = originalVal;
+                        btn.innerText = originalText;
                         row.style.opacity = '1';
                         row.style.pointerEvents = 'auto';
-                        // Revert
-                        sel.value = sel.getAttribute('data-current');
                     }
                 })
                 .catch(err => {
                     console.error(err);
                     alert('Network error.');
+                    input.value = originalVal;
+                    btn.innerText = originalText;
                     row.style.opacity = '1';
                     row.style.pointerEvents = 'auto';
-                    sel.value = sel.getAttribute('data-current');
                 });
             });
         });
@@ -518,6 +962,10 @@
             document.getElementById('mobileBackdrop').classList.toggle('open');
         }
     </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 

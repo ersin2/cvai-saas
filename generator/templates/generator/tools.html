@@ -234,7 +234,7 @@
                             <div class="mb-3">
                                 <label class="form-label">Your Resume</label>
                                 <textarea name="resume" class="form-control" rows="4"
-                                    placeholder="Paste your resume..." required></textarea>
+                                    placeholder="Paste your resume..." required>{{ profile.base_resume|default:"" }}</textarea>
                             </div>
                             <div class="mb-4">
                                 <label class="form-label">Job Description</label>
@@ -297,7 +297,7 @@
                             <div class="mb-3">
                                 <label class="form-label">Your Resume</label>
                                 <textarea name="resume" class="form-control" rows="5"
-                                    placeholder="Paste your full resume text..." required></textarea>
+                                    placeholder="Paste your full resume text..." required>{{ profile.base_resume|default:"" }}</textarea>
                             </div>
                             <div class="mb-4">
                                 <label class="form-label">Job Description</label>
