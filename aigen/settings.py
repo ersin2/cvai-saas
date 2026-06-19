@@ -273,29 +273,41 @@ if SENTRY_DSN and sentry_sdk:
         send_default_pii=False,           # GDPR: don't send user IPs/emails to Sentry
         environment='production' if not DEBUG else 'development',
     )
-
 # ── Медиа файлы и S3 (Supabase) ─────────────────────────────────────────────
+# ── Обновленная настройка хранилищ для Django 5.2 ───────────────────────────
 USE_S3 = os.environ.get('USE_S3', 'False') == 'True'
 
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage" if USE_S3 else "django.core.files.storage.FileSystemStorage",
+    },
+}
+
+# Если включен S3, прокидываем настройки S3 здесь
 if USE_S3:
     AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
     AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
     AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME', 'cvai-media')
-    
     AWS_S3_ENDPOINT_URL = os.environ.get('AWS_S3_ENDPOINT_URL')
     AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', 'eu-central-1')
-
     AWS_DEFAULT_ACL = 'public-read'
     AWS_QUERYSTRING_AUTH = False
     AWS_S3_FILE_OVERWRITE = False
-
-    # Формируем правильный публичный URL для картинок Supabase
+    
+    # 1. Supabase requires Signature Version 4
+    AWS_S3_SIGNATURE_VERSION = 's3v4'
+    
+    # Формируем URL
     supabase_project_url = AWS_S3_ENDPOINT_URL.split('/storage')[0].split('//')[1]
-    AWS_S3_CUSTOM_DOMAIN = f"{supabase_project_url}/storage/v1/object/public/{AWS_STORAGE_BUCKET_NAME}"
+    custom_domain = f"{supabase_project_url}/storage/v1/object/public/{AWS_STORAGE_BUCKET_NAME}"
+    
+    # 2. Tell django-storages to use this custom domain for generating file URLs
+    AWS_S3_CUSTOM_DOMAIN = custom_domain
+    MEDIA_URL = f"https://{custom_domain}/"
 
-    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
 else:
-    # Для локальной разработки без облака оставляем как было
     MEDIA_URL = '/media/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
