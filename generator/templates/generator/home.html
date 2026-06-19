@@ -371,44 +371,62 @@
     .ai-pdf-hint {
       font-weight: 400; color: var(--text-muted); font-size: .7rem;
     }
-    .ai-pdf-input {
+    .ai-pdf-custom-upload {
+      display: flex; align-items: center; gap: 10px;
       width: 100%;
       background: rgba(0,0,0,.3);
-      border: 1px dashed rgba(248,113,113,.35);
+      border: 1px dashed rgba(248,113,113,.4);
       border-radius: var(--radius-sm);
       color: var(--text-secondary);
       font-size: .78rem;
-      padding: 6px 10px;
+      padding: 10px 14px;
       cursor: pointer;
-      transition: border-color .2s, box-shadow .2s;
+      transition: all .2s ease;
     }
-    .ai-pdf-input:hover {
-      border-color: rgba(248,113,113,.65);
-      box-shadow: 0 0 0 2px rgba(248,113,113,.1);
+    .ai-pdf-custom-upload:hover {
+      background: rgba(248,113,113,.08);
+      border-color: rgba(248,113,113,.8);
+      color: #fff;
     }
-    .ai-pdf-input:focus { outline: none; border-color: #f87171; }
-    .ai-pdf-input::file-selector-button {
-      background: rgba(248,113,113,.15);
-      border: 1px solid rgba(248,113,113,.3);
-      border-radius: 5px;
+    .ai-pdf-custom-upload i {
       color: #f87171;
-      font-size: .74rem; font-weight: 700;
-      padding: 3px 10px; margin-right: 8px;
-      cursor: pointer;
-      transition: background .15s;
+      font-size: 1.1rem;
     }
-    .ai-pdf-input::file-selector-button:hover {
-      background: rgba(248,113,113,.28);
-    }
+    .ai-magic-row {
       display: flex; gap: 8px; align-items: center; margin-top: 8px;
     }
-    .ai-magic-lang {
-      background: rgba(0,0,0,.25);
-      border: 1px solid rgba(255,255,255,.10);
-      border-radius: var(--radius-sm);
-      color: var(--text-primary); font-size: .78rem;
-      padding: 7px 10px; outline: none; cursor: pointer;
+    .ai-magic-lang-wrapper {
+      position: relative;
       flex-shrink: 0;
+    }
+    .ai-magic-lang {
+      appearance: none;
+      -webkit-appearance: none;
+      background: rgba(0,0,0,.3);
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: .78rem;
+      padding: 8px 30px 8px 12px;
+      outline: none; cursor: pointer;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .ai-magic-lang:focus, .ai-magic-lang:hover {
+      border-color: var(--accent);
+      background: rgba(0,0,0,.4);
+    }
+    .ai-magic-lang option {
+      background: #0d1120;
+      color: #fff;
+    }
+    .ai-lang-arrow {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      pointer-events: none;
     }
     .btn-ai-magic {
       flex: 1; padding: 9px 14px;
@@ -752,15 +770,16 @@
 
             <!-- PDF Upload row -->
             <div class="ai-pdf-upload-row">
-              <label class="ai-pdf-label" for="ai-pdf-upload">
+              <div class="ai-pdf-label">
                 <i class="fas fa-file-pdf" style="color:#f87171;"></i>
                 Upload old PDF resume
                 <span class="ai-pdf-hint">(optional — used instead of or with pasted text)</span>
+              </div>
+              <input type="file" id="ai-pdf-upload" accept=".pdf" style="display: none;">
+              <label for="ai-pdf-upload" class="ai-pdf-custom-upload">
+                <i class="fas fa-cloud-arrow-up"></i>
+                <span id="ai-pdf-filename">Click to browse or drag PDF here</span>
               </label>
-              <input type="file"
-                     id="ai-pdf-upload"
-                     accept=".pdf"
-                     class="ai-pdf-input">
             </div>
 
             <textarea
@@ -770,21 +789,24 @@
             ></textarea>
 
             <div class="ai-magic-row">
-              <select class="ai-magic-lang" id="aiLang" title="Output language">
-                <option value="English">🇺🇸 English</option>
-                <option value="Russian">🇷🇺 Russian</option>
-                <option value="German">🇩🇪 German</option>
-                <option value="French">🇫🇷 French</option>
-                <option value="Spanish">🇪🇸 Spanish</option>
-                <option value="Portuguese">🇵🇹 Portuguese</option>
-                <option value="Italian">🇮🇹 Italian</option>
-                <option value="Turkish">🇹🇷 Turkish</option>
-                <option value="Chinese">🇨🇳 Chinese</option>
-                <option value="Japanese">🇯🇵 Japanese</option>
-                <option value="Korean">🇰🇷 Korean</option>
-                <option value="Arabic">🇸🇦 Arabic</option>
-                <option value="Hindi">🇮🇳 Hindi</option>
-              </select>
+              <div class="ai-magic-lang-wrapper">
+                <select class="ai-magic-lang" id="aiLang" title="Output language">
+                  <option value="English">🇺🇸 English</option>
+                  <option value="Russian">🇷🇺 Russian</option>
+                  <option value="German">🇩🇪 German</option>
+                  <option value="French">🇫🇷 French</option>
+                  <option value="Spanish">🇪🇸 Spanish</option>
+                  <option value="Portuguese">🇵🇹 Portuguese</option>
+                  <option value="Italian">🇮🇹 Italian</option>
+                  <option value="Turkish">🇹🇷 Turkish</option>
+                  <option value="Chinese">🇨🇳 Chinese</option>
+                  <option value="Japanese">🇯🇵 Japanese</option>
+                  <option value="Korean">🇰🇷 Korean</option>
+                  <option value="Arabic">🇸🇦 Arabic</option>
+                  <option value="Hindi">🇮🇳 Hindi</option>
+                </select>
+                <i class="fas fa-chevron-down ai-lang-arrow"></i>
+              </div>
 
               <button type="button" class="btn-ai-magic"
                       id="btnAiFill" onclick="autoFillWithAI()">
@@ -796,6 +818,25 @@
               </button>
             </div>
           </div><!-- /.ai-magic-box -->
+          <script>
+            document.addEventListener('DOMContentLoaded', () => {
+              const fileInput = document.getElementById('ai-pdf-upload');
+              if (fileInput) {
+                fileInput.addEventListener('change', function() {
+                  const nameEl = document.getElementById('ai-pdf-filename');
+                  if (this.files && this.files.length > 0) {
+                    nameEl.textContent = this.files[0].name;
+                    nameEl.style.color = '#fff';
+                    nameEl.style.fontWeight = '600';
+                  } else {
+                    nameEl.textContent = 'Click to browse or drag PDF here';
+                    nameEl.style.color = 'var(--text-secondary)';
+                    nameEl.style.fontWeight = 'normal';
+                  }
+                });
+              }
+            });
+          </script>
 
           <!-- ── §1  TEMPLATE GALLERY ─────────────────────── -->
           <div class="vs-section">
