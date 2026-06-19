@@ -274,3 +274,28 @@ if SENTRY_DSN and sentry_sdk:
         environment='production' if not DEBUG else 'development',
     )
 
+# ── Медиа файлы и S3 (Supabase) ─────────────────────────────────────────────
+USE_S3 = os.environ.get('USE_S3', 'False') == 'True'
+
+if USE_S3:
+    AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME', 'cvai-media')
+    
+    AWS_S3_ENDPOINT_URL = os.environ.get('AWS_S3_ENDPOINT_URL')
+    AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', 'eu-central-1')
+
+    AWS_DEFAULT_ACL = 'public-read'
+    AWS_QUERYSTRING_AUTH = False
+    AWS_S3_FILE_OVERWRITE = False
+
+    # Формируем правильный публичный URL для картинок Supabase
+    supabase_project_url = AWS_S3_ENDPOINT_URL.split('/storage')[0].split('//')[1]
+    AWS_S3_CUSTOM_DOMAIN = f"{supabase_project_url}/storage/v1/object/public/{AWS_STORAGE_BUCKET_NAME}"
+
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
+else:
+    # Для локальной разработки без облака оставляем как было
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
