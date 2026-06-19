@@ -79,11 +79,23 @@ body {
     radial-gradient(ellipse at 50% 50%, rgba(124, 58, 237, 0.04) 0%, transparent 70%);
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--dark-bg); }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+/* ── Custom Scrollbar (WebKit) — dark theme ───────────────────────── */
+::-webkit-scrollbar              { width: 8px; height: 8px; }
+::-webkit-scrollbar-track        { background: #1e1e2e; border-radius: 4px; }
+::-webkit-scrollbar-thumb        { background: #4cc9f0; border-radius: 4px;
+                                   border: 2px solid #1e1e2e; }
+::-webkit-scrollbar-thumb:hover  { background: #3ba0c6; }
+::-webkit-scrollbar-corner       { background: #1e1e2e; }
+
+/* Table containers get the same treatment */
+.table-responsive::-webkit-scrollbar              { width: 6px; height: 6px; }
+.table-responsive::-webkit-scrollbar-track        { background: #12121f; border-radius: 4px; }
+.table-responsive::-webkit-scrollbar-thumb        { background: #4cc9f0; border-radius: 4px;
+                                                    border: 1px solid #12121f; }
+.table-responsive::-webkit-scrollbar-thumb:hover  { background: #3ba0c6; }
+
+/* Firefox */
+* { scrollbar-width: thin; scrollbar-color: #4cc9f0 #1e1e2e; }
 
 /* Selection */
 ::selection { background: rgba(76, 201, 240, 0.25); color: #fff; }

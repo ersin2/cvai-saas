@@ -359,7 +359,47 @@
       box-shadow: 0 0 0 3px rgba(76,201,240,.18);
     }
     .ai-magic-textarea::placeholder { color: var(--text-muted); }
-    .ai-magic-row {
+    /* PDF upload row inside the AI Magic Box */
+    .ai-pdf-upload-row {
+      margin-bottom: 8px;
+    }
+    .ai-pdf-label {
+      display: flex; align-items: center; gap: 6px;
+      font-size: .75rem; font-weight: 600; color: var(--text-secondary);
+      margin-bottom: 4px; cursor: default;
+    }
+    .ai-pdf-hint {
+      font-weight: 400; color: var(--text-muted); font-size: .7rem;
+    }
+    .ai-pdf-input {
+      width: 100%;
+      background: rgba(0,0,0,.3);
+      border: 1px dashed rgba(248,113,113,.35);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-size: .78rem;
+      padding: 6px 10px;
+      cursor: pointer;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .ai-pdf-input:hover {
+      border-color: rgba(248,113,113,.65);
+      box-shadow: 0 0 0 2px rgba(248,113,113,.1);
+    }
+    .ai-pdf-input:focus { outline: none; border-color: #f87171; }
+    .ai-pdf-input::file-selector-button {
+      background: rgba(248,113,113,.15);
+      border: 1px solid rgba(248,113,113,.3);
+      border-radius: 5px;
+      color: #f87171;
+      font-size: .74rem; font-weight: 700;
+      padding: 3px 10px; margin-right: 8px;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .ai-pdf-input::file-selector-button:hover {
+      background: rgba(248,113,113,.28);
+    }
       display: flex; gap: 8px; align-items: center; margin-top: 8px;
     }
     .ai-magic-lang {
@@ -710,10 +750,23 @@
               {% endif %}
             </div>
 
+            <!-- PDF Upload row -->
+            <div class="ai-pdf-upload-row">
+              <label class="ai-pdf-label" for="ai-pdf-upload">
+                <i class="fas fa-file-pdf" style="color:#f87171;"></i>
+                Upload old PDF resume
+                <span class="ai-pdf-hint">(optional — used instead of or with pasted text)</span>
+              </label>
+              <input type="file"
+                     id="ai-pdf-upload"
+                     accept=".pdf"
+                     class="ai-pdf-input">
+            </div>
+
             <textarea
               id="raw-resume-text"
               class="ai-magic-textarea"
-              placeholder="Paste your old resume, LinkedIn summary, or career history here…&#10;&#10;Example: 'I worked at Google for 5 years as a backend engineer, built APIs serving 10M users, Python/Django/GCP…'"
+              placeholder="Paste your old resume, LinkedIn summary, or career history here&#10;&#10;Example: 'I worked at Google for 5 years as a backend engineer, built APIs serving 10M users, Python/Django/GCP…'&#10;&#10;Tip: Upload a PDF above OR paste text here — AI will extract and rewrite everything."
             ></textarea>
 
             <div class="ai-magic-row">
@@ -1654,10 +1707,20 @@
    * Main handler — called when the user clicks "Auto-Fill with AI".
    */
   async function autoFillWithAI() {
-    const rawText = document.getElementById('raw-resume-text').value.trim();
-    if (!rawText) {
-      showToast('Please paste some resume text first.', 'danger');
+    const rawText   = document.getElementById('raw-resume-text').value.trim();
+    const pdfInput  = document.getElementById('ai-pdf-upload');
+    const pdfFile   = pdfInput && pdfInput.files && pdfInput.files[0];
+
+    // Require at least one source: text OR a PDF file
+    if (!rawText && !pdfFile) {
+      showToast('Please paste resume text or upload a PDF first.', 'danger');
       document.getElementById('raw-resume-text').focus();
+      return;
+    }
+
+    // Guard: PDF must be under 10 MB
+    if (pdfFile && pdfFile.size > 10 * 1024 * 1024) {
+      showToast('PDF is too large (max 10 MB). Please compress or paste text instead.', 'danger');
       return;
     }
 
@@ -1680,12 +1743,10 @@
       const fd = new FormData();
       fd.append('resume',   rawText);
       fd.append('language', document.getElementById('aiLang').value);
-      // Pass name fields if the user already filled them
-      const nameEl = document.getElementById('f_full_name');
-      if (nameEl && nameEl.value.trim()) {
-        const parts = nameEl.value.trim().split(' ');
-        fd.append('first_name', parts[0] || '');
-        fd.append('last_name',  parts.slice(1).join(' ') || '');
+
+      // Attach PDF file if the user selected one (backend key: resume_pdf)
+      if (pdfFile) {
+        fd.append('resume_pdf', pdfFile, pdfFile.name);
       }
 
       // ── Call the backend ─────────────────────────────────────
