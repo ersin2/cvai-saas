@@ -61,7 +61,10 @@ def profile(request):
         user_profile.base_resume = request.POST.get('base_resume', '')
         user_profile.default_font = request.POST.get('default_font', 'Inter')
         user_profile.default_language = request.POST.get('default_language', 'English')
-        user_profile.avatar_url = request.POST.get('avatar_url', '')
+        
+        if 'avatar' in request.FILES:
+            user_profile.avatar = request.FILES['avatar']
+            
         user_profile.save()
         messages.success(request, 'Your global defaults have been saved.')
         return redirect('profile')

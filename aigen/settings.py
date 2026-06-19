@@ -300,6 +300,9 @@ if USE_S3:
     # 1. Supabase requires Signature Version 4
     AWS_S3_SIGNATURE_VERSION = 's3v4'
     
+    if not AWS_S3_ENDPOINT_URL:
+        raise ValueError("You turned on USE_S3=True in .env, but forgot to add AWS_S3_ENDPOINT_URL!")
+        
     # Формируем URL
     supabase_project_url = AWS_S3_ENDPOINT_URL.split('/storage')[0].split('//')[1]
     custom_domain = f"{supabase_project_url}/storage/v1/object/public/{AWS_STORAGE_BUCKET_NAME}"

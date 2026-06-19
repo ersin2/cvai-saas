@@ -157,7 +157,7 @@
             <a href="{% url 'history' %}"   class="nav-link-item">History</a>
             <a href="{% url 'pricing' %}"   class="nav-link-item">Pricing</a>
             <a href="{% url 'profile' %}"   class="user-badge" style="border-color: rgba(76,201,240,0.3);">
-                {% if user.profile.avatar_url %}<img src="{{ user.profile.avatar_url }}" alt="Avatar" style="width: 22px; height: 22px; border-radius: 50%; object-fit: cover; margin-right: 6px;">{% else %}<i class="fas fa-user"></i>{% endif %}{{ user.username }}
+                {% if user.profile.avatar %}<img src="{{ user.profile.avatar.url }}" alt="Avatar" style="width: 22px; height: 22px; border-radius: 50%; object-fit: cover; margin-right: 6px;">{% else %}<i class="fas fa-user"></i>{% endif %}{{ user.username }}
             </a>
             <form action="{% url 'logout' %}" method="post" style="margin:0;">
                 {% csrf_token %}
@@ -365,7 +365,7 @@
                                 </div>
                             </div>
                             
-                            <form method="post" action="{% url 'profile' %}" class="mt-4">
+                            <form method="post" action="{% url 'profile' %}" class="mt-4" enctype="multipart/form-data">
                                 {% csrf_token %}
                                 <div class="row g-4">
                                     <!-- Left Column: Base Resume -->
@@ -397,8 +397,13 @@
                                         </select>
                                     </div>
                                     <div class="col-lg-12">
-                                        <label class="form-label" style="font-weight: 600; color: #cbd5e1;"><i class="fas fa-image me-2" style="color:#a855f7;"></i>Avatar URL</label>
-                                        <input type="url" name="avatar_url" class="form-control" placeholder="https://..." value="{{ user.profile.avatar_url|default:'' }}" style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); color: #f1f5f9; border-radius: 10px;">
+                                        <label class="form-label" style="font-weight: 600; color: #cbd5e1;"><i class="fas fa-image me-2" style="color:#a855f7;"></i>Profile Avatar</label>
+                                        <div class="d-flex align-items-center gap-3">
+    {% if user.profile.avatar %}
+    <img src="{{ user.profile.avatar.url }}" alt="Avatar" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(168, 85, 247, 0.4);">
+    {% endif %}
+    <input type="file" name="avatar" accept="image/*" class="form-control" style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); color: #f1f5f9; border-radius: 10px;">
+</div>
                                     </div>
                                     <div class="col-lg-12">
                                         <button type="submit" class="btn-primary-grad w-100 mt-2" style="border-radius: 10px; padding: 12px; font-size: 0.95rem; justify-content: center;">
