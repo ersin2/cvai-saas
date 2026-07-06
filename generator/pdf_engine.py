@@ -33,6 +33,7 @@ from reportlab.platypus import (
     Spacer, Image as RLImage, FrameBreak, Flowable,
     HRFlowable,
 )
+from reportlab.platypus.flowables import KeepTogether
 from reportlab.graphics.shapes import Drawing, Line, Rect
 from PIL import Image, ImageOps, ImageDraw as PILDraw
 
@@ -55,7 +56,7 @@ TEMPLATES = [
         "layout":        "minimal_centered",
         "primary_color": "#1a1a2e",
         "bg_color":      "#ffffff",
-        "accent_color":  "#c9a84c",
+        "accent_color":  "#475569",
         "font_family":   "Times-Roman",
     },
     {
@@ -185,51 +186,6 @@ def get_templates_for_plan(pdf_limit: int) -> list:
 # ─────────────────────────────────────────────────────────────────────────────
 # SHARED UTILITIES
 # ─────────────────────────────────────────────────────────────────────────────
-
-class ProSkillBar(Flowable):
-    """Horizontal skill progress bar — reusable across all templates."""
-
-    def __init__(self, name, level_percent, width=150, height=22,
-                 bar_bg="#34495e", bar_fill="#4cc9f0", text_color="white",
-                 label_color=None):
-        Flowable.__init__(self)
-        self.name = name
-        self.level = min(max(float(level_percent), 0), 100) / 100.0
-        self.width = width
-        self.height = height
-        self.bar_bg = bar_bg
-        self.bar_fill = bar_fill
-        self.text_color = text_color
-        self.label_color = label_color or text_color
-
-        if self.level >= 0.9:
-            self.txt = "EXPERT"
-        elif self.level >= 0.70:
-            self.txt = "SENIOR"
-        elif self.level >= 0.40:
-            self.txt = "MIDDLE"
-        else:
-            self.txt = "JUNIOR"
-
-    def draw(self):
-        c = self.canv
-        tc = (colors.HexColor("#ffffff") if self.text_color == "white"
-              else colors.HexColor(self.text_color)
-              if isinstance(self.text_color, str) else self.text_color)
-        lc = (colors.HexColor("#aaaaaa") if self.label_color == "white"
-              else colors.HexColor(self.label_color)
-              if isinstance(self.label_color, str) else tc)
-        c.setFont("Helvetica-Bold", 8.5)
-        c.setFillColor(tc)
-        c.drawString(0, 12, self.name)
-        c.setFont("Helvetica", 7)
-        c.setFillColor(lc)
-        c.drawRightString(self.width, 12, self.txt)
-        c.setFillColor(colors.HexColor(self.bar_bg))
-        c.roundRect(0, 2, self.width, 5, 2, fill=1, stroke=0)
-        c.setFillColor(colors.HexColor(self.bar_fill))
-        fill_w = max(4, self.width * self.level)
-        c.roundRect(0, 2, fill_w, 5, 2, fill=1, stroke=0)
 
 
 def _process_photo(photo_file):
@@ -364,68 +320,91 @@ def _font_variants(font: str):
 def _render_text_block(story, text, s_title, s_meta, s_bullet, s_body):
     """
     Parse free-form text (experience / projects) and append styled paragraphs.
+    Each logical block (title + meta + bullets) is wrapped in KeepTogether so
+    that a section header or lone meta line never orphans on a new page.
+
     Rules:
       - Lines starting with - or * → bulleted paragraph
       - Short lines with | or digits → grey meta line (dates/company)
-      - Other short lines → bold title
+      - Other short lines → bold title  (triggers a new logical block)
       - Long lines → body paragraph
     """
+    current_block = []   # accumulates flowables for one job entry
+
+    def _flush(blk):
+        """Commit the current block to story, wrapped in KeepTogether."""
+        if blk:
+            story.append(KeepTogether(blk))
+            story.append(Spacer(1, 6))  # breathing room between entries
+
     for t in (text or "").split('\n'):
         t = t.strip()
         if not t:
             continue
         if t.startswith('-') or t.startswith('*'):
-            story.append(Paragraph(t[1:].strip(), s_bullet, bulletText='•'))
+            current_block.append(Paragraph(t[1:].strip(), s_bullet, bulletText='•'))
         elif len(t) < 100 and ('|' in t or any(ch.isdigit() for ch in t)):
-            story.append(Paragraph(f'<font color="#888888">{t}</font>', s_meta))
+            current_block.append(Paragraph(f'<font color="#888888">{t}</font>', s_meta))
         elif len(t) < 100:
-            story.append(Paragraph(f'<b>{t}</b>', s_title))
+            # A short non-meta line signals a new job title — flush previous block
+            _flush(current_block)
+            current_block = [Paragraph(f'<b>{t}</b>', s_title)]
         else:
-            story.append(Paragraph(t, s_body))
+            current_block.append(Paragraph(t, s_body))
+
+    _flush(current_block)  # flush any remaining block
 
 
 def _render_edu_certs_lang(story, req, s_h2, s_body, s_sub=None,
                             hr_color=None, w="100%"):
-    """Append Education, Certifications, and Languages blocks if filled."""
+    """
+    Append Education, Certifications, Languages, and Portfolio blocks.
+    Each block is wrapped in KeepTogether to prevent orphaned section headers
+    across page breaks.
+    """
     s_sub = s_sub or s_body
 
     edu = req.POST.get('education', '').strip()
     if edu:
-        story.append(Paragraph("EDUCATION", s_h2))
+        blk = [Paragraph("EDUCATION", s_h2)]
         if hr_color:
-            story.append(HRFlowable(width=w, thickness=0.5,
-                                    color=hr_color, spaceAfter=5))
+            blk.append(HRFlowable(width=w, thickness=0.5,
+                                  color=hr_color, spaceAfter=5))
         for line in edu.split('\n'):
             line = line.strip()
             if line:
-                story.append(Paragraph(line, s_sub))
+                blk.append(Paragraph(line, s_sub))
+        story.append(KeepTogether(blk))
 
     certs = req.POST.get('certifications', '').strip()
     if certs:
-        story.append(Paragraph("CERTIFICATIONS", s_h2))
+        blk = [Paragraph("CERTIFICATIONS", s_h2)]
         if hr_color:
-            story.append(HRFlowable(width=w, thickness=0.5,
-                                    color=hr_color, spaceAfter=5))
+            blk.append(HRFlowable(width=w, thickness=0.5,
+                                  color=hr_color, spaceAfter=5))
         for line in certs.replace(',', '\n').split('\n'):
             line = line.strip()
             if line:
-                story.append(Paragraph(f"• {line}", s_body))
+                blk.append(Paragraph(f"• {line}", s_body))
+        story.append(KeepTogether(blk))
 
     lang = req.POST.get('languages', '').strip()
     if lang:
-        story.append(Paragraph("LANGUAGES", s_h2))
+        blk = [Paragraph("LANGUAGES", s_h2)]
         if hr_color:
-            story.append(HRFlowable(width=w, thickness=0.5,
-                                    color=hr_color, spaceAfter=5))
-        story.append(Paragraph(lang, s_body))
+            blk.append(HRFlowable(width=w, thickness=0.5,
+                                  color=hr_color, spaceAfter=5))
+        blk.append(Paragraph(lang, s_body))
+        story.append(KeepTogether(blk))
 
     port = req.POST.get('portfolio_url', '').strip()
     if port:
-        story.append(Paragraph("PORTFOLIO / GITHUB", s_h2))
+        blk = [Paragraph("PORTFOLIO / GITHUB", s_h2)]
         if hr_color:
-            story.append(HRFlowable(width=w, thickness=0.5,
-                                    color=hr_color, spaceAfter=5))
-        story.append(Paragraph(f'<link href="{port}">{port}</link>', s_body))
+            blk.append(HRFlowable(width=w, thickness=0.5,
+                                  color=hr_color, spaceAfter=5))
+        blk.append(Paragraph(f'<link href="{port}">{port}</link>', s_body))
+        story.append(KeepTogether(blk))
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -468,8 +447,8 @@ def _build_minimal_centered(req, buf, cfg: dict):
                                spaceAfter=6, alignment=1)
     s_info   = ParagraphStyle('I',  fontName=fn, fontSize=9,  textColor=colors.HexColor('#555555'),
                                leading=13, spaceAfter=8, alignment=1)
-    s_h2     = ParagraphStyle('H2', fontName=fb, fontSize=9,  textColor=C_HEAD,
-                               spaceBefore=18, spaceAfter=4, alignment=1,
+    s_h2     = ParagraphStyle('H2', fontName=fb, fontSize=12,  textColor=C_HEAD,
+                               spaceBefore=16, spaceAfter=4, alignment=1,
                                textTransform='uppercase', letterSpacing=2)
     s_body   = ParagraphStyle('B',  fontName=fn, fontSize=9.5, textColor=C_TEXT,
                                leading=14, spaceAfter=5)
@@ -493,6 +472,7 @@ def _build_minimal_centered(req, buf, cfg: dict):
     contacts = " · ".join(filter(None, [
         req.POST.get('email'), req.POST.get('phone'),
         req.POST.get('location'), req.POST.get('linkedin'),
+        req.POST.get('github'),
     ]))
     if contacts:
         story.append(Paragraph(contacts, s_info))
@@ -525,7 +505,7 @@ def _build_minimal_centered(req, buf, cfg: dict):
         story.append(Paragraph("SKILLS", s_h2))
         story.append(HRFlowable(width="40%", thickness=0.5, color=C_ACC,
                                  hAlign='CENTER', spaceAfter=6))
-        skill_txt = "  ·  ".join(f"<b>{n}</b>" for n, _ in skills)
+        skill_txt = ",  ".join(n for n, _ in skills)
         story.append(Paragraph(skill_txt, s_body))
 
     _render_edu_certs_lang(story, req, s_h2, s_body, hr_color=C_ACC, w="40%")
@@ -590,7 +570,7 @@ def _build_left_sidebar_dark(req, buf, cfg: dict):
                                 leading=13, spaceAfter=3)
     s_sb_dim  = ParagraphStyle('SD', fontName=fn, fontSize=7, textColor=C_DIM,
                                 spaceAfter=1)
-    s_h2      = ParagraphStyle('H2', fontName=fb, fontSize=10, textColor=C_TEXT,
+    s_h2      = ParagraphStyle('H2', fontName=fb, fontSize=12, textColor=C_TEXT,
                                 spaceBefore=16, spaceAfter=6,
                                 textTransform='uppercase')
     s_body    = ParagraphStyle('B',  fontName=fn, fontSize=9.5, textColor=C_TEXT,
@@ -616,7 +596,8 @@ def _build_left_sidebar_dark(req, buf, cfg: dict):
     for lbl, val in [("LOCATION", req.POST.get('location')),
                      ("EMAIL",    req.POST.get('email')),
                      ("PHONE",    req.POST.get('phone')),
-                     ("LINKEDIN", req.POST.get('linkedin'))]:
+                     ("LINKEDIN", req.POST.get('linkedin')),
+                     ("GITHUB",   req.POST.get('github'))]:
         if val:
             story.append(Paragraph(lbl, s_sb_dim))
             story.append(Paragraph(val, s_sb_t))
@@ -624,11 +605,8 @@ def _build_left_sidebar_dark(req, buf, cfg: dict):
     skills = _parse_skills(req.POST.get('skills_list', ''))
     if skills:
         story.append(Paragraph("SKILLS", s_sb_h))
-        for name, lvl in skills:
-            story.append(ProSkillBar(name, lvl, width=SB_W - 2*PAD,
-                                     bar_bg='#2c3e50', bar_fill=_pc,
-                                     text_color='white'))
-            story.append(Spacer(1, 6))
+        skill_txt = ",  ".join(n for n, _ in skills)
+        story.append(Paragraph(skill_txt, s_sb_t))
 
     lang = req.POST.get('languages', '').strip()
     if lang:
@@ -714,7 +692,7 @@ def _build_right_sidebar_light(req, buf, cfg: dict):
                                leading=30, spaceAfter=2)
     s_role   = ParagraphStyle('R',  fontName=fi, fontSize=12, textColor=C_TEXT,
                                spaceAfter=10)
-    s_h2     = ParagraphStyle('H2', fontName=fb, fontSize=9.5, textColor=C_ACC,
+    s_h2     = ParagraphStyle('H2', fontName=fb, fontSize=12, textColor=C_ACC,
                                spaceBefore=16, spaceAfter=5,
                                textTransform='uppercase', letterSpacing=1.5)
     s_body   = ParagraphStyle('B',  fontName=fn, fontSize=9.5, textColor=C_TEXT,
@@ -766,7 +744,8 @@ def _build_right_sidebar_light(req, buf, cfg: dict):
     for lbl, val in [("Location", req.POST.get('location')),
                      ("Email",    req.POST.get('email')),
                      ("Phone",    req.POST.get('phone')),
-                     ("LinkedIn", req.POST.get('linkedin'))]:
+                     ("LinkedIn", req.POST.get('linkedin')),
+                     ("GitHub",   req.POST.get('github'))]:
         if val:
             story.append(Paragraph(f'<b><font color="{_pc}">{lbl}</font></b>', s_sb_h))
             story.append(Paragraph(val, s_sb_t))
@@ -774,11 +753,8 @@ def _build_right_sidebar_light(req, buf, cfg: dict):
     skills = _parse_skills(req.POST.get('skills_list', ''))
     if skills:
         story.append(Paragraph("SKILLS", s_sb_h))
-        for name, lvl in skills:
-            story.append(ProSkillBar(name, lvl, width=SB_W - 2*PAD,
-                                     bar_bg='#e2e8f0', bar_fill=_pc,
-                                     text_color='#1e1e2e'))
-            story.append(Spacer(1, 5))
+        skill_txt = ",  ".join(n for n, _ in skills)
+        story.append(Paragraph(skill_txt, s_sb_t))
 
     _render_edu_certs_lang(story, req, s_sb_h, s_sb_t)
     try:
@@ -840,7 +816,7 @@ def _build_split_header(req, buf, cfg: dict):
                                spaceAfter=4)
     s_info   = ParagraphStyle('I',  fontName=fn, fontSize=8.5,
                                textColor=colors.HexColor('#a0aec0'), leading=13)
-    s_h2     = ParagraphStyle('H2', fontName=fb, fontSize=9.5,
+    s_h2     = ParagraphStyle('H2', fontName=fb, fontSize=12,
                                textColor=C_ACC1, spaceBefore=16, spaceAfter=5,
                                textTransform='uppercase', letterSpacing=1.2)
     C_TEXT   = colors.HexColor('#2d3748')
@@ -869,7 +845,8 @@ def _build_split_header(req, buf, cfg: dict):
     story.append(Paragraph(req.POST.get('target_role', 'Professional'), s_role))
     contacts = " · ".join(filter(None, [
         req.POST.get('email'), req.POST.get('phone'),
-        req.POST.get('location'),
+        req.POST.get('location'), req.POST.get('linkedin'),
+        req.POST.get('github'),
     ]))
     if contacts:
         story.append(Paragraph(contacts, s_info))
@@ -900,11 +877,8 @@ def _build_split_header(req, buf, cfg: dict):
     skills = _parse_skills(req.POST.get('skills_list', ''))
     if skills:
         story.append(Paragraph("SKILLS", s_sb_h))
-        for name, lvl in skills:
-            story.append(ProSkillBar(name, lvl, width=RIGHT_W - 6,
-                                     bar_bg='#e2e8f0', bar_fill=_pc,
-                                     text_color='#2d3748'))
-            story.append(Spacer(1, 5))
+        skill_txt = ",  ".join(n for n, _ in skills)
+        story.append(Paragraph(skill_txt, s_sb_t))
 
     _render_edu_certs_lang(story, req, s_sb_h, s_sb_t)
     try:
@@ -974,8 +948,8 @@ def _build_timeline_modern(req, buf, cfg: dict):
                                spaceAfter=6)
     s_info   = ParagraphStyle('I',  fontName=fn, fontSize=8.5, textColor=C_MUTED,
                                leading=13, spaceAfter=10)
-    s_h2     = ParagraphStyle('H2', fontName=fb, fontSize=10, textColor=C_LINE,
-                               spaceBefore=18, spaceAfter=4,
+    s_h2     = ParagraphStyle('H2', fontName=fb, fontSize=12, textColor=C_LINE,
+                               spaceBefore=16, spaceAfter=4,
                                textTransform='uppercase', letterSpacing=1.5)
     s_body   = ParagraphStyle('B',  fontName=fn, fontSize=9.5, textColor=C_TEXT,
                                leading=14, spaceAfter=5)
@@ -993,6 +967,7 @@ def _build_timeline_modern(req, buf, cfg: dict):
     contacts = " · ".join(filter(None, [
         req.POST.get('email'), req.POST.get('phone'),
         req.POST.get('location'), req.POST.get('linkedin'),
+        req.POST.get('github'),
     ]))
     if contacts:
         story.append(Paragraph(contacts, s_info))
@@ -1023,8 +998,7 @@ def _build_timeline_modern(req, buf, cfg: dict):
     if skills:
         story.append(Paragraph("SKILLS", s_h2))
         story.append(HRFlowable(width="100%", thickness=0.5, color=C_ACC, spaceAfter=5))
-        skill_txt = "  ·  ".join(f"<b>{n}</b>  <font color='#64748b'>{int(l)}%</font>"
-                                  for n, l in skills)
+        skill_txt = ",  ".join(n for n, _ in skills)
         story.append(Paragraph(skill_txt, s_body))
 
     _render_edu_certs_lang(story, req, s_h2, s_body, hr_color=C_ACC)
@@ -1087,7 +1061,7 @@ def _build_two_column_equal(req, buf, cfg: dict):
                                spaceAfter=8)
     s_info   = ParagraphStyle('I',  fontName=fn, fontSize=8, textColor=C_MUTED,
                                leading=12, spaceAfter=8)
-    s_h2     = ParagraphStyle('H2', fontName=fb, fontSize=9, textColor=C_ACC,
+    s_h2     = ParagraphStyle('H2', fontName=fb, fontSize=12, textColor=C_ACC,
                                spaceBefore=16, spaceAfter=5,
                                textTransform='uppercase', letterSpacing=1.5)
     s_body   = ParagraphStyle('B',  fontName=fn, fontSize=9, textColor=C_TEXT,
@@ -1111,6 +1085,7 @@ def _build_two_column_equal(req, buf, cfg: dict):
     story.append(Paragraph(req.POST.get('target_role', 'Professional'), s_role))
     contacts = " · ".join(filter(None, [
         req.POST.get('email'), req.POST.get('phone'), req.POST.get('location'),
+        req.POST.get('linkedin'), req.POST.get('github'),
     ]))
     if contacts:
         story.append(Paragraph(contacts, s_info))
@@ -1139,11 +1114,8 @@ def _build_two_column_equal(req, buf, cfg: dict):
     if skills:
         story.append(Paragraph("SKILLS", s_h2))
         story.append(HRFlowable(width="100%", thickness=0.5, color=C_RULE, spaceAfter=5))
-        for name, lvl in skills:
-            story.append(ProSkillBar(name, lvl, width=COL_W - PAD,
-                                     bar_bg='#d1fae5', bar_fill=_pc,
-                                     text_color='#1e293b'))
-            story.append(Spacer(1, 5))
+        skill_txt = ",  ".join(n for n, _ in skills)
+        story.append(Paragraph(skill_txt, s_body))
 
     _render_edu_certs_lang(story, req, s_h2, s_body, hr_color=C_RULE)
     try:
@@ -1212,6 +1184,7 @@ def _build_hacker_terminal(req, buf, cfg: dict):
     contacts = "  ".join(filter(None, [
         req.POST.get('email'), req.POST.get('phone'),
         req.POST.get('location'), req.POST.get('linkedin'),
+        req.POST.get('github'),
     ]))
     if contacts:
         story.append(Paragraph(f"$ contact  {contacts}", s_dim))
@@ -1235,9 +1208,8 @@ def _build_hacker_terminal(req, buf, cfg: dict):
     skills = _parse_skills(req.POST.get('skills_list', ''))
     if skills:
         story.append(Paragraph("$ pip list --installed", s_h2))
-        for name_s, lvl in skills:
-            bar = '█' * int(lvl / 10) + '░' * (10 - int(lvl / 10))
-            story.append(Paragraph(f"{name_s:<20} [{bar}] {int(lvl)}%", s_body))
+        skill_txt = ",  ".join(n for n, _ in skills)
+        story.append(Paragraph(skill_txt, s_body))
 
     edu = req.POST.get('education', '').strip()
     if edu:
@@ -1292,8 +1264,8 @@ def _build_academic_classic(req, buf, cfg: dict):
                                spaceAfter=3, alignment=1)
     s_info   = ParagraphStyle('I',  fontName=fn, fontSize=9, textColor=C_GREY,
                                leading=13, spaceAfter=6, alignment=1)
-    s_h2     = ParagraphStyle('H2', fontName=fb, fontSize=10, textColor=C_BLACK,
-                               spaceBefore=12, spaceAfter=2,
+    s_h2     = ParagraphStyle('H2', fontName=fb, fontSize=12, textColor=C_BLACK,
+                               spaceBefore=16, spaceAfter=2,
                                textTransform='uppercase')
     s_body   = ParagraphStyle('B',  fontName=fn, fontSize=9.5, textColor=C_BLACK,
                                leading=14, spaceAfter=4)
@@ -1304,7 +1276,8 @@ def _build_academic_classic(req, buf, cfg: dict):
     s_meta   = ParagraphStyle('M',  fontName=fi, fontSize=9, textColor=C_GREY,
                                spaceAfter=3)
 
-    HR = lambda: HRFlowable(width="100%", thickness=0.8, color=C_BLACK, spaceAfter=5)
+    HR = lambda: HRFlowable(width="100%", thickness=0.5,
+                            color=colors.HexColor('#555555'), spaceAfter=5)
 
     story = []
 
@@ -1313,6 +1286,7 @@ def _build_academic_classic(req, buf, cfg: dict):
     contacts = " | ".join(filter(None, [
         req.POST.get('email'), req.POST.get('phone'),
         req.POST.get('location'), req.POST.get('linkedin'),
+        req.POST.get('github'),
     ]))
     if contacts:
         story.append(Paragraph(contacts, s_info))
@@ -1339,7 +1313,7 @@ def _build_academic_classic(req, buf, cfg: dict):
     if skills:
         story.append(Paragraph("SKILLS & COMPETENCIES", s_h2))
         story.append(HR())
-        skill_txt = ", ".join(f"{n} ({int(l)}%)" for n, l in skills)
+        skill_txt = ", ".join(n for n, _ in skills)
         story.append(Paragraph(skill_txt, s_body))
 
     edu = req.POST.get('education', '').strip()
@@ -1427,7 +1401,7 @@ def _build_top_bottom_split(req, buf, cfg: dict):
                                spaceAfter=6)
     s_info   = ParagraphStyle('I',  fontName=fn, fontSize=8.5,
                                textColor=colors.HexColor('#a0c4d8'), leading=13)
-    s_h2     = ParagraphStyle('H2', fontName=fb, fontSize=10, textColor=C_ACC,
+    s_h2     = ParagraphStyle('H2', fontName=fb, fontSize=12, textColor=C_ACC,
                                spaceBefore=16, spaceAfter=5,
                                textTransform='uppercase', letterSpacing=1.2)
     s_body   = ParagraphStyle('B',  fontName=fn, fontSize=9.5, textColor=C_TEXT,
@@ -1451,6 +1425,7 @@ def _build_top_bottom_split(req, buf, cfg: dict):
     contacts = " · ".join(filter(None, [
         req.POST.get('email'), req.POST.get('phone'),
         req.POST.get('location'), req.POST.get('linkedin'),
+        req.POST.get('github'),
     ]))
     if contacts:
         story.append(Paragraph(contacts, s_info))
@@ -1479,11 +1454,8 @@ def _build_top_bottom_split(req, buf, cfg: dict):
     if skills:
         story.append(Paragraph("SKILLS", s_h2))
         story.append(HRFlowable(width="100%", thickness=0.5, color=C_PALE, spaceAfter=5))
-        for name, lvl in skills:
-            story.append(ProSkillBar(name, lvl, width=W_A4 - 2*M,
-                                     bar_bg='#e2e8f0', bar_fill=_pc,
-                                     text_color='#1e293b'))
-            story.append(Spacer(1, 5))
+        skill_txt = ",  ".join(n for n, _ in skills)
+        story.append(Paragraph(skill_txt, s_body))
 
     _render_edu_certs_lang(story, req, s_h2, s_body, hr_color=C_PALE)
     try:
@@ -1548,7 +1520,7 @@ def _build_creative_masonry(req, buf, cfg: dict):
                                leading=32, spaceAfter=2)
     s_role   = ParagraphStyle('R',  fontName=fi, fontSize=12, textColor=C_SEC,
                                spaceAfter=10)
-    s_h2     = ParagraphStyle('H2', fontName=fb, fontSize=9, textColor=C_ACC,
+    s_h2     = ParagraphStyle('H2', fontName=fb, fontSize=12, textColor=C_ACC,
                                spaceBefore=16, spaceAfter=4,
                                textTransform='uppercase', letterSpacing=2)
     s_body   = ParagraphStyle('B',  fontName=fn, fontSize=9.5, textColor=C_W,
@@ -1601,7 +1573,8 @@ def _build_creative_masonry(req, buf, cfg: dict):
     for lbl, val in [("Location", req.POST.get('location')),
                      ("Email",    req.POST.get('email')),
                      ("Phone",    req.POST.get('phone')),
-                     ("LinkedIn", req.POST.get('linkedin'))]:
+                     ("LinkedIn", req.POST.get('linkedin')),
+                     ("GitHub",   req.POST.get('github'))]:
         if val:
             story.append(Paragraph(lbl.upper(), s_sb_h))
             story.append(Paragraph(val, s_sb_t))
@@ -1609,11 +1582,8 @@ def _build_creative_masonry(req, buf, cfg: dict):
     skills = _parse_skills(req.POST.get('skills_list', ''))
     if skills:
         story.append(Paragraph("SKILLS", s_sb_h))
-        for name, lvl in skills:
-            story.append(ProSkillBar(name, lvl, width=SIDE_W - 2*PAD,
-                                     bar_bg='#2d2d3e', bar_fill=_pc,
-                                     text_color='white'))
-            story.append(Spacer(1, 5))
+        skill_txt = ",  ".join(n for n, _ in skills)
+        story.append(Paragraph(skill_txt, s_sb_t))
 
     _render_edu_certs_lang(story, req, s_sb_h, s_sb_t)
     try:
