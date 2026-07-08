@@ -1,17 +1,10 @@
+{% extends 'generator/base_app.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generation History | CVAI</title>
-    <meta name="description"
-        content="Review your AI-generated cover letters, see past results, and reuse your best letters for new applications.">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}">
+{% block title %}Generation History | CVAI{% endblock %}
+{% block meta_desc %}Review your AI-generated cover letters, see past results, and reuse your best letters for new applications.{% endblock %}
+
+{% block extra_head %}
 
     <style>
         /* ── HISTORY ITEM ── */
@@ -89,47 +82,9 @@
             gap: 5px;
         }
     </style>
-</head>
+{% endblock extra_head %}
 
-<body>
-
-    <!-- NAVBAR -->
-    <nav class="navbar-custom">
-        <a href="{% url 'home' %}" class="logo-text">
-            <i class="fas fa-cube"></i>CV<span style="-webkit-text-fill-color: var(--secondary);">AI</span>
-        </a>
-        <div class="nav-group desktop-nav">
-            <a href="{% url 'home' %}"      class="nav-link-item">Generator</a>
-            <a href="{% url 'dashboard' %}" class="nav-link-item">Dashboard</a>
-            <a href="{% url 'tools' %}"     class="nav-link-item">AI Tools</a>
-            <a href="{% url 'tracker' %}"   class="nav-link-item">Tracker</a>
-            <a href="{% url 'history' %}"   class="nav-link-item active">History</a>
-            <a href="{% url 'profile' %}"   class="user-badge">
-                <i class="fas fa-user"></i>{{ user.username }}
-            </a>
-        </div>
-        <button class="hamburger-btn" onclick="toggleMobileNav()"><i class="fas fa-bars"></i></button>
-    </nav>
-
-    <!-- MOBILE DRAWER -->
-    <div class="mobile-backdrop" id="mobileBackdrop" onclick="toggleMobileNav()"></div>
-    <div class="mobile-drawer" id="mobileDrawer">
-        <div class="drawer-header">
-            <span class="logo-text" style="font-size:1.1rem;">CV<span style="-webkit-text-fill-color:var(--secondary);">AI</span></span>
-            <button class="drawer-close-btn" onclick="toggleMobileNav()"><i class="fas fa-times"></i></button>
-        </div>
-        <div class="drawer-nav-section">
-            <a href="{% url 'home' %}"      class="nav-link-item"><i class="fas fa-pen-ruler"></i>Generator</a>
-            <a href="{% url 'dashboard' %}" class="nav-link-item"><i class="fas fa-chart-pie"></i>Dashboard</a>
-            <a href="{% url 'tools' %}"     class="nav-link-item"><i class="fas fa-wand-magic-sparkles"></i>AI Tools</a>
-            <a href="{% url 'tracker' %}"   class="nav-link-item"><i class="fas fa-briefcase"></i>Tracker</a>
-            <a href="{% url 'history' %}"   class="nav-link-item active"><i class="fas fa-clock-rotate-left"></i>History</a>
-            <div class="drawer-divider"></div>
-            <a href="{% url 'pricing' %}"   class="nav-link-item"><i class="fas fa-tags"></i>Pricing</a>
-            <a href="{% url 'profile' %}"   class="nav-link-item"><i class="fas fa-user"></i>{{ user.username }}</a>
-        </div>
-    </div>
-
+{% block content %}
     <!-- PAGE CONTENT -->
     <div class="container pb-5" style="max-width: 860px;">
 
@@ -304,23 +259,6 @@
             }
         }
 
-        function toggleMobileNav() {
-            document.getElementById('mobileDrawer').classList.toggle('open');
-            document.getElementById('mobileBackdrop').classList.toggle('open');
-        }
-
-        function showToast(message, type) {
-            const toast = document.createElement('div');
-            const icons = {success:'check-circle', warning:'exclamation-triangle', danger:'times-circle'};
-            toast.className = 'toast-notification toast-' + type;
-            toast.innerHTML = '<i class="fas fa-' + (icons[type] || 'info-circle') + '"></i>' + message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.classList.add('show'), 10);
-            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 4000);
         }
     </script>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-
-</html>
+{% endblock content %}

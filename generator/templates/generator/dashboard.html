@@ -1,18 +1,11 @@
+{% extends 'generator/base_app.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard | CVAI — Career Command Center</title>
-  <meta name="description"
-    content="Track your AI cover letter generation stats, application funnel, and career progress in one dashboard.">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+{% block title %}Dashboard | CVAI — Career Command Center{% endblock %}
+{% block meta_desc %}Track your AI cover letter generation stats, application funnel, and career progress in one dashboard.{% endblock %}
+
+{% block extra_head %}
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}">
 
   <style>
     /* ═══════════════════════════════════════════════════════
@@ -448,48 +441,9 @@
       box-shadow: 0 6px 20px rgba(67,97,238,0.4);
     }
   </style>
-</head>
+{% endblock extra_head %}
 
-<body>
-
-  <!-- ════════════ NAVBAR ════════════ -->
-  <nav class="navbar-custom">
-    <a href="{% url 'home' %}" class="logo-text">
-      <i class="fas fa-cube"></i>CV<span style="-webkit-text-fill-color:var(--secondary);">AI</span>
-    </a>
-    <div class="nav-group desktop-nav">
-      <a href="{% url 'home' %}"      class="nav-link-item"><i class="fas fa-pen-ruler me-1" style="font-size:0.8rem;opacity:.7;"></i>Studio</a>
-      <a href="{% url 'dashboard' %}" class="nav-link-item active"><i class="fas fa-chart-pie me-1" style="font-size:0.8rem;opacity:.7;"></i>Dashboard</a>
-      <a href="{% url 'tools' %}"     class="nav-link-item"><i class="fas fa-wand-magic-sparkles me-1" style="font-size:0.8rem;opacity:.7;"></i>AI Tools</a>
-      <a href="{% url 'tracker' %}"   class="nav-link-item"><i class="fas fa-briefcase me-1" style="font-size:0.8rem;opacity:.7;"></i>Tracker</a>
-      <a href="{% url 'history' %}"   class="nav-link-item"><i class="fas fa-clock-rotate-left me-1" style="font-size:0.8rem;opacity:.7;"></i>History</a>
-      <a href="{% url 'profile' %}"   class="user-badge">
-        <i class="fas fa-user"></i>{{ user.username }}
-      </a>
-    </div>
-    <button class="hamburger-btn" onclick="toggleMobileNav()"><i class="fas fa-bars"></i></button>
-  </nav>
-
-  <!-- MOBILE DRAWER -->
-  <div class="mobile-backdrop" id="mobileBackdrop" onclick="toggleMobileNav()"></div>
-  <div class="mobile-drawer" id="mobileDrawer">
-    <div class="drawer-header">
-      <span class="logo-text" style="font-size:1.1rem;">CV<span style="-webkit-text-fill-color:var(--secondary);">AI</span></span>
-      <button class="drawer-close-btn" onclick="toggleMobileNav()"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="drawer-nav-section">
-      <a href="{% url 'home' %}"      class="nav-link-item"><i class="fas fa-pen-ruler"></i>Studio</a>
-      <a href="{% url 'dashboard' %}" class="nav-link-item active"><i class="fas fa-chart-pie"></i>Dashboard</a>
-      <a href="{% url 'tools' %}"     class="nav-link-item"><i class="fas fa-wand-magic-sparkles"></i>AI Tools</a>
-      <a href="{% url 'tracker' %}"   class="nav-link-item"><i class="fas fa-briefcase"></i>Tracker</a>
-      <a href="{% url 'history' %}"   class="nav-link-item"><i class="fas fa-clock-rotate-left"></i>History</a>
-      <div class="drawer-divider"></div>
-      <a href="{% url 'pricing' %}"   class="nav-link-item"><i class="fas fa-tags"></i>Pricing</a>
-      <a href="{% url 'profile' %}"   class="nav-link-item"><i class="fas fa-user"></i>{{ user.username }}</a>
-    </div>
-  </div>
-
-  <!-- ════════════ PAGE CONTENT ════════════ -->
+{% block content %}
   <div class="container-fluid px-3 px-md-4 pb-5" style="max-width:1300px; margin:0 auto;">
 
     <!-- PAGE HEADER -->
@@ -1238,6 +1192,4 @@
       });
     }
   </script>
-
-</body>
-</html>
+{% endblock content %}

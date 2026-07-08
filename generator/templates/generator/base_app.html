@@ -1,0 +1,196 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- ── SEO ─────────────────────────────────────────────────── -->
+  <title>{% block title %}CVAI — AI Resume Builder{% endblock %}</title>
+  <meta name="description" content="{% block meta_desc %}Build stunning, ATS-optimized resumes with AI in seconds.{% endblock %}">
+
+  <!-- ── Open Graph / Social ──────────────────────────────────── -->
+  <meta property="og:title"       content="{% block og_title %}{% block title_plain %}CVAI{% endblock %}{% endblock %}">
+  <meta property="og:description" content="{% block og_desc %}{% block meta_desc_plain %}AI-powered resume builder.{% endblock %}{% endblock %}">
+  <meta property="og:type"        content="website">
+  <meta name="twitter:card"       content="summary_large_image">
+
+  <!-- ── Favicon ──────────────────────────────────────────────── -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23080c14'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='monospace' font-weight='700' font-size='18' fill='%234cc9f0'>CV</text></svg>">
+
+  <!-- ── External Libraries ───────────────────────────────────── -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- ── Global Design System ─────────────────────────────────── -->
+  <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}">
+
+  <!-- ── Page-specific styles ─────────────────────────────────── -->
+  {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+
+{% block navbar %}
+  <!-- ════════════ NAVBAR ════════════ -->
+  <nav class="navbar-custom">
+    <a href="{% url 'home' %}" class="logo-text">
+      <i class="fas fa-cube"></i>CV<span style="-webkit-text-fill-color:var(--secondary);">AI</span>
+    </a>
+
+    {% if user.profile.generations_count is not None and user.profile.plan == 'free' %}
+    <span class="gen-counter desktop-nav">
+      <i class="fas fa-bolt" style="font-size:0.7rem;"></i>
+      {{ user.profile.generations_count }} left
+    </span>
+    {% endif %}
+
+    <div class="nav-group desktop-nav">
+      <a href="{% url 'home' %}"
+         class="nav-link-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+        <i class="fas fa-pen-ruler me-1" style="font-size:0.8rem;opacity:.7;"></i>Studio
+      </a>
+      <a href="{% url 'dashboard' %}"
+         class="nav-link-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        <i class="fas fa-chart-pie me-1" style="font-size:0.8rem;opacity:.7;"></i>Dashboard
+      </a>
+      <a href="{% url 'tools' %}"
+         class="nav-link-item {% if request.resolver_match.url_name == 'tools' %}active{% endif %}">
+        <i class="fas fa-wand-magic-sparkles me-1" style="font-size:0.8rem;opacity:.7;"></i>AI Tools
+      </a>
+      <a href="{% url 'tracker' %}"
+         class="nav-link-item {% if request.resolver_match.url_name == 'tracker' %}active{% endif %}">
+        <i class="fas fa-briefcase me-1" style="font-size:0.8rem;opacity:.7;"></i>Tracker
+      </a>
+      <a href="{% url 'history' %}"
+         class="nav-link-item {% if request.resolver_match.url_name == 'history' %}active{% endif %}">
+        <i class="fas fa-clock-rotate-left me-1" style="font-size:0.8rem;opacity:.7;"></i>History
+      </a>
+
+      {% if user.profile.plan == 'free' %}
+      <a href="{% url 'pricing' %}" class="btn-upgrade">
+        <i class="fas fa-star me-1" style="font-size:0.7rem;"></i>Upgrade
+      </a>
+      {% endif %}
+
+      <a href="{% url 'profile' %}" class="user-badge">
+        <i class="fas fa-user"></i>{{ user.username }}
+      </a>
+    </div>
+
+    <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleMobileNav()" aria-label="Open menu">
+      <i class="fas fa-bars"></i>
+    </button>
+  </nav>
+
+  <!-- MOBILE DRAWER -->
+  <div class="mobile-backdrop" id="mobileBackdrop" onclick="toggleMobileNav()"></div>
+  <div class="mobile-drawer" id="mobileDrawer" role="navigation" aria-label="Mobile menu">
+    <div class="drawer-header">
+      <span class="logo-text" style="font-size:1.1rem;">CV<span style="-webkit-text-fill-color:var(--secondary);">AI</span></span>
+      <button class="drawer-close-btn" onclick="toggleMobileNav()" aria-label="Close menu">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="drawer-nav-section">
+      <a href="{% url 'home' %}"
+         class="nav-link-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+        <i class="fas fa-pen-ruler"></i>Studio
+      </a>
+      <a href="{% url 'dashboard' %}"
+         class="nav-link-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        <i class="fas fa-chart-pie"></i>Dashboard
+      </a>
+      <a href="{% url 'tools' %}"
+         class="nav-link-item {% if request.resolver_match.url_name == 'tools' %}active{% endif %}">
+        <i class="fas fa-wand-magic-sparkles"></i>AI Tools
+      </a>
+      <a href="{% url 'tracker' %}"
+         class="nav-link-item {% if request.resolver_match.url_name == 'tracker' %}active{% endif %}">
+        <i class="fas fa-briefcase"></i>Tracker
+      </a>
+      <a href="{% url 'history' %}"
+         class="nav-link-item {% if request.resolver_match.url_name == 'history' %}active{% endif %}">
+        <i class="fas fa-clock-rotate-left"></i>History
+      </a>
+      <div class="drawer-divider"></div>
+      <a href="{% url 'pricing' %}" class="nav-link-item">
+        <i class="fas fa-tags"></i>Pricing
+      </a>
+      <a href="{% url 'profile' %}" class="nav-link-item">
+        <i class="fas fa-user"></i>{{ user.username }}
+      </a>
+      <a href="{% url 'logout' %}" class="nav-link-item" style="color:var(--danger);">
+        <i class="fas fa-sign-out-alt"></i>Log Out
+      </a>
+    </div>
+  </div>
+{% endblock navbar %}
+
+<!-- ── Django Messages → Toasts ─────────────────────────────── -->
+{% if messages %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    {% for message in messages %}
+    showToast("{{ message|escapejs }}", "{{ message.tags|default:'info' }}");
+    {% endfor %}
+  });
+</script>
+{% endif %}
+
+<!-- ── Page Content ──────────────────────────────────────────── -->
+{% block content %}{% endblock %}
+
+<!-- ── Global Toast Container ───────────────────────────────── -->
+<div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+
+<!-- ── Bootstrap JS ─────────────────────────────────────────── -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- ── Shared Scripts ────────────────────────────────────────── -->
+<script>
+  /* ── Mobile nav toggle ── */
+  function toggleMobileNav() {
+    document.getElementById('mobileDrawer').classList.toggle('open');
+    document.getElementById('mobileBackdrop').classList.toggle('open');
+  }
+  /* Close drawer on Escape */
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      document.getElementById('mobileDrawer').classList.remove('open');
+      document.getElementById('mobileBackdrop').classList.remove('open');
+    }
+  });
+
+  /* ── Global toast system ── */
+  function showToast(message, type) {
+    const icons = {
+      success: 'check-circle',
+      danger:  'times-circle',
+      warning: 'exclamation-triangle',
+      error:   'times-circle',
+      info:    'info-circle',
+    };
+    const toast = document.createElement('div');
+    const resolvedType = type === 'error' ? 'danger' : (type || 'info');
+    toast.className = 'toast-item toast-' + resolvedType;
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML =
+      '<i class="fas fa-' + (icons[resolvedType] || 'info-circle') + '"></i>' +
+      '<span>' + message + '</span>';
+    document.getElementById('toastContainer').appendChild(toast);
+    /* Force reflow before adding .show */
+    requestAnimationFrame(() => requestAnimationFrame(() => toast.classList.add('show')));
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 300);
+    }, 4200);
+  }
+</script>
+
+{% block extra_scripts %}{% endblock %}
+
+</body>
+</html>
