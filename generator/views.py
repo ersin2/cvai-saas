@@ -1,16 +1,15 @@
 import httpx
-import os
-import io
 import re
 import json
-import tempfile
 import logging
-from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
+import socket
+import ipaddress
 
 from asgiref.sync import sync_to_async          # wrap sync ORM/render calls for use in async views
 from django.conf import settings                # reads AI_SERVICE_URL
 from django.core.cache import cache             # lightweight rate-limiting store
+from django.db.models import Count, Q           # aggregate dashboard stats in one query
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import FileResponse, JsonResponse
 from django.contrib.auth.decorators import login_required
@@ -19,7 +18,7 @@ from django.contrib import messages
 from pdfminer.high_level import extract_text as pdf_extract_text
 from users.models import Profile
 from .models import Generation, JobApplication, AIResult
-from .pdf_engine import build_pdf, get_templates_for_plan, TEMPLATES
+from .pdf_engine import build_pdf, TEMPLATES
 
 logger = logging.getLogger(__name__)
 
@@ -34,25 +33,123 @@ RATE_WINDOW = 60  # seconds
 def _check_rate_limit(user, plan: str):
     """
     Returns None if the user is within limits, or a JsonResponse(429) if throttled.
-    Uses a simple counter-per-user stored in Django's cache.
+    Uses a simple per-user counter stored in Django's cache.
+
+    Deployment note: in production the cache is Redis (shared across the 4 ASGI
+    workers), so the limit is global. With the LocMem fallback (local dev) the
+    counter is per-process, so multi-worker dev servers see a looser effective
+    limit — acceptable for local use.
+
+    Fails OPEN: if the cache backend is degraded (django-redis is configured with
+    IGNORE_EXCEPTIONS=True and returns None on connection errors), we allow the
+    request rather than 500 every generation.
     """
     limit = RATE_LIMITS.get(plan, 3)
     cache_key = f"rl:{user.id}"
-    count = cache.get(cache_key, 0)
-    if count >= limit:
+
+    # First request in this window — add() returns True when the key was created.
+    if cache.add(cache_key, 1, RATE_WINDOW):
+        return None
+
+    try:
+        count = cache.incr(cache_key)
+    except ValueError:
+        # Key expired between add() and incr() — treat as a fresh window.
+        cache.set(cache_key, 1, RATE_WINDOW)
+        return None
+
+    # Degraded cache backend returned None instead of an int — fail open.
+    if count is None:
+        return None
+
+    if count > limit:
         return JsonResponse(
             {'error': 'Too many requests. Please wait a minute and try again.'},
             status=429,
         )
-    cache.set(cache_key, count + 1, RATE_WINDOW)
     return None
+
+
+# ---------------------------------------------------------------------------
+# SSRF PROTECTION
+# Validate that a user-supplied URL points at a PUBLIC host before we fetch it.
+# The check runs on every redirect hop (see scrape_job_url) so a public URL
+# cannot 302-redirect us into the internal network — cloud metadata
+# (169.254.169.254), the private ai-worker, Redis, or Postgres.
+# Note: a determined attacker could still DNS-rebind between this resolve and
+# httpx's connect (TOCTOU); blocking every private range on each hop keeps the
+# residual risk low without a custom pinned-IP transport.
+# ---------------------------------------------------------------------------
+_SCRAPE_MAX_REDIRECTS = 5
+
+
+def _url_points_to_public_host(url: str):
+    """
+    Return (True, None) if `url` is an http(s) URL whose hostname resolves
+    ONLY to public IP addresses; otherwise (False, reason).
+    Every resolved address (IPv4 + IPv6) must be public.
+    """
+    try:
+        parsed = urlparse(url)
+    except Exception:
+        return False, 'Invalid URL.'
+
+    if parsed.scheme not in ('http', 'https'):
+        return False, 'Only http and https URLs are allowed.'
+
+    hostname = parsed.hostname
+    if not hostname:
+        return False, 'Invalid URL.'
+
+    try:
+        addrinfo = socket.getaddrinfo(
+            hostname, parsed.port or (443 if parsed.scheme == 'https' else 80)
+        )
+    except socket.gaierror:
+        return False, 'Could not resolve hostname.'
+
+    for *_head, sockaddr in addrinfo:
+        try:
+            ip_obj = ipaddress.ip_address(sockaddr[0])
+        except ValueError:
+            return False, 'Invalid IP address resolved.'
+        if (ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_link_local
+                or ip_obj.is_multicast or ip_obj.is_reserved or ip_obj.is_unspecified):
+            return False, 'Requests to internal or private network addresses are not allowed.'
+
+    return True, None
+
+
+# ---------------------------------------------------------------------------
+# PDF UPLOAD VALIDATION  (shared by parse_resume_pdf and generate_resume)
+# Rejects oversized files and anything whose leading bytes are not a real PDF
+# signature, so pdfminer never parses a disguised or huge payload.
+# ---------------------------------------------------------------------------
+PDF_MAX_BYTES = 5 * 1024 * 1024  # 5 MB
+
+
+def _validate_pdf_upload(pdf_file):
+    """
+    Return (True, None) if the upload is a real PDF within the size cap,
+    else (False, error_message). Leaves the file pointer reset to 0 so the
+    caller can hand the file straight to pdfminer.
+    """
+    if pdf_file.size > PDF_MAX_BYTES:
+        return False, 'File too large. Maximum size is 5MB.'
+    magic = pdf_file.read(4)
+    pdf_file.seek(0)
+    if magic != b'%PDF':
+        return False, 'Invalid file format. Only real PDF files are accepted.'
+    return True, None
 
 
 # ---------------------------------------------------------------------------
 # ASYNC AI MICROSERVICE CLIENT
 # Django forwards prompts to the FastAPI ai_worker service.
-# Uses httpx.AsyncClient so the Django async event loop is never blocked.
+# Uses a global httpx.AsyncClient to ensure connection pooling across requests.
 # ---------------------------------------------------------------------------
+_ai_client = httpx.AsyncClient(timeout=90.0)
+
 async def _call_ai_service(
     system_prompt: str,
     user_prompt: str,
@@ -70,13 +167,12 @@ async def _call_ai_service(
         "temperature": temperature,
     }
     try:
-        async with httpx.AsyncClient(timeout=90.0) as client:
-            resp = await client.post(f"{ai_url}/generate", json=payload)
-            resp.raise_for_status()
-            data = resp.json()
-            if data.get("error"):
-                return None, data["error"]
-            return data.get("result"), None
+        resp = await _ai_client.post(f"{ai_url}/generate", json=payload)
+        resp.raise_for_status()
+        data = resp.json()
+        if data.get("error"):
+            return None, data["error"]
+        return data.get("result"), None
 
     except httpx.ConnectError:
         logger.error("Cannot reach AI service at %s — is ai_worker running?", ai_url)
@@ -153,12 +249,14 @@ async def generate_letter(request):
     resume_text  = request.POST.get('resume', '')[:10000]
     job_desc     = request.POST.get('job_description', '')[:10000]
     company_name = request.POST.get('company_name', 'Target Company')[:200]
-    job_title    = request.POST.get('job_title_ai', 'Professional')[:200]
+    job_title    = request.POST.get('job_title', 'Professional')[:200]
     tone         = request.POST.get('tone', 'Professional')[:200]
     language     = request.POST.get('language', 'English')[:200]
-    first_name   = request.POST.get('first_name', '').strip()[:200]
-    last_name    = request.POST.get('last_name', '').strip()[:200]
-    full_name    = f"{first_name} {last_name}".strip() or "the candidate"
+    # Fall back to the account's real name — never the literal "the candidate",
+    # which used to leak verbatim into the generated letter and History.
+    full_name    = (request.POST.get('full_name', '').strip()[:400]
+                    or request.user.get_full_name().strip()
+                    or request.user.username)
 
     if not profile.has_generations_left():
         error_message = "You've used all free generations! Upgrade to Pro for more."
@@ -168,7 +266,7 @@ async def generate_letter(request):
         # We use tagged section markers so the parser works regardless of language.
         system_prompt = f"""
 You are an elite career strategist, senior recruiter, ATS expert, and professional
-cover letter writer with experience at top global companies (FAANG, startups, enterprise).
+resume writer with experience at top global companies (FAANG, startups, enterprise).
 
 ⚠️ ABSOLUTE LANGUAGE RULE ⚠️
 You MUST automatically detect the language of the candidate's raw input text. YOU MUST GENERATE YOUR ENTIRE RESPONSE IN THAT EXACT SAME LANGUAGE.
@@ -180,15 +278,15 @@ OUTPUT STRUCTURE — use these EXACT section tags (the tags themselves stay in E
 but ALL content between tags must be in {language}):
 
 [SECTION: MAIN_LETTER]
-... full main cover letter in {language} signed by {full_name} ...
+... full ATS-optimized resume summary and experience bullet points in {language} ...
 [END_SECTION]
 
 [SECTION: VERSION_A]
-... Version A (Corporate/Traditional) in {language} signed by {full_name} ...
+... Version A (Corporate/Traditional format) in {language} ...
 [END_SECTION]
 
 [SECTION: VERSION_B]
-... Version B (Bold/Impact) in {language} signed by {full_name} ...
+... Version B (Bold/Impact format) in {language} ...
 [END_SECTION]
 
 [SECTION: ATS_ANALYSIS]
@@ -219,7 +317,7 @@ Preferred Tone: {tone}
 Output Language: {language}
 
 ⚠️  REMINDER: Every word of your entire response must be in {language}.
-Sign every cover letter version with the candidate's full name: {full_name}.
+Include the candidate's full name: {full_name}.
 
 Generate the elite career response now.
 """
@@ -276,13 +374,21 @@ async def generate_resume(request):
 
     resume_text  = request.POST.get('resume', '')[:10000]
     language     = request.POST.get('language', 'English')[:200]
-    first_name   = request.POST.get('first_name', '').strip()[:200]
-    last_name    = request.POST.get('last_name', '').strip()[:200]
-    full_name    = f"{first_name} {last_name}".strip() or "the candidate"
+    full_name    = (request.POST.get('full_name', '').strip()[:400]
+                    or request.user.get_full_name().strip()
+                    or request.user.username)
 
     # ── PDF upload: extract text and prepend to typed resume text ───────
     pdf_file = request.FILES.get('resume_pdf')
     if pdf_file:
+        # Same server-side guard as parse_resume_pdf — client checks are bypassable.
+        ok, pdf_error = _validate_pdf_upload(pdf_file)
+        if not ok:
+            logger.warning(
+                "Rejected resume_pdf upload from user=%s: %s (filename=%r)",
+                request.user.id, pdf_error, pdf_file.name,
+            )
+            return JsonResponse({'resume': None, 'error': pdf_error})
         try:
             pdf_text = await sync_to_async(pdf_extract_text)(pdf_file)
             pdf_text = (pdf_text or '').strip()
@@ -534,9 +640,29 @@ async def rewrite_section(request):
 
 
 # === GENERATION HISTORY ===
+def _classify_generation(gen):
+    """
+    Tag a Generation with the feature that produced it so History can label it
+    correctly. We distinguish by the job_description sentinel written at save time:
+      - '[AI Resume Studio]'      → resume  (from generate_resume)
+      - '[Section Rewrite — …]'   → draft   (from rewrite_section)
+      - otherwise (real company/title) → cover  (from generate_letter)
+    """
+    jd = gen.job_description or ''
+    if jd == '[AI Resume Studio]':
+        return 'resume'
+    if jd.startswith('[Section Rewrite'):
+        return 'draft'
+    if gen.company_name or gen.job_title:
+        return 'cover'
+    return 'resume'
+
+
 @login_required
 def history(request):
-    generations = Generation.objects.filter(user=request.user)[:20]
+    generations = list(Generation.objects.filter(user=request.user)[:20])
+    for gen in generations:
+        gen.kind = _classify_generation(gen)
     return render(request, 'generator/history.html', {
         'generations': generations,
     })
@@ -636,45 +762,40 @@ def scrape_job_url(request):
     if not url:
         return JsonResponse({'error': 'No URL provided'}, status=400)
 
-    # ── SSRF guard ────────────────────────────────────────────────────
-    try:
-        parsed = urlparse(url)
-    except Exception:
-        return JsonResponse({'error': 'Invalid URL.'}, status=400)
-
-    if parsed.scheme not in ('http', 'https'):
-        return JsonResponse(
-            {'error': 'Only http and https URLs are allowed.'},
-            status=400,
-        )
-
-    hostname = (parsed.hostname or '').lower()
-    _BLOCKED = (
-        'localhost',
-        '127.0.0.1',
-        '0.0.0.0',
-        '[::1]',
-        '::1',
-    )
-    _BLOCKED_PREFIXES = (
-        '192.168.',   # RFC-1918 class C
-        '10.',        # RFC-1918 class A
-        '172.16.',    # RFC-1918 class B start
-        '169.254.',   # link-local (APIPA / AWS metadata)
-    )
-    if hostname in _BLOCKED or any(hostname.startswith(p) for p in _BLOCKED_PREFIXES):
-        logger.warning("SSRF attempt blocked for URL: %s (user=%s)", url, request.user.id)
-        return JsonResponse(
-            {'error': 'Requests to internal or private network addresses are not allowed.'},
-            status=400,
-        )
-    # ── End SSRF guard ────────────────────────────────────────────────
-
+    # ── SSRF-safe fetch ───────────────────────────────────────────────
+    # We follow redirects MANUALLY so every hop is re-validated against the
+    # public-host allow-list. Auto-following would let a public URL bounce us
+    # into a private/internal address.
     try:
         from bs4 import BeautifulSoup
-        resp = httpx.get(url, timeout=15, follow_redirects=True, headers={
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        })
+
+        current_url = url
+        resp = None
+        for _ in range(_SCRAPE_MAX_REDIRECTS + 1):
+            ok, reason = _url_points_to_public_host(current_url)
+            if not ok:
+                logger.warning(
+                    "SSRF attempt blocked for URL: %s (user=%s): %s",
+                    current_url, request.user.id, reason,
+                )
+                return JsonResponse({'error': reason}, status=400)
+
+            resp = httpx.get(
+                current_url, timeout=15, follow_redirects=False,
+                headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'},
+            )
+            if resp.is_redirect:
+                # httpx resolves the (possibly relative) Location into next_request;
+                # fall back to urljoin if it is unavailable for any reason.
+                if resp.next_request is not None:
+                    current_url = str(resp.next_request.url)
+                else:
+                    current_url = urljoin(current_url, resp.headers.get('location', ''))
+                continue
+            break
+        else:
+            return JsonResponse({'error': 'Too many redirects.'}, status=400)
+
         soup = BeautifulSoup(resp.text, 'html.parser')
 
         # Remove scripts, styles, nav, footer
@@ -712,26 +833,16 @@ def parse_resume_pdf(request):
     if not pdf_file:
         return JsonResponse({'error': 'No file uploaded.'}, status=400)
 
-    # Validate file size (max 5MB) — check before reading any bytes
-    if pdf_file.size > 5 * 1024 * 1024:
-        return JsonResponse({'error': 'File too large. Maximum size is 5MB.'}, status=400)
-
-    # ── Magic bytes validation ───────────────────────────────────────────────
-    # Read the first 4 bytes and confirm the PDF signature.
-    # This catches renamed executables/scripts regardless of the file extension.
-    magic = pdf_file.read(4)
-    if magic != b'%PDF':
+    # ── Size + magic-bytes validation (shared helper) ────────────────────────
+    # Catches oversized uploads and renamed executables/scripts regardless of
+    # the file extension. The helper resets the pointer for pdfminer.
+    ok, pdf_error = _validate_pdf_upload(pdf_file)
+    if not ok:
         logger.warning(
-            "Rejected non-PDF upload from user=%s: magic=%r filename=%r",
-            request.user.id, magic, pdf_file.name,
+            "Rejected non-PDF upload from user=%s: %s (filename=%r)",
+            request.user.id, pdf_error, pdf_file.name,
         )
-        return JsonResponse(
-            {'error': 'Invalid file format. Only real PDF files are accepted.'},
-            status=400,
-        )
-    # Reset pointer so pdfminer reads the full file from the beginning
-    pdf_file.seek(0)
-    # ── End magic bytes validation ───────────────────────────────────────────
+        return JsonResponse({'error': pdf_error}, status=400)
 
     try:
         text = pdf_extract_text(pdf_file)
@@ -753,15 +864,25 @@ def dashboard(request):
     applications = JobApplication.objects.filter(user=request.user)
     ai_results = AIResult.objects.filter(user=request.user)
 
+    # One query for all application counts instead of six separate .count() calls.
+    app_counts = applications.aggregate(
+        total=Count('id'),
+        saved=Count('id', filter=Q(status='saved')),
+        applied=Count('id', filter=Q(status='applied')),
+        interviews=Count('id', filter=Q(status='interview')),
+        offers=Count('id', filter=Q(status='offer')),
+        rejected=Count('id', filter=Q(status='rejected')),
+    )
+
     stats = {
         'total_generations': generations.count(),
-        'total_applications': applications.count(),
+        'total_applications': app_counts['total'],
         'total_ai_results': ai_results.count(),
-        'saved': applications.filter(status='saved').count(),
-        'applied': applications.filter(status='applied').count(),
-        'interviews': applications.filter(status='interview').count(),
-        'offers': applications.filter(status='offer').count(),
-        'rejected': applications.filter(status='rejected').count(),
+        'saved': app_counts['saved'],
+        'applied': app_counts['applied'],
+        'interviews': app_counts['interviews'],
+        'offers': app_counts['offers'],
+        'rejected': app_counts['rejected'],
         'generations_left': profile.generations_count if profile.plan == 'free' else '∞',
         'plan': profile.get_plan_display(),
     }

@@ -28,7 +28,8 @@
             --bg: #060810;
             --bg2: #0c1022;
             --text: #e2e8f0;
-            --muted: #64748b;
+            /* WCAG-AA: #94a3b8 on the near-black bg is ~7:1 (was #64748b ≈ 4:1) */
+            --muted: #94a3b8;
         }
 
         * {
@@ -1346,8 +1347,26 @@
                 display: none;
             }
 
+            /* Keep the hero from filling the whole viewport so the CTA stays
+               above the fold on phones (was min-height:100vh + a 6.5rem title). */
+            .hero {
+                min-height: auto;
+                padding: 92px 20px 48px;
+            }
+
+            .hero-title {
+                font-size: clamp(2.1rem, 8.5vw, 3rem);
+                margin-bottom: 18px;
+            }
+
+            .hero-sub {
+                margin-bottom: 28px;
+            }
+
             .stats-bar {
                 gap: 30px;
+                margin-top: 44px;
+                padding-top: 32px;
             }
 
             .sticky-cta {
@@ -1432,18 +1451,18 @@
         <div class="hero-content">
             <div class="hero-badge">
                 <span class="logo-dot"></span>
-                Powered by Llama 3 AI · Free to start
+                Powered by Elite AI · Free to start
             </div>
 
             <h1 class="hero-title">
                 Your Next Job<br>
                 Starts With The<br>
-                <span class="gradient-text"><span id="typewriter">Perfect Letter.</span><span
+                <span class="gradient-text"><span id="typewriter">Perfect Resume.</span><span
                         class="typing-cursor">|</span></span>
             </h1>
 
             <p class="hero-sub">
-                Generate professional cover letters in seconds.
+                Generate professional resumes and cover letters in seconds.
                 Beat ATS systems, impress recruiters, land interviews —
                 all powered by elite AI.
             </p>
@@ -1451,7 +1470,7 @@
             <div class="hero-cta">
                 <a href="{% url 'register' %}" class="btn-primary-glow">
                     <i class="fas fa-magic"></i>
-                    Generate Free Letter
+                    Get Started Free
                 </a>
                 <a href="#how" class="btn-ghost">
                     See How It Works
@@ -1462,7 +1481,7 @@
             <div class="stats-bar">
                 <div class="stat-item">
                     <div class="stat-num" data-count="2400">0</div>
-                    <div class="stat-label">Letters Generated</div>
+                    <div class="stat-label">Documents Generated</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-num" data-count="94">0</div>
@@ -1568,7 +1587,7 @@
                         <i class="fas fa-file-alt" style="color: var(--c2);"></i>
                     </div>
                     <div class="feature-title">Elite Cover Letter</div>
-                    <div class="feature-desc">A fully personalized, ATS-optimized cover letter written by AI trained
+                    <div class="feature-desc">A fully personalized, ATS-optimized resume tailored by AI trained
                         on thousands of successful applications.</div>
                 </div>
 
@@ -1649,8 +1668,8 @@
                         <i class="fas fa-bolt" style="color: #fbbf24;"></i>
                     </div>
                     <div class="feature-title">15 Second Results</div>
-                    <div class="feature-desc">No waiting. No queues. Results in under 15 seconds powered by Llama 3 on
-                        Groq's ultra-fast infrastructure.</div>
+                    <div class="feature-desc">No waiting. No queues. Results in under 15 seconds, powered by Elite AI on
+                        ultra-fast infrastructure.</div>
                 </div>
             </div>
         </div>
@@ -1799,7 +1818,7 @@
                         <li class="active"><i class="fas fa-check"></i> Analytics dashboard</li>
                         <li class="active"><i class="fas fa-check"></i> Early access to new features</li>
                     </ul>
-                    <a href="{% url 'register' %}" class="btn-plan btn-plan-elite">Get Elite →</a>
+                      <a href="{% url 'register' %}" class="btn-plan btn-plan-elite">Get Elite →</a>
                 </div>
             </div>
         </div>
@@ -1961,14 +1980,14 @@
                 <a href="{% url 'privacy' %}"
                     style="color: var(--muted); text-decoration: none; font-size: 0.85rem;">Privacy</a>
             </div>
-            <div class="footer-copy" style="font-size: 0.8rem; color: #334155;">© 2026 CVAI · Built with ❤️ and Llama 3
+            <div class="footer-copy" style="font-size: 0.8rem; color: #334155;">© 2026 CVAI · Built with ❤️ and AI
             </div>
         </div>
     </footer>
 
     <!-- STICKY MOBILE CTA -->
     <div class="sticky-cta" id="stickyCta">
-        <a href="{% url 'register' %}"><i class="fas fa-magic me-2"></i>Start Free — Generate Your Letter</a>
+        <a href="{% url 'register' %}"><i class="fas fa-magic me-2"></i>Start Free — Build Your Resume</a>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -2010,7 +2029,7 @@
         });
 
         // TYPEWRITER EFFECT
-        const words = ['Perfect Letter.', 'Dream Job.', 'Next Interview.', 'Career Change.', 'Offer Letter.'];
+        const words = ['Perfect Resume.', 'Perfect Letter.', 'Dream Job.', 'Next Interview.', 'Career Change.'];
         let wordIndex = 0;
         let charIndex = 0;
         let isDeleting = false;

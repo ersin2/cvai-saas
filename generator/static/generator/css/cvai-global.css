@@ -25,7 +25,9 @@
   /* Text */
   --text-primary:   #f1f5f9;
   --text-secondary: #94a3b8;
-  --text-muted:     #475569;
+  /* WCAG-AA: #7c8a9e on the #080c14 surfaces is ~4.6:1 (was #475569 ≈ 2.5:1),
+     still dimmer than --text-secondary so the hierarchy is preserved. */
+  --text-muted:     #7c8a9e;
   --text-dim:       #334155;
 
   /* Status */
