@@ -1,8 +1,8 @@
 {% extends 'generator/base_app.html' %}
 {% load static %}
 
-{% block title %}AI Tools | CVAI — Interview Prep, Follow-Up & ATS Score{% endblock %}
-{% block meta_desc %}Access AI-powered interview prep, follow-up email generator, and ATS score checker to maximize your job search success.{% endblock %}
+{% block title %}AI Tools | CVAI — Cover Letters, Interview Prep, Follow-Up & ATS Score{% endblock %}
+{% block meta_desc %}Access AI-powered cover letters, interview prep, follow-up email generator, and ATS score checker to maximize your job search success.{% endblock %}
 
 {% block extra_head %}
 
@@ -106,21 +106,87 @@
             font-family: var(--font-mono);
         }
 
-        /* ── HISTORY SIDEBAR ── */
-        .history-item-sm {
-            padding: 11px 14px;
+        /* ── RESULT CARDS SIDEBAR ── */
+        .tool-result-card {
             border-radius: var(--radius-sm);
-            border: 1px solid rgba(255, 255, 255, 0.04);
-            margin-bottom: 6px;
-            cursor: pointer;
-            transition: background var(--transition-fast), border-color var(--transition-fast);
-            font-size: 0.84rem;
+            border: 1px solid rgba(255,255,255,.05);
+            border-left: 3px solid var(--primary);
+            margin-bottom: 8px;
+            overflow: hidden;
+            transition: border-color var(--transition-fast), background var(--transition-fast);
+            background: rgba(0,0,0,.12);
         }
+        .tool-result-card:hover {
+            background: rgba(255,255,255,.03);
+            border-color: rgba(76,201,240,.3);
+        }
+        .tool-result-card[data-type="interview"] { border-left-color: #4cc9f0; }
+        .tool-result-card[data-type="followup"]  { border-left-color: #f72585; }
+        .tool-result-card[data-type="ats"]       { border-left-color: #f59e0b; }
 
-        .history-item-sm:hover {
-            background: var(--surface-3);
-            border-color: var(--border);
+        .trc-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 9px 12px 4px;
         }
+        .trc-type-badge {
+            font-size: 0.65rem; font-weight: 700; padding: 2px 8px;
+            border-radius: 99px; letter-spacing: 0.03em; white-space: nowrap;
+        }
+        .trc-type-badge.trc-interview { background: rgba(76,201,240,.12);  color: #4cc9f0; border: 1px solid rgba(76,201,240,.25); }
+        .trc-type-badge.trc-followup  { background: rgba(247,37,133,.12);  color: #f72585; border: 1px solid rgba(247,37,133,.25); }
+        .trc-type-badge.trc-ats       { background: rgba(245,158,11,.12);  color: #f59e0b; border: 1px solid rgba(245,158,11,.25); }
+        .trc-date {
+            font-size: 0.68rem; color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+        .trc-summary {
+            padding: 2px 12px 6px;
+            font-size: 0.8rem; font-weight: 600; color: var(--text-secondary);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .trc-preview {
+            padding: 0 12px 6px;
+            font-size: 0.76rem; color: var(--text-muted); line-height: 1.55;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .trc-toggle {
+            width: 100%; padding: 6px 12px;
+            display: flex; align-items: center; justify-content: space-between;
+            background: none; border: none; border-top: 1px solid rgba(255,255,255,.04);
+            color: var(--text-muted); font-size: 0.72rem; cursor: pointer;
+            transition: background .15s;
+        }
+        .trc-toggle:hover { background: rgba(255,255,255,.03); }
+        .trc-toggle .trc-chevron {
+            font-size: 0.6rem;
+            transition: transform 0.26s cubic-bezier(.4,0,.2,1);
+        }
+        .tool-result-card.trc-open .trc-chevron { transform: rotate(180deg); }
+        .trc-body {
+            max-height: 0; overflow: hidden;
+            transition: max-height 0.3s cubic-bezier(.4,0,.2,1);
+        }
+        .tool-result-card.trc-open .trc-body { max-height: 320px; }
+        .trc-full {
+            white-space: pre-wrap; font-size: 0.76rem;
+            color: var(--text-secondary); line-height: 1.6;
+            max-height: 200px; overflow-y: auto;
+            padding: 10px 12px 6px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(76,201,240,.15) transparent;
+        }
+        .trc-copy-row { padding: 6px 12px 10px; display: flex; justify-content: flex-end; }
+        .trc-copy-btn {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 4px 11px; border-radius: 6px;
+            border: 1px solid rgba(76,201,240,.2);
+            background: rgba(76,201,240,.06);
+            color: var(--primary); font-size: 0.72rem; font-weight: 600;
+            cursor: pointer; transition: background .2s;
+        }
+        .trc-copy-btn:hover { background: rgba(76,201,240,.18); }
+        .trc-copy-btn.copied { color: #22c55e; border-color: rgba(34,197,94,.25); background: rgba(34,197,94,.07); }
 
         /* ── LOADING ── */
         .loading-spinner {
@@ -155,7 +221,11 @@
 
         <!-- TOOL TABS -->
         <div class="tool-tabs anim-fade-up anim-delay-1">
-            <div class="tool-tab {% if not active_tool or active_tool == 'interview' %}active{% endif %}"
+            <div class="tool-tab {% if not active_tool or active_tool == 'cover' %}active{% endif %}"
+                onclick="showTool('cover', this)">
+                <i class="fas fa-file-signature"></i>Cover Letter
+            </div>
+            <div class="tool-tab {% if active_tool == 'interview' %}active{% endif %}"
                 onclick="showTool('interview', this)">
                 <i class="fas fa-comments"></i>Interview Prep
             </div>
@@ -172,8 +242,87 @@
         <div class="row g-4">
             <div class="col-lg-8">
 
+                <!-- ── COVER LETTER ── -->
+                <div class="tool-panel {% if not active_tool or active_tool == 'cover' %}active{% endif %}" id="panel-cover">
+                    <div class="glass-card">
+                        <h2 class="section-title mb-1">
+                            <i class="fas fa-file-signature" style="color: var(--secondary);"></i>AI Cover Letter
+                        </h2>
+                        <p class="page-subtitle mb-4">One click gives you a tailored cover letter, two alternative versions, an ATS score, and recruiter red-flags.</p>
+                        <form id="form-cover" onsubmit="submitCoverLetter(event)">
+                            {% csrf_token %}
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Your Full Name</label>
+                                    <input type="text" name="full_name" class="form-control"
+                                        value="{{ request.user.get_full_name|default:request.user.username }}" placeholder="Jane Doe">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Company Name</label>
+                                    <input type="text" name="company_name" class="form-control" placeholder="Target company" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Job Title</label>
+                                    <input type="text" name="job_title" class="form-control" placeholder="Senior Developer" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Tone</label>
+                                    <select name="tone" class="form-select">
+                                        <option>Professional</option>
+                                        <option>Enthusiastic</option>
+                                        <option>Formal</option>
+                                        <option>Conversational</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Language</label>
+                                    <select name="language" class="form-select">
+                                        <option>English</option>
+                                        <option>Spanish</option>
+                                        <option>French</option>
+                                        <option>German</option>
+                                        <option>Russian</option>
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Your Resume</label>
+                                    <textarea name="resume" class="form-control" rows="4"
+                                        placeholder="Paste your resume..." required>{{ profile.base_resume|default:"" }}</textarea>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Job Description</label>
+                                    <textarea name="job_description" class="form-control" rows="4"
+                                        placeholder="Paste the job description..." required></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn-tool">
+                                        <i class="fas fa-wand-magic-sparkles"></i>Generate Cover Letter
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- Cover-letter result (client-rendered from the tagged sections) -->
+                        <div id="coverResult" style="display:none; margin-top:28px;">
+                            <div class="tool-tabs" id="coverSectionTabs" style="margin-bottom:16px;"></div>
+                            <div class="result-box" style="margin-top:0;">
+                                <div class="d-flex justify-content-end mb-3">
+                                    <button class="btn-ghost" onclick="copyCoverSection()" style="font-size:0.8rem; padding:8px 16px;">
+                                        <i class="fas fa-copy"></i>Copy
+                                    </button>
+                                </div>
+                                <div id="coverSectionContent"></div>
+                            </div>
+                            <p class="page-subtitle mt-3" style="font-size:0.8rem;">
+                                <i class="fas fa-clock-rotate-left me-1"></i>Saved to your
+                                <a href="{% url 'history' %}" style="color:var(--primary);">History</a>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- ── INTERVIEW PREP ── -->
-                <div class="tool-panel {% if not active_tool or active_tool == 'interview' %}active{% endif %}" id="panel-interview">
+                <div class="tool-panel {% if active_tool == 'interview' %}active{% endif %}" id="panel-interview">
                     <div class="glass-card">
                         <h2 class="section-title mb-1">
                             <i class="fas fa-comments" style="color: var(--primary);"></i>Interview Prep AI
@@ -312,21 +461,26 @@
                     </h2>
                     {% if results %}
                     {% for r in results %}
-                    <div class="history-item-sm" onclick="this.querySelector('.hist-detail').classList.toggle('d-none')">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span>
-                                {% if r.result_type == 'interview' %}<i class="fas fa-comments" style="color: var(--primary); margin-right: 5px;"></i>
-                                {% elif r.result_type == 'followup' %}<i class="fas fa-envelope" style="color: var(--secondary); margin-right: 5px;"></i>
-                                {% else %}<i class="fas fa-chart-bar" style="color: var(--warning); margin-right: 5px;"></i>{% endif %}
-                                {{ r.input_summary|truncatechars:28 }}
+                    <div class="tool-result-card" data-type="{{ r.result_type }}" id="trc-{{ r.id }}">
+                        <div class="trc-header">
+                            <span class="trc-type-badge {% if r.result_type == 'interview' %}trc-interview{% elif r.result_type == 'followup' %}trc-followup{% else %}trc-ats{% endif %}">
+                                <i class="fas fa-{% if r.result_type == 'interview' %}comments{% elif r.result_type == 'followup' %}envelope{% else %}chart-bar{% endif %} me-1"></i>{% if r.result_type == 'interview' %}Interview Prep{% elif r.result_type == 'followup' %}Follow-Up{% else %}ATS Score{% endif %}
                             </span>
-                            <small style="color: var(--text-muted); font-family: var(--font-mono); font-size: 0.72rem; margin-left: 8px; flex-shrink: 0;">
-                                {{ r.created_at|date:"M d" }}
-                            </small>
+                            <span class="trc-date">{{ r.created_at|date:"M d" }}</span>
                         </div>
-                        <div class="hist-detail d-none mt-2"
-                            style="white-space: pre-wrap; font-size: 0.78rem; color: var(--text-secondary); max-height: 200px; overflow-y: auto; line-height: 1.6;">
-                            {{ r.result|truncatechars:500 }}
+                        <div class="trc-summary">{{ r.input_summary|truncatechars:45 }}</div>
+                        <div class="trc-preview">{{ r.result|truncatechars:120 }}</div>
+                        <button class="trc-toggle" onclick="toggleToolResult(this)">
+                            <span>View full</span>
+                            <i class="fas fa-chevron-down trc-chevron"></i>
+                        </button>
+                        <div class="trc-body">
+                            <div class="trc-full">{{ r.result }}</div>
+                            <div class="trc-copy-row">
+                                <button class="trc-copy-btn" onclick="copyTrcItem(this)">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                            </div>
                         </div>
                     </div>
                     {% endfor %}
@@ -352,11 +506,35 @@
             el.classList.add('active');
         }
 
-        function toggleMobileNav() {
-            document.getElementById('mobileDrawer').classList.toggle('open');
-            document.getElementById('mobileBackdrop').classList.toggle('open');
+        /* Toggle a result card expand/collapse */
+        function toggleToolResult(btn) {
+            const card  = btn.closest('.tool-result-card');
+            const label = btn.querySelector('span');
+            const isOpen = card.classList.toggle('trc-open');
+            label.textContent = isOpen ? 'Collapse' : 'View full';
         }
 
+        /* Copy the full result text from a sidebar card */
+        async function copyTrcItem(btn) {
+            const full = btn.closest('.trc-body').querySelector('.trc-full');
+            const text = full ? full.textContent.trim() : '';
+            if (!text) return;
+            try {
+                await navigator.clipboard.writeText(text);
+                btn.classList.add('copied');
+                btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    btn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+                }, 2200);
+            } catch (_) {
+                showToast('Copy failed — please select text manually.', 'danger');
+            }
+        }
+
+
+        /* toggleMobileNav() and showToast() come from base_app.html — the global
+           .toast-item system, so AI Tools toasts match the rest of the app. */
         function copyResult() {
             const box = document.getElementById('toolResultBox');
             if (box) {
@@ -368,21 +546,102 @@
             }
         }
 
-        function showToast(message, type) {
-            const toast = document.createElement('div');
-            const icons = {success:'check-circle', warning:'exclamation-triangle', danger:'times-circle'};
-            toast.className = 'toast-notification toast-' + type;
-            toast.innerHTML = '<i class="fas fa-' + (icons[type] || 'info-circle') + '"></i>' + message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.classList.add('show'), 10);
-            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 4000);
-        }
-
         const TOOL_URLS = {
             interview: '{% url "interview_prep" %}',
             followup:  '{% url "followup_email" %}',
             ats:       '{% url "ats_score" %}'
         };
+
+        // ── COVER LETTER (client-rendered — endpoint returns tagged JSON) ──
+        const COVER_URL = '{% url "generate_letter" %}';
+        let _coverSections = [];  // [{key, label, html}]
+
+        async function submitCoverLetter(event) {
+            event.preventDefault();
+            const form = event.target;
+            const btn  = form.querySelector('button[type=submit]');
+            const orig = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Writing your cover letter...';
+            document.getElementById('loadingSpinner').classList.add('show');
+            document.getElementById('coverResult').style.display = 'none';
+
+            const fd = new FormData(form);
+            fd.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            try {
+                const resp = await fetch(COVER_URL, { method: 'POST', body: fd });
+                document.getElementById('loadingSpinner').classList.remove('show');
+
+                if (resp.status === 429) {
+                    let msg = 'Too many requests. Please wait a minute.';
+                    try { const d = await resp.json(); msg = d.error || msg; } catch (e) {}
+                    showToast(msg, 'warning');
+                    return;
+                }
+                if (!resp.ok) {
+                    showToast('Server error (' + resp.status + '). Please try again.', 'danger');
+                    return;
+                }
+                const data = await resp.json();
+                if (data.error)   { showToast(data.error, 'danger'); return; }
+                if (!data.result) { showToast('AI returned an empty response. Please try again.', 'danger'); return; }
+
+                renderCoverSections(data.result);
+                showToast('Cover letter generated — saved to History.', 'success');
+            } catch (err) {
+                document.getElementById('loadingSpinner').classList.remove('show');
+                showToast('Connection failed. Is the AI service running?', 'danger');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = orig;
+            }
+        }
+
+        function renderCoverSections(raw) {
+            const LABELS = {
+                MAIN_LETTER:   'Cover Letter',
+                VERSION_A:     'Version A',
+                VERSION_B:     'Version B',
+                ATS_ANALYSIS:  'ATS Score',
+                RISK_ANALYSIS: 'Red Flags',
+            };
+            const re = /\[SECTION:\s*([A-Z_]+)\]([\s\S]*?)\[END_SECTION\]/g;
+            _coverSections = [];
+            let m;
+            while ((m = re.exec(raw)) !== null) {
+                const key = m[1].toUpperCase();
+                _coverSections.push({ key, label: LABELS[key] || key, html: formatMarkdown(m[2].trim()) });
+            }
+            // Fallback: model didn't emit tags → show everything in one pane.
+            if (_coverSections.length === 0) {
+                _coverSections.push({ key: 'RAW', label: 'Cover Letter', html: formatMarkdown(raw) });
+            }
+
+            document.getElementById('coverSectionTabs').innerHTML = _coverSections.map((s, i) =>
+                `<div class="tool-tab ${i === 0 ? 'active' : ''}" onclick="showCoverSection(${i}, this)">${s.label}</div>`
+            ).join('');
+            document.getElementById('coverSectionContent').innerHTML = _coverSections[0].html;
+
+            const box = document.getElementById('coverResult');
+            box.style.display = 'block';
+            box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function showCoverSection(idx, el) {
+            document.querySelectorAll('#coverSectionTabs .tool-tab').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('coverSectionContent').innerHTML = _coverSections[idx].html;
+        }
+
+        function copyCoverSection() {
+            const el = document.getElementById('coverSectionContent');
+            const text = el ? el.innerText.trim() : '';
+            if (!text) return;
+            navigator.clipboard.writeText(text)
+                .then(() => showToast('Copied to clipboard!', 'success'))
+                .catch(() => showToast('Copy failed — please select the text manually.', 'danger'));
+        }
 
         async function submitToolForm(event, toolName) {
             event.preventDefault();

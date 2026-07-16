@@ -81,12 +81,55 @@
 
     /* ── LEFT PANEL — Form ─────────────────────────────────── */
     .vs-left {
-      width: 400px; min-width: 320px; max-width: 460px;
+      width: 400px; min-width: 280px; max-width: 620px;
       flex-shrink: 0;
       background: var(--panel-bg);
       border-right: 1px solid var(--panel-border);
       display: flex; flex-direction: column; overflow: hidden;
+      transition: width 0.2s ease;
     }
+
+    /* ── RESIZER DIVIDER ─────────────────────────────────────── */
+    .vs-resizer {
+      width: 6px; flex-shrink: 0;
+      background: var(--panel-border);
+      cursor: col-resize;
+      position: relative;
+      transition: background 0.2s;
+      z-index: 10;
+    }
+    .vs-resizer:hover, .vs-resizer.dragging {
+      background: rgba(76,201,240,0.35);
+    }
+    .vs-resizer::after {
+      content: '';
+      position: absolute; inset: 0;
+      width: 18px; left: -6px;
+    }
+    /* ── COLLAPSE TOGGLE BUTTON ─────────────────────────────── */
+    .vs-collapse-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 22px; height: 44px;
+      background: var(--panel-bg);
+      border: 1px solid rgba(76,201,240,0.2);
+      border-left: none;
+      border-radius: 0 8px 8px 0;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.65rem;
+      transition: color 0.2s, background 0.2s;
+      z-index: 20;
+    }
+    .vs-collapse-btn:hover { color: var(--accent); background: rgba(76,201,240,0.06); }
+    .vs-resizer-wrap {
+      position: relative; flex-shrink: 0;
+      display: flex; align-items: stretch;
+    }
+    .vs-right.preview-hidden { display: none !important; }
+    .vs-left.full-width { max-width: 100%; width: calc(100vw - 6px); }
     .vs-left-header {
       padding: 14px 20px 10px;
       border-bottom: 1px solid var(--panel-border);
@@ -256,11 +299,14 @@
     .vs-preview-status { font-size: .72rem; color: var(--text-muted); }
     .vs-preview-spacer { flex: 1; }
 
-    /* PDF iframe */
-    #pdf-preview {
-      flex: 1; width: 100%; border: none; background: #1a202c;
-      display: block;
+    /* PDF preview — two stacked iframes we crossfade between (no white flash) */
+    .vs-preview-stage { position: relative; flex: 1; min-height: 0; background: #1a202c; }
+    .vs-preview-stage iframe {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      border: none; background: #1a202c;
+      opacity: 0; transition: opacity .18s ease;
     }
+    .vs-preview-stage iframe.active { opacity: 1; }
     .vs-preview-placeholder {
       flex: 1; display: flex; flex-direction: column;
       align-items: center; justify-content: center; gap: 16px;
@@ -309,12 +355,67 @@
     .vs-toast.success i { color: #22c55e; }
     .vs-toast.danger  i { color: #f72585; }
 
+    /* Autosave indicator (in the left header) */
+    .autosave-ind {
+      font-size: .62rem; font-weight: 700; margin-left: 10px;
+      padding: 2px 9px; border-radius: 99px; vertical-align: middle;
+      letter-spacing: .02em; opacity: 0; transition: opacity .2s ease;
+    }
+    .autosave-ind.saving { opacity: 1; color: var(--text-muted); background: rgba(255,255,255,.06); }
+    .autosave-ind.saved  { opacity: 1; color: #22c55e; background: rgba(34,197,94,.12); }
+    .autosave-ind.error  { opacity: 1; color: #f87171; background: rgba(248,113,113,.12); }
+
+    /* ── Confirm dialog ── */
+    .vs-confirm-overlay {
+      display: none; position: fixed; inset: 0; z-index: 100000;
+      background: rgba(7,10,20,.7); backdrop-filter: blur(6px);
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .vs-confirm-overlay.show { display: flex; }
+    .vs-confirm-box {
+      background: rgba(13,17,32,.98); border: 1px solid rgba(76,201,240,.2);
+      border-radius: 20px; padding: 26px; max-width: 380px; width: 100%;
+      text-align: center; box-shadow: 0 30px 70px rgba(0,0,0,.6);
+    }
+    .vs-confirm-msg { color: var(--text-primary); font-size: .95rem; line-height: 1.5; margin-bottom: 22px; }
+    .vs-confirm-actions { display: flex; gap: 10px; justify-content: center; }
+    .vs-confirm-actions button {
+      min-width: 112px; padding: 10px 18px; border-radius: 12px;
+      font-weight: 700; font-size: .85rem; cursor: pointer; border: none;
+    }
+    .vs-btn-ghost { background: rgba(255,255,255,.06); color: var(--text-secondary); }
+    .vs-btn-ghost:hover { background: rgba(255,255,255,.1); }
+    .vs-btn-danger { background: linear-gradient(135deg,#ef4444,#f72585); color: #fff; }
+    .vs-btn-danger:hover { filter: brightness(1.08); }
+
+    /* ── Phase 3 polish: accessible keyboard focus ── */
+    button:focus-visible,
+    a:focus-visible,
+    .tpl-card:focus-visible,
+    .skill-chip:focus-visible,
+    .skill-preset-pill:focus-visible,
+    [tabindex]:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      border-radius: 8px;
+    }
+    .vs-input:focus-visible, .vs-textarea:focus-visible, .vs-select:focus-visible {
+      outline: 2px solid var(--accent); outline-offset: 1px;
+    }
+    /* Smooth, consistent micro-transitions on interactive chrome */
+    .tpl-card, .skill-chip, .vs-section-toggle, .theme-preset-pill, .skill-preset-pill {
+      transition: transform .15s ease, border-color .15s ease, background .15s ease, box-shadow .15s ease;
+    }
+
     /* ── Responsive ──────────────────────────────────────── */
     @media (max-width: 900px) {
       .vs-studio { flex-direction: column; overflow-y: auto; }
-      .vs-left   { width: 100%; max-width: 100%; border-right: none;
+      /* !important overrides any inline width left by a desktop drag-resize */
+      .vs-left   { width: 100% !important; max-width: 100%; border-right: none;
                    border-bottom: 1px solid var(--panel-border); }
-      .vs-right  { min-height: 60vh; }
+      .vs-right  { min-height: 70vh; }
+      /* The vertical drag divider + collapse toggle are meaningless when stacked */
+      .vs-resizer-wrap { display: none; }
       html, body  { overflow: auto; }
     }
 
@@ -592,13 +693,54 @@
     }
     .font-select:focus { border-color: var(--accent); }
 
-    /* ── Dynamic Skills Builder ──────────────────────────────── */
-    .skill-builder {
-      display: flex; flex-direction: column; gap: 12px;
+    /* ══ Enhanced Skills Builder ════════════════════════════════ */
+    .skill-builder { display: flex; flex-direction: column; gap: 14px; }
+
+    /* Preset category tabs */
+    .skill-preset-tabs {
+      display: flex; gap: 6px; flex-wrap: wrap;
     }
-    .skill-input-row {
-      display: flex; gap: 8px; align-items: center;
+    .skill-preset-tab {
+      padding: 4px 12px; border-radius: 99px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      color: var(--text-muted); font-size: .72rem; font-weight: 700;
+      cursor: pointer; transition: all .2s; white-space: nowrap;
+      letter-spacing: .3px;
     }
+    .skill-preset-tab:hover { border-color: var(--accent); color: var(--accent); background: rgba(76,201,240,.06); }
+    .skill-preset-tab.active {
+      border-color: var(--accent); color: var(--accent);
+      background: rgba(76,201,240,.12);
+    }
+    /* Preset pills grid */
+    .skill-preset-pills {
+      display: none; flex-wrap: wrap; gap: 5px;
+      max-height: 90px; overflow-y: auto;
+      padding: 2px 0;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(76,201,240,.2) transparent;
+    }
+    .skill-preset-pills.active { display: flex; }
+    .skill-preset-pill {
+      padding: 3px 10px; border-radius: 99px;
+      border: 1px dashed rgba(255,255,255,.14);
+      background: rgba(255,255,255,.03);
+      color: var(--text-secondary); font-size: .72rem; font-weight: 600;
+      cursor: pointer; transition: all .18s;
+    }
+    .skill-preset-pill:hover {
+      background: rgba(76,201,240,.14);
+      border-color: rgba(76,201,240,.4);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+    .skill-preset-pill.added {
+      opacity: .45; cursor: default; pointer-events: none;
+    }
+
+    /* Manual add row */
+    .skill-input-row { display: flex; gap: 8px; align-items: center; }
     .skill-input-row .vs-input { flex: 1; }
     .btn-add-skill {
       flex-shrink: 0; padding: 8px 14px;
@@ -609,14 +751,44 @@
       cursor: pointer; white-space: nowrap;
       transition: background .2s, transform .15s;
     }
-    .btn-add-skill:hover {
-      background: rgba(76,201,240,.2);
-      transform: translateY(-1px);
+    .btn-add-skill:hover { background: rgba(76,201,240,.2); transform: translateY(-1px); }
+
+    /* Bulk import toggle */
+    .skill-bulk-toggle {
+      font-size: .7rem; color: var(--text-muted);
+      cursor: pointer; background: none; border: none;
+      padding: 0; display: flex; align-items: center; gap: 4px;
+      transition: color .2s;
     }
-    .skill-level-wrap { display: flex; flex-direction: column; gap: 4px; }
-    .skill-level-header {
-      display: flex; justify-content: space-between; align-items: center;
+    .skill-bulk-toggle:hover { color: var(--accent); }
+    .skill-bulk-wrap {
+      display: none; flex-direction: column; gap: 6px;
     }
+    .skill-bulk-wrap.open { display: flex; }
+    .skill-bulk-area {
+      width: 100%; min-height: 56px;
+      background: var(--input-bg);
+      border: 1px dashed rgba(76,201,240,.3);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary); font-size: .82rem;
+      padding: 8px 12px; resize: vertical;
+      font-family: inherit; outline: none;
+      transition: border-color .2s;
+    }
+    .skill-bulk-area:focus { border-color: var(--accent); border-style: solid; }
+    .btn-bulk-add {
+      align-self: flex-end; padding: 6px 14px;
+      border: 1px solid rgba(76,201,240,.3);
+      border-radius: var(--radius-sm);
+      background: rgba(76,201,240,.07);
+      color: var(--accent); font-size: .78rem; font-weight: 700;
+      cursor: pointer; transition: background .2s;
+    }
+    .btn-bulk-add:hover { background: rgba(76,201,240,.18); }
+
+    /* Proficiency slider — larger */
+    .skill-level-wrap { display: flex; flex-direction: column; gap: 6px; }
+    .skill-level-header { display: flex; justify-content: space-between; align-items: center; }
     .skill-level-label {
       font-size: .7rem; font-weight: 700; color: var(--text-muted);
       text-transform: uppercase; letter-spacing: .5px;
@@ -628,14 +800,13 @@
       border: 1px solid rgba(76,201,240,.25);
       transition: background .3s, color .3s;
     }
-    .skill-level-badge.lvl-junior  { background: rgba(248,113,113,.12); color:#f87171; border-color:rgba(248,113,113,.25); }
-    .skill-level-badge.lvl-middle  { background: rgba(251,191,36,.12);  color:#fbbf24; border-color:rgba(251,191,36,.25); }
-    .skill-level-badge.lvl-senior  { background: rgba(34,197,94,.12);   color:#22c55e; border-color:rgba(34,197,94,.25); }
-    .skill-level-badge.lvl-expert  { background: rgba(139,92,246,.12);  color:#8b5cf6; border-color:rgba(139,92,246,.25); }
-    /* Gradient range track override */
+    .skill-level-badge.lvl-junior { background: rgba(248,113,113,.12); color:#f87171; border-color:rgba(248,113,113,.25); }
+    .skill-level-badge.lvl-middle { background: rgba(251,191,36,.12);  color:#fbbf24; border-color:rgba(251,191,36,.25); }
+    .skill-level-badge.lvl-senior { background: rgba(34,197,94,.12);   color:#22c55e; border-color:rgba(34,197,94,.25); }
+    .skill-level-badge.lvl-expert { background: rgba(139,92,246,.12);  color:#8b5cf6; border-color:rgba(139,92,246,.25); }
     .skill-range {
       -webkit-appearance: none; appearance: none;
-      width: 100%; height: 5px; border-radius: 99px;
+      width: 100%; height: 8px; border-radius: 99px;
       background: linear-gradient(
         to right,
         var(--accent) 0%,
@@ -646,47 +817,42 @@
       outline: none; cursor: pointer;
     }
     .skill-range::-webkit-slider-thumb {
-      -webkit-appearance: none; width: 16px; height: 16px;
+      -webkit-appearance: none; width: 20px; height: 20px;
       border-radius: 50%; background: var(--accent);
-      box-shadow: 0 0 6px rgba(76,201,240,.5);
+      box-shadow: 0 0 8px rgba(76,201,240,.6);
       cursor: pointer; transition: transform .15s;
     }
-    .skill-range::-webkit-slider-thumb:hover { transform: scale(1.2); }
-    /* Skill chip list */
-    .skill-chips {
-      display: flex; flex-wrap: wrap; gap: 6px;
-      min-height: 32px;
-    }
+    .skill-range::-webkit-slider-thumb:hover { transform: scale(1.15); }
+
+    /* Chip list */
+    .skill-chips { display: flex; flex-wrap: wrap; gap: 6px; min-height: 32px; }
+    @keyframes chipIn { from { opacity:0; transform: scale(.82); } to { opacity:1; transform: scale(1); } }
     .skill-chip {
       display: inline-flex; align-items: center; gap: 5px;
       padding: 4px 10px 4px 12px;
-      background: rgba(76,201,240,.1);
-      border: 1px solid rgba(76,201,240,.22);
       border-radius: 99px;
       font-size: .75rem; font-weight: 600; color: var(--text-primary);
       animation: chipIn .2s ease;
+      /* default = tech/cyan */
+      background: rgba(76,201,240,.1); border: 1px solid rgba(76,201,240,.25);
     }
-    @keyframes chipIn {
-      from { opacity:0; transform: scale(.85); }
-      to   { opacity:1; transform: scale(1); }
-    }
-    .skill-chip .chip-level {
-      font-size: .6rem; color: var(--accent); font-weight: 800;
-    }
+    .skill-chip[data-cat="design"]  { background: rgba(139,92,246,.12); border-color: rgba(139,92,246,.3); }
+    .skill-chip[data-cat="soft"]    { background: rgba(34,197,94,.1);   border-color: rgba(34,197,94,.28); }
+    .skill-chip[data-cat="lang"]    { background: rgba(251,191,36,.1);  border-color: rgba(251,191,36,.28); }
+    .skill-chip .chip-level { font-size: .6rem; color: var(--accent); font-weight: 800; }
+    .skill-chip[data-cat="design"] .chip-level { color: #a78bfa; }
+    .skill-chip[data-cat="soft"]   .chip-level { color: #4ade80; }
+    .skill-chip[data-cat="lang"]   .chip-level { color: #fbbf24; }
     .skill-chip .chip-del {
       width: 14px; height: 14px; border-radius: 50%;
       background: rgba(248,113,113,.15);
       border: none; cursor: pointer; display: flex;
       align-items: center; justify-content: center;
       font-size: .6rem; color: #f87171;
-      transition: background .2s;
-      padding: 0; line-height: 1;
+      transition: background .2s; padding: 0; line-height: 1;
     }
     .skill-chip .chip-del:hover { background: rgba(248,113,113,.4); }
-    .skill-empty-hint {
-      font-size: .72rem; color: var(--text-muted);
-      font-style: italic; align-self: center;
-    }
+    .skill-empty-hint { font-size: .72rem; color: var(--text-muted); font-style: italic; align-self: center; }
   </style>
 </head>
 
@@ -733,7 +899,7 @@
     <!-- ────── LEFT: THE FORM ────── -->
     <aside class="vs-left">
       <div class="vs-left-header">
-        <h2><i class="fas fa-pen-ruler me-2" style="color:var(--accent);"></i>Resume Builder</h2>
+        <h2><i class="fas fa-pen-ruler me-2" style="color:var(--accent);"></i>Resume Builder<span id="autosaveIndicator" class="autosave-ind"></span></h2>
         <p>Fill in your details — PDF updates live ↗</p>
       </div>
 
@@ -852,7 +1018,7 @@
             <button type="button" class="vs-section-toggle open" data-target="sec-templates">
               <i class="fas fa-palette" style="color:var(--accent);"></i>
               Template Gallery
-              <span style="font-size:.65rem;font-weight:400;color:var(--text-muted);margin-left:4px;">(20 designs)</span>
+              <span style="font-size:.65rem;font-weight:400;color:var(--text-muted);margin-left:4px;">(10 designs)</span>
               <i class="fas fa-chevron-down toggle-icon"></i>
             </button>
             <div class="vs-section-body open" id="sec-templates">
@@ -930,7 +1096,7 @@
                          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
                     <div class="tpl-fallback" style="display:none;background:#ffffff;border:1px solid #caf0f8;">
                       <div class="tpl-swatch" style="background:#00b4d8;"></div>
-                      ⏱️
+                      ⏱ï¸
                     </div>
                   </div>
                   <div class="tpl-info">
@@ -946,7 +1112,7 @@
                          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
                     <div class="tpl-fallback" style="display:none;background:#f8fafb;border:1px solid #d1fae5;">
                       <div class="tpl-swatch" style="background:#059669;"></div>
-                      ⚖️
+                      ⚖ï¸
                     </div>
                   </div>
                   <div class="tpl-info">
@@ -1201,20 +1367,94 @@
 
               <div class="skill-builder">
 
-                <!-- Add-skill row -->
-                <div class="skill-input-row">
-                  <input class="vs-input" type="text" id="skillNameInput"
-                         placeholder="Skill name (e.g. Python)" autocomplete="off"
-                         maxlength="40">
-                  <button type="button" class="btn-add-skill" id="btnAddSkill">
-                    <i class="fas fa-plus"></i> Add
-                  </button>
+                <!-- ① Quick-pick preset tabs -->
+                <div>
+                  <div class="skill-preset-tabs" id="skillPresetTabs">
+                    <button type="button" class="skill-preset-tab active" data-cat="tech">⚡ Tech</button>
+                    <button type="button" class="skill-preset-tab" data-cat="design">🎨 Design</button>
+                    <button type="button" class="skill-preset-tab" data-cat="lang">🌐 Languages</button>
+                    <button type="button" class="skill-preset-tab" data-cat="soft">🤝 Soft Skills</button>
+                  </div>
+                  <!-- Preset pill rows (one per category) -->
+                  <div class="skill-preset-pills active" id="presetPills-tech" style="margin-top:8px;">
+                    <span class="skill-preset-pill" onclick="addSkillPreset('Python','tech')">Python</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('JavaScript','tech')">JavaScript</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('TypeScript','tech')">TypeScript</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('React','tech')">React</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('Node.js','tech')">Node.js</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('Django','tech')">Django</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('SQL','tech')">SQL</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('Docker','tech')">Docker</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('AWS','tech')">AWS</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('Git','tech')">Git</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('REST APIs','tech')">REST APIs</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('GraphQL','tech')">GraphQL</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('Vue.js','tech')">Vue.js</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('PostgreSQL','tech')">PostgreSQL</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('Redis','tech')">Redis</span>
+                  </div>
+                  <div class="skill-preset-pills" id="presetPills-design" style="margin-top:8px;">
+                    <span class="skill-preset-pill" onclick="addSkillPreset('Figma','design')">Figma</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('Adobe XD','design')">Adobe XD</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('Photoshop','design')">Photoshop</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('Illustrator','design')">Illustrator</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('UI/UX Design','design')">UI/UX Design</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('Prototyping','design')">Prototyping</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('Sketch','design')">Sketch</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('After Effects','design')">After Effects</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('Tailwind CSS','design')">Tailwind CSS</span>
+                  </div>
+                  <div class="skill-preset-pills" id="presetPills-lang" style="margin-top:8px;">
+                    <span class="skill-preset-pill" onclick="addSkillPreset('English','lang')">English</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('Russian','lang')">Russian</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('German','lang')">German</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('French','lang')">French</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('Spanish','lang')">Spanish</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('Chinese','lang')">Chinese</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('Arabic','lang')">Arabic</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('Portuguese','lang')">Portuguese</span>
+                  </div>
+                  <div class="skill-preset-pills" id="presetPills-soft" style="margin-top:8px;">
+                    <span class="skill-preset-pill" onclick="addSkillPreset('Leadership','soft')">Leadership</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('Communication','soft')">Communication</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('Problem Solving','soft')">Problem Solving</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('Teamwork','soft')">Teamwork</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('Project Management','soft')">Project Mgmt</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('Critical Thinking','soft')">Critical Thinking</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('Agile / Scrum','soft')">Agile / Scrum</span>
+                    <span class="skill-preset-pill" onclick="addSkillPreset('Mentoring','soft')">Mentoring</span>
+                  </div>
                 </div>
 
-                <!-- Slider -->
+                <!-- ② Manual add row -->
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                  <div class="skill-input-row">
+                    <input class="vs-input" type="text" id="skillNameInput"
+                           placeholder="Or type a skill name…" autocomplete="off"
+                           maxlength="40">
+                    <button type="button" class="btn-add-skill" id="btnAddSkill">
+                      <i class="fas fa-plus"></i> Add
+                    </button>
+                  </div>
+                  <!-- Bulk import toggle -->
+                  <button type="button" class="skill-bulk-toggle" id="btnBulkToggle"
+                          onclick="document.getElementById('skillBulkWrap').classList.toggle('open'); this.querySelector('.bulk-arrow').style.transform = document.getElementById('skillBulkWrap').classList.contains('open') ? 'rotate(90deg)' : 'rotate(0deg)'">
+                    <i class="fas fa-chevron-right bulk-arrow" style="font-size:.6rem;transition:transform .2s;"></i>
+                    Add multiple at once (paste comma-separated)
+                  </button>
+                  <div class="skill-bulk-wrap" id="skillBulkWrap">
+                    <textarea class="skill-bulk-area" id="skillBulkInput"
+                              placeholder="Python, React, SQL, Leadership&#10;(comma or newline separated — all added at current proficiency level)"></textarea>
+                    <button type="button" class="btn-bulk-add" onclick="addBulkSkills()">
+                      <i class="fas fa-layer-group me-1"></i>Add All
+                    </button>
+                  </div>
+                </div>
+
+                <!-- ③ Proficiency slider -->
                 <div class="skill-level-wrap">
                   <div class="skill-level-header">
-                    <span class="skill-level-label">Proficiency</span>
+                    <span class="skill-level-label">Proficiency Level</span>
                     <span class="skill-level-badge lvl-senior" id="skillLevelBadge">Senior · 70</span>
                   </div>
                   <input type="range" class="skill-range" id="skillLevelSlider"
@@ -1222,9 +1462,9 @@
                          oninput="updateSkillSlider(this)">
                 </div>
 
-                <!-- Chips -->
+                <!-- ④ Chips -->
                 <div class="skill-chips" id="skillChips">
-                  <span class="skill-empty-hint" id="skillEmptyHint">No skills yet — add one above ↑</span>
+                  <span class="skill-empty-hint" id="skillEmptyHint">No skills yet — pick a preset or type above ↑</span>
                 </div>
 
               </div><!-- /.skill-builder -->
@@ -1422,6 +1662,15 @@
       </div><!-- /.vs-left-scroll -->
     </aside><!-- /.vs-left -->
 
+    <!-- ────── DRAG-TO-RESIZE DIVIDER ────── -->
+    <div class="vs-resizer-wrap" id="vsResizerWrap">
+      <div class="vs-resizer" id="vsResizer" title="Drag to resize · Ctrl+\ to toggle preview"></div>
+      <button class="vs-collapse-btn" id="vsCollapseBtn"
+              onclick="togglePreview()"
+              title="Ctrl+\ — Toggle preview">
+        <i class="fas fa-chevron-left" id="vsCollapseIcon"></i>
+      </button>
+    </div>
 
     <!-- ────── RIGHT: LIVE PREVIEW ────── -->
     <main class="vs-right" id="vsRight">
@@ -1436,9 +1685,13 @@
         </button>
       </div>
 
-      <!-- PDF iframe — src is set by JS -->
-      <iframe id="pdf-preview" title="Live Resume Preview" class="w-100" style="flex:1;border:none;"></iframe>
+      <!-- PDF preview — double-buffered (JS sets src) so it crossfades without flashing -->
+      <div class="vs-preview-stage" id="previewStage">
+        <iframe id="pdf-preview"   class="active" title="Live Resume Preview"></iframe>
+        <iframe id="pdf-preview-b" title="Live Resume Preview (buffer)" aria-hidden="true"></iframe>
+      </div>
     </main><!-- /.vs-right -->
+
 
   </div><!-- /.vs-studio -->
 
@@ -1463,6 +1716,17 @@
     <span id="vsToastMsg"></span>
   </div>
 
+  <!-- Styled confirm dialog (replaces native confirm) -->
+  <div class="vs-confirm-overlay" id="vsConfirmOverlay" role="dialog" aria-modal="true" aria-labelledby="vsConfirmMsg">
+    <div class="vs-confirm-box">
+      <div class="vs-confirm-msg" id="vsConfirmMsg">Are you sure?</div>
+      <div class="vs-confirm-actions">
+        <button type="button" class="vs-btn-ghost"  id="vsConfirmCancel">Cancel</button>
+        <button type="button" class="vs-btn-danger" id="vsConfirmOk">Confirm</button>
+      </div>
+    </div>
+  </div>
+
 
   <!-- ══════════════════════════════════════════════════════
        VANILLA JS — STUDIO LOGIC
@@ -1485,6 +1749,21 @@
       target.classList.toggle('open', !isOpen);
       btn.classList.toggle('open', !isOpen);
     });
+  });
+
+  /* Make the template gallery keyboard-operable (cards use onclick=selectTemplate) */
+  document.querySelectorAll('.tpl-card').forEach(card => {
+    card.tabIndex = 0;
+    card.setAttribute('role', 'button');
+    const name = card.querySelector('.tpl-name');
+    if (name) card.setAttribute('aria-label', 'Use template: ' + name.textContent);
+  });
+  document.addEventListener('keydown', e => {
+    const card = e.target.closest && e.target.closest('.tpl-card');
+    if (card && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      selectTemplate(card);
+    }
   });
 
   /* ────────────────────────────────────────────────────────
@@ -1546,7 +1825,7 @@
     const file = input.files[0];
     if (!file) return;
 
-    // ── 5 MB guard ────────────────────────────────────────────
+    // ── 5 MB guard ────────────────────────────────────────
     const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
     if (file.size > MAX_BYTES) {
       showToast(
@@ -1588,16 +1867,52 @@
      it as the iframe src.
   ──────────────────────────────────────────────────────── */
   let _previewTimer = null;
+  let _lastSig      = null;          // form signature of the last good render
+  let _frontFrameId = 'pdf-preview'; // which of the two preview iframes is visible
 
   function scheduleLivePreview(delay) {
     clearTimeout(_previewTimer);
     _previewTimer = setTimeout(triggerLivePreview, delay ?? 700);
   }
 
+  /* Serialize the form so we can skip no-op renders (focus/blur/change events
+     that don't actually alter the PDF payload). Files keyed by name+size. */
+  function _formSignature(form) {
+    const parts = [];
+    for (const [k, v] of new FormData(form).entries()) {
+      parts.push(v instanceof File ? `${k}#${v.name}:${v.size}` : `${k}=${v}`);
+    }
+    return parts.join('|');
+  }
+
+  /* Double-buffered swap: load the new PDF into the hidden iframe, then crossfade
+     it in — the preview never white-flashes between renders. */
+  function _swapPreview(url) {
+    const backId = _frontFrameId === 'pdf-preview' ? 'pdf-preview-b' : 'pdf-preview';
+    const back   = document.getElementById(backId);
+    const front  = document.getElementById(_frontFrameId);
+    back.onload = () => {
+      back.classList.add('active');
+      front.classList.remove('active');
+      if (front._blobUrl) {
+        const stale = front._blobUrl;
+        setTimeout(() => URL.revokeObjectURL(stale), 400);  // revoke after the fade
+        front._blobUrl = null;
+      }
+      _frontFrameId = backId;
+    };
+    back._blobUrl = url;
+    back.src      = url;
+  }
+
   async function triggerLivePreview() {
     const form    = document.getElementById('resume-form');
     const spinner = document.getElementById('previewSpinner');
     const status  = document.getElementById('previewStatus');
+
+    // Skip renders when nothing that affects the PDF actually changed.
+    const sig = _formSignature(form);
+    if (sig === _lastSig) return;
 
     spinner.style.display = 'block';
     status.textContent = 'Rendering…';
@@ -1614,21 +1929,23 @@
       // FormData(form) automatically captures the file input (photo).
       // We NEVER render a blob if the server returned an error — a 500
       // would produce a Django HTML error page rendered as garbled PDF.
+      if (res.status === 429) {
+        // Preview bucket exhausted (very heavy editing) — back off and retry once.
+        // A later edit reschedules this and clears the timer, so we never stall.
+        status.textContent = 'Catching up — preview updates shortly…';
+        clearTimeout(_previewTimer);
+        _previewTimer = setTimeout(triggerLivePreview, 8000);
+        return;
+      }
       if (!res.ok) {
-        const httpMsg = 'Preview failed. Please check inputs or try a smaller photo.';
-        showToast(httpMsg, 'danger');
+        showToast('Preview failed. Please check your inputs or try a smaller photo.', 'danger');
         status.textContent = '⚠ Preview unavailable';
         return;  // bail — do NOT touch blob or iframe
       }
 
       const blob = await res.blob();
-      const url  = URL.createObjectURL(blob);
-
-      const iframe = document.getElementById('pdf-preview');
-      // Revoke previous blob URL to avoid memory leak
-      if (iframe._blobUrl) URL.revokeObjectURL(iframe._blobUrl);
-      iframe._blobUrl = url;
-      iframe.src      = url;
+      _swapPreview(URL.createObjectURL(blob));
+      _lastSig = sig;   // mark clean only after a successful render
 
       status.textContent = '✓ Preview updated';
     } catch (err) {
@@ -1700,6 +2017,39 @@
   /* ────────────────────────────────────────────────────────
      INITIAL PREVIEW ON PAGE LOAD (if name already stored)
   ──────────────────────────────────────────────────────── */
+  /* ── AUTOSAVE (localStorage) + unsaved-changes guard ──────────── */
+  let _dirty = false;
+  let _autosaveTimer = null;
+
+  function _setSavedIndicator(state) {
+    const el = document.getElementById('autosaveIndicator');
+    if (!el) return;
+    if (state === 'saving')     { el.textContent = 'Saving…';   el.className = 'autosave-ind saving'; }
+    else if (state === 'saved') { el.textContent = 'Saved ✓';   el.className = 'autosave-ind saved'; }
+    else                        { el.textContent = 'Not saved'; el.className = 'autosave-ind error'; }
+  }
+
+  function scheduleAutosave() {
+    _dirty = true;
+    _setSavedIndicator('saving');
+    clearTimeout(_autosaveTimer);
+    _autosaveTimer = setTimeout(saveDraft, 800);
+  }
+
+  function saveDraft() {
+    const form = document.getElementById('resume-form');
+    const data = {};
+    new FormData(form).forEach((v, k) => { if (typeof v === 'string') data[k] = v; });
+    try { data.__skills = JSON.stringify(_skills || []); } catch (_) {}
+    try {
+      localStorage.setItem('cvai_draft_v2', JSON.stringify(data));
+      _dirty = false;
+      _setSavedIndicator('saved');
+    } catch (_) {
+      _setSavedIndicator('error');
+    }
+  }
+
   window.addEventListener('DOMContentLoaded', () => {
     // Restore saved draft from localStorage
     const draft = localStorage.getItem('cvai_draft_v2');
@@ -1707,23 +2057,30 @@
       try {
         const d = JSON.parse(draft);
         Object.entries(d).forEach(([k, v]) => {
+          if (k === '__skills') return;
           const el = document.querySelector(`[name="${k}"]`);
           if (el && el.type !== 'file') el.value = v;
         });
+        // Rebuild the skills chips so they survive a reload too
+        if (d.__skills) {
+          try { _skills = JSON.parse(d.__skills) || []; _renderChips(); _compileSkills(); } catch (_) {}
+        }
         scheduleLivePreview(1200);
+        _setSavedIndicator('saved');
       } catch(_) {}
     }
 
-    // Auto-save draft every 30 seconds
+    // Save on every edit (debounced), plus a slow safety-net interval
+    ['input', 'change'].forEach(ev =>
+      document.getElementById('resume-form').addEventListener(ev, scheduleAutosave)
+    );
     setInterval(saveDraft, 30000);
   });
 
-  function saveDraft() {
-    const form = document.getElementById('resume-form');
-    const data = {};
-    new FormData(form).forEach((v, k) => { if (typeof v === 'string') data[k] = v; });
-    localStorage.setItem('cvai_draft_v2', JSON.stringify(data));
-  }
+  // Warn before leaving only if a save is still pending (protects the sub-second window)
+  window.addEventListener('beforeunload', (e) => {
+    if (_dirty) { e.preventDefault(); e.returnValue = ''; }
+  });
 
   /* ════════════════════════════════════════════════════════════
      AI AUTO-FILL — wires /generate-resume/ to every form field
@@ -1788,7 +2145,7 @@
   function _skillsToText(skillsArray) {
     if (!Array.isArray(skillsArray) || skillsArray.length === 0) return '';
     return skillsArray
-      .map(s => `${s.name}-${Math.round(s.level ?? 50)}`)
+      .map(s => `${String(s.name).replace(/,/g, ' ').trim()}-${Math.round(s.level ?? 50)}`)
       .join(',');
   }
 
@@ -1824,7 +2181,7 @@
       return;
     }
 
-    // ── Button: loading state ────────────────────────────────
+    // ── Button: loading state ────────────────────────────────────────
     const btn     = document.getElementById('btnAiFill');
     const spinner = document.getElementById('aiBtnSpinner');
     const btnText = document.getElementById('aiBtnText');
@@ -2129,6 +2486,15 @@
   }
 
   /** Re-render all chips from the _skills array */
+  /* Escape user-supplied text before it goes into innerHTML.
+     Skill names come from manual entry AND AI auto-fill (a pasted résumé the
+     model echoes back), so treat them as untrusted. */
+  function _escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, m => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[m]));
+  }
+
   function _renderChips() {
     const container = document.getElementById('skillChips');
     const hint      = document.getElementById('skillEmptyHint');
@@ -2138,6 +2504,7 @@
 
     if (_skills.length === 0) {
       hint && (hint.style.display = '');
+      _syncPresetPillStates();
       return;
     }
     hint && (hint.style.display = 'none');
@@ -2146,25 +2513,39 @@
       const { cls, txt } = _skillLabel(sk.level);
       const chip = document.createElement('span');
       chip.className = 'skill-chip';
+      chip.dataset.cat = sk.cat || 'tech';
+      const safeName = _escapeHtml(sk.name);
       chip.innerHTML = `
-        <span>${sk.name}</span>
+        <span>${safeName}</span>
         <span class="chip-level">${sk.level}</span>
         <button class="chip-del" type="button"
-                aria-label="Remove ${sk.name}"
+                aria-label="Remove ${safeName}"
                 onclick="deleteSkill(${idx})">&times;</button>`;
       container.appendChild(chip);
     });
+    _syncPresetPillStates();
   }
 
   /** Compile _skills → hidden input + trigger preview */
   function _compileSkills() {
     const hidden = document.getElementById('f_skills_list');
-    hidden.value = _skills.map(s => `${s.name}-${s.level}`).join(',');
+    // Commas separate skills and can't appear inside a name; hyphens are fine
+    // (the backend splits the level off the right).
+    hidden.value = _skills.map(s => `${String(s.name).replace(/,/g, ' ').trim()}-${s.level}`).join(',');
     hidden.dispatchEvent(new Event('change', { bubbles: true }));
     scheduleLivePreview(400);
   }
 
-  /** Add a skill from the input row */
+  /** Core add — accepts name, level, and optional category */
+  function _addSkillCore(name, level, cat) {
+    name = name.trim();
+    if (!name) return false;
+    if (_skills.some(s => s.name.toLowerCase() === name.toLowerCase())) return false;
+    _skills.push({ name, level, cat: cat || 'tech' });
+    return true;
+  }
+
+  /** Add a skill from the manual input row */
   function addSkill() {
     const nameEl  = document.getElementById('skillNameInput');
     const levelEl = document.getElementById('skillLevelSlider');
@@ -2177,28 +2558,73 @@
       setTimeout(() => nameEl.style.borderColor = '', 800);
       return;
     }
-    // Prevent duplicates (case-insensitive)
-    if (_skills.some(s => s.name.toLowerCase() === name.toLowerCase())) {
+    if (!_addSkillCore(name, level, 'tech')) {
       showToast(`"${name}" is already in your skills list.`, 'danger');
       nameEl.select();
       return;
     }
-
-    _skills.push({ name, level });
     _renderChips();
     _compileSkills();
-
-    // Reset input
     nameEl.value = '';
     nameEl.focus();
   }
 
+  /** Add a skill from a preset pill click */
+  function addSkillPreset(name, cat) {
+    const level = parseInt(document.getElementById('skillLevelSlider').value, 10);
+    if (!_addSkillCore(name, level, cat)) {
+      showToast(`"${name}" is already added.`, 'danger');
+      return;
+    }
+    _renderChips();
+    _compileSkills();
+  }
+
+  /** Add multiple skills from bulk textarea (comma / newline separated) */
+  function addBulkSkills() {
+    const level = parseInt(document.getElementById('skillLevelSlider').value, 10);
+    const raw   = document.getElementById('skillBulkInput').value;
+    const names = raw.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+    let added = 0, dupes = 0;
+    names.forEach(n => { _addSkillCore(n, level, 'tech') ? added++ : dupes++; });
+    if (added > 0) {
+      _renderChips();
+      _compileSkills();
+      document.getElementById('skillBulkInput').value = '';
+      showToast(`Added ${added} skill${added > 1 ? 's' : ''}${dupes > 0 ? ` (${dupes} dupe${dupes > 1 ? 's' : ''} skipped)` : ''}.`, 'success');
+    } else {
+      showToast('All entered skills are already in your list.', 'danger');
+    }
+  }
+
+
+  /** Mark preset pills as added if already in _skills */
+  function _syncPresetPillStates() {
+    const names = new Set(_skills.map(s => s.name.toLowerCase()));
+    document.querySelectorAll('.skill-preset-pill').forEach(pill => {
+      // Match pill text without emoji prefix (e.g. "Python" from "Python")
+      const pillName = pill.textContent.trim().toLowerCase();
+      pill.classList.toggle('added', names.has(pillName));
+    });
+  }
   /** Delete a skill by index */
   function deleteSkill(idx) {
     _skills.splice(idx, 1);
     _renderChips();
     _compileSkills();
   }
+
+  // ── Preset tab switching ─────────────────────────────────
+  document.getElementById('skillPresetTabs').addEventListener('click', e => {
+    const btn = e.target.closest('.skill-preset-tab');
+    if (!btn) return;
+    const cat = btn.dataset.cat;
+    document.querySelectorAll('.skill-preset-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.skill-preset-pills').forEach(p => p.classList.remove('active'));
+    const panel = document.getElementById('presetPills-' + cat);
+    if (panel) panel.classList.add('active');
+  });
 
   // Wire up the Add button
   document.getElementById('btnAddSkill').addEventListener('click', addSkill);
@@ -2212,13 +2638,85 @@
   updateSkillSlider(document.getElementById('skillLevelSlider'));
 
   /* ════════════════════════════════════════════════════════════
+     PANEL RESIZER — drag the divider to resize the form panel
+  ════════════════════════════════════════════════════════════ */
+  (function initResizer() {
+    const resizer = document.getElementById('vsResizer');
+    const vsLeft  = document.querySelector('.vs-left');
+    const MIN_W   = 280, MAX_W = 620;
+    let dragging  = false, startX, startW;
+
+    resizer.addEventListener('mousedown', e => {
+      dragging = true; startX = e.clientX;
+      startW   = vsLeft.getBoundingClientRect().width;
+      resizer.classList.add('dragging');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    });
+    document.addEventListener('mousemove', e => {
+      if (!dragging) return;
+      let newW = Math.max(MIN_W, Math.min(MAX_W, startW + (e.clientX - startX)));
+      vsLeft.style.width = newW + 'px';
+    });
+    document.addEventListener('mouseup', () => {
+      if (!dragging) return;
+      dragging = false;
+      resizer.classList.remove('dragging');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    });
+  })();
+
+  /* Toggle preview panel visibility (also triggered by Ctrl+\) */
+  function togglePreview() {
+    const vsRight = document.getElementById('vsRight');
+    const icon    = document.getElementById('vsCollapseIcon');
+    const vsLeft  = document.querySelector('.vs-left');
+    const hidden  = vsRight.classList.toggle('preview-hidden');
+    icon.style.transform = hidden ? 'rotate(180deg)' : 'rotate(0deg)';
+    vsLeft.style.width   = hidden ? 'calc(100vw - 28px)' : '';
+  }
+
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === '\\') {
+      e.preventDefault(); togglePreview();
+    }
+  });
+
+  /* ════════════════════════════════════════════════════════════
      CLEAR / RESET BUTTON
      Resets all form inputs, clears the skills chip list,
      resets color pickers to defaults, then refreshes preview.
   ════════════════════════════════════════════════════════════ */
 
-  document.getElementById('btnResetForm').addEventListener('click', () => {
-    if (!confirm('Clear all fields and start a fresh resume?')) return;
+  /* Promise-based styled confirm (replaces native confirm) */
+  function studioConfirm(message, opts) {
+    opts = opts || {};
+    return new Promise(resolve => {
+      const ov     = document.getElementById('vsConfirmOverlay');
+      const ok     = document.getElementById('vsConfirmOk');
+      const cancel = document.getElementById('vsConfirmCancel');
+      document.getElementById('vsConfirmMsg').textContent = message;
+      ok.textContent = opts.confirmText || 'Confirm';
+      ov.classList.add('show');
+      function done(v) {
+        ov.classList.remove('show');
+        ok.onclick = null; cancel.onclick = null; ov.onclick = null;
+        document.removeEventListener('keydown', onKey);
+        resolve(v);
+      }
+      function onKey(e) { if (e.key === 'Escape') done(false); }
+      ok.onclick = () => done(true);
+      cancel.onclick = () => done(false);
+      ov.onclick = e => { if (e.target === ov) done(false); };
+      document.addEventListener('keydown', onKey);
+      ok.focus();
+    });
+  }
+
+  document.getElementById('btnResetForm').addEventListener('click', async () => {
+    const ok = await studioConfirm('Clear all fields and start a fresh resume?', { confirmText: 'Clear all' });
+    if (!ok) return;
 
     // Native form reset (text inputs, selects, textareas)
     document.getElementById('resume-form').reset();

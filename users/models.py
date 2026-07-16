@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import F
 from django.contrib.auth.models import User
 
 
@@ -63,10 +64,29 @@ class Profile(models.Model):
         return self.generations_count > 0
 
     def use_generation(self):
-        """Decrement the free-plan counter; no-op for paid plans."""
-        if self.plan == 'free':
-            self.generations_count -= 1
-            self.save()
+        """
+        Atomically consume one free-plan generation; no-op for paid plans.
+
+        Uses a DB-level guarded decrement (F() with generations_count__gt=0) so
+        concurrent requests can't lose updates or drive the counter negative —
+        the previous read-modify-write let parallel requests each decrement the
+        same in-memory value, effectively granting free users extra generations.
+
+        Returns True if a generation was consumed (or the plan is unlimited),
+        False if the free quota was already exhausted.
+        """
+        if self.plan in ('pro', 'elite'):
+            return True
+
+        updated = Profile.objects.filter(
+            pk=self.pk, generations_count__gt=0
+        ).update(generations_count=F('generations_count') - 1)
+
+        if updated:
+            # Keep the in-memory instance consistent for the rest of the request.
+            self.refresh_from_db(fields=['generations_count'])
+            return True
+        return False
 
     def __str__(self):
         return f'{self.user.username} Profile ({self.plan})'

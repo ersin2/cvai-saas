@@ -7,6 +7,7 @@ from .forms import UserRegisterForm
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -269,6 +270,17 @@ def stripe_webhook(request):
     except stripe.error.SignatureVerificationError:
         logger.warning('Stripe webhook: signature mismatch.')
         return HttpResponse(status=400)
+
+    # ── Idempotency guard ────────────────────────────────────────────────────
+    # Stripe retries webhooks and may redeliver the same event. cache.add() is
+    # atomic (Redis in prod): it returns True only the first time we see this
+    # event ID, so duplicates short-circuit here instead of re-applying upgrades.
+    # If the cache is degraded (add() returns None), we fall through and process
+    # — better to double-apply an idempotent upgrade than to drop a real payment.
+    event_id = event.get('id')
+    if event_id and cache.add(f'stripe_evt:{event_id}', 1, 60 * 60 * 24) is False:
+        logger.info('Stripe webhook: duplicate event %s ignored.', event_id)
+        return HttpResponse(status=200)
 
     # ── checkout.session.completed ───────────────────────────────────────────
     if event['type'] == 'checkout.session.completed':

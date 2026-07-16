@@ -25,7 +25,9 @@
   /* Text */
   --text-primary:   #f1f5f9;
   --text-secondary: #94a3b8;
-  --text-muted:     #475569;
+  /* WCAG-AA: #7c8a9e on the #080c14 surfaces is ~4.6:1 (was #475569 ≈ 2.5:1),
+     still dimmer than --text-secondary so the hierarchy is preserved. */
+  --text-muted:     #7c8a9e;
   --text-dim:       #334155;
 
   /* Status */
@@ -604,6 +606,29 @@ body {
   border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
+/* ── 10b. COMPANY AVATAR (local initials — no external image calls) ─── */
+.company-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-dim);
+  color: var(--primary);
+  border: 1px solid rgba(76, 201, 240, 0.2);
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: 1rem;
+  text-transform: uppercase;
+  line-height: 1;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.company-avatar.avatar-sm { width: 32px; height: 32px; font-size: 0.82rem; border-radius: 8px; }
+.company-avatar.avatar-lg { width: 50px; height: 50px; font-size: 1.2rem; border-radius: 12px; }
+
 /* ── 11. STAT CARDS ─────────────────────────────────────────── */
 .stat-card-v2 {
   background: var(--surface-2);
@@ -714,70 +739,70 @@ body {
   flex-shrink: 0;
 }
 
-/* ── 14. EMPTY STATE ─────────────────────────────────────────── */
-.empty-state-v2 {
-  text-align: center;
-  padding: 56px 24px;
+/* Empty-state + toast components are defined once, further down
+   ("Empty State Component" and "Global Toast Notifications"). */
+
+/* ── 15b. CONFIRM DIALOG ─────────────────────────────────────── */
+.confirm-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  background: rgba(8, 12, 20, 0.7);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
 }
 
-.empty-icon-box {
-  width: 64px;
-  height: 64px;
-  border-radius: var(--radius-md);
-  background: var(--primary-dim);
+.confirm-overlay.open {
+  display: flex;
+  animation: fadeSlideUp 0.2s ease both;
+}
+
+.confirm-box {
+  background: #0f1526;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 28px 26px;
+  max-width: 380px;
+  width: 100%;
+  text-align: center;
+}
+
+.confirm-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--danger);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 18px;
-  font-size: 1.6rem;
+  font-size: 1.3rem;
+  margin: 0 auto 16px;
 }
 
-.empty-title {
-  font-weight: 700;
-  font-size: 1rem;
+.confirm-message {
   color: var(--text-primary);
-  margin-bottom: 6px;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  margin-bottom: 22px;
 }
 
-.empty-desc {
-  color: var(--text-muted);
-  font-size: 0.84rem;
-  margin-bottom: 20px;
-  line-height: 1.6;
-}
-
-/* ── 15. TOAST NOTIFICATIONS ─────────────────────────────────── */
-.toast-notification {
-  position: fixed;
-  bottom: 28px;
-  right: 24px;
-  padding: 14px 20px;
-  border-radius: var(--radius-md);
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: white;
-  z-index: 9999;
-  opacity: 0;
-  transform: translateY(12px);
-  transition: opacity 0.28s ease, transform 0.28s ease;
-  backdrop-filter: blur(20px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+.confirm-actions {
   display: flex;
-  align-items: center;
   gap: 10px;
-  min-width: 240px;
-  max-width: 360px;
+  justify-content: center;
 }
 
-.toast-notification.show {
-  opacity: 1;
-  transform: translateY(0);
-}
+.confirm-actions button { min-width: 112px; }
 
-.toast-success { background: rgba(22, 163, 74, 0.95); }
-.toast-warning { background: rgba(202, 138, 4, 0.95); }
-.toast-danger  { background: rgba(220, 38, 38, 0.95); }
-.toast-info    { background: rgba(14, 165, 233, 0.95); }
+#confirmOk.confirm-danger {
+  background: linear-gradient(135deg, #ef4444, #f87171) !important;
+}
 
 /* ── 16. LOADING OVERLAY ─────────────────────────────────────── */
 .loading-overlay {
@@ -918,10 +943,13 @@ body {
     padding: 16px;
   }
 
-  .toast-notification {
+  .toast-container {
     right: 12px;
     left: 12px;
     bottom: 16px;
+  }
+
+  .toast-item {
     max-width: unset;
   }
 }
@@ -1129,6 +1157,18 @@ body {
 .app-table {
     position: relative;
     z-index: 1;
+}
+
+/* ── Accessible Focus (keyboard nav) ─────────────────────────── */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 
 /* ── Reduced Motion ─────────────────────────────────────────── */

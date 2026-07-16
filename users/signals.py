@@ -3,16 +3,18 @@ from django.contrib.auth.models import User
 from django.dispatch import receiver
 from .models import Profile
 
-@receiver(post_save, sender=User)
-def create_profile(sender, instance, created, **kwargs):
-    if created:
-        Profile.objects.create(user=instance)
 
 @receiver(post_save, sender=User)
-def save_profile(sender, instance, **kwargs):
-    try:
-        # Пытаемся сохранить профиль, если он есть
-        instance.profile.save()
-    except Profile.DoesNotExist:
-        # Если профиля нет — создаем его!
-        Profile.objects.create(user=instance)
+def ensure_profile(sender, instance, created, **kwargs):
+    """
+    Create a Profile the first time a User is created.
+
+    Consolidated from the old two-signal pattern: the previous `save_profile`
+    ran an extra `profile.save()` on EVERY `User.save()` — including each
+    login's `last_login` update — which was a wasted write per request and could
+    clobber concurrent profile changes. `get_or_create` keeps this idempotent in
+    case a profile already exists (e.g. created by a defensive get_or_create in a
+    view or by a data migration).
+    """
+    if created:
+        Profile.objects.get_or_create(user=instance)

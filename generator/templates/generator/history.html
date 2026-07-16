@@ -2,263 +2,393 @@
 {% load static %}
 
 {% block title %}Generation History | CVAI{% endblock %}
-{% block meta_desc %}Review your AI-generated cover letters, see past results, and reuse your best letters for new applications.{% endblock %}
+{% block meta_desc %}Review your AI-generated resumes and cover letters, copy results, and manage your history.{% endblock %}
 
 {% block extra_head %}
+<style>
+  /* ── TIMELINE LAYOUT ─────────────────────────────────── */
+  .hist-timeline { display: flex; flex-direction: column; gap: 0; }
 
-    <style>
-        /* ── HISTORY ITEM ── */
-        .history-item {
-            background: rgba(0, 0, 0, 0.18);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: var(--radius-md);
-            padding: 18px 22px;
-            margin-bottom: 10px;
-            transition: border-color var(--transition-base), background var(--transition-base), box-shadow var(--transition-base);
-            cursor: pointer;
-        }
+  .hist-card {
+    position: relative;
+    background: rgba(0,0,0,0.18);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-left: 4px solid var(--primary);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    margin-bottom: 10px;
+    transition: border-color var(--transition-base), background var(--transition-base), box-shadow var(--transition-base);
+    overflow: hidden;
+  }
+  .hist-card:hover {
+    background: rgba(0,0,0,0.26);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.22);
+  }
+  /* border colour by type */
+  .hist-card[data-type="resume"]     { border-left-color: #4cc9f0; }
+  .hist-card[data-type="cover"]      { border-left-color: #f72585; }
+  .hist-card[data-type="draft"]      { border-left-color: #f59e0b; }
+  .hist-card[data-type="unknown"]    { border-left-color: #64748b; }
 
-        .history-item:hover {
-            border-color: rgba(76, 201, 240, 0.25);
-            background: rgba(0, 0, 0, 0.26);
-            box-shadow: 0 6px 24px rgba(0,0,0,0.2);
-        }
+  /* Header row (always visible) */
+  .hist-card-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 12px; padding: 14px 16px 10px;
+    cursor: pointer; user-select: none;
+  }
+  .hist-card-left { min-width: 0; flex: 1; }
+  .hist-card-headline {
+    font-size: 0.92rem; font-weight: 700;
+    color: var(--text-primary); margin-bottom: 4px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .hist-card-sub {
+    font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 6px;
+  }
+  .hist-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .hist-badge {
+    font-size: 0.68rem; font-weight: 700; padding: 2px 9px;
+    border-radius: 99px; letter-spacing: 0.03em; white-space: nowrap;
+  }
+  .hist-badge-type-resume  { background: rgba(76,201,240,.12);  color: #4cc9f0; border: 1px solid rgba(76,201,240,.25); }
+  .hist-badge-type-cover   { background: rgba(247,37,133,.12);  color: #f72585; border: 1px solid rgba(247,37,133,.25); }
+  .hist-badge-type-draft   { background: rgba(245,158,11,.12);  color: #f59e0b; border: 1px solid rgba(245,158,11,.25); }
+  .hist-badge-type-unknown { background: rgba(100,116,139,.12); color: #94a3b8; border: 1px solid rgba(100,116,139,.2); }
+  .hist-badge-tone { background: rgba(247,37,133,.1); color: #f472b6; border: 1px solid rgba(247,37,133,.18); }
 
-        .history-company {
-            color: var(--primary);
-            font-weight: 700;
-            font-size: 1rem;
-        }
+  .hist-card-right {
+    display: flex; align-items: flex-start; gap: 8px; flex-shrink: 0;
+  }
+  .hist-date {
+    font-size: 0.72rem; color: var(--text-muted);
+    font-family: var(--font-mono); white-space: nowrap; padding-top: 2px;
+  }
+  .hist-del-btn {
+    width: 28px; height: 28px; border-radius: 8px; border: none;
+    background: rgba(239,68,68,.1); color: #f87171;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 0.72rem; transition: background .2s;
+    flex-shrink: 0;
+  }
+  .hist-del-btn:hover { background: rgba(239,68,68,.28); }
 
-        .history-title-text {
-            color: var(--text-secondary);
-            font-size: 0.88rem;
-        }
+  /* 2-line preview text */
+  .hist-preview {
+    padding: 0 16px 10px;
+    font-size: 0.82rem; color: var(--text-muted); line-height: 1.6;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
 
-        .history-meta {
-            font-size: 0.78rem;
-            color: var(--text-muted);
-            font-family: var(--font-mono);
-        }
+  /* Expand/collapse footer */
+  .hist-expand-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 16px; border-top: 1px solid rgba(255,255,255,.04);
+    cursor: pointer;
+  }
+  .hist-expand-row:hover { background: rgba(255,255,255,.02); }
+  .hist-expand-label {
+    font-size: 0.72rem; color: var(--text-muted);
+    display: flex; align-items: center; gap: 5px;
+  }
+  .hist-expand-label .hist-chevron {
+    font-size: 0.65rem; transition: transform 0.28s cubic-bezier(.4,0,.2,1);
+  }
+  .hist-card.expanded .hist-chevron { transform: rotate(180deg); }
 
-        .history-preview {
-            color: var(--text-muted);
-            font-size: 0.84rem;
-            margin-top: 10px;
-            line-height: 1.6;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
+  /* Smooth expand body */
+  .hist-body {
+    max-height: 0; overflow: hidden;
+    transition: max-height 0.35s cubic-bezier(.4,0,.2,1);
+  }
+  .hist-card.expanded .hist-body { max-height: 800px; }
 
-        .history-full {
-            white-space: pre-wrap;
-            color: #cbd5e1;
-            font-size: 0.88rem;
-            line-height: 1.75;
-            border-top: 1px solid rgba(255,255,255,0.05);
-            padding-top: 16px;
-            margin-top: 12px;
-        }
+  .hist-full-content {
+    white-space: pre-wrap; color: #cbd5e1;
+    font-size: 0.86rem; line-height: 1.75;
+    padding: 14px 16px 0;
+    border-top: 1px solid rgba(255,255,255,.05);
+  }
 
-        .badge-tone {
-            background: var(--secondary-dim);
-            color: var(--secondary);
-            border: 1px solid rgba(247,37,133,0.2);
-            font-size: 0.72rem;
-            font-weight: 700;
-            padding: 3px 10px;
-            border-radius: 99px;
-            letter-spacing: 0.02em;
-        }
+  /* Copy button */
+  .hist-copy-row {
+    padding: 10px 16px 14px;
+    display: flex; justify-content: flex-end; gap: 8px;
+  }
+  .hist-copy-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 14px; border-radius: 8px;
+    border: 1px solid rgba(76,201,240,.25);
+    background: rgba(76,201,240,.07);
+    color: var(--primary); font-size: 0.78rem; font-weight: 600;
+    cursor: pointer; transition: background .2s, transform .15s;
+  }
+  .hist-copy-btn:hover { background: rgba(76,201,240,.18); transform: translateY(-1px); }
+  .hist-copy-btn.copied { color: #22c55e; border-color: rgba(34,197,94,.3); background: rgba(34,197,94,.08); }
 
-        .expand-indicator {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            margin-top: 8px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-    </style>
+  /* Clear all button */
+  .btn-clear-all {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 16px; border-radius: 99px;
+    border: 1px solid rgba(239,68,68,.3);
+    background: rgba(239,68,68,.06);
+    color: #f87171; font-size: 0.8rem; font-weight: 700;
+    cursor: pointer; transition: background .2s, transform .15s;
+    white-space: nowrap;
+  }
+  .btn-clear-all:hover { background: rgba(239,68,68,.18); transform: translateY(-1px); }
+</style>
 {% endblock extra_head %}
 
 {% block content %}
-    <!-- PAGE CONTENT -->
-    <div class="container pb-5" style="max-width: 860px;">
+<div class="container pb-5" style="max-width: 860px;">
 
-        <!-- PAGE HEADER -->
-        <div class="page-header anim-fade-up">
-            <h1 class="page-title"><i class="fas fa-clock-rotate-left"></i> Generation History</h1>
-            <p class="page-subtitle">
-                {% if generations %}Your last {{ generations|length }} AI cover letters{% else %}No generations yet{% endif %}
-            </p>
-        </div>
-
-        <!-- HISTORY CARD -->
-        <div class="glass-card anim-fade-up anim-delay-1">
-
-            {% if generations %}
-            {% for gen in generations %}
-            <div class="history-item" id="hist-{{ gen.id }}"
-                 onclick="toggleHistoryItem(this)">
-                <div class="d-flex align-items-start justify-content-between gap-3">
-                    <div style="min-width: 0;">
-                        <div class="d-flex align-items-center gap-2 flex-wrap">
-                            {% if gen.company_name or gen.job_title %}
-                                <span class="history-company">{{ gen.company_name|default:"Unknown Company" }}</span>
-                                <span class="history-title-text">· {{ gen.job_title|default:"Position" }}</span>
-                            {% else %}
-                                <span class="history-company">AI Resume Draft</span>
-                            {% endif %}
-                        </div>
-                        <div class="history-preview">{{ gen.result|truncatechars:200 }}</div>
-                        <div class="history-full d-none">{{ gen.result }}</div>
-                        <div class="expand-indicator">
-                            <i class="fas fa-chevron-down expand-icon" style="transition: transform 0.25s;"></i>
-                            <span class="expand-text">Click to expand</span>
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-center gap-2 flex-shrink-0">
-                        <span class="badge-tone">{{ gen.tone }}</span>
-                        <span class="history-meta">{{ gen.created_at|date:"M d, Y" }}</span>
-                        <button class="btn-danger-sm"
-                                title="Delete"
-                                onclick="event.stopPropagation(); deleteGeneration({{ gen.id }})">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-
-            {% else %}
-            <div class="empty-state-v2">
-                <div class="empty-icon-box">
-                    <i class="fas fa-rocket" style="color: var(--primary);"></i>
-                </div>
-                <div class="empty-title">Your FAANG-level resume is waiting</div>
-                <p class="empty-desc">Generate your first AI-powered cover letter and it will appear here for easy access.</p>
-                <a href="{% url 'home' %}" class="btn-primary-grad">
-                    <i class="fas fa-magic me-2"></i>Start Generating
-                </a>
-            </div>
-            {% endif %}
-
-        </div>
+  <!-- PAGE HEADER -->
+  <div class="page-header anim-fade-up">
+    <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
+      <div>
+        <h1 class="page-title"><i class="fas fa-clock-rotate-left"></i> Generation History</h1>
+        <p class="page-subtitle">
+          {% if generations %}Your last {{ generations|length }} AI generation{% if generations|length != 1 %}s{% endif %}{% else %}No generations yet{% endif %}
+        </p>
+      </div>
+      {% if generations %}
+      <button class="btn-clear-all" onclick="clearAllGenerations()" id="btnClearAll">
+        <i class="fas fa-trash-alt"></i> Clear all
+      </button>
+      {% endif %}
     </div>
+  </div>
 
-    <script>
-        const CSRF = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+  <!-- HISTORY CARD -->
+  <div class="glass-card anim-fade-up anim-delay-1" style="padding: 20px;">
 
-        function toggleHistoryItem(item) {
-            const full = item.querySelector('.history-full');
-            const preview = item.querySelector('.history-preview');
-            const icon = item.querySelector('.expand-icon');
-            const textSpan = item.querySelector('.expand-text');
-            const isOpen = !full.classList.contains('d-none');
+    {% if generations %}
+    <div class="hist-timeline" id="histTimeline">
+      {% for gen in generations %}
+      <div class="hist-card" data-type="{{ gen.kind }}" id="hist-{{ gen.id }}">
 
-            if (isOpen) {
-                full.classList.add('d-none');
-                preview.style.display = '';
-                icon.style.transform = 'rotate(0deg)';
-                textSpan.textContent = 'Click to expand';
-            } else {
-                full.classList.remove('d-none');
-                preview.style.display = 'none';
-                icon.style.transform = 'rotate(180deg)';
-                textSpan.textContent = 'Click to collapse';
-            }
-        }
+        <!-- Always-visible header (clickable) -->
+        <div class="hist-card-header" onclick="toggleHistCard({{ gen.id }})">
+          <div class="hist-card-left">
+            <div class="hist-card-headline">
+              {% if gen.kind == 'cover' %}{{ gen.company_name|default:'Cover Letter' }}{% if gen.job_title %} — {{ gen.job_title }}{% endif %}{% elif gen.kind == 'draft' %}Section Rewrite{% else %}AI Resume{% endif %}
+            </div>
+            {% if gen.kind == 'cover' and gen.job_title and gen.company_name %}
+            <div class="hist-card-sub">{{ gen.job_title }}</div>
+            {% endif %}
+            <div class="hist-badges">
+              {% if gen.kind == 'cover' %}
+              <span class="hist-badge hist-badge-type-cover">Cover Letter</span>
+              {% elif gen.kind == 'draft' %}
+              <span class="hist-badge hist-badge-type-draft">Draft</span>
+              {% else %}
+              <span class="hist-badge hist-badge-type-resume">Resume</span>
+              {% endif %}
+              {% if gen.tone %}
+              <span class="hist-badge hist-badge-tone">{{ gen.tone }}</span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="hist-card-right">
+            <span class="hist-date">{{ gen.created_at|date:"M d, Y" }}</span>
+            <button class="hist-del-btn" title="Delete"
+                    onclick="event.stopPropagation(); deleteGeneration({{ gen.id }})">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </div>
+        </div>
 
-        document.addEventListener("DOMContentLoaded", () => {
-            const escapeHtml = (str) => {
-                if (!str) return '';
-                return String(str).replace(/[&<>"']/g, m => ({
-                    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-                }[m]));
-            };
+        <!-- 2-line preview -->
+        <div class="hist-preview" id="histPreview-{{ gen.id }}">{{ gen.result|truncatechars:200 }}</div>
 
-            document.querySelectorAll('.history-item').forEach(item => {
-                const fullDiv = item.querySelector('.history-full');
-                const previewDiv = item.querySelector('.history-preview');
-                const rawContent = fullDiv.textContent.trim();
-                
-                if (rawContent.startsWith('{') && rawContent.endsWith('}')) {
-                    try {
-                        const data = JSON.parse(rawContent);
-                        const name = data.full_name || 'Candidate';
-                        const summary = data.summary || 'No summary available.';
-                        
-                        // Mini preview format
-                        previewDiv.innerHTML = `<strong style="color: var(--text-1);">${escapeHtml(name)}</strong> — ${escapeHtml(summary).substring(0, 160)}...`;
-                        
-                        // Full content HTML format
-                        let fullHtml = `<strong style="font-size:1.1rem; color:var(--text-1);">${escapeHtml(name)}</strong><br>`;
-                        if (data.target_role) {
-                            fullHtml += `<span style="color:var(--primary); font-weight:600; font-size:0.9rem;">${escapeHtml(data.target_role)}</span><br>`;
-                        }
-                        fullHtml += `<div style="margin-top:12px; color:#cbd5e1;">${escapeHtml(summary)}</div>`;
-                        
-                        if (data.experience && data.experience.length > 0) {
-                            fullHtml += `<div style="margin-top:16px; font-weight:700; color:var(--text-1);">Experience</div><ul style="padding-left:20px; margin-top:6px; margin-bottom:0;">`;
-                            data.experience.forEach(exp => {
-                                fullHtml += `<li style="margin-bottom:6px;"><strong>${escapeHtml(exp.title || 'Role')}</strong> at <span style="color:var(--primary);">${escapeHtml(exp.company || 'Company')}</span></li>`;
-                            });
-                            fullHtml += `</ul>`;
-                        }
-                        
-                        if (data.skills && data.skills.length > 0) {
-                            fullHtml += `<div style="margin-top:16px; font-weight:700; color:var(--text-1);">Skills</div>`;
-                            fullHtml += `<div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">`;
-                            data.skills.forEach(skill => {
-                                let skillName = typeof skill === 'string' ? skill : (skill.name || '');
-                                fullHtml += `<span class="badge-tone" style="border-radius:4px; font-weight:600; padding:4px 8px;">${escapeHtml(skillName)}</span>`;
-                            });
-                            fullHtml += `</div>`;
-                        }
-                        
-                        fullDiv.innerHTML = fullHtml;
-                    } catch (e) {
-                        // ignore JSON parse errors
-                    }
-                }
-            });
+        <!-- Expand toggle row -->
+        <div class="hist-expand-row" onclick="toggleHistCard({{ gen.id }})">
+          <span class="hist-expand-label">
+            <i class="fas fa-chevron-down hist-chevron"></i>
+            <span class="hist-expand-text">Show full result</span>
+          </span>
+          <span style="font-size:0.7rem; color: var(--text-muted);">
+            {{ gen.result|length }} chars
+          </span>
+        </div>
+
+        <!-- Smooth-expand body -->
+        <div class="hist-body" id="histBody-{{ gen.id }}">
+          <div class="hist-full-content" id="histFull-{{ gen.id }}">{{ gen.result }}</div>
+          <div class="hist-copy-row">
+            <button class="hist-copy-btn" id="histCopyBtn-{{ gen.id }}"
+                    onclick="copyHistItem({{ gen.id }})">
+              <i class="fas fa-copy"></i> Copy
+            </button>
+          </div>
+        </div>
+
+      </div><!-- /.hist-card -->
+      {% endfor %}
+    </div><!-- /#histTimeline -->
+
+    {% else %}
+    <div class="empty-state-v2">
+      <div class="empty-icon-box">
+        <i class="fas fa-rocket" style="color: var(--primary);"></i>
+      </div>
+      <div class="empty-title">Your FAANG-level resume is waiting</div>
+      <p class="empty-desc">Generate your first AI-powered resume and it will appear here for easy access.</p>
+      <a href="{% url 'home' %}" class="btn-primary-grad">
+        <i class="fas fa-magic me-2"></i>Start Generating
+      </a>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+<script>
+  const CSRF = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+
+  /* ── Toggle expand / collapse ─── */
+  function toggleHistCard(id) {
+    const card    = document.getElementById('hist-' + id);
+    const body    = document.getElementById('histBody-' + id);
+    const preview = document.getElementById('histPreview-' + id);
+    const label   = card.querySelector('.hist-expand-text');
+    const isOpen  = card.classList.contains('expanded');
+
+    card.classList.toggle('expanded', !isOpen);
+    label.textContent  = isOpen ? 'Show full result' : 'Collapse';
+    preview.style.display = isOpen ? '' : 'none';
+  }
+
+  /* ── Copy to clipboard ─── */
+  async function copyHistItem(id) {
+    const fullEl = document.getElementById('histFull-' + id);
+    const btn    = document.getElementById('histCopyBtn-' + id);
+    const text   = fullEl ? fullEl.textContent.trim() : '';
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      btn.classList.add('copied');
+      btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+      }, 2200);
+    } catch (_) {
+      showToast('Could not copy — please select text manually.', 'danger');
+    }
+  }
+
+  /* ── Delete single ─── */
+  async function deleteGeneration(pk) {
+    if (!confirm('Delete this generation? This cannot be undone.')) return;
+    try {
+      const resp = await fetch(`/history/${pk}/delete/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': CSRF, 'X-Requested-With': 'XMLHttpRequest' },
+      });
+      const data = await resp.json();
+      if (data.ok) {
+        const card = document.getElementById('hist-' + pk);
+        card.style.transition = 'opacity 0.32s ease, max-height 0.32s ease, margin 0.32s ease, padding 0.32s ease';
+        card.style.overflow   = 'hidden';
+        card.style.maxHeight  = card.offsetHeight + 'px';
+        requestAnimationFrame(() => {
+          card.style.opacity     = '0';
+          card.style.maxHeight   = '0';
+          card.style.marginBottom = '0';
         });
+        setTimeout(() => card.remove(), 350);
+        showToast('Generation deleted.', 'success');
+        _checkEmpty();
+      } else {
+        showToast('Could not delete: ' + (data.error || 'Unknown error'), 'danger');
+      }
+    } catch (e) {
+      showToast('Network error. Please try again.', 'danger');
+    }
+  }
 
-        async function deleteGeneration(pk) {
-            if (!confirm('Delete this generation? This cannot be undone.')) return;
-            try {
-                const resp = await fetch(`/history/${pk}/delete/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': CSRF,
-                        'X-Requested-With': 'XMLHttpRequest',
-                    },
-                });
-                const data = await resp.json();
-                if (data.ok) {
-                    const card = document.getElementById('hist-' + pk);
-                    card.style.transition = 'opacity 0.35s ease, max-height 0.35s ease, margin 0.35s ease, padding 0.35s ease';
-                    card.style.overflow = 'hidden';
-                    card.style.maxHeight = card.offsetHeight + 'px';
-                    requestAnimationFrame(() => {
-                        card.style.opacity = '0';
-                        card.style.maxHeight = '0';
-                        card.style.marginBottom = '0';
-                        card.style.padding = '0';
-                    });
-                    setTimeout(() => card.remove(), 370);
-                    showToast('Generation deleted.', 'success');
-                } else {
-                    showToast('Could not delete: ' + (data.error || 'Unknown error'), 'danger');
-                }
-            } catch (e) {
-                showToast('Network error. Please try again.', 'danger');
-            }
-        }
+  /* ── Clear all ─── */
+  async function clearAllGenerations() {
+    const cards = [...document.querySelectorAll('.hist-card[id^="hist-"]')];
+    if (!cards.length) return;
+    if (!confirm(`Delete all ${cards.length} generation${cards.length > 1 ? 's' : ''}? This cannot be undone.`)) return;
 
+    const btn = document.getElementById('btnClearAll');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting…'; }
+
+    for (const card of cards) {
+      const pk = card.id.replace('hist-', '');
+      try {
+        const resp = await fetch(`/history/${pk}/delete/`, {
+          method: 'POST',
+          headers: { 'X-CSRFToken': CSRF, 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        const data = await resp.json();
+        if (data.ok) {
+          card.style.transition = 'opacity 0.2s ease';
+          card.style.opacity = '0';
+          setTimeout(() => card.remove(), 220);
+          await new Promise(r => setTimeout(r, 80));
         }
-    </script>
+      } catch (_) {}
+    }
+    showToast('All generations cleared.', 'success');
+    if (btn) btn.remove();
+    _checkEmpty();
+  }
+
+  /* Show empty state if no cards remain */
+  function _checkEmpty() {
+    const timeline = document.getElementById('histTimeline');
+    if (timeline && !timeline.querySelector('.hist-card')) {
+      timeline.innerHTML = `
+        <div class="empty-state-v2">
+          <div class="empty-icon-box"><i class="fas fa-inbox" style="color:var(--text-muted);"></i></div>
+          <div class="empty-title">No generations yet</div>
+          <p class="empty-desc">Generate your first resume or cover letter to see it here.</p>
+          <a href="{% url 'home' %}" class="btn-primary-grad">
+            <i class="fas fa-magic me-2"></i>Start Generating
+          </a>
+        </div>`;
+    }
+  }
+
+  /* Parse JSON results if the backend stored them as JSON strings */
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.hist-full-content').forEach(el => {
+      const raw = el.textContent.trim();
+      if (raw.startsWith('{') && raw.endsWith('}')) {
+        try {
+          const data = JSON.parse(raw);
+          const esc  = s => String(s || '').replace(/[&<>"']/g, m =>
+            ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+          let html = `<strong style="font-size:1.05rem;color:var(--text-primary);">${esc(data.full_name)}</strong><br>`;
+          if (data.target_role)
+            html += `<span style="color:var(--primary);font-weight:600;font-size:0.9rem;">${esc(data.target_role)}</span><br>`;
+          if (data.summary)
+            html += `<div style="margin-top:10px;color:#cbd5e1;">${esc(data.summary)}</div>`;
+          if (Array.isArray(data.experience) && data.experience.length) {
+            html += `<div style="margin-top:14px;font-weight:700;color:var(--text-primary);">Experience</div><ul style="padding-left:18px;margin:6px 0 0;">`;
+            data.experience.forEach(exp => {
+              html += `<li style="margin-bottom:5px;"><strong>${esc(exp.title||'Role')}</strong> at <span style="color:var(--primary);">${esc(exp.company||'')}</span></li>`;
+            });
+            html += `</ul>`;
+          }
+          if (Array.isArray(data.skills) && data.skills.length) {
+            html += `<div style="margin-top:14px;font-weight:700;color:var(--text-primary);">Skills</div>`;
+            html += `<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;">`;
+            data.skills.forEach(sk => {
+              const name = typeof sk === 'string' ? sk : (sk.name || '');
+              html += `<span class="hist-badge hist-badge-type-draft" style="border-radius:5px;">${esc(name)}</span>`;
+            });
+            html += `</div>`;
+          }
+          el.innerHTML = html;
+        } catch (_) {}
+      }
+    });
+  });
+</script>
 {% endblock content %}

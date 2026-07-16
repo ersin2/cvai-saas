@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}Dashboard | CVAI — Career Command Center{% endblock %}
-{% block meta_desc %}Track your AI cover letter generation stats, application funnel, and career progress in one dashboard.{% endblock %}
+{% block meta_desc %}Track your AI resume generation stats, application funnel, and career progress in one dashboard.{% endblock %}
 
 {% block extra_head %}
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -470,7 +470,7 @@
            style="--card-accent:var(--primary);--card-icon-bg:var(--primary-dim);--card-icon-color:var(--primary);--card-value-color:var(--primary);">
         <div class="stat-icon-box"><i class="fas fa-file-alt"></i></div>
         <div class="stat-value-v2">{{ stats.total_generations }}</div>
-        <div class="stat-label-v2">Cover Letters</div>
+        <div class="stat-label-v2">Resumes</div>
       </div>
       <div class="stat-card-v2 card-hoverable anim-fade-up anim-delay-2"
            style="--card-accent:var(--secondary);--card-icon-bg:var(--secondary-dim);--card-icon-color:var(--secondary);--card-value-color:var(--secondary);">
@@ -571,7 +571,7 @@
         <div class="glass-card h-100">
           <div class="feed-header">
             <div class="panel-title mb-0">
-              <i class="fas fa-file-alt" style="color:var(--primary);"></i>Cover Letters
+              <i class="fas fa-file-alt" style="color:var(--primary);"></i>Resumes
             </div>
             {% if recent_generations %}
             <span class="feed-count-pill">{{ recent_generations|length }}</span>
@@ -590,7 +590,7 @@
                    data-role="{{ gen.job_title|default:'Position' }}"
                    data-content="{{ gen.result|default:'' }}"
                    tabindex="0" role="button"
-                   aria-label="View cover letter for {{ gen.company_name|default:'Unknown Company' }}">
+                   aria-label="View resume for {{ gen.company_name|default:'Unknown Company' }}">
                 <div class="act-icon" style="background:var(--primary-dim);">
                   <i class="fas fa-file-alt" style="color:var(--primary);"></i>
                 </div>
@@ -631,8 +631,8 @@
             <div class="dash-empty-icon" style="background:var(--primary-dim);">
               <i class="fas fa-pen-nib" style="color:var(--primary);"></i>
             </div>
-            <div class="dash-empty-title">Your FAANG-level letter awaits</div>
-            <p class="dash-empty-desc">Generate your first AI cover letter in seconds</p>
+            <div class="dash-empty-title">Your FAANG-level resume awaits</div>
+            <p class="dash-empty-desc">Generate your first AI resume in seconds</p>
             <a href="{% url 'home' %}" class="btn-primary-grad" style="font-size:0.78rem;padding:8px 20px;">
               Create Now <i class="fas fa-arrow-right ms-1"></i>
             </a>
@@ -908,7 +908,7 @@
 
     /* Type config */
     const TYPE_CONFIG = {
-      letter:    { icon: 'fas fa-file-alt',            color: '#4cc9f0',  label: 'Cover Letter' },
+      letter:    { icon: 'fas fa-file-alt',            color: '#4cc9f0',  label: 'Resume' },
       app:       { icon: 'fas fa-briefcase',           color: '#22c55e',  label: 'Application' },
       ai_ats:    { icon: 'fas fa-chart-bar',           color: '#a855f7',  label: 'ATS Analysis' },
       ai_interview: { icon: 'fas fa-user-tie',         color: '#fbbf24',  label: 'Interview Prep' },
@@ -1188,7 +1188,7 @@
           btn.innerHTML = '<i class="fas fa-copy"></i> Copy Text';
         }, 2200);
       }).catch(() => {
-        alert('Copy failed — please select and copy manually.');
+        showToast('Copy failed — please select and copy manually.', 'danger');
       });
     }
   </script>
