@@ -139,18 +139,23 @@ preview. `studio_styles.html` is its stylesheet (home includes it). Decision con
   Enter/Space selects).
 - Consistent 150 ms micro-transitions on interactive chrome (cards, chips, toggles, pills).
 
-**Deferred (documented, not done — by choice):**
-- **Inline-handler migration** (~30 `onclick`/`oninput`). On this page it yields little
-  real benefit — the studio relies on inline `<script>`, inline `style=`, and CDN scripts,
-  so a strict CSP isn't achievable regardless — while carrying meaningful regression risk.
-  Recommend a separate, dedicated pass if a strict CSP becomes a goal.
-- **Mojibake cleanup.** `home.html` contains double-encoded characters (garbled `…`, `✓`,
-  `—`, box-drawing) in comments and a few visible status strings. Best fixed by re-saving
-  the source as clean UTF-8, not piecemeal — deferred to avoid encoding risk mid-pass.
-- **Deeper mobile flow.** The studio already stacks below 900 px (form above, preview
-  below); a dedicated mobile preview/download toggle would refine it further.
-- **Structured Experience/Education entries** (P1 proposal) — still recommended as the
-  biggest future upgrade; kept as freeform textareas for now.
+**Post-Phase-3 cleanup (done):**
+- **Mojibake fixed** — reversed 4354 double-encoded UTF-8 runs in `home.html` (garbled
+  `…`/`✓`/`—`, box-drawing comments, language-dropdown flag emoji, the ⚠ status) via a
+  per-run cp1252/latin1 → UTF-8 round-trip that left correct text + legit emoji untouched.
+  Renders clean; 70 tests pass.
+- **Mobile flow** — the drag-resizer/collapse toggle is hidden when the layout stacks
+  (<900 px); the form is forced full-width and the stacked preview given more height.
+- **collectstatic** run to refresh the tracked `staticfiles/` (also runs on deploy).
+
+**Deferred to a follow-up (by owner decision — skipped for this deploy):**
+- **Inline-handler migration** (~30 `onclick`/`oninput`). Little real benefit here — the
+  studio relies on inline `<script>`, inline `style=`, and CDN scripts, so a strict CSP
+  isn't achievable regardless — and meaningful regression risk. Do it only if a strict CSP
+  becomes a goal.
+- **Structured Experience/Education entries** (P1 proposal) — the biggest future UX upgrade
+  (repeatable add/remove/reorder blocks). Kept as freeform textareas for now; worth its own
+  focused branch with careful `pdf_engine` contract testing.
 
 ## Top-5 to verify manually (after fixes)
 
