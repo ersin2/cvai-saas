@@ -410,9 +410,12 @@
     /* ── Responsive ──────────────────────────────────────── */
     @media (max-width: 900px) {
       .vs-studio { flex-direction: column; overflow-y: auto; }
-      .vs-left   { width: 100%; max-width: 100%; border-right: none;
+      /* !important overrides any inline width left by a desktop drag-resize */
+      .vs-left   { width: 100% !important; max-width: 100%; border-right: none;
                    border-bottom: 1px solid var(--panel-border); }
-      .vs-right  { min-height: 60vh; }
+      .vs-right  { min-height: 70vh; }
+      /* The vertical drag divider + collapse toggle are meaningless when stacked */
+      .vs-resizer-wrap { display: none; }
       html, body  { overflow: auto; }
     }
 
