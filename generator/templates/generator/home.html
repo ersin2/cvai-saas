@@ -5,9 +5,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Visual Resume Studio | CVAI â€” AI-Powered Resume Builder</title>
+  <title>Visual Resume Studio | CVAI — AI-Powered Resume Builder</title>
   <meta name="description"
-    content="Build a stunning, ATS-optimized resume with AI. Pick from 20 premium templates, upload a photo, and preview your PDF live â€” no page reload needed.">
+    content="Build a stunning, ATS-optimized resume with AI. Pick from 20 premium templates, upload a photo, and preview your PDF live — no page reload needed.">
 
   <!-- Bootstrap 5 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -21,9 +21,9 @@
   {% include 'generator/partials/studio_styles.html' %}
 
   <style>
-    /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-       VISUAL RESUME STUDIO â€” SPLIT-SCREEN LAYOUT
-       â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+    /* ═══════════════════════════════════════════════════════════
+       VISUAL RESUME STUDIO — SPLIT-SCREEN LAYOUT
+       ═══════════════════════════════════════════════════════════ */
     :root {
       --studio-bg:       #070a14;
       --panel-bg:        #0d1120;
@@ -44,7 +44,7 @@
     body { background: var(--studio-bg); color: var(--text-primary);
            font-family: 'Inter', system-ui, sans-serif; }
 
-    /* â”€â”€ Navbar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Navbar ─────────────────────────────────────────────── */
     .vs-nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
       height: 52px;
@@ -73,13 +73,13 @@
     }
     .vs-nav-btn-dl:hover { opacity: .88; transform: translateY(-1px); }
 
-    /* â”€â”€ Studio Root â€” two-column split below nav â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Studio Root — two-column split below nav ──────────── */
     .vs-studio {
       position: fixed; inset: 52px 0 0 0;
       display: flex; overflow: hidden;
     }
 
-    /* â”€â”€ LEFT PANEL â€” Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── LEFT PANEL — Form ─────────────────────────────────── */
     .vs-left {
       width: 400px; min-width: 280px; max-width: 620px;
       flex-shrink: 0;
@@ -89,7 +89,7 @@
       transition: width 0.2s ease;
     }
 
-    /* â”€â”€ RESIZER DIVIDER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── RESIZER DIVIDER ─────────────────────────────────────── */
     .vs-resizer {
       width: 6px; flex-shrink: 0;
       background: var(--panel-border);
@@ -106,7 +106,7 @@
       position: absolute; inset: 0;
       width: 18px; left: -6px;
     }
-    /* â”€â”€ COLLAPSE TOGGLE BUTTON â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── COLLAPSE TOGGLE BUTTON ─────────────────────────────── */
     .vs-collapse-btn {
       position: absolute;
       top: 50%;
@@ -142,7 +142,7 @@
                       scrollbar-width: thin;
                       scrollbar-color: rgba(76,201,240,0.2) transparent; }
 
-    /* â”€â”€ Form sections / accordion â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Form sections / accordion ──────────────────────────── */
     .vs-section { border-bottom: 1px solid var(--panel-border); }
     .vs-section-toggle {
       width: 100%; display: flex; align-items: center; gap: 10px;
@@ -157,7 +157,7 @@
     .vs-section-body { display: none; padding: 4px 20px 16px; }
     .vs-section-body.open { display: block; }
 
-    /* â”€â”€ Form inputs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€  */
+    /* ── Form inputs ──────────────────────────────────────────  */
     .vs-label { font-size: .72rem; font-weight: 600; color: var(--text-muted);
                 text-transform: uppercase; letter-spacing: .5px;
                 margin-bottom: 4px; display: block; }
@@ -176,7 +176,7 @@
     .vs-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .mb-form { margin-bottom: 12px; }
 
-    /* â”€â”€ Photo upload zone â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Photo upload zone ────────────────────────────────── */
     .photo-zone {
       border: 2px dashed var(--input-border); border-radius: var(--radius);
       padding: 16px; text-align: center; cursor: pointer;
@@ -196,7 +196,7 @@
       display: none; margin: 0 auto 8px;
     }
 
-    /* â”€â”€ Sliders â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Sliders ──────────────────────────────────────────── */
     .slider-wrap { margin-bottom: 14px; }
     .slider-header { display: flex; justify-content: space-between;
                      align-items: center; margin-bottom: 6px; }
@@ -215,7 +215,7 @@
     }
     input[type="range"].vs-range::-webkit-slider-thumb:active { transform: scale(1.2); }
 
-    /* â”€â”€ Template Gallery â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Template Gallery ─────────────────────────────────── */
     .tpl-gallery {
       display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
       padding: 4px 0;
@@ -265,7 +265,7 @@
     .cat-creative   { background: rgba(255,107,107,.10);   color: #ff6b6b; }
     .cat-executive  { background: rgba(212,168,83,.10);    color: #d4a853; }
 
-    /* â”€â”€ AI Fill button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── AI Fill button ──────────────────────────────────── */
     .btn-ai-fill {
       width: 100%; padding: 10px; border-radius: var(--radius-sm); border: none;
       background: linear-gradient(135deg,#4361ee,#f72585);
@@ -274,7 +274,7 @@
     }
     .btn-ai-fill:hover { opacity: .88; transform: translateY(-1px); }
 
-    /* â”€â”€ RIGHT PANEL â€” Live Preview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── RIGHT PANEL — Live Preview ──────────────────────── */
     .vs-right {
       flex: 1; background: #111827; display: flex;
       flex-direction: column; overflow: hidden;
@@ -315,7 +315,7 @@
     .vs-preview-placeholder i { font-size: 3rem; opacity: .3; }
     .vs-preview-placeholder p { font-size: .85rem; }
 
-    /* â”€â”€ Loading overlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Loading overlay ─────────────────────────────────── */
     .vs-loading-overlay {
       display: none; position: fixed; inset: 0; z-index: 99999;
       background: rgba(7,10,20,0.75); backdrop-filter: blur(16px);
@@ -341,7 +341,7 @@
                          margin-bottom: 6px; font-size: 1rem; }
     .vs-loading-sub   { color: var(--text-muted); font-size: .78rem; }
 
-    /* â”€â”€ Toast â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Toast ───────────────────────────────────────────── */
     .vs-toast {
       position: fixed; bottom: 24px; right: 24px; z-index: 9999;
       background: rgba(13,17,32,.96); border: 1px solid rgba(76,201,240,.2);
@@ -407,7 +407,7 @@
       transition: transform .15s ease, border-color .15s ease, background .15s ease, box-shadow .15s ease;
     }
 
-    /* â”€â”€ Responsive â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Responsive ──────────────────────────────────────── */
     @media (max-width: 900px) {
       .vs-studio { flex-direction: column; overflow-y: auto; }
       .vs-left   { width: 100%; max-width: 100%; border-right: none;
@@ -416,7 +416,7 @@
       html, body  { overflow: auto; }
     }
 
-    /* â”€â”€ AI Magic Box â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── AI Magic Box ───────────────────────────────────────── */
     .ai-magic-box {
       margin: 0;
       background: linear-gradient(135deg,
@@ -572,7 +572,7 @@
       white-space: nowrap; flex-shrink: 0;
     }
 
-    /* â”€â”€ âœ¨ Rewrite-with-AI micro-button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── ✨ Rewrite-with-AI micro-button ────────────────────── */
     .rewrite-wrap {
       position: relative;
     }
@@ -636,7 +636,7 @@
       padding-top: 32px;
     }
 
-    /* â”€â”€ Reset / Clear button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Reset / Clear button ────────────────────────────────── */
     .btn-reset-form {
       display: inline-flex; align-items: center; gap: 6px;
       padding: 8px 16px;
@@ -653,7 +653,7 @@
       transform: translateY(-1px);
     }
 
-    /* â”€â”€ Theme Customization panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Theme Customization panel ───────────────────────────── */
     .theme-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -690,7 +690,7 @@
     }
     .font-select:focus { border-color: var(--accent); }
 
-    /* â•â• Enhanced Skills Builder â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+    /* ══ Enhanced Skills Builder ════════════════════════════════ */
     .skill-builder { display: flex; flex-direction: column; gap: 14px; }
 
     /* Preset category tabs */
@@ -783,7 +783,7 @@
     }
     .btn-bulk-add:hover { background: rgba(76,201,240,.18); }
 
-    /* Proficiency slider â€” larger */
+    /* Proficiency slider — larger */
     .skill-level-wrap { display: flex; flex-direction: column; gap: 6px; }
     .skill-level-header { display: flex; justify-content: space-between; align-items: center; }
     .skill-level-label {
@@ -855,9 +855,9 @@
 
 <body>
 
-  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  <!-- ══════════════════════════════════════════════════════
        TOP NAV
-       â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+       ══════════════════════════════════════════════════════ -->
   <nav class="vs-nav" id="mainNav">
     <a href="{% url 'home' %}" class="vs-nav-logo">CV<span>AI</span></a>
 
@@ -888,16 +888,16 @@
     </button>
   </nav>
 
-  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  <!-- ══════════════════════════════════════════════════════
        SPLIT-SCREEN STUDIO
-       â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+       ══════════════════════════════════════════════════════ -->
   <div class="vs-studio" id="vsStudio">
 
-    <!-- â”€â”€â”€â”€â”€â”€ LEFT: THE FORM â”€â”€â”€â”€â”€â”€ -->
+    <!-- ────── LEFT: THE FORM ────── -->
     <aside class="vs-left">
       <div class="vs-left-header">
         <h2><i class="fas fa-pen-ruler me-2" style="color:var(--accent);"></i>Resume Builder<span id="autosaveIndicator" class="autosave-ind"></span></h2>
-        <p>Fill in your details â€” PDF updates live â†—</p>
+        <p>Fill in your details — PDF updates live ↗</p>
       </div>
 
       <div class="vs-left-scroll">
@@ -919,15 +919,15 @@
           <!-- Hidden: selected template slug -->
           <input type="hidden" name="template_name" id="selectedTemplate" value="minimal_centered">
 
-          <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-               AI MAGIC BOX â€” Auto-fill from raw text / PDF
-               â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+          <!-- ══════════════════════════════════════════════════
+               AI MAGIC BOX — Auto-fill from raw text / PDF
+               ══════════════════════════════════════════════════ -->
           <div class="ai-magic-box">
             <div class="ai-magic-header">
               <div class="ai-icon"><i class="fas fa-sparkles"></i></div>
               <div>
                 <h3>AI Auto-Fill</h3>
-                <p>Paste your old resume or LinkedIn â€” AI fills every field instantly</p>
+                <p>Paste your old resume or LinkedIn — AI fills every field instantly</p>
               </div>
               {% if user.is_authenticated %}
               <span class="ai-gens-pill ms-auto" id="aiGensPill">
@@ -945,7 +945,7 @@
               <div class="ai-pdf-label">
                 <i class="fas fa-file-pdf" style="color:#f87171;"></i>
                 Upload old PDF resume
-                <span class="ai-pdf-hint">(optional â€” used instead of or with pasted text)</span>
+                <span class="ai-pdf-hint">(optional — used instead of or with pasted text)</span>
               </div>
               <input type="file" id="ai-pdf-upload" accept=".pdf" style="display: none;">
               <label for="ai-pdf-upload" class="ai-pdf-custom-upload">
@@ -957,25 +957,25 @@
             <textarea
               id="raw-resume-text"
               class="ai-magic-textarea"
-              placeholder="Paste your old resume, LinkedIn summary, or career history here&#10;&#10;Example: 'I worked at Google for 5 years as a backend engineer, built APIs serving 10M users, Python/Django/GCPâ€¦'&#10;&#10;Tip: Upload a PDF above OR paste text here â€” AI will extract and rewrite everything."
+              placeholder="Paste your old resume, LinkedIn summary, or career history here&#10;&#10;Example: 'I worked at Google for 5 years as a backend engineer, built APIs serving 10M users, Python/Django/GCP…'&#10;&#10;Tip: Upload a PDF above OR paste text here — AI will extract and rewrite everything."
             ></textarea>
 
             <div class="ai-magic-row">
               <div class="ai-magic-lang-wrapper">
                 <select class="ai-magic-lang" id="aiLang" title="Output language">
-                  <option value="English">ðŸ‡ºðŸ‡¸ English</option>
-                  <option value="Russian">ðŸ‡·ðŸ‡º Russian</option>
-                  <option value="German">ðŸ‡©ðŸ‡ª German</option>
-                  <option value="French">ðŸ‡«ðŸ‡· French</option>
-                  <option value="Spanish">ðŸ‡ªðŸ‡¸ Spanish</option>
-                  <option value="Portuguese">ðŸ‡µðŸ‡¹ Portuguese</option>
-                  <option value="Italian">ðŸ‡®ðŸ‡¹ Italian</option>
-                  <option value="Turkish">ðŸ‡¹ðŸ‡· Turkish</option>
-                  <option value="Chinese">ðŸ‡¨ðŸ‡³ Chinese</option>
-                  <option value="Japanese">ðŸ‡¯ðŸ‡µ Japanese</option>
-                  <option value="Korean">ðŸ‡°ðŸ‡· Korean</option>
-                  <option value="Arabic">ðŸ‡¸ðŸ‡¦ Arabic</option>
-                  <option value="Hindi">ðŸ‡®ðŸ‡³ Hindi</option>
+                  <option value="English">🇺🇸 English</option>
+                  <option value="Russian">🇷🇺 Russian</option>
+                  <option value="German">🇩🇪 German</option>
+                  <option value="French">🇫🇷 French</option>
+                  <option value="Spanish">🇪🇸 Spanish</option>
+                  <option value="Portuguese">🇵🇹 Portuguese</option>
+                  <option value="Italian">🇮🇹 Italian</option>
+                  <option value="Turkish">🇹🇷 Turkish</option>
+                  <option value="Chinese">🇨🇳 Chinese</option>
+                  <option value="Japanese">🇯🇵 Japanese</option>
+                  <option value="Korean">🇰🇷 Korean</option>
+                  <option value="Arabic">🇸🇦 Arabic</option>
+                  <option value="Hindi">🇮🇳 Hindi</option>
                 </select>
                 <i class="fas fa-chevron-down ai-lang-arrow"></i>
               </div>
@@ -1010,7 +1010,7 @@
             });
           </script>
 
-          <!-- â”€â”€ Â§1  TEMPLATE GALLERY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+          <!-- ── §1  TEMPLATE GALLERY ─────────────────────── -->
           <div class="vs-section">
             <button type="button" class="vs-section-toggle open" data-target="sec-templates">
               <i class="fas fa-palette" style="color:var(--accent);"></i>
@@ -1029,12 +1029,12 @@
                          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
                     <div class="tpl-fallback" style="display:none;background:#ffffff;border:1px solid #c9a84c;">
                       <div class="tpl-swatch" style="background:#1a1a2e;"></div>
-                      ðŸ“„
+                      📄
                     </div>
                   </div>
                   <div class="tpl-info">
                     <div class="tpl-name">Minimal Centered</div>
-                    <div class="tpl-cat">1-Col Â· Serif Elegance</div>
+                    <div class="tpl-cat">1-Col · Serif Elegance</div>
                   </div>
                   <div class="tpl-check"><i class="fas fa-check"></i></div>
                 </div>
@@ -1045,7 +1045,7 @@
                          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
                     <div class="tpl-fallback" style="display:none;background:#1e2a38;">
                       <div class="tpl-swatch" style="background:#4cc9f0;"></div>
-                      ðŸŒ‘
+                      🌑
                     </div>
                   </div>
                   <div class="tpl-info">
@@ -1061,7 +1061,7 @@
                          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
                     <div class="tpl-fallback" style="display:none;background:#f3f0ff;">
                       <div class="tpl-swatch" style="background:#7c3aed;"></div>
-                      ðŸ’œ
+                      💜
                     </div>
                   </div>
                   <div class="tpl-info">
@@ -1077,7 +1077,7 @@
                          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
                     <div class="tpl-fallback" style="display:none;background:#2d3436;">
                       <div class="tpl-swatch" style="background:#ff6b6b;"></div>
-                      ðŸŽ¨
+                      🎨
                     </div>
                   </div>
                   <div class="tpl-info">
@@ -1093,7 +1093,7 @@
                          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
                     <div class="tpl-fallback" style="display:none;background:#ffffff;border:1px solid #caf0f8;">
                       <div class="tpl-swatch" style="background:#00b4d8;"></div>
-                      â±ï¸
+                      ⏱ï¸
                     </div>
                   </div>
                   <div class="tpl-info">
@@ -1109,7 +1109,7 @@
                          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
                     <div class="tpl-fallback" style="display:none;background:#f8fafb;border:1px solid #d1fae5;">
                       <div class="tpl-swatch" style="background:#059669;"></div>
-                      âš–ï¸
+                      ⚖ï¸
                     </div>
                   </div>
                   <div class="tpl-info">
@@ -1125,12 +1125,12 @@
                          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
                     <div class="tpl-fallback" style="display:none;background:#0d0d0d;">
                       <div class="tpl-swatch" style="background:#00ff41;"></div>
-                      ðŸ’»
+                      💻
                     </div>
                   </div>
                   <div class="tpl-info">
                     <div class="tpl-name">Hacker Terminal</div>
-                    <div class="tpl-cat">Green Monospace Â· Dev</div>
+                    <div class="tpl-cat">Green Monospace · Dev</div>
                   </div>
                   <div class="tpl-check"><i class="fas fa-check"></i></div>
                 </div>
@@ -1141,12 +1141,12 @@
                          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
                     <div class="tpl-fallback" style="display:none;background:#ffffff;border:1px solid #333;">
                       <div class="tpl-swatch" style="background:#1a1a1a;"></div>
-                      ðŸŽ“
+                      🎓
                     </div>
                   </div>
                   <div class="tpl-info">
                     <div class="tpl-name">Academic Classic</div>
-                    <div class="tpl-cat">ATS-Optimised Â· Dense</div>
+                    <div class="tpl-cat">ATS-Optimised · Dense</div>
                   </div>
                   <div class="tpl-check"><i class="fas fa-check"></i></div>
                 </div>
@@ -1157,7 +1157,7 @@
                          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
                     <div class="tpl-fallback" style="display:none;background:#1e3a5f;">
                       <div class="tpl-swatch" style="background:#2563eb;"></div>
-                      ðŸ”·
+                      🔷
                     </div>
                   </div>
                   <div class="tpl-info">
@@ -1173,21 +1173,21 @@
                          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
                     <div class="tpl-fallback" style="display:none;background:#0f0f1a;">
                       <div class="tpl-swatch" style="background:#e879f9;"></div>
-                      âœ¨
+                      ✨
                     </div>
                   </div>
                   <div class="tpl-info">
                     <div class="tpl-name">Creative Masonry</div>
-                    <div class="tpl-cat">Dark Â· Asymmetric</div>
+                    <div class="tpl-cat">Dark · Asymmetric</div>
                   </div>
                   <div class="tpl-check"><i class="fas fa-check"></i></div>
                 </div>
 
               </div>
             </div><!-- /sec-templates -->
-          </div><!-- /Â§1 -->
+          </div><!-- /§1 -->
 
-          <!-- â”€â”€ Â§2  PERSONAL INFO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+          <!-- ── §2  PERSONAL INFO ────────────────────────── -->
           <div class="vs-section">
             <button type="button" class="vs-section-toggle open" data-target="sec-personal">
               <i class="fas fa-id-card" style="color:#a78bfa;"></i>
@@ -1270,17 +1270,17 @@
                           data-target="f_about_me"
                           title="Rewrite with AI (uses 1 generation)">
                     <div class="rw-spinner"></div>
-                    <span class="rw-label">âœ¨ Rewrite</span>
+                    <span class="rw-label">✨ Rewrite</span>
                   </button>
                   <textarea class="vs-textarea" id="f_about_me" name="about_me" rows="4"
-                            placeholder="A passionate engineer with 5+ years of experienceâ€¦"
+                            placeholder="A passionate engineer with 5+ years of experience…"
                             oninput="scheduleLivePreview()"></textarea>
                 </div>
               </div>
             </div>
-          </div><!-- /Â§2 -->
+          </div><!-- /§2 -->
 
-          <!-- â”€â”€ Â§3  EXPERIENCE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+          <!-- ── §3  EXPERIENCE ──────────────────────────── -->
           <div class="vs-section">
             <button type="button" class="vs-section-toggle" data-target="sec-exp">
               <i class="fas fa-briefcase" style="color:#f59e0b;"></i>
@@ -1303,17 +1303,17 @@
                           data-target="f_experience_text"
                           title="Rewrite with AI using XYZ formula (uses 1 generation)">
                     <div class="rw-spinner"></div>
-                    <span class="rw-label">âœ¨ Rewrite</span>
+                    <span class="rw-label">✨ Rewrite</span>
                   </button>
                   <textarea class="vs-textarea" id="f_experience_text" name="experience_text" rows="7"
-                            placeholder="Software Engineer | Acme Corp | 2021â€“Present&#10;- Built REST APIs serving 2M daily users&#10;- Reduced latency by 40% via Redis caching"
+                            placeholder="Software Engineer | Acme Corp | 2021–Present&#10;- Built REST APIs serving 2M daily users&#10;- Reduced latency by 40% via Redis caching"
                             oninput="scheduleLivePreview()"></textarea>
                 </div>
               </div>
             </div>
-          </div><!-- /Â§3 -->
+          </div><!-- /§3 -->
 
-          <!-- â”€â”€ Â§3b  PROJECTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+          <!-- ── §3b  PROJECTS ───────────────────────────────── -->
           <div class="vs-section">
             <button type="button" class="vs-section-toggle" data-target="sec-projects">
               <i class="fas fa-code-branch" style="color:#f59e0b;"></i>
@@ -1332,9 +1332,9 @@
                           oninput="scheduleLivePreview()"></textarea>
               </div>
             </div>
-          </div><!-- /Â§3b -->
+          </div><!-- /§3b -->
 
-          <!-- â”€â”€ Â§4  EDUCATION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+          <!-- ── §4  EDUCATION ───────────────────────────── -->
           <div class="vs-section">
             <button type="button" class="vs-section-toggle" data-target="sec-edu">
               <i class="fas fa-graduation-cap" style="color:#22c55e;"></i>
@@ -1345,13 +1345,13 @@
               <div class="mb-form">
                 <label class="vs-label" for="f_education">Education (one entry per line)</label>
                 <textarea class="vs-textarea" id="f_education" name="education" rows="4"
-                          placeholder="B.Sc. Computer Science â€” MIT â€” 2018&#10;M.Sc. Machine Learning â€” Stanford â€” 2020"
+                          placeholder="B.Sc. Computer Science — MIT — 2018&#10;M.Sc. Machine Learning — Stanford — 2020"
                           oninput="scheduleLivePreview()"></textarea>
               </div>
             </div>
-          </div><!-- /Â§4 -->
+          </div><!-- /§4 -->
 
-          <!-- â”€â”€ Â§5  SKILLS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+          <!-- ── §5  SKILLS ──────────────────────────────── -->
           <div class="vs-section">
             <button type="button" class="vs-section-toggle" data-target="sec-skills">
               <i class="fas fa-chart-bar" style="color:#818cf8;"></i>
@@ -1364,13 +1364,13 @@
 
               <div class="skill-builder">
 
-                <!-- â‘  Quick-pick preset tabs -->
+                <!-- ① Quick-pick preset tabs -->
                 <div>
                   <div class="skill-preset-tabs" id="skillPresetTabs">
-                    <button type="button" class="skill-preset-tab active" data-cat="tech">âš¡ Tech</button>
-                    <button type="button" class="skill-preset-tab" data-cat="design">ðŸŽ¨ Design</button>
-                    <button type="button" class="skill-preset-tab" data-cat="lang">ðŸŒ Languages</button>
-                    <button type="button" class="skill-preset-tab" data-cat="soft">ðŸ¤ Soft Skills</button>
+                    <button type="button" class="skill-preset-tab active" data-cat="tech">⚡ Tech</button>
+                    <button type="button" class="skill-preset-tab" data-cat="design">🎨 Design</button>
+                    <button type="button" class="skill-preset-tab" data-cat="lang">🌐 Languages</button>
+                    <button type="button" class="skill-preset-tab" data-cat="soft">🤝 Soft Skills</button>
                   </div>
                   <!-- Preset pill rows (one per category) -->
                   <div class="skill-preset-pills active" id="presetPills-tech" style="margin-top:8px;">
@@ -1423,11 +1423,11 @@
                   </div>
                 </div>
 
-                <!-- â‘¡ Manual add row -->
+                <!-- ② Manual add row -->
                 <div style="display:flex;flex-direction:column;gap:6px;">
                   <div class="skill-input-row">
                     <input class="vs-input" type="text" id="skillNameInput"
-                           placeholder="Or type a skill nameâ€¦" autocomplete="off"
+                           placeholder="Or type a skill name…" autocomplete="off"
                            maxlength="40">
                     <button type="button" class="btn-add-skill" id="btnAddSkill">
                       <i class="fas fa-plus"></i> Add
@@ -1441,35 +1441,35 @@
                   </button>
                   <div class="skill-bulk-wrap" id="skillBulkWrap">
                     <textarea class="skill-bulk-area" id="skillBulkInput"
-                              placeholder="Python, React, SQL, Leadership&#10;(comma or newline separated â€” all added at current proficiency level)"></textarea>
+                              placeholder="Python, React, SQL, Leadership&#10;(comma or newline separated — all added at current proficiency level)"></textarea>
                     <button type="button" class="btn-bulk-add" onclick="addBulkSkills()">
                       <i class="fas fa-layer-group me-1"></i>Add All
                     </button>
                   </div>
                 </div>
 
-                <!-- â‘¢ Proficiency slider -->
+                <!-- ③ Proficiency slider -->
                 <div class="skill-level-wrap">
                   <div class="skill-level-header">
                     <span class="skill-level-label">Proficiency Level</span>
-                    <span class="skill-level-badge lvl-senior" id="skillLevelBadge">Senior Â· 70</span>
+                    <span class="skill-level-badge lvl-senior" id="skillLevelBadge">Senior · 70</span>
                   </div>
                   <input type="range" class="skill-range" id="skillLevelSlider"
                          min="0" max="100" step="10" value="70"
                          oninput="updateSkillSlider(this)">
                 </div>
 
-                <!-- â‘£ Chips -->
+                <!-- ④ Chips -->
                 <div class="skill-chips" id="skillChips">
-                  <span class="skill-empty-hint" id="skillEmptyHint">No skills yet â€” pick a preset or type above â†‘</span>
+                  <span class="skill-empty-hint" id="skillEmptyHint">No skills yet — pick a preset or type above ↑</span>
                 </div>
 
               </div><!-- /.skill-builder -->
             </div>
-          </div><!-- /Â§5 -->
+          </div><!-- /§5 -->
 
 
-          <!-- â”€â”€ Â§6  CERTIFICATIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+          <!-- ── §6  CERTIFICATIONS ─────────────────────── -->
           <div class="vs-section">
             <button type="button" class="vs-section-toggle" data-target="sec-certs">
               <i class="fas fa-certificate" style="color:#f97316;"></i>
@@ -1484,9 +1484,9 @@
                           oninput="scheduleLivePreview()"></textarea>
               </div>
             </div>
-          </div><!-- /Â§6 -->
+          </div><!-- /§6 -->
 
-          <!-- â”€â”€ Â§7  LANGUAGES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+          <!-- ── §7  LANGUAGES ──────────────────────────── -->
           <div class="vs-section">
             <button type="button" class="vs-section-toggle" data-target="sec-lang">
               <i class="fas fa-globe" style="color:#4ecdc4;"></i>
@@ -1507,9 +1507,9 @@
                           oninput="scheduleLivePreview()"></textarea>
               </div>
             </div>
-          </div><!-- /Â§7 -->
+          </div><!-- /§7 -->
 
-          <!-- â”€â”€ Â§8  DESIGN CONTROLS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+          <!-- ── §8  DESIGN CONTROLS ────────────────────── -->
           <div class="vs-section">
             <button type="button" class="vs-section-toggle" data-target="sec-design">
               <i class="fas fa-sliders" style="color:var(--accent2);"></i>
@@ -1554,9 +1554,9 @@
                        oninput="document.getElementById('valLineHeight').textContent=parseFloat(this.value).toFixed(2); scheduleLivePreview();">
               </div>
             </div>
-          </div><!-- /Â§8 -->
+          </div><!-- /§8 -->
 
-          <!-- â”€â”€ Â§9  THEME CUSTOMIZATION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+          <!-- ── §9  THEME CUSTOMIZATION ───────────────── -->
           <div class="vs-section">
             <button type="button" class="vs-section-toggle" data-target="sec-theme">
               <i class="fas fa-palette" style="color:#e879f9;"></i>
@@ -1653,23 +1653,23 @@
               </p>
 
             </div>
-          </div><!-- /Â§9 -->
+          </div><!-- /§9 -->
 
         </form><!-- /#resume-form -->
       </div><!-- /.vs-left-scroll -->
     </aside><!-- /.vs-left -->
 
-    <!-- â”€â”€â”€â”€â”€â”€ DRAG-TO-RESIZE DIVIDER â”€â”€â”€â”€â”€â”€ -->
+    <!-- ────── DRAG-TO-RESIZE DIVIDER ────── -->
     <div class="vs-resizer-wrap" id="vsResizerWrap">
-      <div class="vs-resizer" id="vsResizer" title="Drag to resize Â· Ctrl+\ to toggle preview"></div>
+      <div class="vs-resizer" id="vsResizer" title="Drag to resize · Ctrl+\ to toggle preview"></div>
       <button class="vs-collapse-btn" id="vsCollapseBtn"
               onclick="togglePreview()"
-              title="Ctrl+\ â€” Toggle preview">
+              title="Ctrl+\ — Toggle preview">
         <i class="fas fa-chevron-left" id="vsCollapseIcon"></i>
       </button>
     </div>
 
-    <!-- â”€â”€â”€â”€â”€â”€ RIGHT: LIVE PREVIEW â”€â”€â”€â”€â”€â”€ -->
+    <!-- ────── RIGHT: LIVE PREVIEW ────── -->
     <main class="vs-right" id="vsRight">
       <div class="vs-preview-bar">
         <span class="vs-preview-label"><i class="fas fa-eye me-1"></i>Live Preview</span>
@@ -1693,17 +1693,17 @@
   </div><!-- /.vs-studio -->
 
 
-  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  <!-- ══════════════════════════════════════════════════════
        LOADING OVERLAY (AI fill)
-       â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+       ══════════════════════════════════════════════════════ -->
   <div class="vs-loading-overlay" id="vsLoadingOverlay">
     <div class="vs-loading-card">
       <div class="vs-spinner-rings">
         <div class="ring-o"></div>
         <div class="ring-i"></div>
       </div>
-      <div class="vs-loading-title" id="vsLoadingTitle">Generating your resumeâ€¦</div>
-      <div class="vs-loading-sub">Elite AI â€¢ usually 5â€“15 seconds</div>
+      <div class="vs-loading-title" id="vsLoadingTitle">Generating your resume…</div>
+      <div class="vs-loading-sub">Elite AI • usually 5–15 seconds</div>
     </div>
   </div>
 
@@ -1725,20 +1725,20 @@
   </div>
 
 
-  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-       VANILLA JS â€” STUDIO LOGIC
-       â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <!-- ══════════════════════════════════════════════════════
+       VANILLA JS — STUDIO LOGIC
+       ══════════════════════════════════════════════════════ -->
   <script>
-  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  /* ────────────────────────────────────────────────────────
      CONSTANTS
-  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  ──────────────────────────────────────────────────────── */
   const DOWNLOAD_URL   = "{% url 'download_pdf' %}";
   const PREVIEW_URL    = "{% url 'download_pdf' %}?mode=preview";
   const CSRF_TOKEN     = "{{ csrf_token }}";
 
-  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  /* ────────────────────────────────────────────────────────
      ACCORDION TOGGLES
-  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  ──────────────────────────────────────────────────────── */
   document.querySelectorAll('.vs-section-toggle').forEach(btn => {
     btn.addEventListener('click', () => {
       const target = document.getElementById(btn.dataset.target);
@@ -1763,10 +1763,10 @@
     }
   });
 
-  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-     TEMPLATE DEFAULTS â€” used to reset color pickers when
+  /* ────────────────────────────────────────────────────────
+     TEMPLATE DEFAULTS — used to reset color pickers when
      switching templates, preventing color bleed.
-  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  ──────────────────────────────────────────────────────── */
   const TEMPLATE_DEFAULTS = {
     minimal_centered:    { primary: '#1a1a2e', bg: '#ffffff', accent: '#c9a84c', font: 'Times-Roman' },
     left_sidebar_dark:   { primary: '#4cc9f0', bg: '#1e2a38', accent: '#f0f4f8', font: 'Helvetica' },
@@ -1799,15 +1799,15 @@
     if (cpFont)    { cpFont.value    = defaults.font; }
   }
 
-  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  /* ────────────────────────────────────────────────────────
      TEMPLATE SELECTION
-  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  ──────────────────────────────────────────────────────── */
   function selectTemplate(card) {
     document.querySelectorAll('.tpl-card').forEach(c => c.classList.remove('active'));
     card.classList.add('active');
     const slug = card.dataset.slug;
     document.getElementById('selectedTemplate').value = slug;
-    // â”€â”€ KEY FIX: reset color pickers to the new template's defaults â”€â”€
+    // ── KEY FIX: reset color pickers to the new template's defaults ──
     // This prevents previously-set custom colors from bleeding into
     // the newly selected template's preview.
     _syncPickersToTemplate(slug);
@@ -1815,7 +1815,7 @@
     showToast('Template: ' + card.querySelector('.tpl-name').textContent, 'success');
   }
 
-  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  /* ────────────────────────────────────────────────────────
      PHOTO UPLOAD PREVIEW
   ──────────────────────────────────────────────────────── */
   function handlePhotoChange(input) {
@@ -1856,13 +1856,13 @@
     photoZone.addEventListener(ev, e => { e.preventDefault(); photoZone.classList.remove('drag-over'); });
   });
 
-  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  /* ────────────────────────────────────────────────────────
      DEBOUNCED LIVE PREVIEW
      Fires 700ms after the last form change.
      Silently POSTs the form data to /download-pdf/,
      gets a PDF blob, creates an ObjectURL, and sets
      it as the iframe src.
-  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  ──────────────────────────────────────────────────────── */
   let _previewTimer = null;
   let _lastSig      = null;          // form signature of the last good render
   let _frontFrameId = 'pdf-preview'; // which of the two preview iframes is visible
@@ -1912,7 +1912,7 @@
     if (sig === _lastSig) return;
 
     spinner.style.display = 'block';
-    status.textContent = 'Renderingâ€¦';
+    status.textContent = 'Rendering…';
 
     try {
       const fd = new FormData(form);
@@ -1922,9 +1922,9 @@
         headers: { 'X-CSRFToken': CSRF_TOKEN },
       });
 
-      // â”€â”€ Robust HTTP error check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ── Robust HTTP error check ─────────────────────────────────────────
       // FormData(form) automatically captures the file input (photo).
-      // We NEVER render a blob if the server returned an error â€” a 500
+      // We NEVER render a blob if the server returned an error — a 500
       // would produce a Django HTML error page rendered as garbled PDF.
       if (res.status === 429) {
         // Preview bucket exhausted (very heavy editing) — back off and retry once.
@@ -1936,32 +1936,32 @@
       }
       if (!res.ok) {
         showToast('Preview failed. Please check your inputs or try a smaller photo.', 'danger');
-        status.textContent = 'âš  Preview unavailable';
-        return;  // bail â€” do NOT touch blob or iframe
+        status.textContent = '⚠ Preview unavailable';
+        return;  // bail — do NOT touch blob or iframe
       }
 
       const blob = await res.blob();
       _swapPreview(URL.createObjectURL(blob));
       _lastSig = sig;   // mark clean only after a successful render
 
-      status.textContent = 'âœ“ Preview updated';
+      status.textContent = '✓ Preview updated';
     } catch (err) {
       console.error('Live preview error:', err);
-      status.textContent = 'Preview unavailable â€” download to view';
+      status.textContent = 'Preview unavailable — download to view';
       showToast('Preview error: ' + err.message, 'danger');
     } finally {
       spinner.style.display = 'none';
     }
   }
 
-  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  /* ────────────────────────────────────────────────────────
      DOWNLOAD PDF (full download, not blob preview)
-  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  ──────────────────────────────────────────────────────── */
   async function downloadPdf() {
     const form   = document.getElementById('resume-form');
     const btn    = document.getElementById('btnDownloadPdf');
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Buildingâ€¦';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Building…';
 
     try {
       const fd  = new FormData(form);
@@ -1981,16 +1981,16 @@
       URL.revokeObjectURL(url);
       showToast('PDF downloaded!', 'success');
     } catch (err) {
-      showToast('Download failed â€” please try again.', 'danger');
+      showToast('Download failed — please try again.', 'danger');
     } finally {
       btn.disabled = false;
       btn.innerHTML = '<i class="fas fa-file-arrow-down me-1"></i>Download PDF';
     }
   }
 
-  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  /* ────────────────────────────────────────────────────────
      TOAST NOTIFICATION
-  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  ──────────────────────────────────────────────────────── */
   let _toastTimer = null;
   function showToast(msg, type = 'success') {
     const toast = document.getElementById('vsToast');
@@ -2002,18 +2002,18 @@
     _toastTimer = setTimeout(() => { toast.classList.remove('show'); }, 3500);
   }
 
-  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  /* ────────────────────────────────────────────────────────
      LISTEN TO ALL FORM CHANGE EVENTS
      (covers selects, checkboxes, file inputs not captured
      by inline oninput handlers)
-  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  ──────────────────────────────────────────────────────── */
   document.getElementById('resume-form').addEventListener('change', () => {
     scheduleLivePreview(400);
   });
 
-  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  /* ────────────────────────────────────────────────────────
      INITIAL PREVIEW ON PAGE LOAD (if name already stored)
-  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  ──────────────────────────────────────────────────────── */
   /* ── AUTOSAVE (localStorage) + unsaved-changes guard ──────────── */
   let _dirty = false;
   let _autosaveTimer = null;
@@ -2079,9 +2079,9 @@
     if (_dirty) { e.preventDefault(); e.returnValue = ''; }
   });
 
-  /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-     AI AUTO-FILL â€” wires /generate-resume/ to every form field
-     â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+  /* ════════════════════════════════════════════════════════════
+     AI AUTO-FILL — wires /generate-resume/ to every form field
+     ════════════════════════════════════════════════════════════ */
 
   const AI_RESUME_URL = "{% url 'generate_resume' %}";
 
@@ -2153,12 +2153,12 @@
   function _educationToText(eduArray) {
     if (!Array.isArray(eduArray) || eduArray.length === 0) return '';
     return eduArray
-      .map(e => [e.degree, e.school, e.dates].filter(Boolean).join(' â€” '))
+      .map(e => [e.degree, e.school, e.dates].filter(Boolean).join(' — '))
       .join('\n');
   }
 
   /**
-   * Main handler â€” called when the user clicks "Auto-Fill with AI".
+   * Main handler — called when the user clicks "Auto-Fill with AI".
    */
   async function autoFillWithAI() {
     const rawText   = document.getElementById('raw-resume-text').value.trim();
@@ -2185,15 +2185,15 @@
     btn.disabled  = true;
     btn.classList.add('loading');
     spinner.style.display = 'block';
-    btnText.innerHTML = '&nbsp;Generatingâ€¦';
+    btnText.innerHTML = '&nbsp;Generating…';
 
     // Show preview-bar status
     const previewStatus  = document.getElementById('previewStatus');
     const prevStatusText = previewStatus.textContent;
-    previewStatus.textContent = 'âœ¦ AI is writing your resumeâ€¦';
+    previewStatus.textContent = '✦ AI is writing your resume…';
 
     try {
-      // â”€â”€ Build FormData for the AI endpoint â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ── Build FormData for the AI endpoint ──────────────────
       const fd = new FormData();
       fd.append('resume',   rawText);
       fd.append('language', document.getElementById('aiLang').value);
@@ -2203,7 +2203,7 @@
         fd.append('resume_pdf', pdfFile, pdfFile.name);
       }
 
-      // â”€â”€ Call the backend â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ── Call the backend ─────────────────────────────────────
       const res = await fetch(AI_RESUME_URL, {
         method:  'POST',
         body:    fd,
@@ -2216,7 +2216,7 @@
 
       const data = await res.json();
 
-      // â”€â”€ Error from server / AI service â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ── Error from server / AI service ──────────────────────
       if (data.error) {
         showToast(data.error, 'danger');
         return;
@@ -2228,16 +2228,16 @@
         return;
       }
 
-      // â”€â”€ Handle raw fallback (AI returned non-JSON) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ── Handle raw fallback (AI returned non-JSON) ───────────
       if (r._raw) {
         // Put the raw text into the experience area so nothing is lost
         _setField('#f_experience_text', r._raw);
-        showToast('AI returned unstructured text â€” placed in Experience field.', 'success');
+        showToast('AI returned unstructured text — placed in Experience field.', 'success');
         scheduleLivePreview(300);
         return;
       }
 
-      // â”€â”€ Populate every matching form field â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ── Populate every matching form field ───────────────────
 
       // Personal info
       _setField('#f_full_name',     r.full_name);
@@ -2250,24 +2250,24 @@
       // Professional summary
       _setField('#f_about_me',      r.summary);
 
-      // Work experience â†’ reconstructed plain-text block
+      // Work experience → reconstructed plain-text block
       const expText = _experienceToText(r.experience);
       if (expText) _setField('#f_experience_text', expText);
 
-      // Skills â†’ "Name-Level," format
+      // Skills → "Name-Level," format
       const skillsText = _skillsToText(r.skills);
       if (skillsText) _setField('#f_skills_list', skillsText);
 
-      // Education â†’ one entry per line
+      // Education → one entry per line
       const eduText = _educationToText(r.education);
       if (eduText) _setField('#f_education', eduText);
 
-      // Languages â†’ comma-joined list
+      // Languages → comma-joined list
       if (Array.isArray(r.languages) && r.languages.length) {
         _setField('#f_languages', r.languages.join(', '));
       }
 
-      // â”€â”€ Open key accordion sections that were closed â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ── Open key accordion sections that were closed ─────────
       ['sec-personal', 'sec-exp', 'sec-skills', 'sec-edu'].forEach(id => {
         const body   = document.getElementById(id);
         const toggle = document.querySelector(`[data-target="${id}"]`);
@@ -2277,7 +2277,7 @@
         }
       });
 
-      // â”€â”€ Trigger live preview immediately â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ── Trigger live preview immediately ─────────────────────
       // Dispatch a change event on the form so scheduleLivePreview fires.
       document.getElementById('resume-form').dispatchEvent(
         new Event('change', { bubbles: true })
@@ -2285,16 +2285,16 @@
       // Also call directly with a short delay so all _setField events settle
       scheduleLivePreview(300);
 
-      // â”€â”€ Auto-save the new data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ── Auto-save the new data ───────────────────────────────
       saveDraft();
 
-      showToast('âœ¨ Resume auto-filled! Preview updatingâ€¦', 'success');
+      showToast('✨ Resume auto-filled! Preview updating…', 'success');
 
     } catch (err) {
       console.error('AI auto-fill error:', err);
       showToast('AI error: ' + err.message, 'danger');
     } finally {
-      // â”€â”€ Restore button state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ── Restore button state ──────────────────────────────────
       btn.disabled = false;
       btn.classList.remove('loading');
       spinner.style.display = 'none';
@@ -2311,18 +2311,18 @@
     }
   });
 
-  /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-     âœ¨ SECTION REWRITER â€” wires .btn-rewrite-ai â†’ /rewrite-section/
-     â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  /* ════════════════════════════════════════════════════════════════
+     ✨ SECTION REWRITER — wires .btn-rewrite-ai → /rewrite-section/
+     ════════════════════════════════════════════════════════════════
 
      Architecture:
-       â€¢ One delegated click listener on the form catches both buttons.
-       â€¢ data-section  â†’ 'summary' | 'experience'  (sent as section_type)
-       â€¢ data-target   â†’ ID of the textarea to read from / write back to.
-       â€¢ Language is read from the shared #aiLang selector (same as AI fill).
-       â€¢ On success: textarea gets the rewritten text, ai-flash plays,
+       • One delegated click listener on the form catches both buttons.
+       • data-section  → 'summary' | 'experience'  (sent as section_type)
+       • data-target   → ID of the textarea to read from / write back to.
+       • Language is read from the shared #aiLang selector (same as AI fill).
+       • On success: textarea gets the rewritten text, ai-flash plays,
          and a 'change' event triggers the live-preview debounce.
-  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+  ════════════════════════════════════════════════════════════════ */
 
   const REWRITE_URL = "{% url 'rewrite_section' %}";
 
@@ -2336,7 +2336,7 @@
     const textarea    = document.getElementById(targetId);
     const rawText     = textarea ? textarea.value.trim() : '';
 
-    // â”€â”€ Guard: need some text to rewrite â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Guard: need some text to rewrite ────────────────────────────────────
     if (!rawText) {
       showToast(
         `Please write something in the ${sectionType === 'summary' ? 'Summary' : 'Experience'} field first.`,
@@ -2346,7 +2346,7 @@
       return;
     }
 
-    // â”€â”€ Enter loading state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Enter loading state ──────────────────────────────────────────────────
     const spinner    = btn.querySelector('.rw-spinner');
     const labelEl    = btn.querySelector('.rw-label');
     const origLabel  = labelEl.textContent;
@@ -2354,18 +2354,18 @@
     btn.disabled         = true;
     btn.classList.add('rw-loading');
     if (spinner)  spinner.style.display = 'block';
-    if (labelEl)  labelEl.textContent   = 'Rewritingâ€¦';
+    if (labelEl)  labelEl.textContent   = 'Rewriting…';
     if (textarea) textarea.disabled     = true;
 
-    // â”€â”€ Status bar feedback â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Status bar feedback ──────────────────────────────────────────────────
     const previewStatus = document.getElementById('previewStatus');
     const prevStatus    = previewStatus ? previewStatus.textContent : '';
     if (previewStatus)
       previewStatus.textContent =
-        `âœ¦ AI rewriting ${sectionType === 'summary' ? 'summary' : 'experience'}â€¦`;
+        `✦ AI rewriting ${sectionType === 'summary' ? 'summary' : 'experience'}…`;
 
     try {
-      // â”€â”€ Build POST body â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ── Build POST body ────────────────────────────────────────────────────
       const fd = new FormData();
       fd.append('text',         rawText);
       fd.append('section_type', sectionType);
@@ -2373,7 +2373,7 @@
         (document.getElementById('aiLang') || { value: 'English' }).value
       );
 
-      // â”€â”€ Fetch â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ── Fetch ──────────────────────────────────────────────────────────────
       const res  = await fetch(REWRITE_URL, {
         method:  'POST',
         body:    fd,
@@ -2382,20 +2382,20 @@
 
       const data = await res.json().catch(() => ({}));
 
-      // â”€â”€ HTTP-level errors â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ── HTTP-level errors ──────────────────────────────────────────────────
       if (!res.ok) {
-        // 402 â†’ out of generations (server sends a friendly message)
-        // 429 â†’ rate-limited
-        // 503 â†’ AI service down
+        // 402 → out of generations (server sends a friendly message)
+        // 429 → rate-limited
+        // 503 → AI service down
         const msg = data.error
           || (res.status === 402 ? "You've run out of generations. Upgrade to Pro!"
-            : res.status === 429 ? 'Too many requests â€” please wait a moment.'
+            : res.status === 429 ? 'Too many requests — please wait a moment.'
             : `Server error ${res.status}.`);
         showToast(msg, 'danger');
         return;
       }
 
-      // â”€â”€ Application-level error â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ── Application-level error ────────────────────────────────────────────
       if (data.error) {
         showToast(data.error, 'danger');
         return;
@@ -2403,11 +2403,11 @@
 
       const rewritten = (data.rewritten_text || '').trim();
       if (!rewritten) {
-        showToast('AI returned an empty response â€” please try again.', 'danger');
+        showToast('AI returned an empty response — please try again.', 'danger');
         return;
       }
 
-      // â”€â”€ Write result back into the textarea â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ── Write result back into the textarea ────────────────────────────────
       textarea.value = rewritten;
       _flashField(textarea);   // reuse the cyan-flash helper from AI Auto-Fill
 
@@ -2423,8 +2423,8 @@
 
       showToast(
         sectionType === 'summary'
-          ? 'âœ¨ Summary rewritten! Preview updatingâ€¦'
-          : 'âœ¨ Experience rewritten with XYZ formula! Preview updatingâ€¦',
+          ? '✨ Summary rewritten! Preview updating…'
+          : '✨ Experience rewritten with XYZ formula! Preview updating…',
         'success'
       );
 
@@ -2433,7 +2433,7 @@
       showToast('Network error: ' + err.message, 'danger');
 
     } finally {
-      // â”€â”€ Always restore UI state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ── Always restore UI state ────────────────────────────────────────────
       btn.disabled         = false;
       btn.classList.remove('rw-loading');
       if (spinner)  spinner.style.display = 'none';
@@ -2443,9 +2443,9 @@
     }
   }
 
-  // â”€â”€ Delegated event listener on the form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Delegated event listener on the form ────────────────────────────────
   // Catches clicks on any .btn-rewrite-ai inside #resume-form regardless of
-  // when the DOM was stamped â€” future-proof if more sections are added.
+  // when the DOM was stamped — future-proof if more sections are added.
   document.getElementById('resume-form').addEventListener('click', e => {
     const btn = e.target.closest('.btn-rewrite-ai');
     if (btn) {
@@ -2454,16 +2454,16 @@
     }
   });
 
-  /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  /* ════════════════════════════════════════════════════════════
      DYNAMIC SKILLS BUILDER
      Manages an in-memory array of {name, level} objects,
      renders them as removable chips, and compiles a hidden
      "skills_list" input (Python-85,Django-70) after every change.
-  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+  ════════════════════════════════════════════════════════════ */
 
   let _skills = [];   // [{name: 'Python', level: 85}, ...]
 
-  /** Map slider value â†’ CSS class + label text */
+  /** Map slider value → CSS class + label text */
   function _skillLabel(v) {
     const n = parseInt(v, 10);
     if (n <= 30) return { cls: 'lvl-junior', txt: 'Junior' };
@@ -2479,7 +2479,7 @@
     const badge = document.getElementById('skillLevelBadge');
     const { cls, txt } = _skillLabel(input.value);
     badge.className = 'skill-level-badge ' + cls;
-    badge.textContent = txt + ' Â· ' + input.value;
+    badge.textContent = txt + ' · ' + input.value;
   }
 
   /** Re-render all chips from the _skills array */
@@ -2523,7 +2523,7 @@
     _syncPresetPillStates();
   }
 
-  /** Compile _skills â†’ hidden input + trigger preview */
+  /** Compile _skills → hidden input + trigger preview */
   function _compileSkills() {
     const hidden = document.getElementById('f_skills_list');
     // Commas separate skills and can't appear inside a name; hyphens are fine
@@ -2533,7 +2533,7 @@
     scheduleLivePreview(400);
   }
 
-  /** Core add â€” accepts name, level, and optional category */
+  /** Core add — accepts name, level, and optional category */
   function _addSkillCore(name, level, cat) {
     name = name.trim();
     if (!name) return false;
@@ -2611,7 +2611,7 @@
     _compileSkills();
   }
 
-  // â”€â”€ Preset tab switching â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Preset tab switching ─────────────────────────────────
   document.getElementById('skillPresetTabs').addEventListener('click', e => {
     const btn = e.target.closest('.skill-preset-tab');
     if (!btn) return;
@@ -2634,9 +2634,9 @@
   // Initialize slider gradient on page load
   updateSkillSlider(document.getElementById('skillLevelSlider'));
 
-  /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-     PANEL RESIZER â€” drag the divider to resize the form panel
-  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+  /* ════════════════════════════════════════════════════════════
+     PANEL RESIZER — drag the divider to resize the form panel
+  ════════════════════════════════════════════════════════════ */
   (function initResizer() {
     const resizer = document.getElementById('vsResizer');
     const vsLeft  = document.querySelector('.vs-left');
@@ -2680,11 +2680,11 @@
     }
   });
 
-  /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  /* ════════════════════════════════════════════════════════════
      CLEAR / RESET BUTTON
      Resets all form inputs, clears the skills chip list,
      resets color pickers to defaults, then refreshes preview.
-  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+  ════════════════════════════════════════════════════════════ */
 
   /* Promise-based styled confirm (replaces native confirm) */
   function studioConfirm(message, opts) {
