@@ -7,12 +7,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pricing | CVAI — Choose Your Plan</title>
     <meta name="description"
-        content="Unlock the full power of AI cover letter generation. Choose from Free, Pro, or Elite plans and land your dream job faster.">
+        content="Unlock the full power of AI resume generation. Choose from Free, Pro, or Elite plans and land your dream job faster.">
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23080c14'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='monospace' font-weight='700' font-size='18' fill='%234cc9f0'>CV</text></svg>">
     <!-- OG / Social -->
     <meta property="og:title" content="CVAI Pricing — Free, Pro &amp; Elite Plans">
-    <meta property="og:description" content="Unlock the full power of AI cover letter generation. Start free, upgrade anytime.">
+    <meta property="og:description" content="Unlock the full power of AI resume generation. Start free, upgrade anytime.">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -77,7 +77,7 @@
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
         }
-        .pricing-hero p { color: #64748b; font-size: 1.05rem; max-width: 520px; margin: 0 auto; }
+        .pricing-hero p { color: #94a3b8; font-size: 1.05rem; max-width: 520px; margin: 0 auto; }
 
         /* ── GRID ── */
         .pricing-grid {
@@ -152,8 +152,8 @@
         /* Price */
         .plan-price { font-size: 3.2rem; font-weight: 800; line-height: 1; margin-bottom: 6px; }
         .plan-price sup { font-size: 1.2rem; vertical-align: super; margin-right: 2px; }
-        .plan-price .period { font-size: 0.9rem; font-weight: 400; color: #64748b; }
-        .plan-tagline { font-size: 0.82rem; color: #475569; margin-bottom: 28px; }
+        .plan-price .period { font-size: 0.9rem; font-weight: 400; color: #94a3b8; }
+        .plan-tagline { font-size: 0.82rem; color: #94a3b8; margin-bottom: 28px; }
 
         .plan-divider { border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 20px 0; }
 
@@ -195,7 +195,7 @@
         }
 
         /* Note + Hamburger */
-        .pricing-note { text-align: center; color: #334155; font-size: 0.82rem; padding-bottom: 40px; }
+        .pricing-note { text-align: center; color: #8b98ac; font-size: 0.82rem; padding-bottom: 40px; }
         .pricing-note a { color: var(--primary); text-decoration: none; }
         .hamburger-btn { display: none; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
         @media (max-width: 768px) {
@@ -221,6 +221,14 @@
             border-bottom: 1px solid rgba(255,255,255,0.05);
         }
         .drawer-link:hover { color: var(--primary); }
+
+        /* Accessible keyboard focus */
+        a:focus-visible,
+        button:focus-visible,
+        .btn-plan:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 3px;
+        }
     </style>
 </head>
 
@@ -236,10 +244,12 @@
             </button>
         </div>
         {% if user.is_authenticated %}
-        <a href="{% url 'home' %}"      class="drawer-link"><i class="fas fa-magic me-2"></i>Generator</a>
-        <a href="{% url 'dashboard' %}" class="drawer-link"><i class="fas fa-chart-bar me-2"></i>Dashboard</a>
-        <a href="{% url 'history' %}"   class="drawer-link"><i class="fas fa-clock me-2"></i>History</a>
-        <a href="{% url 'pricing' %}"   class="drawer-link" style="color:var(--primary);"><i class="fas fa-crown me-2"></i>Pricing</a>
+        <a href="{% url 'home' %}"      class="drawer-link"><i class="fas fa-pen-ruler me-2"></i>Studio</a>
+        <a href="{% url 'dashboard' %}" class="drawer-link"><i class="fas fa-chart-pie me-2"></i>Dashboard</a>
+        <a href="{% url 'tools' %}"     class="drawer-link"><i class="fas fa-wand-magic-sparkles me-2"></i>AI Tools</a>
+        <a href="{% url 'tracker' %}"   class="drawer-link"><i class="fas fa-briefcase me-2"></i>Tracker</a>
+        <a href="{% url 'history' %}"   class="drawer-link"><i class="fas fa-clock-rotate-left me-2"></i>History</a>
+        <a href="{% url 'pricing' %}"   class="drawer-link" style="color:var(--primary);"><i class="fas fa-tags me-2"></i>Pricing</a>
         <a href="{% url 'profile' %}"   class="drawer-link"><i class="fas fa-user me-2"></i>Profile</a>
         <a href="{% url 'logout' %}"    class="drawer-link" style="color:var(--secondary);"><i class="fas fa-sign-out-alt me-2"></i>Logout</a>
         {% else %}
@@ -253,8 +263,10 @@
         <a href="{% url 'landing' %}" class="logo-text">CV<span style="-webkit-text-fill-color:var(--primary);">AI</span></a>
         <div class="d-flex align-items-center gap-2 nav-links-desktop">
             {% if user.is_authenticated %}
-            <a href="{% url 'home' %}"      class="nav-link-item">Generator</a>
+            <a href="{% url 'home' %}"      class="nav-link-item">Studio</a>
             <a href="{% url 'dashboard' %}" class="nav-link-item">Dashboard</a>
+            <a href="{% url 'tools' %}"     class="nav-link-item">AI Tools</a>
+            <a href="{% url 'tracker' %}"   class="nav-link-item">Tracker</a>
             <a href="{% url 'history' %}"   class="nav-link-item">History</a>
             <a href="{% url 'pricing' %}"   class="nav-link-item" style="color:var(--primary);">Pricing</a>
             <a href="{% url 'profile' %}"   class="nav-link-item"><i class="fas fa-user-circle me-1"></i>{{ user.username }}</a>
@@ -270,7 +282,7 @@
     <section class="pricing-hero">
         <div class="eyebrow">Transparent Pricing</div>
         <h1>Simple plans,<br><span>powerful results</span></h1>
-        <p>Start free, upgrade when you're ready. All plans include AI cover letters, ATS analysis &amp; risk feedback.</p>
+        <p>Start free, upgrade when you're ready. All plans include AI resumes, ATS analysis &amp; risk feedback.</p>
     </section>
 
     {% if user.is_authenticated %}{% with plan=user.profile.plan %}
@@ -284,7 +296,7 @@
             <div class="plan-tagline">Get started — no credit card needed</div>
             <hr class="plan-divider">
             <ul class="plan-features">
-                <li><i class="fas fa-check fi fi-check"></i> 3 AI cover letter generations</li>
+                <li><i class="fas fa-check fi fi-check"></i> 3 AI resume generations</li>
                 <li><i class="fas fa-check fi fi-check"></i> Main letter + 2 alternative versions</li>
                 <li><i class="fas fa-check fi fi-check"></i> Recruiter risk analysis</li>
                 <li><i class="fas fa-check fi fi-check"></i> 1 Standard PDF template (Classic Navy)</li>
@@ -296,7 +308,7 @@
             {% if plan == 'free' %}
             <button class="btn-plan btn-free current" disabled>✓ Current Plan</button>
             {% else %}
-            <a href="{% url 'pricing' %}" class="btn-plan btn-downgrade">Downgrade to Free</a>
+            <a href="{% url 'stripe_customer_portal' %}" class="btn-plan btn-downgrade">Manage Subscription</a>
             {% endif %}
         </div>
 
@@ -320,7 +332,7 @@
             {% if plan == 'pro' %}
             <button class="btn-plan btn-pro current" disabled>✓ Current Plan</button>
             {% elif plan == 'elite' %}
-            <a href="{% url 'pricing' %}" class="btn-plan btn-downgrade">Downgrade to Pro</a>
+            <a href="{% url 'stripe_customer_portal' %}" class="btn-plan btn-downgrade">Manage Subscription</a>
             {% else %}
             <a href="{% url 'buy_premium' plan='pro' %}" class="btn-plan btn-pro">Upgrade to Pro →</a>
             {% endif %}
@@ -340,7 +352,7 @@
                 <li><i class="fas fa-check fi fi-check"></i> Recruiter risk analysis</li>
                 <li><i class="fas fa-check fi fi-check"></i> <strong>ALL 20+ PDF templates</strong></li>
                 <li><i class="fas fa-check fi fi-check"></i> Full history saving</li>
-                <li><i class="fas fa-check fi fi-check"></i> <strong>Max AI speed (Claude 3.5 Sonnet)</strong></li>
+                <li><i class="fas fa-check fi fi-check"></i> <strong>Max AI speed &amp; priority queue</strong></li>
                 <li><i class="fas fa-check fi fi-check"></i> <strong>AI Interview Prep &amp; Follow-up</strong></li>
             </ul>
             {% if plan == 'elite' %}
@@ -361,7 +373,7 @@
             <div class="plan-tagline">Get started — no credit card needed</div>
             <hr class="plan-divider">
             <ul class="plan-features">
-                <li><i class="fas fa-check fi fi-check"></i> 3 AI cover letter generations</li>
+                <li><i class="fas fa-check fi fi-check"></i> 3 AI resume generations</li>
                 <li><i class="fas fa-check fi fi-check"></i> Main letter + 2 alternative versions</li>
                 <li><i class="fas fa-check fi fi-check"></i> Recruiter risk analysis</li>
                 <li><i class="fas fa-check fi fi-check"></i> 1 Standard PDF template</li>
@@ -403,7 +415,7 @@
                 <li><i class="fas fa-check fi fi-check"></i> Recruiter risk analysis</li>
                 <li><i class="fas fa-check fi fi-check"></i> <strong>ALL 20+ PDF templates</strong></li>
                 <li><i class="fas fa-check fi fi-check"></i> Full history saving</li>
-                <li><i class="fas fa-check fi fi-check"></i> <strong>Max AI speed (Claude 3.5 Sonnet)</strong></li>
+                <li><i class="fas fa-check fi fi-check"></i> <strong>Max AI speed &amp; priority queue</strong></li>
                 <li><i class="fas fa-check fi fi-check"></i> <strong>AI Interview Prep &amp; Follow-up</strong></li>
             </ul>
             <a href="{% url 'register' %}" class="btn-plan btn-elite">Get Elite Access →</a>

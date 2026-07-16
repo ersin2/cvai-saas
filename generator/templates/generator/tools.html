@@ -533,11 +533,8 @@
         }
 
 
-        function toggleMobileNav() {
-            document.getElementById('mobileDrawer').classList.toggle('open');
-            document.getElementById('mobileBackdrop').classList.toggle('open');
-        }
-
+        /* toggleMobileNav() and showToast() come from base_app.html — the global
+           .toast-item system, so AI Tools toasts match the rest of the app. */
         function copyResult() {
             const box = document.getElementById('toolResultBox');
             if (box) {
@@ -547,16 +544,6 @@
                     showToast('Failed to copy. Please select the text manually.', 'danger');
                 });
             }
-        }
-
-        function showToast(message, type) {
-            const toast = document.createElement('div');
-            const icons = {success:'check-circle', warning:'exclamation-triangle', danger:'times-circle'};
-            toast.className = 'toast-notification toast-' + type;
-            toast.innerHTML = '<i class="fas fa-' + (icons[type] || 'info-circle') + '"></i>' + message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.classList.add('show'), 10);
-            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 4000);
         }
 
         const TOOL_URLS = {

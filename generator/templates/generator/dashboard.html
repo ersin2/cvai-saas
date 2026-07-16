@@ -1188,7 +1188,7 @@
           btn.innerHTML = '<i class="fas fa-copy"></i> Copy Text';
         }, 2200);
       }).catch(() => {
-        alert('Copy failed — please select and copy manually.');
+        showToast('Copy failed — please select and copy manually.', 'danger');
       });
     }
   </script>

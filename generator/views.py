@@ -30,7 +30,13 @@ logger = logging.getLogger(__name__)
 RATE_LIMITS = {'free': 3, 'pro': 20, 'elite': 50}
 RATE_WINDOW = 60  # seconds
 
-def _check_rate_limit(user, plan: str):
+# Live preview (Studio) re-renders the PDF on every debounced edit, so it needs a
+# generous per-user bucket separate from the AI-generation limit — otherwise a free
+# user's preview 429s after 3 edits/min. This is a render, not an AI generation.
+PREVIEW_RATE_LIMIT = 60  # renders/min per user
+
+
+def _check_rate_limit(user, plan: str, *, limit=None, key_prefix='rl'):
     """
     Returns None if the user is within limits, or a JsonResponse(429) if throttled.
     Uses a simple per-user counter stored in Django's cache.
@@ -44,8 +50,9 @@ def _check_rate_limit(user, plan: str):
     IGNORE_EXCEPTIONS=True and returns None on connection errors), we allow the
     request rather than 500 every generation.
     """
-    limit = RATE_LIMITS.get(plan, 3)
-    cache_key = f"rl:{user.id}"
+    if limit is None:
+        limit = RATE_LIMITS.get(plan, 3)
+    cache_key = f"{key_prefix}:{user.id}"
 
     # First request in this window — add() returns True when the key was created.
     if cache.add(cache_key, 1, RATE_WINDOW):
@@ -699,7 +706,17 @@ def generate_pdf(request):
     profile, _ = Profile.objects.get_or_create(user=request.user)
 
     # ── Rate-limit: PDF rendering is CPU-intensive ────────────────────────
-    throttled = _check_rate_limit(request.user, profile.plan)
+    # The Studio live preview re-renders on every debounced edit, so it uses a
+    # separate, generous bucket — otherwise editing would trip the per-plan
+    # generation limit (Free = 3/min) and the preview would 429 mid-typing.
+    is_preview = request.GET.get('mode') == 'preview'
+    if is_preview:
+        throttled = _check_rate_limit(
+            request.user, profile.plan,
+            limit=PREVIEW_RATE_LIMIT, key_prefix='rlprev',
+        )
+    else:
+        throttled = _check_rate_limit(request.user, profile.plan)
     if throttled:
         return throttled
 
@@ -714,10 +731,9 @@ def generate_pdf(request):
     buffer   = build_pdf(template_slug, request)
     filename = f'CVAI_{template_slug}.pdf'
 
-    # Inline mode: used by the live-preview iframe in the Visual Resume Studio.
-    # The frontend appends ?mode=preview to the fetch URL so the browser can
+    # Inline mode (is_preview, resolved above): used by the live-preview iframe in
+    # the Visual Resume Studio. The frontend appends ?mode=preview so the browser can
     # render the PDF directly inside the <iframe> without forcing a download.
-    is_preview = request.GET.get('mode') == 'preview'
     response = FileResponse(
         buffer,
         content_type='application/pdf',
@@ -1133,6 +1149,16 @@ Be brutally honest. Give specific keyword suggestions. Start with the score on t
 
 
 # === APPLICATION TRACKER ===
+# Kanban columns (status, label, top-border color) — presentational data for the board.
+KANBAN_COLUMNS = [
+    ('saved',     '📌 Saved',     '#64748b'),
+    ('applied',   '📤 Applied',   '#3b82f6'),
+    ('interview', '🎤 Interview', '#f59e0b'),
+    ('offer',     '🎉 Offer',     '#10b981'),
+    ('rejected',  '❌ Rejected',  '#ef4444'),
+]
+
+
 @login_required
 def tracker(request):
     """Job application tracker dashboard."""
@@ -1178,6 +1204,7 @@ def tracker(request):
     return render(request, 'generator/tracker.html', {
         'applications': applications,
         'stats': stats,
+        'kanban_cols': KANBAN_COLUMNS,
     })
 
 

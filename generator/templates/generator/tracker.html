@@ -77,12 +77,8 @@
         .drawer-close { background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer; transition: color 0.2s; }
         .drawer-close:hover { color: #fff; }
         
-        /* Match Score Ring */
-        .match-score { position: absolute; top: 16px; right: 16px; width: 40px; height: 40px; border-radius: 50%; background: conic-gradient(var(--primary) calc(var(--score) * 1%), var(--surface-3) 0); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; font-family: var(--font-mono); color: #fff; }
-        .match-score::before { content: ""; position: absolute; inset: 4px; border-radius: 50%; background: var(--surface-2); z-index: -1; }
-        
         /* ── CHARTS ── */
-        .charts-container { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; margin-bottom: 28px; }
+        .charts-container { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 28px; max-width: 520px; }
         .chart-card { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; }
         .chart-title { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
         
@@ -143,15 +139,6 @@
             transform: scale(1.002);
         }
 
-        .company-logo {
-            width: 42px;
-            height: 42px;
-            border-radius: 10px;
-            object-fit: cover;
-            background: #fff;
-            border: 1px solid var(--border);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
 
         .company-name {
             font-weight: 700;
@@ -305,12 +292,7 @@
     <!-- PAGE CONTENT -->
     <div class="container pb-5">
 
-        {% if messages %}
-        {% for msg in messages %}
-        <div class="alert bg-{{ msg.tags }} bg-opacity-25 text-white rounded-3 border-0 mt-3"
-             style="border-left: 3px solid currentColor !important;">{{ msg }}</div>
-        {% endfor %}
-        {% endif %}
+        <!-- Django messages render as global toasts via base_app.html -->
 
         <!-- PAGE HEADER -->
         <div class="page-header anim-fade-up">
@@ -356,6 +338,7 @@
 
         
         <!-- CHARTS DASHBOARD -->
+        {% if applications %}
         <div class="charts-container anim-fade-up anim-delay-1">
             <div class="chart-card">
                 <div class="chart-title"><i class="fas fa-chart-pie me-2"></i>Conversion Funnel</div>
@@ -363,13 +346,8 @@
                     <canvas id="funnelChart"></canvas>
                 </div>
             </div>
-            <div class="chart-card">
-                <div class="chart-title"><i class="fas fa-chart-line me-2"></i>Activity Over Time</div>
-                <div style="height: 200px; position: relative;">
-                    <canvas id="timelineChart"></canvas>
-                </div>
-            </div>
         </div>
+        {% endif %}
 
         <!-- CONTROLS -->
         <div class="kanban-controls anim-fade-up anim-delay-2">
@@ -378,7 +356,7 @@
                 <button class="view-btn" id="btnBoardView" onclick="switchView('board')"><i class="fas fa-columns me-2"></i>Board</button>
             </div>
             <div class="d-flex gap-2">
-                <span style="font-size: 0.8rem; color: var(--text-muted);"><i class="fas fa-info-circle me-1"></i>AI Match Score generated from keywords</span>
+                <span style="font-size: 0.8rem; color: var(--text-muted);"><i class="fas fa-info-circle me-1"></i>Switch to Board to drag cards between stages</span>
             </div>
         </div>
 
@@ -401,10 +379,7 @@
                         <tr>
                             <td data-label="Company">
                                 <div class="d-flex align-items-center gap-3">
-                                    <img src="https://logo.clearbit.com/{{ app.company_name|lower|urlencode }}.com" 
-                                         alt="{{ app.company_name }}"
-                                         class="company-logo"
-                                         onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ app.company_name|urlencode }}&background=1e293b&color=fff&rounded=true&bold=true&size=42';">
+                                    <div class="company-avatar" aria-hidden="true">{{ app.company_name|first|upper }}</div>
                                     <div>
                                         <div class="company-name">{{ app.company_name }}</div>
                                         <div class="job-title-text">{{ app.job_title }}</div>
@@ -468,48 +443,25 @@
 
         <!-- KANBAN BOARD -->
         <div class="kanban-board anim-fade-up anim-delay-2" id="kanbanBoard">
-            {% for status_val, label, color in kanban_columns %}
+            {% for col_status, col_label, col_color in kanban_cols %}
             <div class="kanban-col">
-                <div class="kanban-col-header" style="border-top: 3px solid {{ color }};">
-                    {{ label }} 
-                    <span class="badge" style="background: {{ color }}; color: #000; font-family: var(--font-mono);">
-                        {{ apps_by_status|default:''|default_if_none:'' }}
-                    </span>
-                </div>
-                <div class="kanban-dropzone" data-status="{{ status_val }}">
-                    {% for app in applications %}
-                        {% if app.status == status_val %}
-                        <div class="kanban-card" data-id="{{ app.pk }}" onclick="openDrawer('{{ app.company_name|escapejs }}', '{{ app.job_title|escapejs }}', '{{ app.status|escapejs }}', '{{ app.salary_range|escapejs }}', '{{ app.notes|escapejs }}', '{{ app.job_url|escapejs }}', '{{ app.created_at|date:"M d, Y" }}')">
-                            <!-- Match Score Hash Mock -->
-                            <div class="match-score" style="--score: {{ app.pk|add:70 }};" title="AI Match Score: {{ app.pk|add:70 }}%">{{ app.pk|add:70 }}%</div>
-                            <div class="d-flex align-items-center gap-3 mb-3">
-                                <img src="https://logo.clearbit.com/{{ app.company_name|lower|urlencode }}.com" class="company-logo" style="width: 32px; height: 32px;" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ app.company_name|urlencode }}&background=1e293b&color=fff&rounded=true&bold=true&size=32';">
-                                <div>
-                                    <div class="company-name" style="font-size: 0.85rem;">{{ app.company_name }}</div>
-                                </div>
-                            </div>
-                            <div class="job-title-text fw-bold mb-2 text-white">{{ app.job_title }}</div>
-                            <div class="d-flex justify-content-between align-items-center mt-2">
-                                <span style="font-size: 0.7rem; color: var(--text-muted);"><i class="far fa-clock me-1"></i>{{ app.created_at|date:"M d" }}</span>
-                            </div>
+                <div class="kanban-col-header" style="border-top: 3px solid {{ col_color }};">{{ col_label }}</div>
+                <div class="kanban-dropzone" data-status="{{ col_status }}">
+                    {% for app in applications %}{% if app.status == col_status %}
+                    <div class="kanban-card" data-id="{{ app.pk }}" onclick="openDrawer('{{ app.company_name|escapejs }}', '{{ app.job_title|escapejs }}', '{{ app.status|escapejs }}', '{{ app.salary_range|escapejs }}', '{{ app.notes|escapejs }}', '{{ app.job_url|escapejs }}', '{{ app.created_at|date:"M d, Y" }}')">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <div class="company-avatar avatar-sm" aria-hidden="true">{{ app.company_name|first|upper }}</div>
+                            <div class="company-name" style="font-size: 0.85rem;">{{ app.company_name }}</div>
                         </div>
-                        {% endif %}
-                    {% endfor %}
+                        <div class="job-title-text fw-bold mb-2 text-white">{{ app.job_title }}</div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span style="font-size: 0.7rem; color: var(--text-muted);"><i class="far fa-clock me-1"></i>{{ app.created_at|date:"M d" }}</span>
+                        </div>
+                    </div>
+                    {% endif %}{% endfor %}
                 </div>
             </div>
             {% endfor %}
-            <!-- Hardcoded fallbacks if template tags fail -->
-            {% if not kanban_columns %}
-            <div class="kanban-col"><div class="kanban-col-header" style="border-top:3px solid #64748b;">📌 Saved</div><div class="kanban-dropzone" data-status="saved">{% for app in applications %}{% if app.status == 'saved' %}<div class="kanban-card" data-id="{{ app.pk }}" onclick="openDrawer('{{ app.company_name|escapejs }}', '{{ app.job_title|escapejs }}', '{{ app.status|escapejs }}', '{{ app.salary_range|escapejs }}', '{{ app.notes|escapejs }}', '{{ app.job_url|escapejs }}', '{{ app.created_at|date:'M d, Y' }}')"><div class="match-score" style="--score: {{ app.pk|add:70 }};">{{ app.pk|add:70 }}%</div><div class="d-flex gap-2 align-items-center mb-2"><img src="https://logo.clearbit.com/{{ app.company_name|lower|urlencode }}.com" class="company-logo" style="width:32px;height:32px;" onerror="this.src='https://ui-avatars.com/api/?name={{ app.company_name|urlencode }}&background=1e293b&color=fff';"><div style="font-size:0.85rem;font-weight:bold;">{{ app.company_name }}</div></div><div style="font-size:0.8rem;color:var(--text-secondary);">{{ app.job_title }}</div></div>{% endif %}{% endfor %}</div></div>
-            
-            <div class="kanban-col"><div class="kanban-col-header" style="border-top:3px solid #3b82f6;">📤 Applied</div><div class="kanban-dropzone" data-status="applied">{% for app in applications %}{% if app.status == 'applied' %}<div class="kanban-card" data-id="{{ app.pk }}" onclick="openDrawer('{{ app.company_name|escapejs }}', '{{ app.job_title|escapejs }}', '{{ app.status|escapejs }}', '{{ app.salary_range|escapejs }}', '{{ app.notes|escapejs }}', '{{ app.job_url|escapejs }}', '{{ app.created_at|date:'M d, Y' }}')"><div class="match-score" style="--score: {{ app.pk|add:75 }};">{{ app.pk|add:75 }}%</div><div class="d-flex gap-2 align-items-center mb-2"><img src="https://logo.clearbit.com/{{ app.company_name|lower|urlencode }}.com" class="company-logo" style="width:32px;height:32px;" onerror="this.src='https://ui-avatars.com/api/?name={{ app.company_name|urlencode }}&background=1e293b&color=fff';"><div style="font-size:0.85rem;font-weight:bold;">{{ app.company_name }}</div></div><div style="font-size:0.8rem;color:var(--text-secondary);">{{ app.job_title }}</div></div>{% endif %}{% endfor %}</div></div>
-
-            <div class="kanban-col"><div class="kanban-col-header" style="border-top:3px solid #f59e0b;">🎤 Interview</div><div class="kanban-dropzone" data-status="interview">{% for app in applications %}{% if app.status == 'interview' %}<div class="kanban-card" data-id="{{ app.pk }}" onclick="openDrawer('{{ app.company_name|escapejs }}', '{{ app.job_title|escapejs }}', '{{ app.status|escapejs }}', '{{ app.salary_range|escapejs }}', '{{ app.notes|escapejs }}', '{{ app.job_url|escapejs }}', '{{ app.created_at|date:'M d, Y' }}')"><div class="match-score" style="--score: {{ app.pk|add:85 }};">{{ app.pk|add:85 }}%</div><div class="d-flex gap-2 align-items-center mb-2"><img src="https://logo.clearbit.com/{{ app.company_name|lower|urlencode }}.com" class="company-logo" style="width:32px;height:32px;" onerror="this.src='https://ui-avatars.com/api/?name={{ app.company_name|urlencode }}&background=1e293b&color=fff';"><div style="font-size:0.85rem;font-weight:bold;">{{ app.company_name }}</div></div><div style="font-size:0.8rem;color:var(--text-secondary);">{{ app.job_title }}</div></div>{% endif %}{% endfor %}</div></div>
-            
-            <div class="kanban-col"><div class="kanban-col-header" style="border-top:3px solid #10b981;">🎉 Offer</div><div class="kanban-dropzone" data-status="offer">{% for app in applications %}{% if app.status == 'offer' %}<div class="kanban-card" data-id="{{ app.pk }}" onclick="openDrawer('{{ app.company_name|escapejs }}', '{{ app.job_title|escapejs }}', '{{ app.status|escapejs }}', '{{ app.salary_range|escapejs }}', '{{ app.notes|escapejs }}', '{{ app.job_url|escapejs }}', '{{ app.created_at|date:'M d, Y' }}')"><div class="match-score" style="--score: {{ app.pk|add:92 }};">{{ app.pk|add:92 }}%</div><div class="d-flex gap-2 align-items-center mb-2"><img src="https://logo.clearbit.com/{{ app.company_name|lower|urlencode }}.com" class="company-logo" style="width:32px;height:32px;" onerror="this.src='https://ui-avatars.com/api/?name={{ app.company_name|urlencode }}&background=1e293b&color=fff';"><div style="font-size:0.85rem;font-weight:bold;">{{ app.company_name }}</div></div><div style="font-size:0.8rem;color:var(--text-secondary);">{{ app.job_title }}</div></div>{% endif %}{% endfor %}</div></div>
-            
-            <div class="kanban-col"><div class="kanban-col-header" style="border-top:3px solid #ef4444;">❌ Rejected</div><div class="kanban-dropzone" data-status="rejected">{% for app in applications %}{% if app.status == 'rejected' %}<div class="kanban-card" data-id="{{ app.pk }}" onclick="openDrawer('{{ app.company_name|escapejs }}', '{{ app.job_title|escapejs }}', '{{ app.status|escapejs }}', '{{ app.salary_range|escapejs }}', '{{ app.notes|escapejs }}', '{{ app.job_url|escapejs }}', '{{ app.created_at|date:'M d, Y' }}')"><div class="match-score" style="--score: {{ app.pk|add:60 }};">{{ app.pk|add:60 }}%</div><div class="d-flex gap-2 align-items-center mb-2"><img src="https://logo.clearbit.com/{{ app.company_name|lower|urlencode }}.com" class="company-logo" style="width:32px;height:32px;" onerror="this.src='https://ui-avatars.com/api/?name={{ app.company_name|urlencode }}&background=1e293b&color=fff';"><div style="font-size:0.85rem;font-weight:bold;">{{ app.company_name }}</div></div><div style="font-size:0.8rem;color:var(--text-secondary);">{{ app.job_title }}</div></div>{% endif %}{% endfor %}</div></div>
-            {% endif %}
         </div>
 
             {% else %}
@@ -537,7 +489,7 @@
         </div>
         <div class="drawer-body">
             <div class="d-flex gap-3 mb-4 align-items-center">
-                <img src="" id="dr-logo" class="company-logo" style="width:50px;height:50px;" onerror="this.src='https://ui-avatars.com/api/?name=C&background=1e293b&color=fff';">
+                <div id="dr-logo" class="company-avatar avatar-lg" aria-hidden="true"></div>
                 <div>
                     <div style="font-size: 1.1rem; color: var(--primary);" id="dr-job">Job Title</div>
                     <div class="badge mt-2" id="dr-status" style="font-family: var(--font-mono); font-size: 0.75rem;">Status</div>
@@ -604,6 +556,7 @@
                                     <option value="applied" style="background: #1e293b; color: white;">📤 Applied</option>
                                     <option value="interview" style="background: #1e293b; color: white;">🎤 Interview</option>
                                     <option value="offer" style="background: #1e293b; color: white;">🎉 Offer</option>
+                                    <option value="rejected" style="background: #1e293b; color: white;">❌ Rejected</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
@@ -668,7 +621,7 @@
                             .then(res => res.json())
                             .then(data => {
                                 if (data.status !== 'success') {
-                                    alert('Error updating status');
+                                    showToast('Could not update status. Please try again.', 'danger');
                                     evt.from.appendChild(itemEl); // revert
                                 } else {
                                     const formSelect = document.querySelector(`.ajax-status-form[action*="${appId}"] .status-select`);
@@ -727,9 +680,8 @@
             document.getElementById('dr-date').innerText = date;
             
             const logoEl = document.getElementById('dr-logo');
-            logoEl.src = `https://logo.clearbit.com/${company.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`;
-            logoEl.onerror = () => logoEl.src = `https://ui-avatars.com/api/?name=${company}&background=1e293b&color=fff&bold=true`;
-            
+            logoEl.textContent = (company || '?').trim().charAt(0).toUpperCase();
+
             const urlEl = document.getElementById('dr-url');
             if (url && url !== 'None') { urlEl.href = url; urlEl.style.display = 'inline-block'; } 
             else { urlEl.style.display = 'none'; }
@@ -769,24 +721,6 @@
                         }]
                     },
                     options: { maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#94a3b8' } } }, cutout: '75%' }
-                });
-            }
-            const ctxTimeline = document.getElementById('timelineChart');
-            if (ctxTimeline && typeof Chart !== 'undefined') {
-                new Chart(ctxTimeline, {
-                    type: 'line',
-                    data: {
-                        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-                        datasets: [{
-                            label: 'Applications',
-                            data: [1, 3, 2, {{ stats.applied|default:0 }}],
-                            borderColor: '#4cc9f0',
-                            backgroundColor: 'rgba(76,201,240,0.1)',
-                            fill: true,
-                            tension: 0.4
-                        }]
-                    },
-                    options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } } } }
                 });
             }
         });
@@ -855,8 +789,9 @@
                         input.setAttribute('data-current', val);
                         row.style.opacity = '1';
                         row.style.pointerEvents = 'auto';
+                        showToast('Status updated.', 'success');
                     } else {
-                        alert(data.error || 'Failed to update status.');
+                        showToast(data.error || 'Failed to update status.', 'danger');
                         // Revert
                         input.value = originalVal;
                         btn.innerText = originalText;
@@ -866,7 +801,7 @@
                 })
                 .catch(err => {
                     console.error(err);
-                    alert('Network error.');
+                    showToast('Network error. Please try again.', 'danger');
                     input.value = originalVal;
                     btn.innerText = originalText;
                     row.style.opacity = '1';
@@ -877,10 +812,12 @@
 
         // AJAX Delete
         document.querySelectorAll('.ajax-delete-form').forEach(form => {
-            form.addEventListener('submit', function(e) {
+            form.addEventListener('submit', async function(e) {
                 e.preventDefault();
-                if (!confirm('Delete this application?')) return;
-                
+                const ok = await confirmDialog('Delete this application? This cannot be undone.',
+                                               { danger: true, confirmText: 'Delete' });
+                if (!ok) return;
+
                 const row = this.closest('tr');
                 row.style.opacity = '0.5';
                 row.style.pointerEvents = 'none';
@@ -899,15 +836,16 @@
                         row.style.transform = 'translateX(20px)';
                         row.style.opacity = '0';
                         setTimeout(() => row.remove(), 300);
+                        showToast('Application deleted.', 'success');
                     } else {
-                        alert('Failed to delete application.');
+                        showToast('Failed to delete application.', 'danger');
                         row.style.opacity = '1';
                         row.style.pointerEvents = 'auto';
                     }
                 })
                 .catch(err => {
                     console.error(err);
-                    alert('Network error.');
+                    showToast('Network error. Please try again.', 'danger');
                     row.style.opacity = '1';
                     row.style.pointerEvents = 'auto';
                 });

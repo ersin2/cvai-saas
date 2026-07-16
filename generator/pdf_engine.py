@@ -260,10 +260,15 @@ def _process_photo(photo_file):
 
 
 def _parse_skills(skills_str: str):
-    """Parse 'Python-80,Django-70' → [(name, level_float), ...]"""
+    """Parse 'Python-80,Django-70' → [(name, level_float), ...]
+
+    Split the level off the RIGHT so skill names may contain hyphens
+    (e.g. 'Objective-C-80' → ('Objective-C', 80)). The frontend always appends
+    '-<level>', so the last hyphen-group is the level.
+    """
     result = []
     for item in (skills_str or "").split(','):
-        parts = item.strip().split('-')
+        parts = item.strip().rsplit('-', 1)
         name = parts[0].strip()
         if not name:
             continue

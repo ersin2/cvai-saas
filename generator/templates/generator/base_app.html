@@ -146,6 +146,18 @@
 <!-- ── Global Toast Container ───────────────────────────────── -->
 <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
 
+<!-- ── Global Confirm Dialog ────────────────────────────────── -->
+<div class="confirm-overlay" id="confirmOverlay" role="dialog" aria-modal="true" aria-labelledby="confirmMessage">
+  <div class="confirm-box">
+    <div class="confirm-icon"><i class="fas fa-triangle-exclamation"></i></div>
+    <div class="confirm-message" id="confirmMessage">Are you sure?</div>
+    <div class="confirm-actions">
+      <button type="button" class="btn-ghost" id="confirmCancel">Cancel</button>
+      <button type="button" class="btn-primary-grad" id="confirmOk">Confirm</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── Bootstrap JS ─────────────────────────────────────────── -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -187,6 +199,34 @@
       toast.classList.remove('show');
       setTimeout(() => toast.remove(), 300);
     }, 4200);
+  }
+
+  /* ── Global styled confirm — returns a Promise<boolean> ── */
+  function confirmDialog(message, opts) {
+    opts = opts || {};
+    return new Promise(function (resolve) {
+      const overlay  = document.getElementById('confirmOverlay');
+      const okBtn    = document.getElementById('confirmOk');
+      const cancel   = document.getElementById('confirmCancel');
+      document.getElementById('confirmMessage').textContent = message || 'Are you sure?';
+      okBtn.textContent = opts.confirmText || 'Confirm';
+      okBtn.classList.toggle('confirm-danger', !!opts.danger);
+      overlay.classList.add('open');
+
+      function cleanup(val) {
+        overlay.classList.remove('open');
+        okBtn.onclick = null; cancel.onclick = null; overlay.onclick = null;
+        document.removeEventListener('keydown', onKey);
+        resolve(val);
+      }
+      function onKey(e) { if (e.key === 'Escape') cleanup(false); }
+
+      okBtn.onclick  = function () { cleanup(true); };
+      cancel.onclick = function () { cleanup(false); };
+      overlay.onclick = function (e) { if (e.target === overlay) cleanup(false); };
+      document.addEventListener('keydown', onKey);
+      okBtn.focus();
+    });
   }
 </script>
 
