@@ -19,6 +19,7 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            font-family: inherit;
             padding: 10px 20px;
             border-radius: var(--radius-sm);
             border: 1px solid var(--border);
@@ -54,7 +55,7 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            background: linear-gradient(135deg, #4361ee, var(--secondary));
+            background: var(--grad-cta);
             border: none;
             color: white;
             padding: 13px 28px;
@@ -179,11 +180,11 @@
         .trc-copy-row { padding: 6px 12px 10px; display: flex; justify-content: flex-end; }
         .trc-copy-btn {
             display: inline-flex; align-items: center; gap: 5px;
-            padding: 4px 11px; border-radius: 6px;
+            padding: 4px 11px; border-radius: var(--r-sm);
             border: 1px solid rgba(76,201,240,.2);
             background: rgba(76,201,240,.06);
             color: var(--primary); font-size: 0.72rem; font-weight: 600;
-            cursor: pointer; transition: background .2s;
+            cursor: pointer; transition: background var(--t-fast);
         }
         .trc-copy-btn:hover { background: rgba(76,201,240,.18); }
         .trc-copy-btn.copied { color: #22c55e; border-color: rgba(34,197,94,.25); background: rgba(34,197,94,.07); }
@@ -221,22 +222,22 @@
 
         <!-- TOOL TABS -->
         <div class="tool-tabs anim-fade-up anim-delay-1">
-            <div class="tool-tab {% if not active_tool or active_tool == 'cover' %}active{% endif %}"
+            <button type="button" class="tool-tab {% if not active_tool or active_tool == 'cover' %}active{% endif %}"
                 onclick="showTool('cover', this)">
                 <i class="fas fa-file-signature"></i>Cover Letter
-            </div>
-            <div class="tool-tab {% if active_tool == 'interview' %}active{% endif %}"
+            </button>
+            <button type="button" class="tool-tab {% if active_tool == 'interview' %}active{% endif %}"
                 onclick="showTool('interview', this)">
                 <i class="fas fa-comments"></i>Interview Prep
-            </div>
-            <div class="tool-tab {% if active_tool == 'followup' %}active{% endif %}"
+            </button>
+            <button type="button" class="tool-tab {% if active_tool == 'followup' %}active{% endif %}"
                 onclick="showTool('followup', this)">
                 <i class="fas fa-envelope"></i>Follow-Up Emails
-            </div>
-            <div class="tool-tab {% if active_tool == 'ats' %}active{% endif %}"
+            </button>
+            <button type="button" class="tool-tab {% if active_tool == 'ats' %}active{% endif %}"
                 onclick="showTool('ats', this)">
                 <i class="fas fa-chart-bar"></i>ATS Score
-            </div>
+            </button>
         </div>
 
         <div class="row g-4">
@@ -446,10 +447,10 @@
                 {% endif %}
 
                 <!-- ── LOADING ── -->
-                <div class="loading-spinner" id="loadingSpinner">
+                <div class="loading-spinner" id="loadingSpinner" role="status" aria-live="polite">
                     <div class="spinner-ring"></div>
-                    <div class="fw-bold" style="font-size: 0.95rem; color: var(--text-primary);">AI is analyzing...</div>
-                    <div style="color: var(--text-muted); font-size: 0.82rem; margin-top: 4px;">Usually takes 10–20 seconds</div>
+                    <div class="fw-bold" style="font-size: 0.95rem; color: var(--text-primary);">AI is working on it…</div>
+                    <div style="color: var(--text-muted); font-size: 0.82rem; margin-top: 4px;">Usually 10–20 seconds — complex requests can take longer. Don't close this tab.</div>
                 </div>
             </div>
 
@@ -490,7 +491,7 @@
                             <i class="fas fa-inbox" style="color: var(--text-muted); font-size: 1.2rem;"></i>
                         </div>
                         <div class="empty-title" style="font-size: 0.88rem;">No results yet</div>
-                        <p class="empty-desc" style="font-size: 0.78rem;">Try a tool!</p>
+                        <p class="empty-desc" style="font-size: 0.78rem;">Run any tool on the left — results land here automatically.</p>
                     </div>
                     {% endif %}
                 </div>
@@ -619,7 +620,7 @@
             }
 
             document.getElementById('coverSectionTabs').innerHTML = _coverSections.map((s, i) =>
-                `<div class="tool-tab ${i === 0 ? 'active' : ''}" onclick="showCoverSection(${i}, this)">${s.label}</div>`
+                `<button type="button" class="tool-tab ${i === 0 ? 'active' : ''}" onclick="showCoverSection(${i}, this)">${s.label}</button>`
             ).join('');
             document.getElementById('coverSectionContent').innerHTML = _coverSections[0].html;
 

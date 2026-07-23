@@ -63,7 +63,7 @@
     font-family: var(--font-mono); white-space: nowrap; padding-top: 2px;
   }
   .hist-del-btn {
-    width: 28px; height: 28px; border-radius: 8px; border: none;
+    width: 28px; height: 28px; border-radius: var(--r-sm); border: none;
     background: rgba(239,68,68,.1); color: #f87171;
     cursor: pointer; display: flex; align-items: center; justify-content: center;
     font-size: 0.72rem; transition: background .2s;
@@ -116,11 +116,11 @@
   }
   .hist-copy-btn {
     display: inline-flex; align-items: center; gap: 6px;
-    padding: 6px 14px; border-radius: 8px;
+    padding: 6px 14px; border-radius: var(--r-sm);
     border: 1px solid rgba(76,201,240,.25);
     background: rgba(76,201,240,.07);
     color: var(--primary); font-size: 0.78rem; font-weight: 600;
-    cursor: pointer; transition: background .2s, transform .15s;
+    cursor: pointer; transition: background var(--t-fast), transform var(--t-fast);
   }
   .hist-copy-btn:hover { background: rgba(76,201,240,.18); transform: translateY(-1px); }
   .hist-copy-btn.copied { color: #22c55e; border-color: rgba(34,197,94,.3); background: rgba(34,197,94,.08); }
@@ -128,11 +128,11 @@
   /* Clear all button */
   .btn-clear-all {
     display: inline-flex; align-items: center; gap: 6px;
-    padding: 7px 16px; border-radius: 99px;
+    padding: 7px 16px; border-radius: var(--r-pill);
     border: 1px solid rgba(239,68,68,.3);
     background: rgba(239,68,68,.06);
     color: #f87171; font-size: 0.8rem; font-weight: 700;
-    cursor: pointer; transition: background .2s, transform .15s;
+    cursor: pointer; transition: background var(--t-fast), transform var(--t-fast);
     white-space: nowrap;
   }
   .btn-clear-all:hover { background: rgba(239,68,68,.18); transform: translateY(-1px); }
@@ -232,8 +232,8 @@
       <div class="empty-icon-box">
         <i class="fas fa-rocket" style="color: var(--primary);"></i>
       </div>
-      <div class="empty-title">Your FAANG-level resume is waiting</div>
-      <p class="empty-desc">Generate your first AI-powered resume and it will appear here for easy access.</p>
+      <div class="empty-title">No generations yet</div>
+      <p class="empty-desc">Generate your first AI resume or cover letter and it will appear here for easy access.</p>
       <a href="{% url 'home' %}" class="btn-primary-grad">
         <i class="fas fa-magic me-2"></i>Start Generating
       </a>
@@ -280,7 +280,9 @@
 
   /* ── Delete single ─── */
   async function deleteGeneration(pk) {
-    if (!confirm('Delete this generation? This cannot be undone.')) return;
+    const ok = await confirmDialog('Delete this generation? This cannot be undone.',
+                                   { danger: true, confirmText: 'Delete' });
+    if (!ok) return;
     try {
       const resp = await fetch(`/history/${pk}/delete/`, {
         method: 'POST',
@@ -312,7 +314,10 @@
   async function clearAllGenerations() {
     const cards = [...document.querySelectorAll('.hist-card[id^="hist-"]')];
     if (!cards.length) return;
-    if (!confirm(`Delete all ${cards.length} generation${cards.length > 1 ? 's' : ''}? This cannot be undone.`)) return;
+    const ok = await confirmDialog(
+      `Delete all ${cards.length} generation${cards.length > 1 ? 's' : ''}? This cannot be undone.`,
+      { danger: true, confirmText: 'Delete all' });
+    if (!ok) return;
 
     const btn = document.getElementById('btnClearAll');
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting…'; }

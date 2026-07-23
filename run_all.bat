@@ -1,0 +1,6 @@
+@echo off
+echo Starting CVAI AI Worker (FastAPI)...
+start "CVAI AI Worker" cmd /c ".venv\Scripts\python.exe -m uvicorn ai_service.main:app --port 8001 --reload"
+
+echo Starting CVAI Django Server...
+.venv\Scripts\python.exe manage.py runserver

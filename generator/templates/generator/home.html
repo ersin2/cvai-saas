@@ -16,27 +16,28 @@
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   <!-- Global Design System -->
-  <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}?v=2">
-  <!-- Existing Studio Styles (keep design tokens intact) -->
-  {% include 'generator/partials/studio_styles.html' %}
+  <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}?v=3">
+  <!-- Legacy studio_styles.html include removed in Phase 4: its selectors
+       (.studio-root, .tpl-executive .cv-*) match nothing in this template. -->
 
   <style>
     /* ═══════════════════════════════════════════════════════════
        VISUAL RESUME STUDIO — SPLIT-SCREEN LAYOUT
        ═══════════════════════════════════════════════════════════ */
     :root {
-      --studio-bg:       #070a14;
-      --panel-bg:        #0d1120;
+      /* Phase 1: aliases to the global token set (cvai-global.css) */
+      --studio-bg:       var(--bg);
+      --panel-bg:        var(--surface-1);
       --panel-border:    rgba(76,201,240,0.10);
-      --input-bg:        rgba(255,255,255,0.04);
-      --input-border:    rgba(255,255,255,0.10);
+      --input-bg:        var(--surface-2);
+      --input-border:    var(--border);
       --input-focus:     rgba(76,201,240,0.30);
-      --accent:          #4cc9f0;
-      --accent2:         #f72585;
-      --text-primary:    #e2e8f0;
-      --text-muted:      #64748b;
-      --radius:          12px;
-      --radius-sm:       8px;
+      --accent:          var(--brand);
+      --accent2:         var(--brand-2);
+      --text-primary:    var(--text-1);
+      --text-muted:      var(--text-3); /* was #64748b — failed WCAG AA on dark bg */
+      --radius:          var(--r-md);
+      --radius-sm:       var(--r-sm);
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -67,11 +68,12 @@
     }
     .vs-nav-btn-dl {
       font-size: 0.8rem; font-weight: 700; padding: 6px 18px;
-      background: linear-gradient(135deg,#4361ee,#4cc9f0);
-      border: none; border-radius: 99px; color: #fff; cursor: pointer;
-      transition: opacity .2s, transform .15s; white-space: nowrap;
+      background: var(--grad-cta);
+      border: none; border-radius: var(--r-pill); color: #fff; cursor: pointer;
+      transition: opacity var(--t-fast), transform var(--t-fast); white-space: nowrap;
     }
-    .vs-nav-btn-dl:hover { opacity: .88; transform: translateY(-1px); }
+    .vs-nav-btn-dl:hover:not(:disabled) { opacity: .88; transform: translateY(-1px); }
+    .vs-nav-btn-dl:disabled { opacity: .55; cursor: not-allowed; }
 
     /* ── Studio Root — two-column split below nav ──────────── */
     .vs-studio {
@@ -151,8 +153,10 @@
       cursor: pointer; text-align: left; transition: background .2s;
     }
     .vs-section-toggle:hover { background: rgba(255,255,255,.03); }
+    .vs-section-toggle:hover .toggle-icon { color: var(--accent); }
     .vs-section-toggle i.toggle-icon { margin-left: auto; color: var(--text-muted);
-                                        font-size: .75rem; transition: transform .25s; }
+                                        font-size: .75rem;
+                                        transition: transform var(--t-base), color var(--t-fast); }
     .vs-section-toggle.open .toggle-icon { transform: rotate(180deg); }
     .vs-section-body { display: none; padding: 4px 20px 16px; }
     .vs-section-body.open { display: block; }
@@ -165,8 +169,13 @@
       width: 100%; background: var(--input-bg);
       border: 1px solid var(--input-border); border-radius: var(--radius-sm);
       color: var(--text-primary); font-size: .85rem; padding: 8px 12px;
-      outline: none; transition: border-color .2s, box-shadow .2s;
+      outline: none; transition: border-color var(--t-fast), box-shadow var(--t-fast), background var(--t-fast);
       font-family: inherit;
+    }
+    /* Hover affordance: editable areas visibly invite the cursor */
+    .vs-input:hover:not(:focus), .vs-textarea:hover:not(:focus), .vs-select:hover:not(:focus) {
+      border-color: rgba(255,255,255,0.22);
+      background: rgba(255,255,255,0.055);
     }
     .vs-input:focus, .vs-textarea:focus, .vs-select:focus {
       border-color: var(--accent); box-shadow: 0 0 0 3px var(--input-focus);
@@ -221,12 +230,23 @@
       padding: 4px 0;
     }
     .tpl-card {
-      border: 2px solid var(--input-border); border-radius: var(--radius-sm);
-      overflow: hidden; cursor: pointer; transition: border-color .2s, transform .2s;
+      border: 2px solid var(--input-border); border-radius: var(--radius);
+      overflow: hidden; cursor: pointer;
+      transition: border-color var(--t-base), transform var(--t-base), box-shadow var(--t-base);
       position: relative;
+      background: rgba(0,0,0,.2);
     }
-    .tpl-card:hover { border-color: var(--accent); transform: translateY(-2px); }
-    .tpl-card.active { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(76,201,240,.2); }
+    .tpl-card:hover {
+      border-color: rgba(76,201,240,.55);
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-2);
+    }
+    .tpl-card.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(76,201,240,.18), var(--shadow-2);
+    }
+    .tpl-card.active .tpl-name { color: var(--accent); }
+    .tpl-card.active .tpl-info { background: rgba(76,201,240,.06); }
     .tpl-card .tpl-thumb {
       width: 100%; aspect-ratio: 3/4; background: #1a1f35;
       display: flex; align-items: center; justify-content: center;
@@ -234,7 +254,9 @@
     }
     .tpl-card .tpl-thumb img {
       width: 100%; height: 100%; object-fit: cover; display: block;
+      transition: transform var(--t-base);
     }
+    .tpl-card:hover .tpl-thumb img { transform: scale(1.05); }
     /* Colour swatch fallback when image doesn't exist yet */
     .tpl-card .tpl-thumb .tpl-fallback {
       position: absolute; inset: 0; display: flex; flex-direction: column;
@@ -249,9 +271,10 @@
     .tpl-card .tpl-cat  { font-size: .65rem; color: var(--text-muted); margin-top: 1px; }
     .tpl-card .tpl-check {
       position: absolute; top: 6px; right: 6px;
-      width: 20px; height: 20px; border-radius: 50%;
+      width: 22px; height: 22px; border-radius: 50%;
       background: var(--accent); display: none;
       align-items: center; justify-content: center; font-size: .65rem; color: #000;
+      box-shadow: 0 2px 10px rgba(76,201,240,.5);
     }
     .tpl-card.active .tpl-check { display: flex; }
     .cat-badge {
@@ -268,15 +291,17 @@
     /* ── AI Fill button ──────────────────────────────────── */
     .btn-ai-fill {
       width: 100%; padding: 10px; border-radius: var(--radius-sm); border: none;
-      background: linear-gradient(135deg,#4361ee,#f72585);
+      background: var(--grad-cta);
       color: #fff; font-weight: 700; font-size: .85rem; cursor: pointer;
       transition: opacity .2s, transform .15s; margin-top: 6px;
     }
     .btn-ai-fill:hover { opacity: .88; transform: translateY(-1px); }
 
-    /* ── RIGHT PANEL — Live Preview ──────────────────────── */
+    /* ── RIGHT PANEL — Live Preview ──────────────────────────
+       Darker than the editor panel: form = workbench,
+       preview = artboard. */
     .vs-right {
-      flex: 1; background: #111827; display: flex;
+      flex: 1; background: #05080f; display: flex;
       flex-direction: column; overflow: hidden;
       position: relative;
     }
@@ -300,11 +325,11 @@
     .vs-preview-spacer { flex: 1; }
 
     /* PDF preview — two stacked iframes we crossfade between (no white flash) */
-    .vs-preview-stage { position: relative; flex: 1; min-height: 0; background: #1a202c; }
+    .vs-preview-stage { position: relative; flex: 1; min-height: 0; background: #0a0e18; }
     .vs-preview-stage iframe {
       position: absolute; inset: 0; width: 100%; height: 100%;
-      border: none; background: #1a202c;
-      opacity: 0; transition: opacity .18s ease;
+      border: none; background: #0a0e18;
+      opacity: 0; transition: opacity var(--t-base);
     }
     .vs-preview-stage iframe.active { opacity: 1; }
     .vs-preview-placeholder {
@@ -403,12 +428,23 @@
       outline: 2px solid var(--accent); outline-offset: 1px;
     }
     /* Smooth, consistent micro-transitions on interactive chrome */
-    .tpl-card, .skill-chip, .vs-section-toggle, .theme-preset-pill, .skill-preset-pill {
-      transition: transform .15s ease, border-color .15s ease, background .15s ease, box-shadow .15s ease;
+    .skill-chip, .vs-section-toggle, .theme-preset-pill, .skill-preset-pill {
+      transition: transform var(--t-fast), border-color var(--t-fast), background var(--t-fast), box-shadow var(--t-fast);
     }
 
     /* ── Responsive ──────────────────────────────────────── */
+    @media (max-width: 480px) {
+      /* Paired inputs stack on phones — 167px columns are too cramped */
+      .vs-row { grid-template-columns: 1fr; }
+    }
     @media (max-width: 900px) {
+      /* Nav holds logo + links + actions with no hamburger — let it
+         swipe-scroll instead of overflowing the viewport */
+      .vs-nav { overflow-x: auto; scrollbar-width: none; }
+      .vs-nav::-webkit-scrollbar { display: none; }
+      .vs-nav > * { flex-shrink: 0; }
+      .vs-nav-spacer { min-width: 8px; }
+
       .vs-studio { flex-direction: column; overflow-y: auto; }
       /* !important overrides any inline width left by a desktop drag-resize */
       .vs-left   { width: 100% !important; max-width: 100%; border-right: none;
@@ -532,7 +568,7 @@
     .btn-ai-magic {
       flex: 1; padding: 9px 14px;
       border: none; border-radius: var(--radius-sm);
-      background: linear-gradient(135deg,#4361ee,#f72585);
+      background: var(--grad-cta);
       color: #fff; font-weight: 800; font-size: .82rem;
       cursor: pointer; display: flex; align-items: center;
       justify-content: center; gap: 7px;
@@ -1096,7 +1132,7 @@
                          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
                     <div class="tpl-fallback" style="display:none;background:#ffffff;border:1px solid #caf0f8;">
                       <div class="tpl-swatch" style="background:#00b4d8;"></div>
-                      ⏱ï¸
+                      ⏱️
                     </div>
                   </div>
                   <div class="tpl-info">
@@ -1112,7 +1148,7 @@
                          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
                     <div class="tpl-fallback" style="display:none;background:#f8fafb;border:1px solid #d1fae5;">
                       <div class="tpl-swatch" style="background:#059669;"></div>
-                      ⚖ï¸
+                      ⚖️
                     </div>
                   </div>
                   <div class="tpl-info">
@@ -1627,7 +1663,7 @@
                 </div>
 
                 <!-- Font Family -->
-                <div class="color-field" style="grid-column: span 3;">
+                <div class="color-field" style="grid-column: 1 / -1;">
                   <label>Font Style</label>
                   <div class="font-dropdown" id="customFontDropdown">
                     <input type="hidden" id="cp_font" name="font_family" value="Helvetica">
@@ -1818,6 +1854,17 @@
     showToast('Template: ' + card.querySelector('.tpl-name').textContent, 'success');
   }
 
+  /* Keyboard access for the template gallery (cards are divs) */
+  document.querySelectorAll('.tpl-card').forEach(card => {
+    card.tabIndex = 0;
+    card.setAttribute('role', 'button');
+    const name = card.querySelector('.tpl-name');
+    if (name) card.setAttribute('aria-label', 'Select template: ' + name.textContent);
+    card.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); }
+    });
+  });
+
   /* ────────────────────────────────────────────────────────
      PHOTO UPLOAD PREVIEW
   ──────────────────────────────────────────────────────── */
@@ -1961,10 +2008,17 @@
      DOWNLOAD PDF (full download, not blob preview)
   ──────────────────────────────────────────────────────── */
   async function downloadPdf() {
-    const form   = document.getElementById('resume-form');
-    const btn    = document.getElementById('btnDownloadPdf');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Building…';
+    const form = document.getElementById('resume-form');
+    /* Both download buttons (nav + preview bar) reflect the export state */
+    const btns = [
+      document.getElementById('btnDownloadPdf'),
+      document.getElementById('btnDlRight'),
+    ].filter(Boolean);
+    const orig = btns.map(b => b.innerHTML);
+    btns.forEach(b => {
+      b.disabled  = true;
+      b.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Building…';
+    });
 
     try {
       const fd  = new FormData(form);
@@ -1982,12 +2036,14 @@
       a.download = `CVAI_${slug}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
-      showToast('PDF downloaded!', 'success');
+      showToast('PDF downloaded — check your downloads folder.', 'success');
     } catch (err) {
       showToast('Download failed — please try again.', 'danger');
     } finally {
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-file-arrow-down me-1"></i>Download PDF';
+      btns.forEach((b, i) => {
+        b.disabled  = false;
+        b.innerHTML = orig[i];
+      });
     }
   }
 

@@ -53,7 +53,7 @@
             align-items: center;
             gap: 7px;
             padding: 5px 16px;
-            border-radius: 99px;
+            border-radius: var(--r-pill);
             font-size: 0.78rem;
             font-weight: 800;
             letter-spacing: 1px;
@@ -67,7 +67,7 @@
         /* ── PROGRESS BAR ── */
         .gen-progress-wrap {
             background: rgba(255,255,255,0.06);
-            border-radius: 99px;
+            border-radius: var(--r-pill);
             height: 8px;
             overflow: hidden;
             margin-top: 14px;
@@ -75,8 +75,8 @@
 
         .gen-progress-bar {
             height: 100%;
-            background: linear-gradient(90deg, var(--primary), #4361ee);
-            border-radius: 99px;
+            background: linear-gradient(90deg, var(--primary), var(--indigo));
+            border-radius: var(--r-pill);
             transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
@@ -136,7 +136,7 @@
         }
 
         .btn-go-pro:hover {
-            transform: translateY(-2px) scale(1.02);
+            transform: translateY(-2px);
             box-shadow: 0 10px 28px rgba(245, 158, 11, 0.45);
         }
     </style>
@@ -166,7 +166,7 @@
                 </button>
             </form>
         </div>
-        <button class="hamburger-btn" onclick="toggleMobileNav()"><i class="fas fa-bars"></i></button>
+        <button class="hamburger-btn" onclick="toggleMobileNav()" aria-label="Open menu"><i class="fas fa-bars"></i></button>
     </nav>
 
     <!-- MOBILE DRAWER -->
@@ -174,7 +174,7 @@
     <div class="mobile-drawer" id="mobileDrawer">
         <div class="drawer-header">
             <span class="logo-text" style="font-size:1.1rem;">CV<span style="-webkit-text-fill-color:var(--secondary);">AI</span></span>
-            <button class="drawer-close-btn" onclick="toggleMobileNav()"><i class="fas fa-times"></i></button>
+            <button class="drawer-close-btn" onclick="toggleMobileNav()" aria-label="Close menu"><i class="fas fa-times"></i></button>
         </div>
         <div class="drawer-nav-section">
             {% if user.profile.plan == 'free' %}

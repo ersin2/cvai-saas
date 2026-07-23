@@ -12,13 +12,9 @@
        DASHBOARD — Premium Overhaul
        ═══════════════════════════════════════════════════════ */
     :root {
-      --dash-surface:    rgba(14, 18, 32, 0.92);
-      --dash-border:     rgba(255, 255, 255, 0.07);
       --dash-hover-bg:   rgba(76, 201, 240, 0.06);
       --dash-hover-glow: rgba(76, 201, 240, 0.18);
     }
-
-    body { font-family: 'Inter', 'Outfit', sans-serif; }
 
     /* ── STAT GRID ── */
     .stat-grid {
@@ -41,15 +37,15 @@
       align-items: center;
       gap: 12px;
       padding: 11px 14px;
-      border-radius: 12px;
+      border-radius: var(--r-md);
       border: 1px solid transparent;
       margin-bottom: 6px;
       cursor: pointer;
       transition:
-        background 0.22s ease,
-        border-color 0.22s ease,
-        box-shadow 0.22s ease,
-        transform 0.18s ease;
+        background var(--t-base),
+        border-color var(--t-base),
+        box-shadow var(--t-base),
+        transform var(--t-base);
       position: relative;
       overflow: hidden;
     }
@@ -170,16 +166,13 @@
       padding: 20px 24px 16px;
       position: relative;
     }
-    /* Rainbow top border on modal */
+    /* Accent top border on modal — static, matches .glass-card */
     #activityModal .modal-header::before {
       content: '';
       position: absolute;
-      top: 0; left: 0; right: 0; height: 2px;
-      background: linear-gradient(90deg, #4361ee, #4cc9f0, #f72585, #4cc9f0, #4361ee);
-      background-size: 300% 100%;
-      animation: modal-bar 3s linear infinite;
+      top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(76,201,240,0.4), rgba(247,37,133,0.3), transparent);
     }
-    @keyframes modal-bar { to { background-position: -300% 0; } }
 
     #activityModal .modal-title {
       font-size: 1rem;
@@ -407,7 +400,7 @@
       align-items: center;
       gap: 6px;
       padding: 7px 16px;
-      border-radius: 9px;
+      border-radius: var(--r-sm);
       font-size: 0.76rem;
       font-weight: 700;
       border: 1px solid rgba(255,255,255,0.1);
@@ -427,14 +420,14 @@
       align-items: center;
       gap: 6px;
       padding: 7px 18px;
-      border-radius: 9px;
+      border-radius: var(--r-sm);
       font-size: 0.76rem;
       font-weight: 700;
       border: none;
-      background: linear-gradient(135deg, #4361ee, #4cc9f0);
+      background: var(--grad-cta);
       color: #fff;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all var(--t-fast);
     }
     .modal-btn-primary:hover {
       transform: translateY(-1px);
@@ -507,9 +500,22 @@
           <div class="panel-title">
             <i class="fas fa-filter" style="color:var(--primary);"></i>Application Funnel
           </div>
+          {% if stats.total_applications %}
           <div class="chart-container">
             <canvas id="funnelChart"></canvas>
           </div>
+          {% else %}
+          <div class="dash-empty" style="padding:28px 16px 20px;">
+            <div class="dash-empty-icon" style="background:var(--primary-dim);">
+              <i class="fas fa-filter" style="color:var(--primary);"></i>
+            </div>
+            <div class="dash-empty-title">No applications tracked yet</div>
+            <p class="dash-empty-desc">Your funnel fills in as you move applications from Saved to Offer</p>
+            <a href="{% url 'tracker' %}" class="btn-primary-grad" style="font-size:0.78rem;padding:8px 20px;">
+              Open Tracker <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+          </div>
+          {% endif %}
         </div>
       </div>
 
@@ -631,8 +637,8 @@
             <div class="dash-empty-icon" style="background:var(--primary-dim);">
               <i class="fas fa-pen-nib" style="color:var(--primary);"></i>
             </div>
-            <div class="dash-empty-title">Your FAANG-level resume awaits</div>
-            <p class="dash-empty-desc">Generate your first AI resume in seconds</p>
+            <div class="dash-empty-title">No resumes yet</div>
+            <p class="dash-empty-desc">Open the Studio and generate your first AI resume</p>
             <a href="{% url 'home' %}" class="btn-primary-grad" style="font-size:0.78rem;padding:8px 20px;">
               Create Now <i class="fas fa-arrow-right ms-1"></i>
             </a>
@@ -685,8 +691,7 @@
             </div>
             <div class="dash-empty-title">Start tracking applications</div>
             <p class="dash-empty-desc">Never lose track of where you applied</p>
-            <a href="{% url 'tracker' %}" class="btn-primary-grad"
-               style="font-size:0.78rem;padding:8px 20px;background:linear-gradient(135deg,#22c55e,#4cc9f0);">
+            <a href="{% url 'tracker' %}" class="btn-primary-grad" style="font-size:0.78rem;padding:8px 20px;">
               Add Application <i class="fas fa-arrow-right ms-1"></i>
             </a>
           </div>
@@ -789,8 +794,7 @@
             </div>
             <div class="dash-empty-title">Unlock your AI arsenal</div>
             <p class="dash-empty-desc">Interview prep, ATS scoring, follow-ups & more</p>
-            <a href="{% url 'tools' %}" class="btn-primary-grad"
-               style="font-size:0.78rem;padding:8px 20px;background:linear-gradient(135deg,#f72585,#ff6b6b);">
+            <a href="{% url 'tools' %}" class="btn-primary-grad" style="font-size:0.78rem;padding:8px 20px;">
               Explore AI Tools <i class="fas fa-arrow-right ms-1"></i>
             </a>
           </div>
@@ -839,60 +843,69 @@
   </div>
 
 
-  <!-- ════════════ SCRIPTS ════════════ -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock content %}
 
+{% block extra_scripts %}
   <script>
     /* ─────────────────────────────────────────────────────
-       CHART.JS — Funnel Doughnut
+       CHART.JS — dark theme defaults + funnel doughnut
+       (canvas absent when there are no applications yet)
     ───────────────────────────────────────────────────── */
-    const ctx = document.getElementById('funnelChart').getContext('2d');
-    new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: ['Saved', 'Applied', 'Interview', 'Offer', 'Rejected'],
-        datasets: [{
-          data: [
-            {{ stats.saved }}, {{ stats.applied }},
-            {{ stats.interviews }}, {{ stats.offers }}, {{ stats.rejected }}
-          ],
-          backgroundColor: [
-            'rgba(148,163,184,0.72)',
-            'rgba(76,201,240,0.72)',
-            'rgba(234,179,8,0.72)',
-            'rgba(34,197,94,0.72)',
-            'rgba(239,68,68,0.72)',
-          ],
-          borderColor: 'rgba(8,12,20,0.7)',
-          borderWidth: 3,
-          hoverOffset: 10,
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: '65%',
-        plugins: {
-          legend: {
-            position: 'right',
-            labels: {
-              color: '#94a3b8',
-              font: { family: 'Inter', size: 11, weight: '600' },
-              padding: 14,
-              usePointStyle: true,
-              pointStyleWidth: 9,
+    const funnelEl = document.getElementById('funnelChart');
+    if (funnelEl && window.Chart) {
+      Chart.defaults.font.family = "'Outfit', sans-serif";
+      Chart.defaults.color = '#94a3b8';
+
+      new Chart(funnelEl.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Saved', 'Applied', 'Interview', 'Offer', 'Rejected'],
+          datasets: [{
+            data: [
+              {{ stats.saved }}, {{ stats.applied }},
+              {{ stats.interviews }}, {{ stats.offers }}, {{ stats.rejected }}
+            ],
+            backgroundColor: [
+              'rgba(148,163,184,0.72)',
+              'rgba(76,201,240,0.72)',
+              'rgba(234,179,8,0.72)',
+              'rgba(34,197,94,0.72)',
+              'rgba(239,68,68,0.72)',
+            ],
+            borderColor: '#080c14',
+            borderWidth: 3,
+            hoverOffset: 8,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '65%',
+          plugins: {
+            legend: {
+              position: 'right',
+              labels: {
+                color: '#94a3b8',
+                font: { size: 11, weight: '600' },
+                padding: 14,
+                usePointStyle: true,
+                pointStyleWidth: 9,
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(13, 19, 34, 0.96)',
+              borderColor: 'rgba(255,255,255,0.08)',
+              borderWidth: 1,
+              titleColor: '#f1f5f9',
+              bodyColor: '#94a3b8',
+              padding: 10,
+              cornerRadius: 8,
+              displayColors: true,
+              boxPadding: 4,
             }
           }
         }
-      }
-    });
-
-    /* ─────────────────────────────────────────────────────
-       MOBILE NAV TOGGLE
-    ───────────────────────────────────────────────────── */
-    function toggleMobileNav() {
-      document.getElementById('mobileDrawer').classList.toggle('open');
-      document.getElementById('mobileBackdrop').classList.toggle('open');
+      });
     }
 
     /* ─────────────────────────────────────────────────────
@@ -1192,4 +1205,4 @@
       });
     }
   </script>
-{% endblock content %}
+{% endblock extra_scripts %}

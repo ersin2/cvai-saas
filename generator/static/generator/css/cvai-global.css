@@ -3,65 +3,97 @@
    Single source of truth for all design tokens and shared components
    ================================================================ */
 
-/* ── 1. DESIGN TOKENS ─────────────────────────────────────────── */
+/* ── 1. DESIGN TOKENS (canonical set — Phase 1) ───────────────── */
 :root {
-  /* Colors */
-  --primary:        #4cc9f0;
-  --primary-dim:    rgba(76, 201, 240, 0.12);
-  --primary-glow:   rgba(76, 201, 240, 0.25);
-  --secondary:      #f72585;
-  --secondary-dim:  rgba(247, 37, 133, 0.12);
-  --accent:         #7c3aed;
-  --gold:           #f59e0b;
+  /* Brand */
+  --brand:     #4cc9f0;   /* cyan — links, active states, focus */
+  --brand-2:   #f72585;   /* pink — gradient end only */
+  --indigo:    #4361ee;   /* gradient start only */
+  --gold:      #f59e0b;   /* upgrade accent */
+  --grad-cta:  linear-gradient(135deg, var(--indigo), var(--brand-2));
+  --grad-gold: linear-gradient(135deg, #f59e0b, #fbbf24);
 
-  /* Surfaces */
-  --dark-bg:      #080c14;
-  --surface-1:    rgba(14, 18, 32, 0.90);
-  --surface-2:    rgba(255, 255, 255, 0.035);
-  --surface-3:    rgba(255, 255, 255, 0.06);
+  /* Surfaces — one background, stepped surfaces */
+  --bg:           #080c14;
+  --surface-1:    #0d1322;               /* panels, cards, modals */
+  --surface-2:    rgba(255, 255, 255, 0.04); /* inputs, raised elements */
+  --surface-3:    rgba(255, 255, 255, 0.07); /* hover */
   --border:       rgba(255, 255, 255, 0.08);
   --border-hover: rgba(255, 255, 255, 0.16);
 
-  /* Text */
-  --text-primary:   #f1f5f9;
-  --text-secondary: #94a3b8;
-  /* WCAG-AA: #7c8a9e on the #080c14 surfaces is ~4.6:1 (was #475569 ≈ 2.5:1),
-     still dimmer than --text-secondary so the hierarchy is preserved. */
-  --text-muted:     #7c8a9e;
-  --text-dim:       #334155;
+  /* Text — all AA on --bg */
+  --text-1:   #f1f5f9;
+  --text-2:   #94a3b8;
+  /* WCAG-AA: #7c8a9e on #080c14 ≈ 4.6:1 — minimum for readable copy */
+  --text-3:   #7c8a9e;
+  --text-dim: #475569;    /* decorative only, never body copy */
 
   /* Status */
   --success: #22c55e;
   --warning: #eab308;
   --danger:  #ef4444;
-  --info:    #4cc9f0;
+  --info:    var(--brand);
 
-  /* Typography */
-  --font-body: 'Outfit', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  /* Type — 2 families + mono, 8-step scale */
+  --font-display: 'Syne', 'Outfit', sans-serif;
+  --font-body:    'Outfit', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+  --fs-xs:   0.72rem;
+  --fs-sm:   0.8rem;
+  --fs-base: 0.875rem;
+  --fs-md:   0.95rem;
+  --fs-lg:   1.125rem;
+  --fs-xl:   1.5rem;
+  --fs-2xl:  clamp(1.75rem, 3.5vw, 2.75rem);
+  --fs-hero: clamp(2.4rem, 6vw, 4.5rem);
+  --lh-tight: 1.1;
+  --lh-base:  1.55;
+  --lh-loose: 1.7;
+  --track-tight: -0.02em;
 
-  /* Spacing */
-  --gap-xs:  6px;
-  --gap-sm:  12px;
-  --gap-md:  20px;
-  --gap-lg:  32px;
-  --gap-xl:  48px;
+  /* Space — 4px base scale */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px; --sp-5: 24px;
+  --sp-6: 32px; --sp-7: 48px; --sp-8: 64px; --sp-9: 96px; --sp-10: 128px;
+  --section-pad: clamp(72px, 10vw, 120px);
+  --content-max: 1200px;
 
-  /* Border Radii */
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
-  --radius-xl: 32px;
+  /* Radius — 5 values, nothing else */
+  --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 24px; --r-pill: 999px;
 
-  /* Shadows */
-  --shadow-sm:   0 4px 16px rgba(0, 0, 0, 0.3);
-  --shadow-card: 0 20px 60px -10px rgba(0, 0, 0, 0.55);
+  /* Elevation — 1px borders + soft shadows; glow reserved for primary CTA */
+  --shadow-1:  0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-2:  0 8px 28px -4px rgba(0, 0, 0, 0.45);
+  --shadow-3:  0 24px 64px -12px rgba(0, 0, 0, 0.55);
+  --glow-cta:  0 8px 32px rgba(67, 97, 238, 0.35);
   --shadow-glow: 0 0 40px rgba(76, 201, 240, 0.15);
 
-  /* Transitions */
-  --transition-fast:   0.15s ease;
-  --transition-base:   0.25s ease;
-  --transition-slow:   0.4s ease;
+  /* Motion */
+  --t-fast:  150ms ease-out;                    /* hover, color, borders */
+  --t-base:  200ms ease;                        /* transforms, reveals */
+  --t-slide: 300ms cubic-bezier(0.22, 1, 0.36, 1); /* drawers, panels */
+
+  /* ── Legacy aliases (migration shims — do not use in new code) ── */
+  --primary:        var(--brand);
+  --primary-dim:    rgba(76, 201, 240, 0.12);
+  --primary-glow:   rgba(76, 201, 240, 0.25);
+  --secondary:      var(--brand-2);
+  --secondary-dim:  rgba(247, 37, 133, 0.12);
+  --accent:         #7c3aed;  /* deprecated purple; studio pages override to --brand */
+  --dark-bg:        var(--bg);
+  --text-primary:   var(--text-1);
+  --text-secondary: var(--text-2);
+  --text-muted:     var(--text-3);
+  --gap-xs: 6px; --gap-sm: var(--sp-3); --gap-md: 20px;
+  --gap-lg: var(--sp-6); --gap-xl: var(--sp-7);
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-lg);   /* 16px */
+  --radius-lg: var(--r-xl);   /* 24px */
+  --radius-xl: var(--r-xl);
+  --shadow-sm:   var(--shadow-1);
+  --shadow-card: var(--shadow-3);
+  --transition-fast: var(--t-fast);
+  --transition-base: var(--t-base);
+  --transition-slow: var(--t-slide);
 }
 
 /* ── 2. RESET & BASE ─────────────────────────────────────────── */
@@ -84,7 +116,7 @@ body {
 /* ── Custom Scrollbar (WebKit) — dark theme ───────────────────────── */
 ::-webkit-scrollbar              { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track        { background: #1e1e2e; border-radius: 4px; }
-::-webkit-scrollbar-thumb        { background: #4cc9f0; border-radius: 4px;
+::-webkit-scrollbar-thumb        { background: var(--brand); border-radius: 4px;
                                    border: 2px solid #1e1e2e; }
 ::-webkit-scrollbar-thumb:hover  { background: #3ba0c6; }
 ::-webkit-scrollbar-corner       { background: #1e1e2e; }
@@ -92,12 +124,12 @@ body {
 /* Table containers get the same treatment */
 .table-responsive::-webkit-scrollbar              { width: 6px; height: 6px; }
 .table-responsive::-webkit-scrollbar-track        { background: #12121f; border-radius: 4px; }
-.table-responsive::-webkit-scrollbar-thumb        { background: #4cc9f0; border-radius: 4px;
+.table-responsive::-webkit-scrollbar-thumb        { background: var(--brand); border-radius: 4px;
                                                     border: 1px solid #12121f; }
 .table-responsive::-webkit-scrollbar-thumb:hover  { background: #3ba0c6; }
 
 /* Firefox */
-* { scrollbar-width: thin; scrollbar-color: #4cc9f0 #1e1e2e; }
+* { scrollbar-width: thin; scrollbar-color: var(--brand) #1e1e2e; }
 
 /* Selection */
 ::selection { background: rgba(76, 201, 240, 0.25); color: #fff; }
@@ -214,7 +246,7 @@ body {
   border: 1px solid rgba(76, 201, 240, 0.25);
   color: var(--primary);
   padding: 5px 12px;
-  border-radius: 99px;
+  border-radius: var(--r-pill);
   font-size: 0.775rem;
   font-weight: 700;
   font-family: var(--font-mono);
@@ -251,7 +283,7 @@ body {
   border: 1px solid var(--border);
   color: var(--text-primary);
   padding: 6px 14px;
-  border-radius: 99px;
+  border-radius: var(--r-pill);
   font-size: 0.85rem;
   font-weight: 600;
   text-decoration: none;
@@ -494,7 +526,7 @@ body {
   background: rgba(239, 68, 68, 0.08);
   border: 1px solid rgba(239, 68, 68, 0.2);
   color: var(--danger);
-  border-radius: 8px;
+  border-radius: var(--r-sm);
   padding: 5px 10px;
   font-size: 0.78rem;
   line-height: 1;
@@ -569,7 +601,7 @@ body {
   align-items: center;
   gap: 5px;
   padding: 4px 10px;
-  border-radius: 99px;
+  border-radius: var(--r-pill);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -610,7 +642,7 @@ body {
 .company-avatar {
   width: 42px;
   height: 42px;
-  border-radius: 10px;
+  border-radius: var(--r-sm);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -626,8 +658,8 @@ body {
   user-select: none;
 }
 
-.company-avatar.avatar-sm { width: 32px; height: 32px; font-size: 0.82rem; border-radius: 8px; }
-.company-avatar.avatar-lg { width: 50px; height: 50px; font-size: 1.2rem; border-radius: 12px; }
+.company-avatar.avatar-sm { width: 32px; height: 32px; font-size: 0.82rem; border-radius: var(--r-sm); }
+.company-avatar.avatar-lg { width: 50px; height: 50px; font-size: 1.2rem; border-radius: var(--r-md); }
 
 /* ── 11. STAT CARDS ─────────────────────────────────────────── */
 .stat-card-v2 {
@@ -762,7 +794,7 @@ body {
 }
 
 .confirm-box {
-  background: #0f1526;
+  background: var(--surface-1);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
@@ -820,7 +852,7 @@ body {
 
 /* ── 17. MODAL ───────────────────────────────────────────────── */
 .modal-content {
-  background: #0f1526 !important;
+  background: var(--surface-1) !important;
   border: 1px solid var(--border) !important;
   border-radius: var(--radius-lg) !important;
   color: var(--text-primary) !important;
@@ -973,7 +1005,7 @@ body {
   border-radius: 50%;
   cursor: pointer;
   border: 2px solid transparent;
-  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  transition: transform var(--t-fast), border-color var(--t-fast), box-shadow var(--t-fast);
   position: relative;
   display: flex;
   align-items: center;
@@ -1013,7 +1045,7 @@ body {
   white-space: nowrap;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s;
+  transition: opacity var(--t-fast);
   z-index: 10;
 }
 
@@ -1076,7 +1108,7 @@ body {
   padding: 10px 30px 10px 12px;
   text-align: left;
   cursor: pointer;
-  transition: all .2s ease;
+  transition: all var(--t-fast);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1091,7 +1123,7 @@ body {
   top: 100%;
   left: 0;
   width: 100%;
-  background: #0d1120;
+  background: var(--surface-1);
   border: 1px solid rgba(76,201,240,.3);
   border-radius: var(--radius-sm);
   margin-top: 4px;
@@ -1109,7 +1141,7 @@ body {
   cursor: pointer;
   font-size: .85rem;
   color: var(--text-primary);
-  transition: background .15s;
+  transition: background var(--t-fast);
 }
 .font-dropdown-option:hover {
   background: rgba(76,201,240,.15);
@@ -1144,7 +1176,7 @@ body {
   white-space: nowrap;
   padding: 4px 8px;
   border-radius: 4px;
-  transition: all 0.2s;
+  transition: all var(--t-fast);
 }
 .vs-left-nav a:hover, .vs-left-nav a.active {
   color: #4cc9f0;
