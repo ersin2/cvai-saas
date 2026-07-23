@@ -13,10 +13,10 @@
     position: relative;
     background: rgba(0,0,0,0.18);
     border: 1px solid rgba(255,255,255,0.05);
-    border-left: 4px solid var(--primary);
-    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    border-left: 4px solid var(--brand);
+    border-radius: 0 var(--r-lg) var(--r-lg) 0;
     margin-bottom: 10px;
-    transition: border-color var(--transition-base), background var(--transition-base), box-shadow var(--transition-base);
+    transition: border-color var(--t-base), background var(--t-base), box-shadow var(--t-base);
     overflow: hidden;
   }
   .hist-card:hover {
@@ -38,11 +38,11 @@
   .hist-card-left { min-width: 0; flex: 1; }
   .hist-card-headline {
     font-size: 0.92rem; font-weight: 700;
-    color: var(--text-primary); margin-bottom: 4px;
+    color: var(--text-1); margin-bottom: 4px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .hist-card-sub {
-    font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 6px;
+    font-size: 0.82rem; color: var(--text-2); margin-bottom: 6px;
   }
   .hist-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   .hist-badge {
@@ -59,7 +59,7 @@
     display: flex; align-items: flex-start; gap: 8px; flex-shrink: 0;
   }
   .hist-date {
-    font-size: 0.72rem; color: var(--text-muted);
+    font-size: 0.72rem; color: var(--text-3);
     font-family: var(--font-mono); white-space: nowrap; padding-top: 2px;
   }
   .hist-del-btn {
@@ -74,7 +74,7 @@
   /* 2-line preview text */
   .hist-preview {
     padding: 0 16px 10px;
-    font-size: 0.82rem; color: var(--text-muted); line-height: 1.6;
+    font-size: 0.82rem; color: var(--text-3); line-height: 1.6;
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
     overflow: hidden;
   }
@@ -87,7 +87,7 @@
   }
   .hist-expand-row:hover { background: rgba(255,255,255,.02); }
   .hist-expand-label {
-    font-size: 0.72rem; color: var(--text-muted);
+    font-size: 0.72rem; color: var(--text-3);
     display: flex; align-items: center; gap: 5px;
   }
   .hist-expand-label .hist-chevron {
@@ -119,7 +119,7 @@
     padding: 6px 14px; border-radius: var(--r-sm);
     border: 1px solid rgba(76,201,240,.25);
     background: rgba(76,201,240,.07);
-    color: var(--primary); font-size: 0.78rem; font-weight: 600;
+    color: var(--brand); font-size: 0.78rem; font-weight: 600;
     cursor: pointer; transition: background var(--t-fast), transform var(--t-fast);
   }
   .hist-copy-btn:hover { background: rgba(76,201,240,.18); transform: translateY(-1px); }
@@ -207,7 +207,7 @@
             <i class="fas fa-chevron-down hist-chevron"></i>
             <span class="hist-expand-text">Show full result</span>
           </span>
-          <span style="font-size:0.7rem; color: var(--text-muted);">
+          <span style="font-size:0.7rem; color: var(--text-3);">
             {{ gen.result|length }} chars
           </span>
         </div>
@@ -230,7 +230,7 @@
     {% else %}
     <div class="empty-state-v2">
       <div class="empty-icon-box">
-        <i class="fas fa-rocket" style="color: var(--primary);"></i>
+        <i class="fas fa-rocket" style="color: var(--brand);"></i>
       </div>
       <div class="empty-title">No generations yet</div>
       <p class="empty-desc">Generate your first AI resume or cover letter and it will appear here for easy access.</p>
@@ -349,7 +349,7 @@
     if (timeline && !timeline.querySelector('.hist-card')) {
       timeline.innerHTML = `
         <div class="empty-state-v2">
-          <div class="empty-icon-box"><i class="fas fa-inbox" style="color:var(--text-muted);"></i></div>
+          <div class="empty-icon-box"><i class="fas fa-inbox" style="color:var(--text-3);"></i></div>
           <div class="empty-title">No generations yet</div>
           <p class="empty-desc">Generate your first resume or cover letter to see it here.</p>
           <a href="{% url 'home' %}" class="btn-primary-grad">
@@ -369,20 +369,20 @@
           const esc  = s => String(s || '').replace(/[&<>"']/g, m =>
             ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
-          let html = `<strong style="font-size:1.05rem;color:var(--text-primary);">${esc(data.full_name)}</strong><br>`;
+          let html = `<strong style="font-size:1.05rem;color:var(--text-1);">${esc(data.full_name)}</strong><br>`;
           if (data.target_role)
-            html += `<span style="color:var(--primary);font-weight:600;font-size:0.9rem;">${esc(data.target_role)}</span><br>`;
+            html += `<span style="color:var(--brand);font-weight:600;font-size:0.9rem;">${esc(data.target_role)}</span><br>`;
           if (data.summary)
             html += `<div style="margin-top:10px;color:#cbd5e1;">${esc(data.summary)}</div>`;
           if (Array.isArray(data.experience) && data.experience.length) {
-            html += `<div style="margin-top:14px;font-weight:700;color:var(--text-primary);">Experience</div><ul style="padding-left:18px;margin:6px 0 0;">`;
+            html += `<div style="margin-top:14px;font-weight:700;color:var(--text-1);">Experience</div><ul style="padding-left:18px;margin:6px 0 0;">`;
             data.experience.forEach(exp => {
-              html += `<li style="margin-bottom:5px;"><strong>${esc(exp.title||'Role')}</strong> at <span style="color:var(--primary);">${esc(exp.company||'')}</span></li>`;
+              html += `<li style="margin-bottom:5px;"><strong>${esc(exp.title||'Role')}</strong> at <span style="color:var(--brand);">${esc(exp.company||'')}</span></li>`;
             });
             html += `</ul>`;
           }
           if (Array.isArray(data.skills) && data.skills.length) {
-            html += `<div style="margin-top:14px;font-weight:700;color:var(--text-primary);">Skills</div>`;
+            html += `<div style="margin-top:14px;font-weight:700;color:var(--text-1);">Skills</div>`;
             html += `<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;">`;
             data.skills.forEach(sk => {
               const name = typeof sk === 'string' ? sk : (sk.name || '');

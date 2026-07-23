@@ -96,7 +96,7 @@
     }
     .act-sub {
       font-size: 0.72rem;
-      color: var(--text-muted);
+      color: var(--text-3);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -104,7 +104,7 @@
     }
     .act-meta {
       font-size: 0.68rem;
-      color: var(--text-muted);
+      color: var(--text-3);
       font-family: 'JetBrains Mono', monospace;
       white-space: nowrap;
       flex-shrink: 0;
@@ -133,7 +133,7 @@
 
     /* Chevron indicator */
     .act-chevron {
-      color: var(--text-muted);
+      color: var(--text-3);
       font-size: 0.65rem;
       opacity: 0;
       transform: translateX(-4px);
@@ -232,11 +232,11 @@
       align-items: center;
       gap: 5px;
       font-size: 0.72rem;
-      color: var(--text-muted);
+      color: var(--text-3);
       font-family: 'JetBrains Mono', monospace;
     }
     .modal-meta-item i {
-      color: var(--primary);
+      color: var(--brand);
       font-size: 0.65rem;
     }
 
@@ -301,7 +301,7 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 1px;
-      color: var(--primary);
+      color: var(--brand);
     }
 
     /* Empty state */
@@ -326,7 +326,7 @@
       margin-bottom: 5px;
     }
     .dash-empty-desc {
-      color: var(--text-muted);
+      color: var(--text-3);
       font-size: 0.78rem;
       margin-bottom: 16px;
       line-height: 1.6;
@@ -338,7 +338,7 @@
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 1.5px;
-      color: var(--text-muted);
+      color: var(--text-3);
       margin-bottom: 12px;
       display: flex;
       align-items: center;
@@ -359,7 +359,7 @@
       padding: 3px 8px;
       border-radius: 99px;
       background: rgba(76,201,240,0.1);
-      color: var(--primary);
+      color: var(--brand);
       border: 1px solid rgba(76,201,240,0.2);
       font-family: 'JetBrains Mono', monospace;
     }
@@ -460,13 +460,13 @@
     <!-- ═══ STAT CARDS ═══ -->
     <div class="stat-grid">
       <div class="stat-card-v2 card-hoverable anim-fade-up anim-delay-1"
-           style="--card-accent:var(--primary);--card-icon-bg:var(--primary-dim);--card-icon-color:var(--primary);--card-value-color:var(--primary);">
+           style="--card-accent:var(--brand);--card-icon-bg:var(--brand-dim);--card-icon-color:var(--brand);--card-value-color:var(--brand);">
         <div class="stat-icon-box"><i class="fas fa-file-alt"></i></div>
         <div class="stat-value-v2">{{ stats.total_generations }}</div>
         <div class="stat-label-v2">Resumes</div>
       </div>
       <div class="stat-card-v2 card-hoverable anim-fade-up anim-delay-2"
-           style="--card-accent:var(--secondary);--card-icon-bg:var(--secondary-dim);--card-icon-color:var(--secondary);--card-value-color:var(--secondary);">
+           style="--card-accent:var(--brand-2);--card-icon-bg:var(--brand-2-dim);--card-icon-color:var(--brand-2);--card-value-color:var(--brand-2);">
         <div class="stat-icon-box"><i class="fas fa-wand-magic-sparkles"></i></div>
         <div class="stat-value-v2">{{ stats.total_ai_results }}</div>
         <div class="stat-label-v2">AI Tool Results</div>
@@ -498,7 +498,7 @@
       <div class="col-lg-6 anim-fade-up anim-delay-2">
         <div class="glass-card h-100">
           <div class="panel-title">
-            <i class="fas fa-filter" style="color:var(--primary);"></i>Application Funnel
+            <i class="fas fa-filter" style="color:var(--brand);"></i>Application Funnel
           </div>
           {% if stats.total_applications %}
           <div class="chart-container">
@@ -506,8 +506,8 @@
           </div>
           {% else %}
           <div class="dash-empty" style="padding:28px 16px 20px;">
-            <div class="dash-empty-icon" style="background:var(--primary-dim);">
-              <i class="fas fa-filter" style="color:var(--primary);"></i>
+            <div class="dash-empty-icon" style="background:var(--brand-dim);">
+              <i class="fas fa-filter" style="color:var(--brand);"></i>
             </div>
             <div class="dash-empty-title">No applications tracked yet</div>
             <p class="dash-empty-desc">Your funnel fills in as you move applications from Saved to Offer</p>
@@ -523,27 +523,27 @@
       <div class="col-lg-6 anim-fade-up anim-delay-3">
         <div class="glass-card h-100">
           <div class="panel-title">
-            <i class="fas fa-rocket" style="color:var(--secondary);"></i>Quick Actions
+            <i class="fas fa-rocket" style="color:var(--brand-2);"></i>Quick Actions
           </div>
           <a href="{% url 'home' %}" class="quick-action-v2">
-            <div class="quick-action-icon" style="background:var(--primary-dim);color:var(--primary);">
+            <div class="quick-action-icon" style="background:var(--brand-dim);color:var(--brand);">
               <i class="fas fa-pen-ruler"></i>
             </div>
             <div>
               <div class="fw-bold" style="font-size:0.88rem;">Resume Studio</div>
               <small class="text-white-50">Build & export your A4 resume</small>
             </div>
-            <i class="fas fa-chevron-right ms-auto" style="color:var(--text-muted);font-size:0.75rem;"></i>
+            <i class="fas fa-chevron-right ms-auto" style="color:var(--text-3);font-size:0.75rem;"></i>
           </a>
           <a href="{% url 'tools' %}" class="quick-action-v2">
-            <div class="quick-action-icon" style="background:var(--secondary-dim);color:var(--secondary);">
+            <div class="quick-action-icon" style="background:var(--brand-2-dim);color:var(--brand-2);">
               <i class="fas fa-brain"></i>
             </div>
             <div>
               <div class="fw-bold" style="font-size:0.88rem;">Interview Prep AI</div>
               <small class="text-white-50">Get tailored interview Q&A</small>
             </div>
-            <i class="fas fa-chevron-right ms-auto" style="color:var(--text-muted);font-size:0.75rem;"></i>
+            <i class="fas fa-chevron-right ms-auto" style="color:var(--text-3);font-size:0.75rem;"></i>
           </a>
           <a href="{% url 'tools' %}" class="quick-action-v2">
             <div class="quick-action-icon" style="background:rgba(234,179,8,0.1);color:var(--warning);">
@@ -553,7 +553,7 @@
               <div class="fw-bold" style="font-size:0.88rem;">ATS Score Checker</div>
               <small class="text-white-50">Analyze resume compatibility</small>
             </div>
-            <i class="fas fa-chevron-right ms-auto" style="color:var(--text-muted);font-size:0.75rem;"></i>
+            <i class="fas fa-chevron-right ms-auto" style="color:var(--text-3);font-size:0.75rem;"></i>
           </a>
           <a href="{% url 'tracker' %}" class="quick-action-v2">
             <div class="quick-action-icon" style="background:rgba(34,197,94,0.1);color:#22c55e;">
@@ -563,7 +563,7 @@
               <div class="fw-bold" style="font-size:0.88rem;">Application Tracker</div>
               <small class="text-white-50">Track and manage applications</small>
             </div>
-            <i class="fas fa-chevron-right ms-auto" style="color:var(--text-muted);font-size:0.75rem;"></i>
+            <i class="fas fa-chevron-right ms-auto" style="color:var(--text-3);font-size:0.75rem;"></i>
           </a>
         </div>
       </div>
@@ -577,7 +577,7 @@
         <div class="glass-card h-100">
           <div class="feed-header">
             <div class="panel-title mb-0">
-              <i class="fas fa-file-alt" style="color:var(--primary);"></i>Resumes
+              <i class="fas fa-file-alt" style="color:var(--brand);"></i>Resumes
             </div>
             {% if recent_generations %}
             <span class="feed-count-pill">{{ recent_generations|length }}</span>
@@ -597,8 +597,8 @@
                    data-content="{{ gen.result|default:'' }}"
                    tabindex="0" role="button"
                    aria-label="View resume for {{ gen.company_name|default:'Unknown Company' }}">
-                <div class="act-icon" style="background:var(--primary-dim);">
-                  <i class="fas fa-file-alt" style="color:var(--primary);"></i>
+                <div class="act-icon" style="background:var(--brand-dim);">
+                  <i class="fas fa-file-alt" style="color:var(--brand);"></i>
                 </div>
                 <div class="act-body">
                   <div class="act-title">{{ gen.company_name|default:"Unknown Company" }}</div>
@@ -634,8 +634,8 @@
 
           {% else %}
           <div class="dash-empty">
-            <div class="dash-empty-icon" style="background:var(--primary-dim);">
-              <i class="fas fa-pen-nib" style="color:var(--primary);"></i>
+            <div class="dash-empty-icon" style="background:var(--brand-dim);">
+              <i class="fas fa-pen-nib" style="color:var(--brand);"></i>
             </div>
             <div class="dash-empty-title">No resumes yet</div>
             <p class="dash-empty-desc">Open the Studio and generate your first AI resume</p>
@@ -704,10 +704,10 @@
         <div class="glass-card h-100">
           <div class="feed-header">
             <div class="panel-title mb-0">
-              <i class="fas fa-wand-magic-sparkles" style="color:var(--secondary);"></i>AI Results
+              <i class="fas fa-wand-magic-sparkles" style="color:var(--brand-2);"></i>AI Results
             </div>
             {% if recent_ai %}
-            <span class="feed-count-pill" style="background:var(--secondary-dim);color:var(--secondary);border-color:rgba(247,37,133,0.2);">{{ recent_ai|length }}</span>
+            <span class="feed-count-pill" style="background:var(--brand-2-dim);color:var(--brand-2);border-color:rgba(247,37,133,0.2);">{{ recent_ai|length }}</span>
             {% endif %}
           </div>
 
@@ -789,8 +789,8 @@
 
           {% else %}
           <div class="dash-empty">
-            <div class="dash-empty-icon" style="background:var(--secondary-dim);">
-              <i class="fas fa-wand-magic-sparkles" style="color:var(--secondary);"></i>
+            <div class="dash-empty-icon" style="background:var(--brand-2-dim);">
+              <i class="fas fa-wand-magic-sparkles" style="color:var(--brand-2);"></i>
             </div>
             <div class="dash-empty-title">Unlock your AI arsenal</div>
             <p class="dash-empty-desc">Interview prep, ATS scoring, follow-ups & more</p>
@@ -1033,15 +1033,15 @@
           // Header
           rHtml += `<h2 style="font-size: 1.5rem; font-weight: 800; color: #fff; margin-bottom: 4px;">${escHtml(data.full_name || 'Candidate Name')}</h2>`;
           if (data.target_role) {
-            rHtml += `<div style="font-size: 1rem; color: var(--primary); font-weight: 600; margin-bottom: 12px;">${escHtml(data.target_role)}</div>`;
+            rHtml += `<div style="font-size: 1rem; color: var(--brand); font-weight: 600; margin-bottom: 12px;">${escHtml(data.target_role)}</div>`;
           }
           
           // Contact info
           let contactItems = [];
-          if (data.email) contactItems.push(`<i class="fas fa-envelope" style="color:var(--text-muted); margin-right:4px;"></i>${escHtml(data.email)}`);
-          if (data.phone) contactItems.push(`<i class="fas fa-phone" style="color:var(--text-muted); margin-right:4px;"></i>${escHtml(data.phone)}`);
-          if (data.location) contactItems.push(`<i class="fas fa-map-marker-alt" style="color:var(--text-muted); margin-right:4px;"></i>${escHtml(data.location)}`);
-          if (data.linkedin) contactItems.push(`<i class="fab fa-linkedin" style="color:var(--text-muted); margin-right:4px;"></i>${escHtml(data.linkedin)}`);
+          if (data.email) contactItems.push(`<i class="fas fa-envelope" style="color:var(--text-3); margin-right:4px;"></i>${escHtml(data.email)}`);
+          if (data.phone) contactItems.push(`<i class="fas fa-phone" style="color:var(--text-3); margin-right:4px;"></i>${escHtml(data.phone)}`);
+          if (data.location) contactItems.push(`<i class="fas fa-map-marker-alt" style="color:var(--text-3); margin-right:4px;"></i>${escHtml(data.location)}`);
+          if (data.linkedin) contactItems.push(`<i class="fab fa-linkedin" style="color:var(--text-3); margin-right:4px;"></i>${escHtml(data.linkedin)}`);
           
           if (contactItems.length > 0) {
             rHtml += `<div style="display:flex; flex-wrap:wrap; gap:16px; font-size:0.8rem; color:#94a3b8; margin-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 16px;">
@@ -1063,7 +1063,7 @@
               rHtml += `<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">`;
               rHtml += `<div>
                   <strong style="font-size: 0.95rem; color: #fff; display: block;">${escHtml(exp.title || '')}</strong>
-                  <span style="font-size: 0.85rem; color: var(--primary); font-weight: 600;">${escHtml(exp.company || '')}</span>
+                  <span style="font-size: 0.85rem; color: var(--brand); font-weight: 600;">${escHtml(exp.company || '')}</span>
               </div>`;
               rHtml += `<div style="font-size: 0.8rem; color: #94a3b8; font-family: 'JetBrains Mono', monospace;">${escHtml(exp.dates || '')}</div>`;
               rHtml += `</div>`;
@@ -1146,7 +1146,7 @@
           }
         }
       } else if (key !== 'app') {
-        contentHtml = `<div class="modal-result-text" style="color:var(--text-muted);font-style:italic;text-align:center;padding:20px 0;">
+        contentHtml = `<div class="modal-result-text" style="color:var(--text-3);font-style:italic;text-align:center;padding:20px 0;">
           No content preview available.
         </div>`;
       }

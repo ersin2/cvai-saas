@@ -21,11 +21,11 @@
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
         rel="stylesheet">
     <!-- Global Design System (canonical tokens; local :root removed in Phase 1) -->
-    <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}?v=3">
+    <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}?v=4">
     <style>
         * { box-sizing: border-box; }
         body {
-            background-color: var(--dark-bg);
+            background-color: var(--bg);
             font-family: 'Outfit', sans-serif;
             color: #e2e8f0;
             min-height: 100vh;
@@ -47,7 +47,7 @@
         }
         .logo-text {
             font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 1.4rem;
-            background: linear-gradient(90deg, #fff, var(--primary));
+            background: linear-gradient(90deg, #fff, var(--brand));
             -webkit-background-clip: text; background-clip: text;
             -webkit-text-fill-color: transparent; text-decoration: none;
         }
@@ -63,13 +63,13 @@
         }
         .pricing-hero .eyebrow {
             font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
-            letter-spacing: 3px; text-transform: uppercase; color: var(--primary); margin-bottom: 16px;
+            letter-spacing: 3px; text-transform: uppercase; color: var(--brand); margin-bottom: 16px;
         }
         .pricing-hero h1 {
             font-size: clamp(2.2rem, 5vw, 3.8rem); font-weight: 800; line-height: 1.1; margin-bottom: 16px;
         }
         .pricing-hero h1 span {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background: linear-gradient(135deg, var(--brand), var(--brand-2));
             -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
         }
         .pricing-hero p { color: #94a3b8; font-size: 1.05rem; max-width: 520px; margin: 0 auto; }
@@ -140,7 +140,7 @@
         /* Label */
         .plan-label { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
             letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px; font-weight: 700; }
-        .plan-label.free  { color: var(--primary); }
+        .plan-label.free  { color: var(--brand); }
         .plan-label.pro   { color: var(--gold); }
         .plan-label.elite { color: #a855f7; }
 
@@ -177,7 +177,7 @@
         .btn-plan:disabled, .btn-plan.current {
             opacity: 0.5; cursor: default; transform: none !important;
         }
-        .btn-free  { background: rgba(76,201,240,0.1); color: var(--primary); border: 1.5px solid rgba(76,201,240,0.3); }
+        .btn-free  { background: rgba(76,201,240,0.1); color: var(--brand); border: 1.5px solid rgba(76,201,240,0.3); }
         .btn-free:hover:not(:disabled) { background: rgba(76,201,240,0.18); }
         .btn-pro   { background: linear-gradient(135deg,#f59e0b,#fbbf24); color: #0a0e17;
             box-shadow: 0 8px 24px rgba(245,158,11,0.35); }
@@ -192,7 +192,7 @@
 
         /* Note + Hamburger */
         .pricing-note { text-align: center; color: #8b98ac; font-size: 0.82rem; padding-bottom: 40px; }
-        .pricing-note a { color: var(--primary); text-decoration: none; }
+        .pricing-note a { color: var(--brand); text-decoration: none; }
         .hamburger-btn { display: none; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
         @media (max-width: 768px) {
             .nav-links-desktop { display: none !important; }
@@ -216,13 +216,13 @@
             font-size: 1rem; font-weight: 600; padding: 13px 0;
             border-bottom: 1px solid rgba(255,255,255,0.05);
         }
-        .drawer-link:hover { color: var(--primary); }
+        .drawer-link:hover { color: var(--brand); }
 
         /* Accessible keyboard focus */
         a:focus-visible,
         button:focus-visible,
         .btn-plan:focus-visible {
-            outline: 2px solid var(--primary);
+            outline: 2px solid var(--brand);
             outline-offset: 3px;
         }
     </style>
@@ -234,7 +234,7 @@
     <div class="mobile-backdrop" id="mobileBackdrop" onclick="toggleMobileNav()"></div>
     <div class="mobile-drawer" id="mobileDrawer">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <span class="logo-text">CV<span style="color:var(--primary);">AI</span></span>
+            <span class="logo-text">CV<span style="color:var(--brand);">AI</span></span>
             <button onclick="toggleMobileNav()" aria-label="Close menu" style="background:none;border:none;color:#94a3b8;font-size:1.4rem;cursor:pointer;">
                 <i class="fas fa-times"></i>
             </button>
@@ -245,9 +245,9 @@
         <a href="{% url 'tools' %}"     class="drawer-link"><i class="fas fa-wand-magic-sparkles me-2"></i>AI Tools</a>
         <a href="{% url 'tracker' %}"   class="drawer-link"><i class="fas fa-briefcase me-2"></i>Tracker</a>
         <a href="{% url 'history' %}"   class="drawer-link"><i class="fas fa-clock-rotate-left me-2"></i>History</a>
-        <a href="{% url 'pricing' %}"   class="drawer-link" style="color:var(--primary);"><i class="fas fa-tags me-2"></i>Pricing</a>
+        <a href="{% url 'pricing' %}"   class="drawer-link" style="color:var(--brand);"><i class="fas fa-tags me-2"></i>Pricing</a>
         <a href="{% url 'profile' %}"   class="drawer-link"><i class="fas fa-user me-2"></i>Profile</a>
-        <a href="{% url 'logout' %}"    class="drawer-link" style="color:var(--secondary);"><i class="fas fa-sign-out-alt me-2"></i>Logout</a>
+        <a href="{% url 'logout' %}"    class="drawer-link" style="color:var(--brand-2);"><i class="fas fa-sign-out-alt me-2"></i>Logout</a>
         {% else %}
         <a href="{% url 'login' %}"    class="drawer-link">Login</a>
         <a href="{% url 'register' %}" class="drawer-link">Sign Up</a>
@@ -256,7 +256,7 @@
 
     <!-- NAVBAR -->
     <nav class="navbar-custom">
-        <a href="{% url 'landing' %}" class="logo-text">CV<span style="-webkit-text-fill-color:var(--primary);">AI</span></a>
+        <a href="{% url 'landing' %}" class="logo-text">CV<span style="-webkit-text-fill-color:var(--brand);">AI</span></a>
         <div class="d-flex align-items-center gap-2 nav-links-desktop">
             {% if user.is_authenticated %}
             <a href="{% url 'home' %}"      class="nav-link-item">Studio</a>
@@ -264,7 +264,7 @@
             <a href="{% url 'tools' %}"     class="nav-link-item">AI Tools</a>
             <a href="{% url 'tracker' %}"   class="nav-link-item">Tracker</a>
             <a href="{% url 'history' %}"   class="nav-link-item">History</a>
-            <a href="{% url 'pricing' %}"   class="nav-link-item" style="color:var(--primary);">Pricing</a>
+            <a href="{% url 'pricing' %}"   class="nav-link-item" style="color:var(--brand);">Pricing</a>
             <a href="{% url 'profile' %}"   class="nav-link-item"><i class="fas fa-user-circle me-1"></i>{{ user.username }}</a>
             {% else %}
             <a href="{% url 'login' %}"    class="nav-link-item">Login</a>
