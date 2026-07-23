@@ -33,7 +33,7 @@
             background: rgba(14, 18, 32, 0.92);
             backdrop-filter: blur(24px);
             border: 1px solid var(--border);
-            border-radius: var(--radius-xl);
+            border-radius: var(--r-xl);
             box-shadow: 0 32px 80px -12px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04);
             padding: 44px 40px 40px;
             position: relative;
@@ -44,7 +44,7 @@
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0; height: 2px;
-            background: linear-gradient(90deg, var(--secondary), var(--primary), var(--secondary));
+            background: linear-gradient(90deg, var(--brand-2), var(--brand), var(--brand-2));
             background-size: 200% 100%;
             animation: shimmer 3s linear infinite;
         }
@@ -65,16 +65,16 @@
 
         .auth-subtitle {
             text-align: center;
-            color: var(--text-muted);
+            color: var(--text-3);
             font-size: 0.88rem;
             margin-bottom: 28px;
         }
 
         /* Social proof */
         .social-proof {
-            background: var(--primary-dim);
+            background: var(--brand-dim);
             border: 1px solid rgba(76, 201, 240, 0.15);
-            border-radius: var(--radius-md);
+            border-radius: var(--r-lg);
             padding: 14px 20px;
             text-align: center;
             margin-bottom: 28px;
@@ -84,13 +84,13 @@
             font-family: var(--font-mono);
             font-size: 1.4rem;
             font-weight: 800;
-            color: var(--primary);
+            color: var(--brand);
             line-height: 1;
         }
 
         .social-proof-text {
             font-size: 0.8rem;
-            color: var(--text-muted);
+            color: var(--text-3);
             font-weight: 600;
             margin-top: 3px;
         }
@@ -100,13 +100,13 @@
             width: 100%;
             padding: 15px;
             border: none;
-            border-radius: var(--radius-md);
-            background: linear-gradient(135deg, #4361ee, var(--secondary));
+            border-radius: var(--r-lg);
+            background: linear-gradient(135deg, #4361ee, var(--brand-2));
             color: white;
             font-weight: 700;
             font-size: 1rem;
             cursor: pointer;
-            transition: transform var(--transition-fast), box-shadow var(--transition-fast), opacity var(--transition-fast);
+            transition: transform var(--t-fast), box-shadow var(--t-fast), opacity var(--t-fast);
             letter-spacing: 0.3px;
         }
 
@@ -140,7 +140,7 @@
             font-weight: 600;
         }
 
-        .trust-item i { color: var(--primary); font-size: 0.75rem; }
+        .trust-item i { color: var(--brand); font-size: 0.75rem; }
 
         /* Back link */
         .back-link {
@@ -150,16 +150,16 @@
         }
 
         .back-link a {
-            color: var(--text-muted);
+            color: var(--text-3);
             text-decoration: none;
             font-size: 0.84rem;
-            transition: color var(--transition-fast);
+            transition: color var(--t-fast);
         }
 
-        .back-link a:hover { color: var(--primary); }
+        .back-link a:hover { color: var(--brand); }
 
         @media (max-width: 480px) {
-            .auth-card { padding: 32px 24px 28px; border-radius: var(--radius-lg); }
+            .auth-card { padding: 32px 24px 28px; border-radius: var(--r-xl); }
         }
     </style>
 </head>
@@ -170,8 +170,8 @@
         <div class="auth-card">
             <!-- LOGO -->
             <a href="{% url 'landing' %}" class="auth-logo">
-                <i class="fas fa-cube" style="-webkit-text-fill-color: var(--primary); font-size: 1.4rem;"></i>
-                <span style="color: white;">CV</span><span style="color: var(--secondary);">AI</span>
+                <i class="fas fa-cube" style="-webkit-text-fill-color: var(--brand); font-size: 1.4rem;"></i>
+                <span style="color: white;">CV</span><span style="color: var(--brand-2);">AI</span>
             </a>
             <p class="auth-subtitle">Welcome back — sign in to continue</p>
 
@@ -217,9 +217,9 @@
 
             <!-- REGISTER LINK -->
             <div class="text-center mt-4" style="font-size: 0.88rem;">
-                <span style="color: var(--text-muted);">Don't have an account?</span>
+                <span style="color: var(--text-3);">Don't have an account?</span>
                 <a href="{% url 'register' %}" class="fw-bold text-decoration-none ms-1"
-                   style="color: var(--primary);">Sign Up Free</a>
+                   style="color: var(--brand);">Sign Up Free</a>
             </div>
 
             <!-- TRUST BAR -->

@@ -16,7 +16,7 @@
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   <!-- Global Design System -->
-  <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}?v=3">
+  <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}?v=4">
   <!-- Legacy studio_styles.html include removed in Phase 4: its selectors
        (.studio-root, .tpl-executive .cv-*) match nothing in this template. -->
 
@@ -34,15 +34,12 @@
       --input-focus:     rgba(76,201,240,0.30);
       --accent:          var(--brand);
       --accent2:         var(--brand-2);
-      --text-primary:    var(--text-1);
-      --text-muted:      var(--text-3); /* was #64748b — failed WCAG AA on dark bg */
       --radius:          var(--r-md);
-      --radius-sm:       var(--r-sm);
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; overflow: hidden; }
-    body { background: var(--studio-bg); color: var(--text-primary);
+    body { background: var(--studio-bg); color: var(--text-1);
            font-family: 'Inter', system-ui, sans-serif; }
 
     /* ── Navbar ─────────────────────────────────────────────── */
@@ -58,9 +55,9 @@
                    text-decoration: none; letter-spacing: -0.5px; }
     .vs-nav-logo span { color: var(--accent); }
     .vs-nav-spacer { flex: 1; }
-    .vs-nav-link { font-size: 0.8rem; color: var(--text-muted);
+    .vs-nav-link { font-size: 0.8rem; color: var(--text-3);
                    text-decoration: none; transition: color .2s; }
-    .vs-nav-link:hover { color: var(--text-primary); }
+    .vs-nav-link:hover { color: var(--text-1); }
     .vs-nav-badge {
       font-size: 0.72rem; font-weight: 700; padding: 3px 10px;
       border-radius: 99px; border: 1px solid rgba(76,201,240,0.25);
@@ -118,7 +115,7 @@
       border: 1px solid rgba(76,201,240,0.2);
       border-left: none;
       border-radius: 0 8px 8px 0;
-      color: var(--text-muted);
+      color: var(--text-3);
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       font-size: 0.65rem;
@@ -138,8 +135,8 @@
       flex-shrink: 0;
     }
     .vs-left-header h2 { font-size: .85rem; font-weight: 700;
-                          color: var(--text-primary); margin-bottom: 2px; }
-    .vs-left-header p  { font-size: .72rem; color: var(--text-muted); }
+                          color: var(--text-1); margin-bottom: 2px; }
+    .vs-left-header p  { font-size: .72rem; color: var(--text-3); }
     .vs-left-scroll { flex: 1; overflow-y: auto; padding: 0;
                       scrollbar-width: thin;
                       scrollbar-color: rgba(76,201,240,0.2) transparent; }
@@ -149,12 +146,12 @@
     .vs-section-toggle {
       width: 100%; display: flex; align-items: center; gap: 10px;
       padding: 12px 20px; background: none; border: none;
-      color: var(--text-primary); font-size: .82rem; font-weight: 600;
+      color: var(--text-1); font-size: .82rem; font-weight: 600;
       cursor: pointer; text-align: left; transition: background .2s;
     }
     .vs-section-toggle:hover { background: rgba(255,255,255,.03); }
     .vs-section-toggle:hover .toggle-icon { color: var(--accent); }
-    .vs-section-toggle i.toggle-icon { margin-left: auto; color: var(--text-muted);
+    .vs-section-toggle i.toggle-icon { margin-left: auto; color: var(--text-3);
                                         font-size: .75rem;
                                         transition: transform var(--t-base), color var(--t-fast); }
     .vs-section-toggle.open .toggle-icon { transform: rotate(180deg); }
@@ -162,13 +159,13 @@
     .vs-section-body.open { display: block; }
 
     /* ── Form inputs ──────────────────────────────────────────  */
-    .vs-label { font-size: .72rem; font-weight: 600; color: var(--text-muted);
+    .vs-label { font-size: .72rem; font-weight: 600; color: var(--text-3);
                 text-transform: uppercase; letter-spacing: .5px;
                 margin-bottom: 4px; display: block; }
     .vs-input, .vs-textarea, .vs-select {
       width: 100%; background: var(--input-bg);
-      border: 1px solid var(--input-border); border-radius: var(--radius-sm);
-      color: var(--text-primary); font-size: .85rem; padding: 8px 12px;
+      border: 1px solid var(--input-border); border-radius: var(--r-sm);
+      color: var(--text-1); font-size: .85rem; padding: 8px 12px;
       outline: none; transition: border-color var(--t-fast), box-shadow var(--t-fast), background var(--t-fast);
       font-family: inherit;
     }
@@ -197,8 +194,8 @@
     .photo-zone input[type="file"] {
       position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%;
     }
-    .photo-zone-icon { font-size: 1.6rem; color: var(--text-muted); margin-bottom: 6px; }
-    .photo-zone-label { font-size: .78rem; color: var(--text-muted); }
+    .photo-zone-icon { font-size: 1.6rem; color: var(--text-3); margin-bottom: 6px; }
+    .photo-zone-label { font-size: .78rem; color: var(--text-3); }
     .photo-preview {
       width: 64px; height: 64px; border-radius: 50%;
       object-fit: cover; border: 2px solid var(--accent);
@@ -209,7 +206,7 @@
     .slider-wrap { margin-bottom: 14px; }
     .slider-header { display: flex; justify-content: space-between;
                      align-items: center; margin-bottom: 6px; }
-    .slider-name { font-size: .78rem; color: var(--text-muted); }
+    .slider-name { font-size: .78rem; color: var(--text-3); }
     .slider-val  { font-size: .72rem; font-weight: 700; color: var(--accent);
                    font-family: 'JetBrains Mono', monospace; }
     input[type="range"].vs-range {
@@ -266,9 +263,9 @@
       width: 100%; height: 8px; position: absolute; top: 0; left: 0;
     }
     .tpl-card .tpl-info { padding: 6px 8px 7px; }
-    .tpl-card .tpl-name { font-size: .72rem; font-weight: 700; color: var(--text-primary);
+    .tpl-card .tpl-name { font-size: .72rem; font-weight: 700; color: var(--text-1);
                            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .tpl-card .tpl-cat  { font-size: .65rem; color: var(--text-muted); margin-top: 1px; }
+    .tpl-card .tpl-cat  { font-size: .65rem; color: var(--text-3); margin-top: 1px; }
     .tpl-card .tpl-check {
       position: absolute; top: 6px; right: 6px;
       width: 22px; height: 22px; border-radius: 50%;
@@ -290,7 +287,7 @@
 
     /* ── AI Fill button ──────────────────────────────────── */
     .btn-ai-fill {
-      width: 100%; padding: 10px; border-radius: var(--radius-sm); border: none;
+      width: 100%; padding: 10px; border-radius: var(--r-sm); border: none;
       background: var(--grad-cta);
       color: #fff; font-weight: 700; font-size: .85rem; cursor: pointer;
       transition: opacity .2s, transform .15s; margin-top: 6px;
@@ -312,7 +309,7 @@
       display: flex; align-items: center; padding: 0 20px; gap: 12px;
     }
     .vs-preview-label { font-size: .72rem; font-weight: 700;
-                         color: var(--text-muted); text-transform: uppercase;
+                         color: var(--text-3); text-transform: uppercase;
                          letter-spacing: 1px; }
     .vs-preview-spinner {
       width: 16px; height: 16px; border-radius: 50%;
@@ -321,7 +318,7 @@
       animation: spin .7s linear infinite; display: none;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .vs-preview-status { font-size: .72rem; color: var(--text-muted); }
+    .vs-preview-status { font-size: .72rem; color: var(--text-3); }
     .vs-preview-spacer { flex: 1; }
 
     /* PDF preview — two stacked iframes we crossfade between (no white flash) */
@@ -335,7 +332,7 @@
     .vs-preview-placeholder {
       flex: 1; display: flex; flex-direction: column;
       align-items: center; justify-content: center; gap: 16px;
-      color: var(--text-muted);
+      color: var(--text-3);
     }
     .vs-preview-placeholder i { font-size: 3rem; opacity: .3; }
     .vs-preview-placeholder p { font-size: .85rem; }
@@ -362,16 +359,16 @@
     .ring-i { position: absolute; inset: 12px; border-radius: 50%;
                border: 2px solid rgba(247,37,133,.12); border-top-color: var(--accent2);
                animation: spin .65s linear infinite reverse; }
-    .vs-loading-title { font-weight: 700; color: var(--text-primary);
+    .vs-loading-title { font-weight: 700; color: var(--text-1);
                          margin-bottom: 6px; font-size: 1rem; }
-    .vs-loading-sub   { color: var(--text-muted); font-size: .78rem; }
+    .vs-loading-sub   { color: var(--text-3); font-size: .78rem; }
 
     /* ── Toast ───────────────────────────────────────────── */
     .vs-toast {
       position: fixed; bottom: 24px; right: 24px; z-index: 9999;
       background: rgba(13,17,32,.96); border: 1px solid rgba(76,201,240,.2);
       border-radius: var(--radius); padding: 12px 20px;
-      font-size: .82rem; color: var(--text-primary);
+      font-size: .82rem; color: var(--text-1);
       box-shadow: 0 12px 40px rgba(0,0,0,.5);
       transform: translateY(120%); transition: transform .3s cubic-bezier(.34,1.56,.64,1);
       display: flex; align-items: center; gap: 8px;
@@ -386,7 +383,7 @@
       padding: 2px 9px; border-radius: 99px; vertical-align: middle;
       letter-spacing: .02em; opacity: 0; transition: opacity .2s ease;
     }
-    .autosave-ind.saving { opacity: 1; color: var(--text-muted); background: rgba(255,255,255,.06); }
+    .autosave-ind.saving { opacity: 1; color: var(--text-3); background: rgba(255,255,255,.06); }
     .autosave-ind.saved  { opacity: 1; color: #22c55e; background: rgba(34,197,94,.12); }
     .autosave-ind.error  { opacity: 1; color: #f87171; background: rgba(248,113,113,.12); }
 
@@ -402,13 +399,13 @@
       border-radius: 20px; padding: 26px; max-width: 380px; width: 100%;
       text-align: center; box-shadow: 0 30px 70px rgba(0,0,0,.6);
     }
-    .vs-confirm-msg { color: var(--text-primary); font-size: .95rem; line-height: 1.5; margin-bottom: 22px; }
+    .vs-confirm-msg { color: var(--text-1); font-size: .95rem; line-height: 1.5; margin-bottom: 22px; }
     .vs-confirm-actions { display: flex; gap: 10px; justify-content: center; }
     .vs-confirm-actions button {
       min-width: 112px; padding: 10px 18px; border-radius: 12px;
       font-weight: 700; font-size: .85rem; cursor: pointer; border: none;
     }
-    .vs-btn-ghost { background: rgba(255,255,255,.06); color: var(--text-secondary); }
+    .vs-btn-ghost { background: rgba(255,255,255,.06); color: var(--text-2); }
     .vs-btn-ghost:hover { background: rgba(255,255,255,.1); }
     .vs-btn-danger { background: linear-gradient(135deg,#ef4444,#f72585); color: #fff; }
     .vs-btn-danger:hover { filter: brightness(1.08); }
@@ -475,18 +472,18 @@
       font-size: .82rem; color: #fff;
     }
     .ai-magic-header h3 {
-      font-size: .82rem; font-weight: 800; color: var(--text-primary);
+      font-size: .82rem; font-weight: 800; color: var(--text-1);
       margin: 0; letter-spacing: -.2px;
     }
     .ai-magic-header p {
-      font-size: .68rem; color: var(--text-muted); margin: 0;
+      font-size: .68rem; color: var(--text-3); margin: 0;
     }
     .ai-magic-textarea {
       width: 100%; min-height: 90px; max-height: 200px;
       background: rgba(0,0,0,.25);
       border: 1px solid rgba(76,201,240,.15);
-      border-radius: var(--radius-sm);
-      color: var(--text-primary); font-size: .82rem;
+      border-radius: var(--r-sm);
+      color: var(--text-1); font-size: .82rem;
       padding: 9px 12px; line-height: 1.55;
       resize: vertical; font-family: inherit; outline: none;
       transition: border-color .2s, box-shadow .2s;
@@ -495,26 +492,26 @@
       border-color: var(--accent);
       box-shadow: 0 0 0 3px rgba(76,201,240,.18);
     }
-    .ai-magic-textarea::placeholder { color: var(--text-muted); }
+    .ai-magic-textarea::placeholder { color: var(--text-3); }
     /* PDF upload row inside the AI Magic Box */
     .ai-pdf-upload-row {
       margin-bottom: 8px;
     }
     .ai-pdf-label {
       display: flex; align-items: center; gap: 6px;
-      font-size: .75rem; font-weight: 600; color: var(--text-secondary);
+      font-size: .75rem; font-weight: 600; color: var(--text-2);
       margin-bottom: 4px; cursor: default;
     }
     .ai-pdf-hint {
-      font-weight: 400; color: var(--text-muted); font-size: .7rem;
+      font-weight: 400; color: var(--text-3); font-size: .7rem;
     }
     .ai-pdf-custom-upload {
       display: flex; align-items: center; gap: 10px;
       width: 100%;
       background: rgba(0,0,0,.3);
       border: 1px dashed rgba(248,113,113,.4);
-      border-radius: var(--radius-sm);
-      color: var(--text-secondary);
+      border-radius: var(--r-sm);
+      color: var(--text-2);
       font-size: .78rem;
       padding: 10px 14px;
       cursor: pointer;
@@ -541,8 +538,8 @@
       -webkit-appearance: none;
       background: rgba(0,0,0,.3);
       border: 1px solid rgba(255,255,255,.15);
-      border-radius: var(--radius-sm);
-      color: var(--text-primary);
+      border-radius: var(--r-sm);
+      color: var(--text-1);
       font-size: .78rem;
       padding: 8px 30px 8px 12px;
       outline: none; cursor: pointer;
@@ -562,12 +559,12 @@
       top: 50%;
       transform: translateY(-50%);
       font-size: 0.65rem;
-      color: var(--text-muted);
+      color: var(--text-3);
       pointer-events: none;
     }
     .btn-ai-magic {
       flex: 1; padding: 9px 14px;
-      border: none; border-radius: var(--radius-sm);
+      border: none; border-radius: var(--r-sm);
       background: var(--grad-cta);
       color: #fff; font-weight: 800; font-size: .82rem;
       cursor: pointer; display: flex; align-items: center;
@@ -680,7 +677,7 @@
       display: inline-flex; align-items: center; gap: 6px;
       padding: 8px 16px;
       border: 1px solid rgba(248,113,113,.3);
-      border-radius: var(--radius-sm);
+      border-radius: var(--r-sm);
       background: rgba(248,113,113,.08);
       color: #f87171;
       font-size: .78rem; font-weight: 700; cursor: pointer;
@@ -703,7 +700,7 @@
     }
     .color-field label {
       font-size: .68rem; font-weight: 700;
-      color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px;
+      color: var(--text-3); text-transform: uppercase; letter-spacing: .5px;
     }
     .color-row {
       display: flex; align-items: center; gap: 8px;
@@ -717,13 +714,13 @@
     .color-row input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; border-radius: 6px; }
     .color-row input[type="color"]::-webkit-color-swatch         { border-radius: 6px; border: none; }
     .color-hex-label {
-      font-size: .7rem; color: var(--text-muted); font-family: 'Courier New', monospace;
+      font-size: .7rem; color: var(--text-3); font-family: 'Courier New', monospace;
     }
     .font-select {
       width: 100%; background: var(--input-bg);
       border: 1px solid rgba(255,255,255,.10);
-      border-radius: var(--radius-sm);
-      color: var(--text-primary); font-size: .82rem;
+      border-radius: var(--r-sm);
+      color: var(--text-1); font-size: .82rem;
       padding: 8px 10px; outline: none; cursor: pointer;
       transition: border-color .2s;
     }
@@ -740,7 +737,7 @@
       padding: 4px 12px; border-radius: 99px;
       border: 1px solid rgba(255,255,255,.12);
       background: rgba(255,255,255,.04);
-      color: var(--text-muted); font-size: .72rem; font-weight: 700;
+      color: var(--text-3); font-size: .72rem; font-weight: 700;
       cursor: pointer; transition: all .2s; white-space: nowrap;
       letter-spacing: .3px;
     }
@@ -762,7 +759,7 @@
       padding: 3px 10px; border-radius: 99px;
       border: 1px dashed rgba(255,255,255,.14);
       background: rgba(255,255,255,.03);
-      color: var(--text-secondary); font-size: .72rem; font-weight: 600;
+      color: var(--text-2); font-size: .72rem; font-weight: 600;
       cursor: pointer; transition: all .18s;
     }
     .skill-preset-pill:hover {
@@ -781,7 +778,7 @@
     .btn-add-skill {
       flex-shrink: 0; padding: 8px 14px;
       border: 1px solid var(--accent);
-      border-radius: var(--radius-sm);
+      border-radius: var(--r-sm);
       background: rgba(76,201,240,.08);
       color: var(--accent); font-weight: 800; font-size: .82rem;
       cursor: pointer; white-space: nowrap;
@@ -791,7 +788,7 @@
 
     /* Bulk import toggle */
     .skill-bulk-toggle {
-      font-size: .7rem; color: var(--text-muted);
+      font-size: .7rem; color: var(--text-3);
       cursor: pointer; background: none; border: none;
       padding: 0; display: flex; align-items: center; gap: 4px;
       transition: color .2s;
@@ -805,8 +802,8 @@
       width: 100%; min-height: 56px;
       background: var(--input-bg);
       border: 1px dashed rgba(76,201,240,.3);
-      border-radius: var(--radius-sm);
-      color: var(--text-primary); font-size: .82rem;
+      border-radius: var(--r-sm);
+      color: var(--text-1); font-size: .82rem;
       padding: 8px 12px; resize: vertical;
       font-family: inherit; outline: none;
       transition: border-color .2s;
@@ -815,7 +812,7 @@
     .btn-bulk-add {
       align-self: flex-end; padding: 6px 14px;
       border: 1px solid rgba(76,201,240,.3);
-      border-radius: var(--radius-sm);
+      border-radius: var(--r-sm);
       background: rgba(76,201,240,.07);
       color: var(--accent); font-size: .78rem; font-weight: 700;
       cursor: pointer; transition: background .2s;
@@ -826,7 +823,7 @@
     .skill-level-wrap { display: flex; flex-direction: column; gap: 6px; }
     .skill-level-header { display: flex; justify-content: space-between; align-items: center; }
     .skill-level-label {
-      font-size: .7rem; font-weight: 700; color: var(--text-muted);
+      font-size: .7rem; font-weight: 700; color: var(--text-3);
       text-transform: uppercase; letter-spacing: .5px;
     }
     .skill-level-badge {
@@ -867,7 +864,7 @@
       display: inline-flex; align-items: center; gap: 5px;
       padding: 4px 10px 4px 12px;
       border-radius: 99px;
-      font-size: .75rem; font-weight: 600; color: var(--text-primary);
+      font-size: .75rem; font-weight: 600; color: var(--text-1);
       animation: chipIn .2s ease;
       /* default = tech/cyan */
       background: rgba(76,201,240,.1); border: 1px solid rgba(76,201,240,.25);
@@ -888,7 +885,7 @@
       transition: background .2s; padding: 0; line-height: 1;
     }
     .skill-chip .chip-del:hover { background: rgba(248,113,113,.4); }
-    .skill-empty-hint { font-size: .72rem; color: var(--text-muted); font-style: italic; align-self: center; }
+    .skill-empty-hint { font-size: .72rem; color: var(--text-3); font-style: italic; align-self: center; }
   </style>
 </head>
 
@@ -1041,7 +1038,7 @@
                     nameEl.style.fontWeight = '600';
                   } else {
                     nameEl.textContent = 'Click to browse or drag PDF here';
-                    nameEl.style.color = 'var(--text-secondary)';
+                    nameEl.style.color = 'var(--text-2)';
                     nameEl.style.fontWeight = 'normal';
                   }
                 });
@@ -1054,7 +1051,7 @@
             <button type="button" class="vs-section-toggle open" data-target="sec-templates">
               <i class="fas fa-palette" style="color:var(--accent);"></i>
               Template Gallery
-              <span style="font-size:.65rem;font-weight:400;color:var(--text-muted);margin-left:4px;">(10 designs)</span>
+              <span style="font-size:.65rem;font-weight:400;color:var(--text-3);margin-left:4px;">(10 designs)</span>
               <i class="fas fa-chevron-down toggle-icon"></i>
             </button>
             <div class="vs-section-body open" id="sec-templates">
@@ -1327,7 +1324,7 @@
               <i class="fas fa-chevron-down toggle-icon"></i>
             </button>
             <div class="vs-section-body" id="sec-exp">
-              <p style="font-size:.75rem;color:var(--text-muted);margin-bottom:10px;">
+              <p style="font-size:.75rem;color:var(--text-3);margin-bottom:10px;">
                 <i class="fas fa-circle-info me-1" style="color:var(--accent);"></i>
                 Use lines starting with <code style="color:var(--accent);">-</code> for bullet points.
                 Short lines become job titles/meta rows.
@@ -1360,7 +1357,7 @@
               <i class="fas fa-chevron-down toggle-icon"></i>
             </button>
             <div class="vs-section-body" id="sec-projects">
-              <p style="font-size:.75rem;color:var(--text-muted);margin-bottom:10px;">
+              <p style="font-size:.75rem;color:var(--text-3);margin-bottom:10px;">
                 <i class="fas fa-circle-info me-1" style="color:var(--accent);"></i>
                 Same format as Experience: bold titles, <code style="color:var(--accent);">-</code> for bullets.
               </p>
@@ -1600,14 +1597,14 @@
             <button type="button" class="vs-section-toggle" data-target="sec-theme">
               <i class="fas fa-palette" style="color:#e879f9;"></i>
               Theme Customization
-              <span style="font-size:.62rem;font-weight:400;color:var(--text-muted);margin-left:4px;">override template colors</span>
+              <span style="font-size:.62rem;font-weight:400;color:var(--text-3);margin-left:4px;">override template colors</span>
               <i class="fas fa-chevron-down toggle-icon"></i>
             </button>
             <div class="vs-section-body" id="sec-theme">
 
               <!-- Theme Presets -->
               <div style="margin-bottom: 12px;">
-                <label style="font-size:.75rem;font-weight:600;color:var(--text-secondary);margin-bottom:8px;display:block;">One-Click Presets</label>
+                <label style="font-size:.75rem;font-weight:600;color:var(--text-2);margin-bottom:8px;display:block;">One-Click Presets</label>
                 <div class="theme-presets-row">
                   <div class="theme-preset-pill" title="Midnight Neon" onclick="applyThemePreset('#4cc9f0', '#060810', '#f72585', this)">
                     <div class="split-bg" style="background: linear-gradient(135deg, #4cc9f0 50%, #060810 50%);"></div>
@@ -1685,7 +1682,7 @@
 
               </div><!-- /.theme-grid -->
 
-              <p style="font-size:.68rem;color:var(--text-muted);">
+              <p style="font-size:.68rem;color:var(--text-3);">
                 <i class="fas fa-circle-info me-1" style="color:var(--accent);"></i>
                 These overrides apply on top of the selected template.
                 Reset to original by clicking <strong>Clear</strong>.
