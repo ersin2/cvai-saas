@@ -59,6 +59,18 @@
         .kanban-col { background: rgba(0,0,0,0.2); border-radius: var(--radius-md); border: 1px solid var(--border); width: 300px; flex-shrink: 0; display: flex; flex-direction: column; }
         .kanban-col-header { padding: 12px 16px; font-weight: 700; font-size: 0.85rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; text-transform: uppercase; letter-spacing: 0.5px; }
         .kanban-dropzone { flex: 1; padding: 12px; min-height: 300px; display: flex; flex-direction: column; gap: 12px; }
+        /* CSS-only empty-column hint — no DOM node, so SortableJS ignores it */
+        .kanban-dropzone:not(:has(.kanban-card))::after {
+            content: 'No applications here yet — drag a card or add one';
+            display: block;
+            text-align: center;
+            padding: 28px 14px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            border: 1px dashed var(--border);
+            border-radius: var(--r-sm);
+            opacity: 0.7;
+        }
         
         .kanban-card { background: var(--surface-2); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--radius-sm); padding: 16px; cursor: grab; transition: transform 0.2s, box-shadow 0.2s; position: relative; }
         .kanban-card:active { cursor: grabbing; }
@@ -66,7 +78,7 @@
         .kanban-card.sortable-ghost { opacity: 0.4; border: 1px dashed var(--text-muted); background: transparent; }
         
         /* ── OFFCANVAS DRAWER ── */
-        .app-drawer { position: fixed; top: 0; right: -450px; width: 450px; height: 100vh; background: rgba(13,17,32,0.98); backdrop-filter: blur(12px); border-left: 1px solid rgba(76,201,240,0.15); z-index: 1050; transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: -10px 0 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; }
+        .app-drawer { position: fixed; top: 0; right: -450px; width: 450px; height: 100vh; background: var(--surface-1); border-left: 1px solid rgba(76,201,240,0.15); z-index: 1050; transition: right var(--t-slide); box-shadow: var(--shadow-3); display: flex; flex-direction: column; }
         .app-drawer.open { right: 0; }
         .app-drawer-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1040; display: none; backdrop-filter: blur(2px); }
         .app-drawer-overlay.open { display: block; }
@@ -186,7 +198,7 @@
             background-color: var(--surface-2);
             color: #fff;
             border: 1px solid var(--border);
-            border-radius: 20px !important;
+            border-radius: var(--r-pill) !important;
             padding: 6px 30px 6px 14px !important;
             font-weight: 600;
             font-size: 0.75rem !important;
@@ -209,7 +221,7 @@
             border: 1px solid var(--border);
             color: var(--text-secondary);
             padding: 5px 10px;
-            border-radius: 7px;
+            border-radius: var(--r-sm);
             font-size: 0.75rem;
             cursor: pointer;
             transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
@@ -231,7 +243,7 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            background: linear-gradient(135deg, #4361ee, var(--secondary));
+            background: var(--grad-cta);
             border: none;
             color: white;
             padding: 11px 24px;
@@ -349,7 +361,8 @@
         </div>
         {% endif %}
 
-        <!-- CONTROLS -->
+        <!-- CONTROLS (hidden when there is nothing to view) -->
+        {% if applications %}
         <div class="kanban-controls anim-fade-up anim-delay-2">
             <div class="view-toggles">
                 <button class="view-btn active" id="btnTableView" onclick="switchView('table')"><i class="fas fa-list me-2"></i>Table</button>
@@ -359,6 +372,7 @@
                 <span style="font-size: 0.8rem; color: var(--text-muted);"><i class="fas fa-info-circle me-1"></i>Switch to Board to drag cards between stages</span>
             </div>
         </div>
+        {% endif %}
 
         <!-- TABLE -->
         <div class="glass-card anim-fade-up anim-delay-2" id="tableView">
@@ -440,9 +454,23 @@
                     </tbody>
                 </table>
             </div>
+            {% else %}
+            <div class="empty-state-v2">
+                <div class="empty-icon-box" style="background: var(--primary-dim);">
+                    <i class="fas fa-inbox" style="color: var(--primary);"></i>
+                </div>
+                <div class="empty-title">No applications yet</div>
+                <p class="empty-desc">Click "Add Application" to start tracking your job search.</p>
+                <button class="btn-add" data-bs-toggle="modal" data-bs-target="#addModal">
+                    <i class="fas fa-plus"></i>Add Application
+                </button>
+            </div>
+            {% endif %}
+        </div>
 
-        <!-- KANBAN BOARD -->
-        <div class="kanban-board anim-fade-up anim-delay-2" id="kanbanBoard">
+        <!-- KANBAN BOARD (sibling of the table card — hidden until Board view) -->
+        {% if applications %}
+        <div class="kanban-board anim-fade-up" id="kanbanBoard">
             {% for col_status, col_label, col_color in kanban_cols %}
             <div class="kanban-col">
                 <div class="kanban-col-header" style="border-top: 3px solid {{ col_color }};">{{ col_label }}</div>
@@ -463,23 +491,10 @@
             </div>
             {% endfor %}
         </div>
-
-            {% else %}
-            <div class="empty-state-v2">
-                <div class="empty-icon-box" style="background: var(--primary-dim);">
-                    <i class="fas fa-inbox" style="color: var(--primary);"></i>
-                </div>
-                <div class="empty-title">No applications yet</div>
-                <p class="empty-desc">Click "Add Application" to start tracking your job search.</p>
-                <button class="btn-add" data-bs-toggle="modal" data-bs-target="#addModal">
-                    <i class="fas fa-plus"></i>Add Application
-                </button>
-            </div>
-            {% endif %}
-        </div>
+        {% endif %}
     </div>
 
-    
+
     <!-- OFFCANVAS DRAWER -->
     <div class="app-drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
     <div class="app-drawer" id="appDrawer">
@@ -551,7 +566,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Status</label>
-                                <select name="status" class="form-select status-select" data-current="{{ app.status }}">
+                                <select name="status" class="form-select status-select">
                                     <option value="saved" style="background: #1e293b; color: white;">📌 Saved</option>
                                     <option value="applied" style="background: #1e293b; color: white;">📤 Applied</option>
                                     <option value="interview" style="background: #1e293b; color: white;">🎤 Interview</option>
@@ -584,16 +599,15 @@
     <script>
         // VIEWS
         function switchView(view) {
+            const table = document.getElementById('tableView');
+            const board = document.getElementById('kanbanBoard');
+            if (!board) return;  // no applications yet — nothing to switch
+
             document.getElementById('btnTableView').classList.toggle('active', view === 'table');
             document.getElementById('btnBoardView').classList.toggle('active', view === 'board');
-            
-            if (view === 'table') {
-                document.getElementById('tableView').style.display = 'block';
-                document.getElementById('kanbanBoard').style.display = 'none';
-            } else {
-                document.getElementById('tableView').style.display = 'none';
-                document.getElementById('kanbanBoard').style.display = 'flex';
-            }
+
+            table.style.display = view === 'table' ? 'block' : 'none';
+            board.style.display = view === 'table' ? 'none' : 'flex';
         }
 
         // KANBAN SORTABLE
@@ -638,6 +652,15 @@
         });
 
         
+        // Keyboard access for the stat filter cards (divs with onclick)
+        document.querySelectorAll('.tracker-stat').forEach(el => {
+            el.tabIndex = 0;
+            el.setAttribute('role', 'button');
+            el.addEventListener('keydown', e => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); }
+            });
+        });
+
         // FILTER LOGIC
         function filterTracker(status) {
             document.querySelectorAll('.tracker-stat').forEach(card => card.classList.remove('active-filter'));
@@ -720,7 +743,25 @@
                             hoverOffset: 4
                         }]
                     },
-                    options: { maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#94a3b8' } } }, cutout: '75%' }
+                    options: {
+                        maintainAspectRatio: false,
+                        cutout: '75%',
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: { color: '#94a3b8', font: { family: "'Outfit', sans-serif", size: 11, weight: '600' }, usePointStyle: true, pointStyleWidth: 9, padding: 12 }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(13, 19, 34, 0.96)',
+                                borderColor: 'rgba(255,255,255,0.08)',
+                                borderWidth: 1,
+                                titleColor: '#f1f5f9',
+                                bodyColor: '#94a3b8',
+                                padding: 10,
+                                cornerRadius: 8,
+                            }
+                        }
+                    }
                 });
             }
         });
@@ -852,10 +893,5 @@
             });
         });
 
-        function toggleMobileNav() {
-            // handled by base_app.html — kept for backward compat
-            document.getElementById('mobileDrawer').classList.toggle('open');
-            document.getElementById('mobileBackdrop').classList.toggle('open');
-        }
     </script>
 {% endblock content %}

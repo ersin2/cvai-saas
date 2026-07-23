@@ -20,15 +20,9 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
         rel="stylesheet">
+    <!-- Global Design System (canonical tokens; local :root removed in Phase 1) -->
+    <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}?v=3">
     <style>
-        :root {
-            --primary:   #4cc9f0;
-            --secondary: #f72585;
-            --accent:    #7c3aed;
-            --gold:      #f59e0b;
-            --dark-bg:   #0a0e17;
-            --border:    rgba(255,255,255,0.08);
-        }
         * { box-sizing: border-box; }
         body {
             background-color: var(--dark-bg);
@@ -43,6 +37,7 @@
 
         /* ── NAVBAR ── */
         .navbar-custom {
+            height: auto; /* guard: global .navbar-custom fixes height at 62px */
             padding: 18px 24px;
             display: flex; justify-content: space-between; align-items: center;
             border-bottom: 1px solid rgba(255,255,255,0.05);
@@ -88,10 +83,10 @@
         /* ── BASE CARD ── */
         .pricing-card {
             background: rgba(16,22,40,0.78); border: 1.5px solid var(--border);
-            border-radius: 28px; padding: 40px 36px 44px;
+            border-radius: var(--r-xl); padding: 40px 36px 44px;
             width: min(340px, 100%); position: relative;
             display: flex; flex-direction: column;
-            transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+            transition: transform var(--t-base), border-color var(--t-base), box-shadow var(--t-base);
             backdrop-filter: blur(14px);
         }
         .pricing-card:hover { transform: translateY(-6px); box-shadow: 0 24px 64px rgba(0,0,0,0.4); }
@@ -99,7 +94,7 @@
         /* Free */
         .card-free { border-color: rgba(76,201,240,0.18); }
         .card-free::before {
-            content: ''; position: absolute; inset: 0; border-radius: 28px;
+            content: ''; position: absolute; inset: 0; border-radius: var(--r-xl);
             background: radial-gradient(ellipse at 50% 0%, rgba(76,201,240,0.06), transparent 60%);
             pointer-events: none;
         }
@@ -114,7 +109,7 @@
             box-shadow: 0 0 0 1px rgba(245,158,11,0.5), 0 28px 80px rgba(245,158,11,0.18);
         }
         .card-pro::before {
-            content: ''; position: absolute; inset: 0; border-radius: 28px;
+            content: ''; position: absolute; inset: 0; border-radius: var(--r-xl);
             background: radial-gradient(ellipse at 50% 0%, rgba(245,158,11,0.08), transparent 60%);
             pointer-events: none;
         }
@@ -128,7 +123,7 @@
             box-shadow: 0 0 0 1px rgba(124,58,237,0.4), 0 28px 80px rgba(124,58,237,0.18);
         }
         .card-elite::before {
-            content: ''; position: absolute; inset: 0; border-radius: 28px;
+            content: ''; position: absolute; inset: 0; border-radius: var(--r-xl);
             background: radial-gradient(ellipse at 50% 0%, rgba(124,58,237,0.08), transparent 60%);
             pointer-events: none;
         }
@@ -168,7 +163,8 @@
         .plan-features li .fi { width: 18px; flex-shrink: 0; margin-top: 2px; }
         .fi-check { color: #10b981; }
         .fi-cross  { color: #374151; }
-        .feat-dim  { opacity: 0.42; }
+        /* 0.6 keeps excluded features readable (AA) while clearly de-emphasized */
+        .feat-dim  { opacity: 0.6; }
 
         /* CTA */
         .btn-plan {
@@ -190,7 +186,7 @@
             box-shadow: 0 8px 24px rgba(124,58,237,0.35); }
         .btn-elite:hover:not(:disabled) { box-shadow: 0 12px 32px rgba(124,58,237,0.5); }
         .btn-downgrade {
-            background: rgba(255,255,255,0.05); color: #64748b;
+            background: rgba(255,255,255,0.05); color: #94a3b8;
             border: 1px solid rgba(255,255,255,0.1);
         }
 
@@ -239,7 +235,7 @@
     <div class="mobile-drawer" id="mobileDrawer">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <span class="logo-text">CV<span style="color:var(--primary);">AI</span></span>
-            <button onclick="toggleMobileNav()" style="background:none;border:none;color:#94a3b8;font-size:1.4rem;cursor:pointer;">
+            <button onclick="toggleMobileNav()" aria-label="Close menu" style="background:none;border:none;color:#94a3b8;font-size:1.4rem;cursor:pointer;">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -275,7 +271,7 @@
             <a href="{% url 'register' %}" class="nav-link-item">Sign Up Free</a>
             {% endif %}
         </div>
-        <button class="hamburger-btn" onclick="toggleMobileNav()"><i class="fas fa-bars"></i></button>
+        <button class="hamburger-btn" onclick="toggleMobileNav()" aria-label="Open menu"><i class="fas fa-bars"></i></button>
     </nav>
 
     <!-- HERO -->
@@ -350,7 +346,7 @@
                 <li><i class="fas fa-check fi fi-check"></i> Main letter + 2 alternative versions</li>
                 <li><i class="fas fa-check fi fi-check"></i> <strong>ATS Score &amp; keyword analysis</strong></li>
                 <li><i class="fas fa-check fi fi-check"></i> Recruiter risk analysis</li>
-                <li><i class="fas fa-check fi fi-check"></i> <strong>ALL 20+ PDF templates</strong></li>
+                <li><i class="fas fa-check fi fi-check"></i> <strong>All premium PDF templates</strong></li>
                 <li><i class="fas fa-check fi fi-check"></i> Full history saving</li>
                 <li><i class="fas fa-check fi fi-check"></i> <strong>Max AI speed &amp; priority queue</strong></li>
                 <li><i class="fas fa-check fi fi-check"></i> <strong>AI Interview Prep &amp; Follow-up</strong></li>
@@ -413,7 +409,7 @@
                 <li><i class="fas fa-check fi fi-check"></i> Main letter + 2 alternative versions</li>
                 <li><i class="fas fa-check fi fi-check"></i> <strong>ATS Score &amp; keyword analysis</strong></li>
                 <li><i class="fas fa-check fi fi-check"></i> Recruiter risk analysis</li>
-                <li><i class="fas fa-check fi fi-check"></i> <strong>ALL 20+ PDF templates</strong></li>
+                <li><i class="fas fa-check fi fi-check"></i> <strong>All premium PDF templates</strong></li>
                 <li><i class="fas fa-check fi fi-check"></i> Full history saving</li>
                 <li><i class="fas fa-check fi fi-check"></i> <strong>Max AI speed &amp; priority queue</strong></li>
                 <li><i class="fas fa-check fi fi-check"></i> <strong>AI Interview Prep &amp; Follow-up</strong></li>

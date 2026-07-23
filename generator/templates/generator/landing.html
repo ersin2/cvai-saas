@@ -18,18 +18,19 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;700&display=swap"
         rel="stylesheet">
+    <!-- Global Design System (canonical tokens) -->
+    <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}?v=3">
 
     <style>
         :root {
-            --c1: #4cc9f0;
-            --c2: #f72585;
-            --c3: #7209b7;
-            --c4: #4361ee;
-            --bg: #060810;
-            --bg2: #0c1022;
-            --text: #e2e8f0;
-            /* WCAG-AA: #94a3b8 on the near-black bg is ~7:1 (was #64748b ≈ 4:1) */
-            --muted: #94a3b8;
+            /* Phase 1: aliases to the global token set (--bg comes from cvai-global.css) */
+            --c1: var(--brand);
+            --c2: var(--brand-2);
+            --c3: #7209b7;      /* legacy purple — landing-only, phase-out in Phase 2 */
+            --c4: var(--indigo);
+            --bg2: var(--surface-1);
+            --text: var(--text-1);
+            --muted: var(--text-2); /* #94a3b8 — AA on near-black bg */
         }
 
         * {
@@ -57,80 +58,6 @@
             outline: 2px solid var(--c1);
             outline-offset: 3px;
             border-radius: 6px;
-        }
-
-        /* CURSOR */
-        .cursor {
-            width: 8px;
-            height: 8px;
-            background: var(--c1);
-            border-radius: 50%;
-            position: fixed;
-            top: 0;
-            left: 0;
-            pointer-events: none;
-            z-index: 99999;
-            transition: transform 0.15s;
-            box-shadow: 0 0 10px var(--c1);
-            display: none; /* shown only when pointer:fine + no-preference via media query above */
-        }
-
-        /* OCEAN WAVE */
-        .ocean-wave-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 0;
-            overflow: hidden;
-        }
-
-        .ocean-wave {
-            position: absolute;
-            left: -100%;
-            width: 300%;
-            border-radius: 40%;
-            opacity: 0.025;
-        }
-
-        .ocean-wave-1 {
-            height: 800px;
-            bottom: -400px;
-            background: var(--c1);
-            animation: oceanFlow 18s linear infinite;
-        }
-
-        .ocean-wave-2 {
-            height: 700px;
-            bottom: -380px;
-            background: var(--c2);
-            animation: oceanFlow 24s linear infinite reverse;
-            opacity: 0.018;
-        }
-
-        .ocean-wave-3 {
-            height: 600px;
-            bottom: -350px;
-            background: var(--c4);
-            animation: oceanFlow 30s linear infinite;
-            opacity: 0.015;
-            animation-delay: -8s;
-        }
-
-        @keyframes oceanFlow {
-            0% {
-                transform: translateX(0) rotate(0deg);
-            }
-
-            50% {
-                transform: translateX(15%) rotate(180deg);
-            }
-
-            100% {
-                transform: translateX(0) rotate(360deg);
-            }
         }
 
         /* NOISE TEXTURE */
@@ -240,91 +167,37 @@
 
         /* HERO */
         .hero {
-            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             text-align: center;
             position: relative;
-            padding: 120px 20px 60px;
+            padding: 150px 20px 90px;
             overflow: hidden;
         }
 
-        /* ANIMATED GRID */
-        .hero-grid {
+        /* HERO GLOW — single static backdrop, no animation */
+        .hero-glow {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image:
-                linear-gradient(rgba(76, 201, 240, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(76, 201, 240, 0.03) 1px, transparent 1px);
-            background-size: 60px 60px;
-            animation: gridMove 20s linear infinite;
-        }
-
-        @keyframes gridMove {
-            0% {
-                transform: translateY(0);
-            }
-
-            100% {
-                transform: translateY(60px);
-            }
-        }
-
-        /* FLOATING ORBS */
-        .orb {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(100px);
-            animation: orbFloat 8s ease-in-out infinite;
-        }
-
-        .orb-1 {
-            width: 500px;
-            height: 500px;
-            background: rgba(114, 9, 183, 0.2);
-            top: -100px;
-            left: -100px;
-            animation-delay: 0s;
-        }
-
-        .orb-2 {
-            width: 400px;
-            height: 400px;
-            background: rgba(76, 201, 240, 0.15);
-            top: 20%;
-            right: -100px;
-            animation-delay: -3s;
-        }
-
-        .orb-3 {
-            width: 300px;
-            height: 300px;
-            background: rgba(247, 37, 133, 0.12);
-            bottom: 0;
-            left: 30%;
-            animation-delay: -5s;
-        }
-
-        @keyframes orbFloat {
-
-            0%,
-            100% {
-                transform: translateY(0) scale(1);
-            }
-
-            50% {
-                transform: translateY(-30px) scale(1.05);
-            }
+            width: 720px;
+            height: 720px;
+            max-width: 100vw;
+            top: -280px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: radial-gradient(circle,
+                rgba(67, 97, 238, 0.16) 0%,
+                rgba(114, 9, 183, 0.08) 40%,
+                transparent 70%);
+            filter: blur(40px);
+            pointer-events: none;
         }
 
         .hero-content {
             position: relative;
             z-index: 2;
-            max-width: 900px;
+            max-width: 980px;
+            width: 100%;
         }
 
         .hero-badge {
@@ -345,9 +218,10 @@
 
         .hero-title {
             font-family: 'Syne', sans-serif;
-            font-size: clamp(3rem, 8vw, 6.5rem);
+            font-size: clamp(2.6rem, 5.5vw, 4.75rem);
             font-weight: 800;
-            line-height: 1.05;
+            line-height: 1.06;
+            letter-spacing: var(--track-tight);
             margin-bottom: 24px;
             animation: fadeInUp 0.8s ease 0.2s both;
         }
@@ -378,24 +252,24 @@
         }
 
         .btn-primary-glow {
-            background: linear-gradient(135deg, var(--c4), var(--c2));
+            background: var(--grad-cta);
             border: none;
             color: white;
             padding: 16px 36px;
-            border-radius: 50px;
+            border-radius: var(--r-pill);
             font-size: 1rem;
             font-weight: 700;
             text-decoration: none;
-            transition: all 0.3s;
-            box-shadow: 0 10px 40px rgba(247, 37, 133, 0.3);
+            transition: transform var(--t-base), box-shadow var(--t-base);
+            box-shadow: var(--glow-cta);
             display: inline-flex;
             align-items: center;
             gap: 10px;
         }
 
         .btn-primary-glow:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 20px 50px rgba(247, 37, 133, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 14px 44px rgba(67, 97, 238, 0.45);
             color: white;
         }
 
@@ -404,11 +278,11 @@
             border: 1px solid rgba(255, 255, 255, 0.15);
             color: white;
             padding: 16px 36px;
-            border-radius: 50px;
+            border-radius: var(--r-pill);
             font-size: 1rem;
             font-weight: 600;
             text-decoration: none;
-            transition: all 0.3s;
+            transition: background var(--t-fast), border-color var(--t-fast), transform var(--t-base);
             display: inline-flex;
             align-items: center;
             gap: 10px;
@@ -421,80 +295,183 @@
             transform: translateY(-2px);
         }
 
-        /* STATS BAR */
-        .stats-bar {
-            display: flex;
-            justify-content: center;
-            gap: 60px;
-            flex-wrap: wrap;
-            margin-top: 70px;
-            padding-top: 50px;
-            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        /* HERO PRODUCT VISUAL — stylized mock of the Resume Studio */
+        .hero-product {
+            max-width: 920px;
+            margin: 64px auto 0;
+            text-align: left;
             animation: fadeInUp 0.8s ease 0.8s both;
         }
 
-        .stat-item {
-            text-align: center;
-        }
-
-        .stat-num {
-            font-family: 'Syne', sans-serif;
-            font-size: 2.2rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--c1), white);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .stat-label {
-            font-size: 0.82rem;
-            color: var(--muted);
-            margin-top: 4px;
-            font-weight: 500;
-        }
-
-        /* MARQUEE */
-        .marquee-section {
-            padding: 30px 0;
-            background: rgba(255, 255, 255, 0.02);
-            border-top: 1px solid rgba(255, 255, 255, 0.04);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-            overflow: hidden;
+        .hp-window {
             position: relative;
+            background: var(--surface-1);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-3);
         }
 
-        .marquee-track {
-            display: flex;
-            gap: 60px;
-            animation: marqueeScroll 25s linear infinite;
-            white-space: nowrap;
-            width: max-content;
-        }
-
-        .marquee-item {
+        .hp-bar {
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-size: 0.85rem;
+            gap: 7px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .hp-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .hp-title {
+            margin: 0 auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
             color: var(--muted);
+        }
+
+        .hp-body {
+            display: grid;
+            grid-template-columns: 290px 1fr;
+            min-height: 400px;
+        }
+
+        .hp-editor {
+            border-right: 1px solid var(--border);
+            padding: 20px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            background: rgba(255, 255, 255, 0.015);
+        }
+
+        .hp-field-label {
+            width: 42%;
+            height: 7px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.10);
+            margin-bottom: 8px;
+        }
+
+        .hp-field-input {
+            height: 32px;
+            border-radius: var(--r-sm);
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .hp-field-input.tall {
+            height: 58px;
+        }
+
+        .hp-field-input.focused {
+            border-color: rgba(76, 201, 240, 0.5);
+            box-shadow: 0 0 0 3px rgba(76, 201, 240, 0.08);
+        }
+
+        .hp-chip-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .hp-chip {
+            padding: 4px 11px;
+            border-radius: var(--r-pill);
+            font-size: 0.68rem;
             font-weight: 600;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-        }
-
-        .marquee-item i {
             color: var(--c1);
-            font-size: 0.75rem;
+            background: rgba(76, 201, 240, 0.08);
+            border: 1px solid rgba(76, 201, 240, 0.2);
         }
 
-        @keyframes marqueeScroll {
-            0% {
-                transform: translateX(0);
-            }
+        .hp-page-wrap {
+            position: relative;
+            padding: 28px 24px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            background: rgba(0, 0, 0, 0.25);
+        }
 
-            100% {
-                transform: translateX(-50%);
-            }
+        .hp-ats {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 5px 11px;
+            border-radius: var(--r-pill);
+        }
+
+        .hp-page {
+            background: #fff;
+            width: min(340px, 100%);
+            border-radius: 6px;
+            padding: 30px 28px;
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+        }
+
+        .hp-name  { height: 14px; width: 55%; background: #111827; border-radius: 3px; margin-bottom: 9px; }
+        .hp-role  { height: 8px;  width: 35%; background: var(--c1); border-radius: 3px; margin-bottom: 18px; opacity: 0.85; }
+        .hp-rule  { height: 1px; background: #e5e7eb; margin: 16px 0; }
+        .hp-h     { height: 7px; width: 28%; background: #374151; border-radius: 3px; margin-bottom: 11px; }
+        .hp-l     { height: 6px; background: #e5e7eb; border-radius: 3px; margin-bottom: 8px; }
+        .hp-l.w90 { width: 90%; }
+        .hp-l.w75 { width: 75%; }
+        .hp-l.w60 { width: 60%; }
+
+        .hp-skill-row {
+            display: flex;
+            gap: 7px;
+            margin-top: 6px;
+        }
+
+        .hp-skill {
+            height: 15px;
+            flex: 1;
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            border-radius: 99px;
+        }
+
+        /* Honest capability chips — no invented metrics */
+        .hero-chips {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 28px;
+            animation: fadeInUp 0.8s ease 1s both;
+        }
+
+        .hero-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--muted);
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.02);
+            padding: 7px 15px;
+            border-radius: var(--r-pill);
+        }
+
+        .hero-chip i {
+            color: var(--c1);
+            font-size: 0.72rem;
         }
 
         /* SECTIONS */
@@ -515,6 +492,8 @@
         }
 
         .section-title {
+            /* display:block guards against the global .section-title flex rule */
+            display: block;
             font-family: 'Syne', sans-serif;
             font-size: clamp(2rem, 4vw, 3.2rem);
             font-weight: 800;
@@ -531,16 +510,16 @@
 
         /* HOW IT WORKS */
         .steps-section {
-            padding: 120px 0;
+            padding: var(--section-pad) 0;
         }
 
         .step-card {
             position: relative;
             padding: 40px;
-            border-radius: 24px;
+            border-radius: var(--r-xl);
             border: 1px solid rgba(255, 255, 255, 0.06);
             background: rgba(255, 255, 255, 0.02);
-            transition: all 0.4s;
+            transition: transform var(--t-base), border-color var(--t-base), background var(--t-base);
             height: 100%;
             overflow: hidden;
         }
@@ -560,7 +539,7 @@
         .step-card:hover {
             border-color: rgba(76, 201, 240, 0.2);
             background: rgba(76, 201, 240, 0.03);
-            transform: translateY(-8px);
+            transform: translateY(-4px);
         }
 
         .step-card:hover::before {
@@ -605,7 +584,7 @@
 
         /* FEATURES */
         .features-section {
-            padding: 120px 0;
+            padding: var(--section-pad) 0;
             background: var(--bg2);
         }
 
@@ -618,27 +597,18 @@
 
         .feature-card {
             padding: 32px;
-            border-radius: 20px;
+            border-radius: var(--r-lg);
             border: 1px solid rgba(255, 255, 255, 0.06);
             background: rgba(255, 255, 255, 0.02);
-            transition: all 0.3s;
+            transition: transform var(--t-base), border-color var(--t-base), background var(--t-base);
             position: relative;
             overflow: hidden;
         }
 
         .feature-card:hover {
             border-color: rgba(76, 201, 240, 0.25);
-            transform: translateY(-5px);
+            transform: translateY(-3px);
             background: rgba(76, 201, 240, 0.03);
-        }
-
-        .feature-card.highlight {
-            border-color: rgba(247, 37, 133, 0.3);
-            background: rgba(247, 37, 133, 0.04);
-        }
-
-        .feature-card.highlight:hover {
-            border-color: rgba(247, 37, 133, 0.5);
         }
 
         .feature-icon {
@@ -668,15 +638,15 @@
 
         /* EXAMPLE SECTION */
         .example-section {
-            padding: 120px 0;
+            padding: var(--section-pad) 0;
         }
 
         .example-window {
-            background: rgba(12, 16, 34, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 20px;
+            background: var(--surface-1);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
             overflow: hidden;
-            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
+            box-shadow: var(--shadow-3);
         }
 
         .window-bar {
@@ -708,11 +678,12 @@
 
         .tab-bar {
             display: flex;
+            flex-wrap: wrap;
             gap: 6px;
             margin-bottom: 20px;
             background: rgba(0, 0, 0, 0.3);
             padding: 6px;
-            border-radius: 12px;
+            border-radius: var(--r-md);
         }
 
         .tab-pill {
@@ -798,7 +769,7 @@
 
         /* PRICING */
         .pricing-section {
-            padding: 120px 0;
+            padding: var(--section-pad) 0;
             background: var(--bg2);
         }
 
@@ -812,22 +783,22 @@
 
         .price-card {
             padding: 40px;
-            border-radius: 24px;
+            border-radius: var(--r-xl);
             border: 1px solid rgba(255, 255, 255, 0.07);
             background: rgba(255, 255, 255, 0.02);
             position: relative;
-            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: transform var(--t-base), border-color var(--t-base), box-shadow var(--t-base), background var(--t-base);
             cursor: pointer;
         }
 
         .price-card:hover {
-            transform: translateY(-12px) scale(1.02);
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-2);
         }
 
         .price-card.selected {
-            transform: translateY(-16px) scale(1.04);
-            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-3);
         }
 
         .price-card.selected-free {
@@ -837,9 +808,9 @@
         }
 
         .price-card.selected-pro {
-            border-color: rgba(255, 215, 0, 0.6);
-            background: rgba(255, 215, 0, 0.06);
-            box-shadow: 0 40px 80px rgba(255, 215, 0, 0.2);
+            border-color: rgba(245, 158, 11, 0.6);
+            background: rgba(245, 158, 11, 0.06);
+            box-shadow: 0 24px 64px -12px rgba(245, 158, 11, 0.2);
         }
 
         .price-card.selected-elite {
@@ -868,9 +839,8 @@
         }
 
         .price-card.popular {
-            border-color: rgba(255, 215, 0, 0.4);
-            background: rgba(255, 215, 0, 0.03);
-            box-shadow: 0 0 60px rgba(255, 215, 0, 0.08);
+            border-color: rgba(245, 158, 11, 0.4);
+            background: rgba(245, 158, 11, 0.03);
         }
 
         .popular-tag {
@@ -878,7 +848,7 @@
             top: -14px;
             left: 50%;
             transform: translateX(-50%);
-            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            background: var(--grad-gold);
             color: #000;
             padding: 4px 16px;
             border-radius: 20px;
@@ -952,7 +922,7 @@
         .btn-plan {
             width: 100%;
             padding: 14px;
-            border-radius: 14px;
+            border-radius: var(--r-md);
             font-weight: 700;
             font-size: 0.9rem;
             text-transform: uppercase;
@@ -976,19 +946,19 @@
         }
 
         .btn-plan-gold {
-            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            background: var(--grad-gold);
             color: #000;
-            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.25);
+            box-shadow: 0 10px 30px rgba(245, 158, 11, 0.25);
         }
 
         .btn-plan-gold:hover {
             transform: translateY(-2px);
-            box-shadow: 0 15px 40px rgba(255, 215, 0, 0.4);
+            box-shadow: 0 15px 40px rgba(245, 158, 11, 0.4);
             color: #000;
         }
 
         .btn-plan-elite {
-            background: linear-gradient(135deg, var(--c4), var(--c2));
+            background: var(--grad-cta);
             color: white;
             box-shadow: 0 10px 30px rgba(247, 37, 133, 0.2);
         }
@@ -1001,7 +971,7 @@
 
         /* TESTIMONIALS */
         .testimonials-section {
-            padding: 120px 0;
+            padding: var(--section-pad) 0;
         }
 
         .testimonials-grid {
@@ -1013,15 +983,40 @@
 
         .testimonial-card {
             padding: 30px;
-            border-radius: 20px;
+            border-radius: var(--r-lg);
             border: 1px solid rgba(255, 255, 255, 0.06);
             background: rgba(255, 255, 255, 0.02);
-            transition: 0.3s;
+            transition: transform var(--t-base), border-color var(--t-base);
         }
 
         .testimonial-card:hover {
             border-color: rgba(76, 201, 240, 0.2);
-            transform: translateY(-4px);
+            transform: translateY(-3px);
+        }
+
+        /* Placeholder testimonial slots — clearly marked, no invented quotes */
+        .testimonial-card.is-placeholder {
+            border-style: dashed;
+            border-color: rgba(255, 255, 255, 0.14);
+            background: rgba(255, 255, 255, 0.012);
+        }
+
+        .placeholder-chip {
+            display: inline-block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--muted);
+            border: 1px dashed rgba(255, 255, 255, 0.22);
+            padding: 3px 9px;
+            border-radius: 4px;
+            margin-bottom: 14px;
+        }
+
+        .testimonial-card.is-placeholder .testimonial-text {
+            font-style: normal;
         }
 
         .stars {
@@ -1069,7 +1064,7 @@
 
         /* CTA SECTION */
         .cta-section {
-            padding: 120px 0;
+            padding: var(--section-pad) 0;
             text-align: center;
             position: relative;
             overflow: hidden;
@@ -1079,10 +1074,11 @@
             position: absolute;
             width: 600px;
             height: 600px;
-            background: radial-gradient(circle, rgba(114, 9, 183, 0.2) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(114, 9, 183, 0.14) 0%, transparent 70%);
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
+            filter: blur(20px);
             pointer-events: none;
         }
 
@@ -1109,40 +1105,70 @@
 
         /* FOOTER */
         footer {
-            padding: 40px 0;
+            padding: 72px 0 32px;
             border-top: 1px solid rgba(255, 255, 255, 0.05);
-            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 48px;
+            margin-bottom: 56px;
         }
 
         .footer-logo {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 1rem;
+            font-size: 1.05rem;
             font-weight: 700;
             color: white;
-            margin-bottom: 12px;
         }
 
-        .footer-links {
-            display: flex;
-            justify-content: center;
-            gap: 24px;
+        .footer-tagline {
+            font-size: 0.85rem;
+            color: var(--muted);
+            line-height: 1.65;
+            max-width: 280px;
+            margin-top: 12px;
+        }
+
+        .footer-col h4 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text);
             margin-bottom: 16px;
         }
 
-        .footer-links a {
+        .footer-col a {
+            display: block;
             color: var(--muted);
             text-decoration: none;
             font-size: 0.85rem;
-            transition: color 0.2s;
+            padding: 5px 0;
+            transition: color var(--t-fast);
         }
 
-        .footer-links a:hover {
+        .footer-col a:hover {
             color: white;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
         }
 
         .footer-copy {
             font-size: 0.8rem;
-            color: #334155;
+            color: var(--muted);
         }
 
         /* ANIMATIONS */
@@ -1181,69 +1207,14 @@
             transform: translateY(0);
         }
 
-        /* TYPING EFFECT */
-        .typing-text {
-            border-right: 3px solid var(--c1);
-            animation: blink 0.7s step-end infinite;
-        }
-
-        @keyframes blink {
-            50% {
-                border-color: transparent;
-            }
-        }
-
-        /* TYPEWRITER */
-        .typing-cursor {
-            display: inline-block;
-            color: var(--c1);
-            animation: blink 0.7s step-end infinite;
-            font-weight: 300;
-            margin-left: 2px;
-        }
-
-        @keyframes blink {
-            50% {
-                opacity: 0;
-            }
-        }
-
-        /* PARTICLES */
-        .particle {
-            position: absolute;
-            border-radius: 50%;
-            pointer-events: none;
-            animation: particleFloat linear infinite;
-        }
-
-        @keyframes particleFloat {
-            0% {
-                transform: translateY(0) scale(1);
-                opacity: 0;
-            }
-
-            10% {
-                opacity: 1;
-            }
-
-            90% {
-                opacity: 0.6;
-            }
-
-            100% {
-                transform: translateY(-100vh) scale(0.5);
-                opacity: 0;
-            }
-        }
-
         /* FAQ */
         .faq-section {
-            padding: 120px 0;
+            padding: var(--section-pad) 0;
         }
 
         .faq-item {
             border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 16px;
+            border-radius: var(--r-lg);
             margin-bottom: 12px;
             overflow: hidden;
             transition: border-color 0.3s;
@@ -1310,6 +1281,34 @@
             padding: 0 28px 22px;
         }
 
+        /* MOBILE DRAWER — local tweaks on top of global drawer classes */
+        .mobile-drawer {
+            padding-top: 70px;
+        }
+
+        .mobile-drawer .drawer-close-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+        }
+
+        .drawer-cta {
+            display: block;
+            background: var(--grad-cta);
+            color: white;
+            text-align: center;
+            padding: 13px;
+            border-radius: var(--r-md);
+            font-weight: 700;
+            text-decoration: none;
+            margin: 12px 14px 0;
+        }
+
+        .drawer-cta:hover {
+            color: white;
+            opacity: 0.92;
+        }
+
         /* STICKY CTA MOBILE */
         .sticky-cta {
             display: none;
@@ -1326,15 +1325,15 @@
 
         .sticky-cta a {
             display: block;
-            background: linear-gradient(135deg, var(--c4), var(--c2));
+            background: var(--grad-cta);
             color: white;
             text-align: center;
             padding: 14px;
-            border-radius: 14px;
+            border-radius: var(--r-md);
             font-weight: 700;
             font-size: 0.95rem;
             text-decoration: none;
-            box-shadow: 0 8px 24px rgba(247, 37, 133, 0.3);
+            box-shadow: var(--glow-cta);
         }
 
         /* MOBILE */
@@ -1367,10 +1366,23 @@
                 margin-bottom: 28px;
             }
 
-            .stats-bar {
-                gap: 30px;
-                margin-top: 44px;
-                padding-top: 32px;
+            .hero-product {
+                margin-top: 40px;
+            }
+
+            /* Editor mock collapses on phones — show just the resume page */
+            .hp-body {
+                grid-template-columns: 1fr;
+                min-height: unset;
+            }
+
+            .hp-editor {
+                display: none;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 32px;
             }
 
             .sticky-cta {
@@ -1389,38 +1401,21 @@
 </head>
 
 <body>
-    <!-- MOBILE DRAWER -->
-    <div class="mobile-backdrop" id="mobileBackdrop" onclick="toggleMobileNav()"
-        style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 999;">
-    </div>
-    <div class="mobile-drawer" id="mobileDrawer"
-        style="position: fixed; top: 0; right: -300px; width: 280px; height: 100vh; background: rgba(15, 20, 35, 0.98); backdrop-filter: blur(30px); z-index: 1000; transition: right 0.3s ease; padding: 80px 24px 24px; border-left: 1px solid rgba(255, 255, 255, 0.08);">
-        <button onclick="toggleMobileNav()"
-            style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.08); border: none; color: white; font-size: 1.2rem; width: 36px; height: 36px; border-radius: 50%; cursor: pointer;"><i
-                class="fas fa-times"></i></button>
-        <a href="#how" class="nav-link-item" onclick="toggleMobileNav()"
-            style="display: block; padding: 14px 16px; color: white; text-decoration: none; font-weight: 600;">How it
-            works</a>
-        <a href="#features" class="nav-link-item" onclick="toggleMobileNav()"
-            style="display: block; padding: 14px 16px; color: white; text-decoration: none; font-weight: 600;">Features</a>
-        <a href="#pricing" class="nav-link-item" onclick="toggleMobileNav()"
-            style="display: block; padding: 14px 16px; color: white; text-decoration: none; font-weight: 600;">Pricing</a>
-        <a href="{% url 'login' %}" class="nav-link-item"
-            style="display: block; padding: 14px 16px; color: white; text-decoration: none; font-weight: 600;">Login</a>
-        <div style="height: 1px; background: rgba(255,255,255,0.06); margin: 12px 0;"></div>
-        <a href="{% url 'register' %}"
-            style="display: block; background: linear-gradient(135deg, var(--c4), var(--c2)); color: white; text-align: center; padding: 14px; border-radius: 14px; font-weight: 700; text-decoration: none;">Get
-            Started Free</a>
-    </div>
-
-    <!-- CURSOR -->
-    <div class="cursor" id="cursor"></div>
-
-    <!-- OCEAN WAVE BACKGROUND -->
-    <div class="ocean-wave-container">
-        <div class="ocean-wave ocean-wave-1"></div>
-        <div class="ocean-wave ocean-wave-2"></div>
-        <div class="ocean-wave ocean-wave-3"></div>
+    <!-- MOBILE DRAWER (shared classes from cvai-global.css) -->
+    <div class="mobile-backdrop" id="mobileBackdrop" onclick="toggleMobileNav()"></div>
+    <div class="mobile-drawer" id="mobileDrawer" role="navigation" aria-label="Mobile menu">
+        <button class="drawer-close-btn" onclick="toggleMobileNav()" aria-label="Close menu">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="drawer-nav-section">
+            <a href="#how" class="nav-link-item" onclick="toggleMobileNav()">How it works</a>
+            <a href="#features" class="nav-link-item" onclick="toggleMobileNav()">Features</a>
+            <a href="#pricing" class="nav-link-item" onclick="toggleMobileNav()">Pricing</a>
+            <a href="#faq" class="nav-link-item" onclick="toggleMobileNav()">FAQ</a>
+            <a href="{% url 'login' %}" class="nav-link-item">Login</a>
+            <div class="drawer-divider"></div>
+            <a href="{% url 'register' %}" class="drawer-cta">Get Started Free</a>
+        </div>
     </div>
 
     <!-- NAVBAR -->
@@ -1437,101 +1432,107 @@
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
             <a href="{% url 'register' %}" class="btn-nav">Start Free →</a>
-            <button class="hamburger-btn" onclick="toggleMobileNav()"
-                style="display: none; background: none; border: none; color: white; font-size: 1.5rem;"><i
-                    class="fas fa-bars"></i></button>
+            <button class="hamburger-btn" onclick="toggleMobileNav()" aria-label="Open menu">
+                <i class="fas fa-bars"></i>
+            </button>
         </div>
     </nav>
 
     <!-- HERO -->
     <section class="hero" id="hero-section">
-        <div class="hero-grid"></div>
-        <div class="orb orb-1"></div>
-        <div class="orb orb-2"></div>
-        <div class="orb orb-3"></div>
-        <div id="particles-container"
-            style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:hidden;"></div>
+        <div class="hero-glow"></div>
 
         <div class="hero-content">
             <div class="hero-badge">
                 <span class="logo-dot"></span>
-                Powered by Elite AI · Free to start
+                Free to start · No credit card
             </div>
 
             <h1 class="hero-title">
-                Your Next Job<br>
-                Starts With The<br>
-                <span class="gradient-text"><span id="typewriter">Perfect Resume.</span><span
-                        class="typing-cursor">|</span></span>
+                Your Next Job Starts With<br>
+                The <span class="gradient-text">Perfect Resume.</span>
             </h1>
 
             <p class="hero-sub">
-                Generate professional resumes and cover letters in seconds.
-                Beat ATS systems, impress recruiters, land interviews —
-                all powered by elite AI.
+                Pick a template, let AI write the hard parts, and download an
+                ATS-optimized resume with a matching cover letter — in minutes.
             </p>
 
             <div class="hero-cta">
                 <a href="{% url 'register' %}" class="btn-primary-glow">
-                    <i class="fas fa-magic"></i>
-                    Get Started Free
+                    Build My Resume — Free
+                    <i class="fas fa-arrow-right"></i>
                 </a>
-                <a href="#how" class="btn-ghost">
-                    See How It Works
-                    <i class="fas fa-arrow-down"></i>
-                </a>
+                <a href="#how" class="btn-ghost">See how it works</a>
             </div>
 
-            <div class="stats-bar">
-                <div class="stat-item">
-                    <div class="stat-num" data-count="2400">0</div>
-                    <div class="stat-label">Documents Generated</div>
+            <!-- Product visual: stylized mock of the Resume Studio -->
+            <div class="hero-product">
+                <div class="hp-window">
+                    <div class="hp-bar">
+                        <span class="hp-dot"></span><span class="hp-dot"></span><span class="hp-dot"></span>
+                        <span class="hp-title">CVAI Studio — live preview</span>
+                    </div>
+                    <div class="hp-body">
+                        <div class="hp-editor" aria-hidden="true">
+                            <div>
+                                <div class="hp-field-label"></div>
+                                <div class="hp-field-input focused"></div>
+                            </div>
+                            <div>
+                                <div class="hp-field-label"></div>
+                                <div class="hp-field-input"></div>
+                            </div>
+                            <div>
+                                <div class="hp-field-label"></div>
+                                <div class="hp-field-input tall"></div>
+                            </div>
+                            <div class="hp-chip-row">
+                                <span class="hp-chip">Python</span>
+                                <span class="hp-chip">React</span>
+                                <span class="hp-chip">SQL</span>
+                                <span class="hp-chip">+ Add</span>
+                            </div>
+                        </div>
+                        <div class="hp-page-wrap" aria-hidden="true">
+                            <span class="hp-ats"><i class="fas fa-check"></i>ATS-friendly</span>
+                            <div class="hp-page">
+                                <div class="hp-name"></div>
+                                <div class="hp-role"></div>
+                                <div class="hp-rule"></div>
+                                <div class="hp-h"></div>
+                                <div class="hp-l w90"></div>
+                                <div class="hp-l w75"></div>
+                                <div class="hp-l w60"></div>
+                                <div class="hp-rule"></div>
+                                <div class="hp-h"></div>
+                                <div class="hp-l w75"></div>
+                                <div class="hp-l w90"></div>
+                                <div class="hp-skill-row">
+                                    <span class="hp-skill"></span><span class="hp-skill"></span><span class="hp-skill"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-num" data-count="94">0</div>
-                    <div class="stat-label">% ATS Pass Rate</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-num" data-count="5">0</div>
-                    <div class="stat-label">Outputs Per Click</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-num" data-count="15">0</div>
-                    <div class="stat-label">Seconds to Generate</div>
+
+                <div class="hero-chips">
+                    <span class="hero-chip"><i class="fas fa-robot"></i>ATS score &amp; analysis</span>
+                    <span class="hero-chip"><i class="fas fa-palette"></i>10 resume templates</span>
+                    <span class="hero-chip"><i class="fas fa-eye"></i>Live PDF preview</span>
+                    <span class="hero-chip"><i class="fas fa-bolt"></i>Free plan included</span>
                 </div>
             </div>
         </div>
     </section>
-
-    <!-- MARQUEE -->
-    <div class="marquee-section">
-        <div class="marquee-track" id="marqueeTrack">
-            <span class="marquee-item"><i class="fas fa-circle"></i> AI Cover Letters</span>
-            <span class="marquee-item"><i class="fas fa-circle"></i> ATS Optimization</span>
-            <span class="marquee-item"><i class="fas fa-circle"></i> PDF CV Builder</span>
-            <span class="marquee-item"><i class="fas fa-circle"></i> Multiple Versions</span>
-            <span class="marquee-item"><i class="fas fa-circle"></i> Recruiter Analysis</span>
-            <span class="marquee-item"><i class="fas fa-circle"></i> Risk Detection</span>
-            <span class="marquee-item"><i class="fas fa-circle"></i> 15 Second Results</span>
-            <span class="marquee-item"><i class="fas fa-circle"></i> 5 Outputs Per Click</span>
-            <span class="marquee-item"><i class="fas fa-circle"></i> AI Cover Letters</span>
-            <span class="marquee-item"><i class="fas fa-circle"></i> ATS Optimization</span>
-            <span class="marquee-item"><i class="fas fa-circle"></i> PDF CV Builder</span>
-            <span class="marquee-item"><i class="fas fa-circle"></i> Multiple Versions</span>
-            <span class="marquee-item"><i class="fas fa-circle"></i> Recruiter Analysis</span>
-            <span class="marquee-item"><i class="fas fa-circle"></i> Risk Detection</span>
-            <span class="marquee-item"><i class="fas fa-circle"></i> 15 Second Results</span>
-            <span class="marquee-item"><i class="fas fa-circle"></i> 5 Outputs Per Click</span>
-        </div>
-    </div>
 
     <!-- HOW IT WORKS -->
     <section class="steps-section" id="how">
         <div class="container">
             <div class="text-center mb-5 reveal">
                 <span class="section-label">// HOW IT WORKS</span>
-                <h2 class="section-title">Three Steps.<br>One Perfect Letter.</h2>
-                <p class="section-sub mx-auto">No templates. No guessing. Just paste your CV and the job — AI does the
+                <h2 class="section-title">Three Steps.<br>One Perfect Resume.</h2>
+                <p class="section-sub mx-auto">No blank pages. No guessing. Just paste your CV and the job — AI does the
                     rest.</p>
             </div>
 
@@ -1565,8 +1566,8 @@
                             <i class="fas fa-rocket" style="color: #a855f7;"></i>
                         </div>
                         <div class="step-title">Apply with Confidence</div>
-                        <div class="step-desc">Copy the letter, download your PDF CV, and hit send. You're ahead of 90%
-                            of applicants before they even start.</div>
+                        <div class="step-desc">Copy the letter, download your PDF resume, and hit send — polished,
+                            consistent, and ready for the recruiter.</div>
                     </div>
                 </div>
             </div>
@@ -1580,19 +1581,19 @@
                 <div class="col-lg-5 reveal">
                     <span class="section-label">// WHAT YOU GET</span>
                     <h2 class="section-title">Not Just a Letter.<br>A Full Career Platform.</h2>
-                    <p class="section-sub">10 powerful AI-powered tools to crush every stage of your job search — from
-                        application to offer.</p>
+                    <p class="section-sub">10 AI tools that cover every stage of your job search — from first
+                        draft to signed offer.</p>
                 </div>
             </div>
 
             <div class="feature-grid">
-                <div class="feature-card highlight reveal">
+                <div class="feature-card reveal">
                     <div class="feature-icon" style="background: rgba(247,37,133,0.12);">
                         <i class="fas fa-file-alt" style="color: var(--c2);"></i>
                     </div>
-                    <div class="feature-title">Elite Cover Letter</div>
-                    <div class="feature-desc">A fully personalized, ATS-optimized resume tailored by AI trained
-                        on thousands of successful applications.</div>
+                    <div class="feature-title">Tailored Cover Letters</div>
+                    <div class="feature-desc">A personalized, ATS-optimized cover letter for every application —
+                        written from your actual CV and the specific job description.</div>
                 </div>
 
                 <div class="feature-card reveal" style="transition-delay: 0.1s;">
@@ -1622,7 +1623,7 @@
                         exactly how to fix them.</div>
                 </div>
 
-                <div class="feature-card highlight reveal" style="transition-delay: 0.25s;">
+                <div class="feature-card reveal" style="transition-delay: 0.25s;">
                     <div class="feature-icon" style="background: rgba(114,9,183,0.12);">
                         <i class="fas fa-link" style="color: var(--c3);"></i>
                     </div>
@@ -1631,7 +1632,7 @@
                         automatically. No more copy-pasting.</div>
                 </div>
 
-                <div class="feature-card highlight reveal" style="transition-delay: 0.3s;">
+                <div class="feature-card reveal" style="transition-delay: 0.3s;">
                     <div class="feature-icon" style="background: rgba(234,179,8,0.12);">
                         <i class="fas fa-microphone-alt" style="color: #eab308;"></i>
                     </div>
@@ -1640,7 +1641,7 @@
                         strategy specific to your target role.</div>
                 </div>
 
-                <div class="feature-card highlight reveal" style="transition-delay: 0.35s;">
+                <div class="feature-card reveal" style="transition-delay: 0.35s;">
                     <div class="feature-icon" style="background: rgba(34,197,94,0.12);">
                         <i class="fas fa-envelope-open-text" style="color: #22c55e;"></i>
                     </div>
@@ -1649,7 +1650,7 @@
                         to each application.</div>
                 </div>
 
-                <div class="feature-card highlight reveal" style="transition-delay: 0.4s;">
+                <div class="feature-card reveal" style="transition-delay: 0.4s;">
                     <div class="feature-icon" style="background: rgba(67,97,238,0.12);">
                         <i class="fas fa-briefcase" style="color: var(--c4);"></i>
                     </div>
@@ -1669,11 +1670,11 @@
 
                 <div class="feature-card reveal" style="transition-delay: 0.5s;">
                     <div class="feature-icon" style="background: rgba(251,191,36,0.1);">
-                        <i class="fas fa-bolt" style="color: #fbbf24;"></i>
+                        <i class="fas fa-eye" style="color: #fbbf24;"></i>
                     </div>
-                    <div class="feature-title">15 Second Results</div>
-                    <div class="feature-desc">No waiting. No queues. Results in under 15 seconds, powered by Elite AI on
-                        ultra-fast infrastructure.</div>
+                    <div class="feature-title">Live PDF Preview</div>
+                    <div class="feature-desc">Edit on the left, watch the finished PDF update on the right. What you
+                        see is exactly what you download.</div>
                 </div>
             </div>
         </div>
@@ -1685,7 +1686,8 @@
             <div class="text-center mb-5 reveal">
                 <span class="section-label">// LIVE PREVIEW</span>
                 <h2 class="section-title">See It In Action</h2>
-                <p class="section-sub mx-auto">This is exactly what you get after clicking Generate.</p>
+                <p class="section-sub mx-auto">An illustrative example of a generated result — main letter,
+                    alternate versions, ATS score, and risk flags.</p>
             </div>
 
             <div class="row justify-content-center reveal">
@@ -1695,7 +1697,7 @@
                             <div class="window-dot" style="background: #ff5f57;"></div>
                             <div class="window-dot" style="background: #ffbd2e;"></div>
                             <div class="window-dot" style="background: #28c840;"></div>
-                            <span class="window-title">cv-letter.ai · Result ready ✓</span>
+                            <span class="window-title">CVAI · Example output</span>
                         </div>
                         <div class="window-body">
                             <div class="tab-bar">
@@ -1797,7 +1799,7 @@
                     <div class="selected-badge">✓ Selected</div>
                     <div class="popular-tag">🔥 Most Popular</div>
                     <div class="plan-name" style="color: #fbbf24;">Pro</div>
-                    <div class="plan-price" style="color: #ffd700;">$5</div>
+                    <div class="plan-price" style="color: #fbbf24;">$5</div>
                     <div class="plan-period">per month</div>
                     <ul class="plan-features">
                         <li class="active"><i class="fas fa-check"></i> 50 generations/month</li>
@@ -1833,45 +1835,49 @@
         <div class="container">
             <div class="text-center mb-5 reveal">
                 <span class="section-label">// WHAT PEOPLE SAY</span>
-                <h2 class="section-title">Real Results.<br>Real People.</h2>
+                <h2 class="section-title">User Stories</h2>
+                <p class="section-sub mx-auto">We're collecting real feedback from early users — placeholder slots
+                    below until then. No invented quotes here.</p>
             </div>
 
+            <!-- PLACEHOLDER testimonial slots: swap each card's content with a real,
+                 permissioned quote (text, name, role/outcome) as they come in. -->
             <div class="testimonials-grid">
-                <div class="testimonial-card reveal">
-                    <div class="stars">★★★★★</div>
-                    <div class="testimonial-text">"I sent 40 applications manually with no responses. Used CV Letter AI
-                        for the next 5 — got 3 interviews in a week. The ATS analysis alone is worth it."</div>
+                <div class="testimonial-card is-placeholder reveal">
+                    <span class="placeholder-chip">Placeholder</span>
+                    <div class="testimonial-text">A real user testimonial will appear here once it's collected and
+                        approved.</div>
                     <div class="testimonial-author">
-                        <div class="author-avatar" style="background: rgba(76,201,240,0.15); color: var(--c1);">AS</div>
+                        <div class="author-avatar" style="background: rgba(76,201,240,0.15); color: var(--c1);">?</div>
                         <div>
-                            <div class="author-name">Alex S.</div>
-                            <div class="author-role">Software Engineer · Hired at Startup</div>
+                            <div class="author-name">Early user</div>
+                            <div class="author-role">Role · Outcome</div>
                         </div>
                     </div>
                 </div>
 
-                <div class="testimonial-card reveal" style="transition-delay: 0.15s;">
-                    <div class="stars">★★★★★</div>
-                    <div class="testimonial-text">"The red flags section showed me I was underselling my experience.
-                        Fixed it in 2 minutes. Got a callback the next day."</div>
+                <div class="testimonial-card is-placeholder reveal" style="transition-delay: 0.15s;">
+                    <span class="placeholder-chip">Placeholder</span>
+                    <div class="testimonial-text">A real user testimonial will appear here once it's collected and
+                        approved.</div>
                     <div class="testimonial-author">
-                        <div class="author-avatar" style="background: rgba(247,37,133,0.15); color: var(--c2);">MK</div>
+                        <div class="author-avatar" style="background: rgba(247,37,133,0.15); color: var(--c2);">?</div>
                         <div>
-                            <div class="author-name">Maria K.</div>
-                            <div class="author-role">Marketing Manager · Career Change</div>
+                            <div class="author-name">Early user</div>
+                            <div class="author-role">Role · Outcome</div>
                         </div>
                     </div>
                 </div>
 
-                <div class="testimonial-card reveal" style="transition-delay: 0.3s;">
-                    <div class="stars">★★★★★</div>
-                    <div class="testimonial-text">"As a non-native English speaker, writing cover letters was a
-                        nightmare. Now I generate a professional one in 15 seconds. Game changer."</div>
+                <div class="testimonial-card is-placeholder reveal" style="transition-delay: 0.3s;">
+                    <span class="placeholder-chip">Placeholder</span>
+                    <div class="testimonial-text">A real user testimonial will appear here once it's collected and
+                        approved.</div>
                     <div class="testimonial-author">
-                        <div class="author-avatar" style="background: rgba(168,85,247,0.15); color: #a855f7;">JL</div>
+                        <div class="author-avatar" style="background: rgba(168,85,247,0.15); color: #a855f7;">?</div>
                         <div>
-                            <div class="author-name">Jin L.</div>
-                            <div class="author-role">Data Analyst · International Job Search</div>
+                            <div class="author-name">Early user</div>
+                            <div class="author-role">Role · Outcome</div>
                         </div>
                     </div>
                 </div>
@@ -1958,8 +1964,8 @@
                     Ready to Land<br>
                     Your <span class="gradient-text">Dream Job?</span>
                 </h2>
-                <p class="cta-sub">Join thousands of job seekers who stopped guessing and started getting interviews.
-                </p>
+                <p class="cta-sub">Stop guessing what recruiters want. Build a resume that shows your best work —
+                    free to start.</p>
                 <a href="{% url 'register' %}" class="btn-primary-glow" style="font-size: 1.1rem; padding: 18px 44px;">
                     <i class="fas fa-magic"></i>
                     Start For Free — No Credit Card
@@ -1974,17 +1980,33 @@
     <!-- FOOTER -->
     <footer>
         <div class="container">
-            <div class="footer-logo">CV<span style="color: var(--c1);">AI</span></div>
-            <div class="footer-links" style="display: flex; justify-content: center; gap: 24px; margin-bottom: 16px;">
-                <a href="#how" style="color: var(--muted); text-decoration: none; font-size: 0.85rem;">How it works</a>
-                <a href="#features" style="color: var(--muted); text-decoration: none; font-size: 0.85rem;">Features</a>
-                <a href="#pricing" style="color: var(--muted); text-decoration: none; font-size: 0.85rem;">Pricing</a>
-                <a href="{% url 'terms' %}"
-                    style="color: var(--muted); text-decoration: none; font-size: 0.85rem;">Terms</a>
-                <a href="{% url 'privacy' %}"
-                    style="color: var(--muted); text-decoration: none; font-size: 0.85rem;">Privacy</a>
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div class="footer-logo">CV<span style="color: var(--c1);">AI</span></div>
+                    <p class="footer-tagline">The AI resume &amp; cover letter studio. Build, score, and track
+                        every application from one place.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Product</h4>
+                    <a href="#how">How it works</a>
+                    <a href="#features">Features</a>
+                    <a href="#pricing">Pricing</a>
+                    <a href="#faq">FAQ</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Account</h4>
+                    <a href="{% url 'login' %}">Log in</a>
+                    <a href="{% url 'register' %}">Create account</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Legal</h4>
+                    <a href="{% url 'terms' %}">Terms of Service</a>
+                    <a href="{% url 'privacy' %}">Privacy Policy</a>
+                </div>
             </div>
-            <div class="footer-copy" style="font-size: 0.8rem; color: #334155;">© 2026 CVAI · Built with ❤️ and AI
+            <div class="footer-bottom">
+                <span class="footer-copy">© 2026 CVAI. All rights reserved.</span>
+                <span class="footer-copy">Built with AI, checked by humans.</span>
             </div>
         </div>
     </footer>
@@ -1997,110 +2019,17 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function toggleMobileNav() {
-            const drawer = document.getElementById('mobileDrawer');
-            const backdrop = document.getElementById('mobileBackdrop');
-            if (drawer.style.right === '0px') {
-                drawer.style.right = '-300px';
-                backdrop.style.display = 'none';
-            } else {
-                drawer.style.right = '0px';
-                backdrop.style.display = 'block';
-            }
+            document.getElementById('mobileDrawer').classList.toggle('open');
+            document.getElementById('mobileBackdrop').classList.toggle('open');
         }
 
-        // CURSOR DOT
-        const cursor = document.getElementById('cursor');
-        let mouseX = 0, mouseY = 0;
-
-        document.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
-            cursor.style.left = mouseX - 4 + 'px';
-            cursor.style.top = mouseY - 4 + 'px';
+        // Close drawer on Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.getElementById('mobileDrawer').classList.remove('open');
+                document.getElementById('mobileBackdrop').classList.remove('open');
+            }
         });
-
-        document.querySelectorAll('a, button').forEach(el => {
-            el.addEventListener('mouseenter', () => {
-                cursor.style.transform = 'scale(2.5)';
-                cursor.style.background = '#f72585';
-                cursor.style.boxShadow = '0 0 15px #f72585';
-            });
-            el.addEventListener('mouseleave', () => {
-                cursor.style.transform = 'scale(1)';
-                cursor.style.background = '#4cc9f0';
-                cursor.style.boxShadow = '0 0 10px #4cc9f0';
-            });
-        });
-
-        // TYPEWRITER EFFECT
-        const words = ['Perfect Resume.', 'Perfect Letter.', 'Dream Job.', 'Next Interview.', 'Career Change.'];
-        let wordIndex = 0;
-        let charIndex = 0;
-        let isDeleting = false;
-        const typeEl = document.getElementById('typewriter');
-
-        function type() {
-            const current = words[wordIndex];
-            if (isDeleting) {
-                typeEl.textContent = current.substring(0, charIndex - 1);
-                charIndex--;
-            } else {
-                typeEl.textContent = current.substring(0, charIndex + 1);
-                charIndex++;
-            }
-
-            let speed = isDeleting ? 60 : 100;
-
-            if (!isDeleting && charIndex === current.length) {
-                speed = 2200; // pause at end
-                isDeleting = true;
-            } else if (isDeleting && charIndex === 0) {
-                isDeleting = false;
-                wordIndex = (wordIndex + 1) % words.length;
-                speed = 400;
-            }
-
-            setTimeout(type, speed);
-        }
-        setTimeout(type, 1000);
-
-        // FLOATING PARTICLES
-        const container = document.getElementById('particles-container');
-        const colors = ['76,201,240', '247,37,133', '114,9,183', '67,97,238'];
-
-        function spawnParticle() {
-            const p = document.createElement('div');
-            p.className = 'particle';
-            const size = 2 + Math.random() * 4;
-            const color = colors[Math.floor(Math.random() * colors.length)];
-            const duration = 8 + Math.random() * 12;
-            const left = Math.random() * 100;
-
-            p.style.cssText = `
-            width: ${size}px;
-            height: ${size}px;
-            left: ${left}%;
-            bottom: -10px;
-            background: rgba(${color}, ${0.3 + Math.random() * 0.4});
-            box-shadow: 0 0 ${size * 2}px rgba(${color}, 0.5);
-            animation-duration: ${duration}s;
-            animation-delay: 0s;
-        `;
-            container.appendChild(p);
-            setTimeout(() => p.remove(), duration * 1000);
-        }
-
-        setInterval(spawnParticle, 600);
-
-        // LIVE COUNTER — letters generated ticks up every few seconds
-        let liveCount = 2400;
-        const liveEl = document.querySelector('[data-count="2400"]');
-        if (liveEl) {
-            setInterval(() => {
-                liveCount += Math.floor(Math.random() * 3) + 1;
-                liveEl.textContent = liveCount.toLocaleString() + '+';
-            }, 3500);
-        }
 
         // PRICING CARD SELECT
         function selectPlan(card, plan) {
@@ -2113,9 +2042,27 @@
         // FAQ TOGGLE
         function toggleFaq(item) {
             const isOpen = item.classList.contains('open');
-            document.querySelectorAll('.faq-item').forEach(f => f.classList.remove('open'));
-            if (!isOpen) item.classList.add('open');
+            document.querySelectorAll('.faq-item').forEach(f => {
+                f.classList.remove('open');
+                const q = f.querySelector('.faq-question');
+                if (q) q.setAttribute('aria-expanded', 'false');
+            });
+            if (!isOpen) {
+                item.classList.add('open');
+                const q = item.querySelector('.faq-question');
+                if (q) q.setAttribute('aria-expanded', 'true');
+            }
         }
+
+        // Keyboard access for click-only elements (pricing cards, FAQ rows)
+        document.querySelectorAll('.price-card, .faq-question').forEach(el => {
+            el.tabIndex = 0;
+            el.setAttribute('role', 'button');
+            if (el.classList.contains('faq-question')) el.setAttribute('aria-expanded', 'false');
+            el.addEventListener('keydown', e => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); }
+            });
+        });
 
         // NAVBAR SCROLL
         window.addEventListener('scroll', () => {
@@ -2131,37 +2078,6 @@
             });
         }, { threshold: 0.1 });
         reveals.forEach(el => observer.observe(el));
-
-        // COUNT UP ON SCROLL
-        function countUp(el, target, suffix = '') {
-            let current = 0;
-            const increment = target / 60;
-            const timer = setInterval(() => {
-                current += increment;
-                if (current >= target) {
-                    current = target;
-                    clearInterval(timer);
-                }
-                el.textContent = Math.floor(current).toLocaleString() + suffix;
-            }, 25);
-        }
-
-        const statsObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    document.querySelectorAll('[data-count]').forEach(el => {
-                        const val = parseInt(el.getAttribute('data-count'));
-                        const label = el.parentElement.querySelector('.stat-label').textContent;
-                        const suffix = label.includes('%') ? '%' : '+';
-                        countUp(el, val, suffix);
-                    });
-                    statsObserver.disconnect();
-                }
-            });
-        }, { threshold: 0.5 });
-
-        const statsBar = document.querySelector('.stats-bar');
-        if (statsBar) statsObserver.observe(statsBar);
     </script>
 
 </body>
