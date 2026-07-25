@@ -75,10 +75,19 @@ for tpl in TEMPLATES:
     doc = fitz.open(stream=pdf_buf.getvalue(), filetype="pdf")
     page = doc.load_page(0)
 
-    # ~2.4x scale off A4 gives a crisp 600px-wide thumbnail on retina.
-    pix = page.get_pixmap(matrix=fitz.Matrix(1.7, 1.7), alpha=False)
+    # Crop the top of the page to an exact 4:3 band. A full A4 shrunk into a
+    # ~180px gallery card turns the body text into unreadable grey noise; the
+    # top band is where each layout is actually distinguishable — name, role,
+    # contact strip, sidebar colour, first section rule — and it stays legible
+    # when small. 4:3 so the CSS aspect-ratio matches the asset exactly and the
+    # card never crops the sides.
+    r = page.rect
+    clip = fitz.Rect(r.x0, r.y0, r.x1, r.y0 + r.width * 3 / 4)
+
+    # 3x zoom off the crop keeps it crisp on retina at card size.
+    pix = page.get_pixmap(matrix=fitz.Matrix(3.0, 3.0), clip=clip, alpha=False)
     dest = OUT / f"{slug}.jpg"
-    pix.save(dest, jpg_quality=88)
+    pix.save(dest, jpg_quality=90)
     doc.close()
     print(f"  {slug:<24} {pix.width}x{pix.height}  {dest.stat().st_size/1024:6.1f} KB")
 
