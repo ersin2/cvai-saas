@@ -2726,7 +2726,7 @@
     const vsRight = document.getElementById('vsRight');
     const MIN_W = 280, HARD_MAX_W = 620;
     const PREVIEW_MIN = 360, RESIZER_W = 6;   // must match .vs-right min-width
-    let dragging = false, startX, startW, moved = 0;
+    let dragging = false, startX, startW, moved = 0, dragEndedAt = 0;
 
     /* The form panel is flex-shrink:0, so it never gives space back on its
        own — the ceiling has to account for the viewport or the preview gets
@@ -2735,14 +2735,26 @@
       return Math.max(MIN_W, Math.min(HARD_MAX_W, window.innerWidth - PREVIEW_MIN - RESIZER_W));
     }
 
-    resizer.addEventListener('mousedown', e => {
+    /* Pointer Events + setPointerCapture, NOT mouse events on document.
+       The preview panel contains PDF iframes; once the cursor crosses into
+       an iframe it owns the mouse events, so a document-level mousemove/
+       mouseup never fires. That froze the drag at the iframe's edge and left
+       `dragging` stuck true forever — which also killed the collapse button.
+       Capturing the pointer routes every move/up back here regardless. */
+    resizer.addEventListener('pointerdown', e => {
+      if (e.button !== 0) return;
       dragging = true; startX = e.clientX; moved = 0;
       startW   = vsLeft.getBoundingClientRect().width;
+      resizer.setPointerCapture(e.pointerId);
       resizer.classList.add('dragging');
       document.body.style.cursor = 'col-resize';
       document.body.style.userSelect = 'none';
+      // Belt and braces for older engines without capture support.
+      vsRight.style.pointerEvents = 'none';
+      e.preventDefault();
     });
-    document.addEventListener('mousemove', e => {
+
+    resizer.addEventListener('pointermove', e => {
       if (!dragging) return;
       moved = Math.max(moved, Math.abs(e.clientX - startX));
       // Dragging the divider means the user wants the split view back.
@@ -2750,17 +2762,33 @@
       vsLeft.style.width =
         Math.max(MIN_W, Math.min(maxWidth(), startW + (e.clientX - startX))) + 'px';
     });
-    document.addEventListener('mouseup', () => {
+
+    function endDrag(e) {
       if (!dragging) return;
       dragging = false;
+      // Timestamp the drag rather than leaving `moved` set: a sticky flag
+      // would swallow the next legitimate click on the toggle.
+      if (moved > 4) dragEndedAt = Date.now();
+      moved = 0;
+      if (e && e.pointerId !== undefined && resizer.hasPointerCapture(e.pointerId)) {
+        resizer.releasePointerCapture(e.pointerId);
+      }
       resizer.classList.remove('dragging');
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
-    });
+      vsRight.style.pointerEvents = '';
+    }
+    resizer.addEventListener('pointerup', endDrag);
+    resizer.addEventListener('pointercancel', endDrag);
+    // Safety net: if a pointerup is ever missed, never leave the UI wedged.
+    window.addEventListener('blur', () => endDrag());
 
-    /* A drag that ends over the collapse button must not also fire its click. */
+    /* A drag that ends over the collapse button must not also fire its click,
+       but a plain click any time after that must still toggle. */
     document.getElementById('vsCollapseBtn').addEventListener('click', e => {
-      if (moved > 4) { e.preventDefault(); e.stopPropagation(); moved = 0; return; }
+      if (dragging || Date.now() - dragEndedAt < 300) {
+        e.preventDefault(); e.stopPropagation(); return;
+      }
       togglePreview();
     });
 
