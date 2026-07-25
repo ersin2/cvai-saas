@@ -16,7 +16,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link
-        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
         rel="stylesheet">
     <!-- Global Design System (canonical tokens) -->
     <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}?v=4">
@@ -26,7 +26,7 @@
             /* Phase 1: aliases to the global token set (--bg comes from cvai-global.css) */
             --c1: var(--brand);
             --c2: var(--brand-2);
-            --c3: #7209b7;      /* legacy purple — landing-only, phase-out in Phase 2 */
+            --c3: var(--brand-3);
             --c4: var(--indigo);
             --bg2: var(--surface-1);
             --text: var(--text-1);
@@ -45,7 +45,7 @@
 
         body {
             background: var(--bg);
-            font-family: 'DM Sans', sans-serif;
+            font-family: var(--font-body);
             color: var(--text);
             overflow-x: hidden;
         }
@@ -98,7 +98,7 @@
         .nav-logo {
             font-family: 'JetBrains Mono', monospace;
             font-weight: 700;
-            font-size: 1.2rem;
+            font-size: var(--fs-lg);
             color: white;
             text-decoration: none;
             display: flex;
@@ -138,7 +138,7 @@
         .nav-links a {
             color: var(--muted);
             text-decoration: none;
-            font-size: 0.9rem;
+            font-size: var(--fs-md);
             font-weight: 500;
             transition: color 0.2s;
         }
@@ -152,8 +152,8 @@
             border: 1px solid rgba(76, 201, 240, 0.3);
             color: var(--c1);
             padding: 9px 22px;
-            border-radius: 50px;
-            font-size: 0.88rem;
+            border-radius: var(--r-pill);
+            font-size: var(--fs-base);
             font-weight: 600;
             text-decoration: none;
             transition: all 0.3s;
@@ -208,8 +208,8 @@
             border: 1px solid rgba(76, 201, 240, 0.2);
             color: var(--c1);
             padding: 8px 18px;
-            border-radius: 50px;
-            font-size: 0.82rem;
+            border-radius: var(--r-pill);
+            font-size: var(--fs-base);
             font-weight: 600;
             margin-bottom: 30px;
             letter-spacing: 0.5px;
@@ -257,7 +257,7 @@
             color: white;
             padding: 16px 36px;
             border-radius: var(--r-pill);
-            font-size: 1rem;
+            font-size: var(--fs-md);
             font-weight: 700;
             text-decoration: none;
             transition: transform var(--t-base), box-shadow var(--t-base);
@@ -279,7 +279,7 @@
             color: white;
             padding: 16px 36px;
             border-radius: var(--r-pill);
-            font-size: 1rem;
+            font-size: var(--fs-md);
             font-weight: 600;
             text-decoration: none;
             transition: background var(--t-fast), border-color var(--t-fast), transform var(--t-base);
@@ -331,7 +331,7 @@
         .hp-title {
             margin: 0 auto;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.72rem;
+            font-size: var(--fs-xs);
             color: var(--muted);
         }
 
@@ -383,7 +383,7 @@
         .hp-chip {
             padding: 4px 11px;
             border-radius: var(--r-pill);
-            font-size: 0.68rem;
+            font-size: var(--fs-xs);
             font-weight: 600;
             color: var(--c1);
             background: rgba(76, 201, 240, 0.08);
@@ -406,7 +406,7 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            font-size: 0.7rem;
+            font-size: var(--fs-xs);
             font-weight: 700;
             color: #10b981;
             background: rgba(16, 185, 129, 0.1);
@@ -443,7 +443,7 @@
             flex: 1;
             background: #f3f4f6;
             border: 1px solid #e5e7eb;
-            border-radius: 99px;
+            border-radius: var(--r-pill);
         }
 
         /* Honest capability chips — no invented metrics */
@@ -460,7 +460,7 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            font-size: 0.8rem;
+            font-size: var(--fs-sm);
             font-weight: 500;
             color: var(--muted);
             border: 1px solid var(--border);
@@ -471,7 +471,7 @@
 
         .hero-chip i {
             color: var(--c1);
-            font-size: 0.72rem;
+            font-size: var(--fs-xs);
         }
 
         /* SECTIONS */
@@ -483,7 +483,7 @@
         .section-label {
             display: inline-block;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.75rem;
+            font-size: var(--fs-sm);
             color: var(--c1);
             letter-spacing: 2px;
             text-transform: uppercase;
@@ -502,7 +502,7 @@
         }
 
         .section-sub {
-            font-size: 1.05rem;
+            font-size: var(--fs-lg);
             color: var(--muted);
             max-width: 560px;
             line-height: 1.7;
@@ -560,24 +560,24 @@
         .step-icon {
             width: 52px;
             height: 52px;
-            border-radius: 14px;
+            border-radius: var(--r-md);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.3rem;
+            font-size: var(--fs-xl);
             margin-bottom: 20px;
         }
 
         .step-title {
             font-family: 'Syne', sans-serif;
-            font-size: 1.2rem;
+            font-size: var(--fs-lg);
             font-weight: 700;
             margin-bottom: 10px;
             color: white;
         }
 
         .step-desc {
-            font-size: 0.92rem;
+            font-size: var(--fs-md);
             color: var(--muted);
             line-height: 1.65;
         }
@@ -614,24 +614,24 @@
         .feature-icon {
             width: 46px;
             height: 46px;
-            border-radius: 12px;
+            border-radius: var(--r-md);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
+            font-size: var(--fs-lg);
             margin-bottom: 18px;
         }
 
         .feature-title {
             font-family: 'Syne', sans-serif;
-            font-size: 1.1rem;
+            font-size: var(--fs-lg);
             font-weight: 700;
             margin-bottom: 10px;
             color: white;
         }
 
         .feature-desc {
-            font-size: 0.88rem;
+            font-size: var(--fs-base);
             color: var(--muted);
             line-height: 1.6;
         }
@@ -666,7 +666,7 @@
 
         .window-title {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.78rem;
+            font-size: var(--fs-sm);
             color: var(--muted);
             margin-left: auto;
             margin-right: auto;
@@ -688,8 +688,8 @@
 
         .tab-pill {
             padding: 7px 16px;
-            border-radius: 8px;
-            font-size: 0.8rem;
+            border-radius: var(--r-sm);
+            font-size: var(--fs-sm);
             font-weight: 600;
             cursor: pointer;
             transition: 0.2s;
@@ -706,7 +706,7 @@
         .letter-preview {
             background: rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(76, 201, 240, 0.15);
-            border-radius: 14px;
+            border-radius: var(--r-md);
             padding: 24px;
         }
 
@@ -761,8 +761,8 @@
             border: 1px solid rgba(16, 185, 129, 0.3);
             color: #10b981;
             padding: 8px 16px;
-            border-radius: 50px;
-            font-size: 0.82rem;
+            border-radius: var(--r-pill);
+            font-size: var(--fs-base);
             font-weight: 700;
             margin-top: 16px;
         }
@@ -827,8 +827,8 @@
             background: linear-gradient(135deg, var(--c1), var(--c4));
             color: white;
             padding: 4px 14px;
-            border-radius: 20px;
-            font-size: 0.72rem;
+            border-radius: var(--r-lg);
+            font-size: var(--fs-xs);
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -851,8 +851,8 @@
             background: var(--grad-gold);
             color: #000;
             padding: 4px 16px;
-            border-radius: 20px;
-            font-size: 0.75rem;
+            border-radius: var(--r-lg);
+            font-size: var(--fs-sm);
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -860,7 +860,7 @@
         }
 
         .plan-name {
-            font-size: 0.8rem;
+            font-size: var(--fs-sm);
             font-weight: 700;
             color: var(--muted);
             text-transform: uppercase;
@@ -878,7 +878,7 @@
         }
 
         .plan-period {
-            font-size: 0.85rem;
+            font-size: var(--fs-base);
             color: var(--muted);
             margin-bottom: 28px;
         }
@@ -895,7 +895,7 @@
             gap: 10px;
             padding: 9px 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-            font-size: 0.9rem;
+            font-size: var(--fs-md);
             color: #94a3b8;
         }
 
@@ -904,7 +904,7 @@
         }
 
         .plan-features li i {
-            font-size: 0.75rem;
+            font-size: var(--fs-sm);
         }
 
         .plan-features li .fa-check {
@@ -924,7 +924,7 @@
             padding: 14px;
             border-radius: var(--r-md);
             font-weight: 700;
-            font-size: 0.9rem;
+            font-size: var(--fs-md);
             text-transform: uppercase;
             letter-spacing: 0.5px;
             text-decoration: none;
@@ -1004,7 +1004,7 @@
         .placeholder-chip {
             display: inline-block;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.62rem;
+            font-size: var(--fs-2xs);
             font-weight: 700;
             letter-spacing: 1.5px;
             text-transform: uppercase;
@@ -1021,13 +1021,13 @@
 
         .stars {
             color: #fbbf24;
-            font-size: 0.85rem;
+            font-size: var(--fs-base);
             margin-bottom: 16px;
             letter-spacing: 2px;
         }
 
         .testimonial-text {
-            font-size: 0.95rem;
+            font-size: var(--fs-md);
             color: #94a3b8;
             line-height: 1.7;
             margin-bottom: 20px;
@@ -1048,17 +1048,17 @@
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 0.9rem;
+            font-size: var(--fs-md);
         }
 
         .author-name {
             font-weight: 700;
-            font-size: 0.9rem;
+            font-size: var(--fs-md);
             color: white;
         }
 
         .author-role {
-            font-size: 0.78rem;
+            font-size: var(--fs-sm);
             color: var(--muted);
         }
 
@@ -1096,7 +1096,7 @@
         }
 
         .cta-sub {
-            font-size: 1.1rem;
+            font-size: var(--fs-lg);
             color: var(--muted);
             max-width: 500px;
             margin: 0 auto 40px;
@@ -1120,13 +1120,13 @@
 
         .footer-logo {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 1.05rem;
+            font-size: var(--fs-lg);
             font-weight: 700;
             color: white;
         }
 
         .footer-tagline {
-            font-size: 0.85rem;
+            font-size: var(--fs-base);
             color: var(--muted);
             line-height: 1.65;
             max-width: 280px;
@@ -1135,7 +1135,7 @@
 
         .footer-col h4 {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.72rem;
+            font-size: var(--fs-xs);
             font-weight: 700;
             letter-spacing: 1.5px;
             text-transform: uppercase;
@@ -1147,7 +1147,7 @@
             display: block;
             color: var(--muted);
             text-decoration: none;
-            font-size: 0.85rem;
+            font-size: var(--fs-base);
             padding: 5px 0;
             transition: color var(--t-fast);
         }
@@ -1167,7 +1167,7 @@
         }
 
         .footer-copy {
-            font-size: 0.8rem;
+            font-size: var(--fs-sm);
             color: var(--muted);
         }
 
@@ -1236,7 +1236,7 @@
             align-items: center;
             cursor: pointer;
             font-weight: 600;
-            font-size: 1rem;
+            font-size: var(--fs-md);
             color: white;
             user-select: none;
         }
@@ -1253,7 +1253,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.75rem;
+            font-size: var(--fs-sm);
             color: var(--muted);
             transition: all 0.3s;
             flex-shrink: 0;
@@ -1272,7 +1272,7 @@
             transition: max-height 0.4s ease, padding 0.3s ease;
             padding: 0 28px;
             color: var(--muted);
-            font-size: 0.95rem;
+            font-size: var(--fs-md);
             line-height: 1.7;
         }
 
@@ -1331,7 +1331,7 @@
             padding: 14px;
             border-radius: var(--r-md);
             font-weight: 700;
-            font-size: 0.95rem;
+            font-size: var(--fs-md);
             text-decoration: none;
             box-shadow: var(--glow-cta);
         }
@@ -1708,7 +1708,7 @@
                             </div>
                             <div class="letter-preview">
                                 <div
-                                    style="font-family: 'DM Sans', sans-serif; font-size: 0.88rem; color: #94a3b8; line-height: 1.75;">
+                                    style="font-size: var(--fs-base); color: var(--text-2); line-height: var(--lh-loose);">
                                     <div style="color: #cbd5e1; font-weight: 600; margin-bottom: 16px;">Dear Hiring
                                         Manager,</div>
                                     <p style="margin-bottom: 12px;">I am writing to express my strong interest in the
@@ -1733,14 +1733,14 @@
 
                                 <!-- ATS SCORE BADGE -->
                                 <div
-                                    style="margin-top: 24px; padding: 16px; background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.2); border-radius: 14px;">
+                                    style="margin-top: 24px; padding: 16px; background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.2); border-radius: var(--r-md);">
                                     <div
                                         style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-                                        <span style="font-size: 0.82rem; font-weight: 700; color: #10b981;"><i
+                                        <span style="font-size: var(--fs-base); font-weight: 700; color: #10b981;"><i
                                                 class="fas fa-robot me-2"></i>ATS Compatibility Score</span>
                                         <span
-                                            style="font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800; color: #10b981;">92<span
-                                                style="font-size: 0.9rem;">/100</span></span>
+                                            style="font-family: 'Syne', sans-serif; font-size: var(--fs-xl); font-weight: 800; color: #10b981;">92<span
+                                                style="font-size: var(--fs-md);">/100</span></span>
                                     </div>
                                     <div
                                         style="height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden;">
@@ -1750,13 +1750,13 @@
                                     </div>
                                     <div style="display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap;">
                                         <span
-                                            style="font-size: 0.75rem; color: #10b981; background: rgba(16,185,129,0.1); padding: 4px 10px; border-radius: 20px;"><i
+                                            style="font-size: var(--fs-sm); color: #10b981; background: rgba(16,185,129,0.1); padding: 4px 10px; border-radius: var(--r-lg);"><i
                                                 class="fas fa-check me-1"></i>Keywords matched</span>
                                         <span
-                                            style="font-size: 0.75rem; color: #10b981; background: rgba(16,185,129,0.1); padding: 4px 10px; border-radius: 20px;"><i
+                                            style="font-size: var(--fs-sm); color: #10b981; background: rgba(16,185,129,0.1); padding: 4px 10px; border-radius: var(--r-lg);"><i
                                                 class="fas fa-check me-1"></i>Format optimized</span>
                                         <span
-                                            style="font-size: 0.75rem; color: #fbbf24; background: rgba(251,191,36,0.1); padding: 4px 10px; border-radius: 20px;"><i
+                                            style="font-size: var(--fs-sm); color: #fbbf24; background: rgba(251,191,36,0.1); padding: 4px 10px; border-radius: var(--r-lg);"><i
                                                 class="fas fa-exclamation me-1"></i>1 risk found</span>
                                     </div>
                                 </div>
@@ -1966,11 +1966,11 @@
                 </h2>
                 <p class="cta-sub">Stop guessing what recruiters want. Build a resume that shows your best work —
                     free to start.</p>
-                <a href="{% url 'register' %}" class="btn-primary-glow" style="font-size: 1.1rem; padding: 18px 44px;">
+                <a href="{% url 'register' %}" class="btn-primary-glow" style="font-size: var(--fs-lg); padding: 18px 44px;">
                     <i class="fas fa-magic"></i>
                     Start For Free — No Credit Card
                 </a>
-                <div class="mt-4" style="font-size: 0.85rem; color: var(--muted);">
+                <div class="mt-4" style="font-size: var(--fs-base); color: var(--muted);">
                     <i class="fas fa-lock me-2"></i>3 free generations · No credit card required · Cancel anytime
                 </div>
             </div>

@@ -51,7 +51,7 @@
 
         .auth-logo {
             font-family: var(--font-mono);
-            font-size: 1.7rem;
+            font-size: var(--fs-2xl);
             font-weight: 700;
             text-align: center;
             text-decoration: none;
@@ -65,7 +65,7 @@
         .auth-subtitle {
             text-align: center;
             color: var(--text-3);
-            font-size: 0.88rem;
+            font-size: var(--fs-base);
             margin-bottom: 24px;
         }
 
@@ -82,7 +82,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            font-size: 0.87rem;
+            font-size: var(--fs-base);
             color: var(--text-2);
             padding: 5px 0;
         }
@@ -93,7 +93,7 @@
 
         .benefit-item i {
             color: var(--success);
-            font-size: 0.78rem;
+            font-size: var(--fs-sm);
             width: 16px;
             flex-shrink: 0;
         }
@@ -101,7 +101,7 @@
         /* Django form labels */
         label {
             color: rgba(255, 255, 255, 0.65) !important;
-            font-size: 0.84rem !important;
+            font-size: var(--fs-base) !important;
             font-weight: 600 !important;
             margin-bottom: 7px !important;
             display: block !important;
@@ -120,7 +120,7 @@
             color: var(--text-1) !important;
             padding: 13px 16px !important;
             border-radius: var(--r-sm) !important;
-            font-size: 0.95rem !important;
+            font-size: var(--fs-md) !important;
             font-family: var(--font-body) !important;
             width: 100% !important;
             display: block !important;
@@ -147,7 +147,7 @@
 
         ul.errorlist li {
             color: #fca5a5;
-            font-size: 0.8rem;
+            font-size: var(--fs-sm);
             display: flex;
             align-items: center;
             gap: 5px;
@@ -168,7 +168,7 @@
             background: linear-gradient(135deg, var(--brand-2), #4361ee);
             color: white;
             font-weight: 700;
-            font-size: 1rem;
+            font-size: var(--fs-md);
             cursor: pointer;
             margin-top: 10px;
             transition: transform var(--t-fast), box-shadow var(--t-fast), opacity var(--t-fast);
@@ -198,12 +198,12 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            font-size: 0.76rem;
+            font-size: var(--fs-sm);
             color: var(--text-dim);
             font-weight: 600;
         }
 
-        .trust-item i { color: var(--brand); font-size: 0.75rem; }
+        .trust-item i { color: var(--brand); font-size: var(--fs-sm); }
 
         /* Back link */
         .back-link {
@@ -215,7 +215,7 @@
         .back-link a {
             color: var(--text-3);
             text-decoration: none;
-            font-size: 0.84rem;
+            font-size: var(--fs-base);
             transition: color var(--t-fast);
         }
 
@@ -233,7 +233,7 @@
         <div class="auth-card">
             <!-- LOGO -->
             <a href="{% url 'landing' %}" class="auth-logo">
-                <i class="fas fa-cube" style="-webkit-text-fill-color: var(--brand); font-size: 1.4rem;"></i>
+                <i class="fas fa-cube" style="-webkit-text-fill-color: var(--brand); font-size: var(--fs-xl);"></i>
                 <span style="color: white;">CV</span><span style="color: var(--brand-2);">AI</span>
             </a>
             <p class="auth-subtitle">Join 2,400+ job seekers using AI to land offers</p>
@@ -274,7 +274,7 @@
             </form>
 
             <!-- LOGIN LINK -->
-            <div class="text-center mt-4" style="font-size: 0.88rem;">
+            <div class="text-center mt-4" style="font-size: var(--fs-base);">
                 <span style="color: var(--text-3);">Already have an account?</span>
                 <a href="{% url 'login' %}" class="fw-bold text-decoration-none ms-1"
                    style="color: var(--brand);">Sign In</a>

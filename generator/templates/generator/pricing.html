@@ -46,14 +46,14 @@
             backdrop-filter: blur(20px);
         }
         .logo-text {
-            font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 1.4rem;
+            font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: var(--fs-xl);
             background: linear-gradient(90deg, #fff, var(--brand));
             -webkit-background-clip: text; background-clip: text;
             -webkit-text-fill-color: transparent; text-decoration: none;
         }
         .nav-link-item {
-            color: #94a3b8; text-decoration: none; font-size: 0.9rem; font-weight: 600;
-            padding: 6px 14px; border-radius: 8px; transition: 0.2s;
+            color: #94a3b8; text-decoration: none; font-size: var(--fs-md); font-weight: 600;
+            padding: 6px 14px; border-radius: var(--r-sm); transition: 0.2s;
         }
         .nav-link-item:hover { color: #fff; background: rgba(255,255,255,0.05); }
 
@@ -62,7 +62,7 @@
             text-align: center; padding: 80px 16px 48px;
         }
         .pricing-hero .eyebrow {
-            font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
+            font-family: 'JetBrains Mono', monospace; font-size: var(--fs-sm);
             letter-spacing: 3px; text-transform: uppercase; color: var(--brand); margin-bottom: 16px;
         }
         .pricing-hero h1 {
@@ -72,7 +72,7 @@
             background: linear-gradient(135deg, var(--brand), var(--brand-2));
             -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
         }
-        .pricing-hero p { color: #94a3b8; font-size: 1.05rem; max-width: 520px; margin: 0 auto; }
+        .pricing-hero p { color: #94a3b8; font-size: var(--fs-lg); max-width: 520px; margin: 0 auto; }
 
         /* ── GRID ── */
         .pricing-grid {
@@ -131,14 +131,14 @@
         /* Badge */
         .plan-badge {
             position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
-            font-size: 0.72rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
-            padding: 5px 18px; border-radius: 99px; white-space: nowrap;
+            font-size: var(--fs-xs); font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
+            padding: 5px 18px; border-radius: var(--r-pill); white-space: nowrap;
         }
         .badge-pro   { background: linear-gradient(90deg,#f59e0b,#fbbf24); color: #0a0e17; }
         .badge-elite { background: linear-gradient(90deg,#7c3aed,#a855f7); color: #fff; }
 
         /* Label */
-        .plan-label { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+        .plan-label { font-family: 'JetBrains Mono', monospace; font-size: var(--fs-xs);
             letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px; font-weight: 700; }
         .plan-label.free  { color: var(--brand); }
         .plan-label.pro   { color: var(--gold); }
@@ -146,9 +146,9 @@
 
         /* Price */
         .plan-price { font-size: 3.2rem; font-weight: 800; line-height: 1; margin-bottom: 6px; }
-        .plan-price sup { font-size: 1.2rem; vertical-align: super; margin-right: 2px; }
-        .plan-price .period { font-size: 0.9rem; font-weight: 400; color: #94a3b8; }
-        .plan-tagline { font-size: 0.82rem; color: #94a3b8; margin-bottom: 28px; }
+        .plan-price sup { font-size: var(--fs-lg); vertical-align: super; margin-right: 2px; }
+        .plan-price .period { font-size: var(--fs-md); font-weight: 400; color: #94a3b8; }
+        .plan-tagline { font-size: var(--fs-base); color: #94a3b8; margin-bottom: 28px; }
 
         .plan-divider { border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 20px 0; }
 
@@ -156,7 +156,7 @@
         .plan-features { list-style: none; padding: 0; margin: 0 0 32px; flex-grow: 1; }
         .plan-features li {
             display: flex; align-items: flex-start; gap: 10px;
-            font-size: 0.91rem; color: #94a3b8;
+            font-size: var(--fs-md); color: #94a3b8;
             padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
         }
         .plan-features li:last-child { border-bottom: none; }
@@ -168,8 +168,8 @@
 
         /* CTA */
         .btn-plan {
-            display: block; width: 100%; padding: 15px 0; border-radius: 14px;
-            font-weight: 700; font-size: 0.95rem; text-align: center;
+            display: block; width: 100%; padding: 15px 0; border-radius: var(--r-md);
+            font-weight: 700; font-size: var(--fs-md); text-align: center;
             text-decoration: none; border: none; cursor: pointer;
             transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s; letter-spacing: 0.3px;
         }
@@ -191,9 +191,9 @@
         }
 
         /* Note + Hamburger */
-        .pricing-note { text-align: center; color: #8b98ac; font-size: 0.82rem; padding-bottom: 40px; }
+        .pricing-note { text-align: center; color: #8b98ac; font-size: var(--fs-base); padding-bottom: 40px; }
         .pricing-note a { color: var(--brand); text-decoration: none; }
-        .hamburger-btn { display: none; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
+        .hamburger-btn { display: none; background: none; border: none; color: white; font-size: var(--fs-2xl); cursor: pointer; }
         @media (max-width: 768px) {
             .nav-links-desktop { display: none !important; }
             .hamburger-btn { display: block; }
@@ -213,7 +213,7 @@
         .mobile-backdrop.open { display: block; }
         .drawer-link {
             display: block; color: #e2e8f0; text-decoration: none;
-            font-size: 1rem; font-weight: 600; padding: 13px 0;
+            font-size: var(--fs-md); font-weight: 600; padding: 13px 0;
             border-bottom: 1px solid rgba(255,255,255,0.05);
         }
         .drawer-link:hover { color: var(--brand); }
@@ -235,7 +235,7 @@
     <div class="mobile-drawer" id="mobileDrawer">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <span class="logo-text">CV<span style="color:var(--brand);">AI</span></span>
-            <button onclick="toggleMobileNav()" aria-label="Close menu" style="background:none;border:none;color:#94a3b8;font-size:1.4rem;cursor:pointer;">
+            <button onclick="toggleMobileNav()" aria-label="Close menu" style="background:none;border:none;color:#94a3b8;font-size: var(--fs-xl);cursor:pointer;">
                 <i class="fas fa-times"></i>
             </button>
         </div>

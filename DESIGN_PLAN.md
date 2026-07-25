@@ -1,119 +1,137 @@
-# CVAI — Design Audit & Plan (Phase 0)
+# CVAI — Design Audit v2
 
-Files audited: `cvai-global.css`, `landing.html` (standalone), `home.html` (standalone, CSS+structure), `base_app.html`.
-Not read (budget): `partials/studio_styles.html` — a 4th style source included by home.html; flagged for Phase 1.
+Re-audit of the **current** codebase (post-overhaul, after PR #3). Supersedes the
+v1 audit, which described the pre-overhaul state and is now historical.
 
----
-
-## 1. Current design system as it exists
-
-### Three competing `:root` token sets
-
-| Token | cvai-global.css (app) | landing.html | home.html (studio) |
-|---|---|---|---|
-| Background | `#080c14` | `#060810` | `#070a14` |
-| Panel/card | `#0f1526` (modal) | `#0c1022` | `#0d1120` |
-| Text primary | `#f1f5f9` | `#e2e8f0` | `#e2e8f0` |
-| Text muted | `#7c8a9e` (AA-fixed) | `#94a3b8` | `#64748b` (**fails AA ~3.5:1**) |
-| `--accent` | **`#7c3aed` (purple)** | — | **`#4cc9f0` (cyan)** — same name, different color |
-| Body font | **Outfit** | **DM Sans** (+ Syne headings) | **Inter** |
-
-Shared brand colors: cyan `#4cc9f0`, pink `#f72585`. Indigo `#4361ee` is used in the main CTA gradient everywhere but is only a token on landing (`--c4`).
-
-### Measured inconsistencies
-- **Border radii: 11 distinct values** — 8, 10, 12, 14, 16, 20, 24, 32px, pills as both `50px` and `99px`, circles as `50%`.
-- **Font sizes: ~26 distinct values** — .6, .62, .65, .68, .7, .72, .75, .78, .8, .82, .85, .88, .9, .92, .95, 1, 1.05, 1.1, 1.15, 1.2, 1.35, 1.4, 2.2, 3rem + clamps. No scale.
-- **Transitions: 10+ durations** (.15s–.8s) with mixed easings; global tokens (`--transition-fast/base/slow`) exist but landing/studio hardcode.
-- **Spacing tokens exist (`--gap-*`) but are almost never consumed** — paddings are one-off values (4→52px, ~20 distinct).
-- **Shadows**: 3 tokens in global; landing uses ~8 ad-hoc shadows (`0 40px 80px`, `0 30px 60px`, `0 0 60px`…).
-- **Two different golds**: upgrade button `#f59e0b→#fbbf24` vs pricing `#ffd700→#ffaa00`.
-- **~8 primary-button styles**: `btn-primary-grad`, `btn-primary-glow`, `btn-nav`, `btn-upgrade`, `btn-plan-gold/elite/free`, `btn-ai-magic`, `vs-nav-btn-dl`, `btn-ai-fill`. Two unrelated `btn-ghost` definitions (global vs landing).
-- **Heavy inline styles on landing**: mobile drawer, footer links, feature icons — all inline, duplicating classes that exist in global CSS.
-- **`base_landing.html` exists but nothing extends it**; landing.html and home.html are standalone full documents duplicating head/CDN/font links.
-- **Hero stacks 7 animated layers**: grid, 3 orbs, particles, waves, noise, typewriter, marquee — plus a (disabled) custom cursor. Busy = cheap.
-- **Rule violations to fix in Phase 2**: hardcoded fake stats ("2,400 documents", "94% ATS pass rate"), 3 fake testimonials with names, "500+ GitHub stars" in a placeholder. Brand inconsistency: "cv-letter.ai" in the demo window title vs CVAI.
-- Minor: mojibake emojis in home.html template fallbacks (`⏱ï¸`, `⚖ï¸`); `@keyframes blink` defined twice in landing; `shimmer` defined in both landing and global.
+Measured, not remembered: every number below comes from a grep of live source
+(`staticfiles/` artifacts excluded).
 
 ---
 
-## 2. Ten highest-impact changes (ranked)
+## 1. Current design system as it actually exists
 
-1. **One token set, consumed everywhere** — merge the 3 `:root` blocks into `cvai-global.css`; landing + studio consume it. Resolves the `--accent` collision, 3 backgrounds, 3 muted grays. *Why: consistency is the single biggest perceived-quality lever; unblocks everything else.* (Phase 1)
-2. **One type system** — Syne (or Outfit 800) for display headings, Outfit for UI/body, JetBrains Mono for numbers; collapse 26 sizes into an 8-step scale. *Why: typography does the heavy lifting on premium feel.* (Phase 1–2)
-3. **Rebuild hero: restraint + real product visual** — drop particles/orbs/grid/waves/noise/typewriter to at most one subtle background effect; add a framed screenshot/stylized mock of the studio above the fold; remove fake counters. *Why: value is currently invisible and the busy-ness reads as template-grade.* (Phase 2)
-4. **Button hierarchy: 3 roles + 1 accent** — primary (indigo→pink gradient, glow reserved for it alone), secondary ghost, danger, gold upgrade accent (one gold). Kill the other 5 styles. *Why: coherent CTAs = product feel; also fixes gradient overuse.* (Phase 1 plumbing, applied 2–3)
-5. **Normalize radius/shadow/transition to token scales** — 5 radii, 3 shadows + 1 reserved glow, 3 timings (150/200/300ms). *Why: pervasive subtle polish; the current 11-radius mix is exactly what makes UIs feel cheap.* (Phase 1)
-6. **Honest social proof structure** — replace fake stats/testimonials with clearly-marked placeholder slots. *Why: rule compliance + trust; recruiters notice invented numbers.* (Phase 2)
-7. **Studio: editor vs canvas separation** — flat panel for the form, visually distinct inset canvas for the PDF preview (contrast step + soft shadow), consistent 150–200ms micro-transitions, fix studio muted-text contrast (`#64748b` → AA). (Phase 4)
-8. **Whitespace rhythm on landing + app screens** — consistent section padding scale, more breathing room inside cards; content max-width on large screens. (Phases 2–3, 5)
-9. **De-inline the landing** — move drawer/footer/feature-icon inline styles into classes; reuse global nav/drawer components instead of the duplicated inline copy. *Why: consistency + maintainability; inline styles are why screens drift.* (Phase 2)
-10. **States: empty/loading/error everywhere** — skeletons for async (90s generation must never look frozen), proper empty states with CTA, human error messages with retry. (Phase 3)
+### What v1 fixed and is holding
+
+One canonical `:root` in `cvai-global.css`, consumed by every screen. Colour,
+surface, border, radius, shadow and motion tokens are real and adopted — the
+five competing token sets, the `--accent` name collision and the two golds are
+gone, and legacy aliases were fully migrated out (434 renames). Empty/loading/
+error states exist on every app screen. No fake metrics or testimonials remain.
+
+### What is actually still broken
+
+**1. The type and space scales are dead tokens.** This is the headline finding.
+`--fs-*`, `--sp-*`, `--lh-*`, `--font-display`, `--content-max` were defined in
+the v1 token block and have **zero consumers in live source**. The only hit
+anywhere is `--track-tight`, used exactly once (`landing.html:224`).
+
+> This is precisely the failure v1 diagnosed about the old `--gap-*` tokens —
+> "spacing tokens exist but are almost never consumed" — and the overhaul
+> reproduced it one layer up. A scale nothing consumes is not a design system,
+> it is a comment.
+
+**2. Three body typefaces are still shipping.**
+
+| Screen | Loaded webfonts | Body renders in |
+|---|---|---|
+| landing | Syne, DM Sans, JetBrains Mono | **DM Sans** |
+| studio (`home.html`) | Outfit, **Inter**, JetBrains Mono | **Inter** |
+| every other screen | Outfit, JetBrains Mono | **Outfit** |
+
+Landing and studio each pull a font nobody else uses. Moving between landing →
+app → studio changes the letterforms twice.
+
+**3. A font that is used but never loaded.** `dashboard.html:211` sets
+`font-family: 'Inter'` on `.modal-result-text`, but dashboard extends
+`base_app.html`, which loads only Outfit + JetBrains Mono. Inter is never
+downloaded, so that text falls through to generic `sans-serif` — a *third*
+face inside a single screen. Silent, and visible only side-by-side.
+
+**4. 366 hardcoded radius / shadow / font-size literals remain**, concentrated in
+the files that were never fully migrated:
+
+| File | Literals |
+|---|---|
+| `home.html` | 97 |
+| `landing.html` | 89 |
+| `dashboard.html` | 66 |
+| `tracker.html` | 38 |
+| `pricing.html` | 28 |
+| `tools.html` | 23 |
+| `history.html` | 17 |
+| `base_app.html` | 8 |
+
+Radii and shadows were migrated where they sat on a named token; the long tail
+of one-off `font-size: 0.78rem` / `0.82rem` / `0.88rem` was not touched at all.
+The type scale is therefore still ~20 ad-hoc sizes wide in practice.
+
+**5. Structural duplication, unchanged.** `landing.html`, `pricing.html` and
+`users/profile.html` are standalone documents that each re-declare `<head>`,
+CDN links, fonts, navbar and mobile drawer markup. Root `templates/` (404, 500,
+terms, privacy) each carry their own mini `:root`; terms and privacy do not link
+`cvai-global.css` at all. This is why screens drift.
+
+**6. Minor.** Landing keeps a legacy purple `--c3: #7209b7` outside the token
+set. `pricing.html` and `profile.html` still hand-roll their nav instead of
+reusing the global components.
 
 ---
 
-## 3. Proposed design tokens (one tight set → `cvai-global.css`)
+## 2. Ten highest-impact changes, ranked
+
+1. **Make the type scale real.** Replace the ~20 ad-hoc `font-size` literals with
+   the 8 `--fs-*` steps, starting with the three heaviest files. *Highest impact:
+   inconsistent type size is the most legible "template-grade" tell, and the
+   tokens already exist — this is adoption, not design.*
+2. **One body typeface.** Standardise on Outfit; drop DM Sans (landing) and Inter
+   (studio) from both the font links and the CSS. Keep Syne for landing display
+   headings and JetBrains Mono for numerics. *Removes two font downloads and the
+   letterform shift between landing, app and studio.*
+3. **Fix the phantom Inter** in `dashboard.html:211` — it is a rendering bug, not
+   a preference.
+4. **Adopt the spacing scale** on section/card padding, replacing one-off values.
+   Generous, *consistent* whitespace is the second-biggest premium lever.
+5. **Extract a shared base template** for the standalone pages (landing, pricing,
+   profile) carrying `<head>`, fonts, navbar and drawer. *Structural fix for the
+   drift that produced findings 2–4 in the first place.*
+6. **Bring root `templates/`** (404, 500, terms, privacy) onto `cvai-global.css`
+   and delete their mini token sets.
+7. **Normalise the remaining radius/shadow literals** in `home.html` and
+   `landing.html` to `--r-*` / `--shadow-*`.
+8. **Tighten heading hierarchy** — apply `--track-tight` and `--lh-tight`
+   consistently to every heading ≥ `--fs-xl`; currently applied once.
+9. **Retire landing's `--c3` purple** into the token set or remove it.
+10. **Content max-width via `--content-max`** instead of the per-screen literals
+    (860 / 920 / 1200 / 1300px currently in use).
+
+---
+
+## 3. Proposed tokens
+
+**No new token set is proposed.** The v1 set is correct and does not need
+revising; items 1, 4 and 8 above are about *consuming* what already exists in
+`cvai-global.css`. Two edits only:
 
 ```css
-:root {
-  /* Brand */
-  --brand:        #4cc9f0;   /* cyan — links, active, focus */
-  --brand-2:      #f72585;   /* pink — gradient end only */
-  --indigo:       #4361ee;   /* gradient start only */
-  --gold:         #f59e0b;   /* upgrade accent (single gold: #f59e0b→#fbbf24) */
-  --grad-cta:     linear-gradient(135deg, var(--indigo), var(--brand-2));
+/* remove — nothing loads Inter or DM Sans after this pass */
+--font-body: 'Outfit', sans-serif;        /* unchanged, now genuinely universal */
 
-  /* Surfaces (one background, stepped surfaces) */
-  --bg:           #080c14;
-  --surface-1:    #0d1322;               /* panels, cards (solid — no rgba stacking) */
-  --surface-2:    rgba(255,255,255,.04); /* raised elements, inputs */
-  --surface-3:    rgba(255,255,255,.07); /* hover */
-  --border:       rgba(255,255,255,.08);
-  --border-hover: rgba(255,255,255,.16);
-
-  /* Text (all AA on --bg) */
-  --text-1:       #f1f5f9;
-  --text-2:       #94a3b8;
-  --text-3:       #7c8a9e;   /* minimum for readable text */
-  --text-dim:     #475569;   /* decorative only, never body copy */
-
-  /* Status */
-  --success:#22c55e; --warning:#eab308; --danger:#ef4444; --info:var(--brand);
-
-  /* Type — 2 families, 8-step scale */
-  --font-display: 'Syne', sans-serif;      /* 700/800, hero + section titles */
-  --font-body:    'Outfit', sans-serif;    /* 400/600/800, everything else */
-  --font-mono:    'JetBrains Mono', monospace; /* numbers, badges, code */
-  --fs-xs:.72rem; --fs-sm:.8rem; --fs-base:.875rem; --fs-md:.95rem;
-  --fs-lg:1.125rem; --fs-xl:1.5rem;
-  --fs-2xl:clamp(1.75rem,3.5vw,2.75rem);        /* section titles */
-  --fs-hero:clamp(2.4rem,6vw,4.5rem);           /* hero only */
-  --lh-tight:1.1; --lh-base:1.55; --lh-loose:1.7;
-  --track-tight:-0.02em;                        /* headings ≥ --fs-xl */
-
-  /* Space — 4px base scale, consumed everywhere */
-  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px;
-  --sp-6:32px; --sp-7:48px; --sp-8:64px; --sp-9:96px; --sp-10:128px;
-  --section-pad: clamp(72px, 10vw, 120px);      /* landing section rhythm */
-  --content-max: 1200px;
-
-  /* Radius — 5 values, nothing else */
-  --r-sm:8px; --r-md:12px; --r-lg:16px; --r-xl:24px; --r-pill:999px;
-
-  /* Elevation — borders + soft shadow, no glows except CTA */
-  --shadow-1: 0 2px 8px rgba(0,0,0,.35);
-  --shadow-2: 0 8px 28px -4px rgba(0,0,0,.45);
-  --shadow-3: 0 24px 64px -12px rgba(0,0,0,.55);
-  --glow-cta: 0 8px 32px rgba(67,97,238,.35);   /* primary CTA hover only */
-
-  /* Motion */
-  --t-fast: 150ms ease-out;                     /* hover, color, borders */
-  --t-base: 200ms ease;                         /* transforms, reveals */
-  --t-slide: 300ms cubic-bezier(.22,1,.36,1);   /* drawers, panels */
-}
+/* add — landing's last untokenised colour */
+--brand-3: #7209b7;                       /* deep purple, landing accents only */
 ```
 
-Migration notes (Phase 1): map old → new (`--primary`→`--brand`, `--radius-sm 10px`→`--r-sm/md`, `radius 14/20px`→`--r-lg`, `radius 24/32px`→`--r-xl`, pills→`--r-pill`, durations round to nearest token). Studio's local `--accent` gets deleted and its usages pointed at `--brand`. Legacy aliases can be kept temporarily (`--primary: var(--brand)`) so nothing breaks mid-migration.
+Everything else — surfaces, text ramp, status, radii, shadows, motion — stays
+exactly as shipped.
 
 ---
 
-**PHASE 0 DONE** — awaiting approval to start Phase 1 (token plumbing, no visual redesign).
+## Scope note
+
+This is adoption and consolidation work, not a redesign. The visual language
+that shipped in PR #3 is sound; what it lacks is *enforcement* in the two layers
+(type, space) where tokens were written but never wired up, plus the structural
+deduplication that stops the drift recurring. Expect the diff to be large but
+visually near-invisible on most screens — with the exception of landing and the
+studio, which will change typeface.
+
+**Awaiting approval before any visual edits.**

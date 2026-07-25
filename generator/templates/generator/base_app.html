@@ -42,7 +42,7 @@
 
     {% if user.profile.generations_count is not None and user.profile.plan == 'free' %}
     <span class="gen-counter desktop-nav">
-      <i class="fas fa-bolt" style="font-size:0.7rem;"></i>
+      <i class="fas fa-bolt" style="font-size: var(--fs-xs);"></i>
       {{ user.profile.generations_count }} left
     </span>
     {% endif %}
@@ -50,28 +50,28 @@
     <div class="nav-group desktop-nav">
       <a href="{% url 'home' %}"
          class="nav-link-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
-        <i class="fas fa-pen-ruler me-1" style="font-size:0.8rem;opacity:.7;"></i>Studio
+        <i class="fas fa-pen-ruler me-1" style="font-size: var(--fs-sm);opacity:.7;"></i>Studio
       </a>
       <a href="{% url 'dashboard' %}"
          class="nav-link-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-        <i class="fas fa-chart-pie me-1" style="font-size:0.8rem;opacity:.7;"></i>Dashboard
+        <i class="fas fa-chart-pie me-1" style="font-size: var(--fs-sm);opacity:.7;"></i>Dashboard
       </a>
       <a href="{% url 'tools' %}"
          class="nav-link-item {% if request.resolver_match.url_name == 'tools' %}active{% endif %}">
-        <i class="fas fa-wand-magic-sparkles me-1" style="font-size:0.8rem;opacity:.7;"></i>AI Tools
+        <i class="fas fa-wand-magic-sparkles me-1" style="font-size: var(--fs-sm);opacity:.7;"></i>AI Tools
       </a>
       <a href="{% url 'tracker' %}"
          class="nav-link-item {% if request.resolver_match.url_name == 'tracker' %}active{% endif %}">
-        <i class="fas fa-briefcase me-1" style="font-size:0.8rem;opacity:.7;"></i>Tracker
+        <i class="fas fa-briefcase me-1" style="font-size: var(--fs-sm);opacity:.7;"></i>Tracker
       </a>
       <a href="{% url 'history' %}"
          class="nav-link-item {% if request.resolver_match.url_name == 'history' %}active{% endif %}">
-        <i class="fas fa-clock-rotate-left me-1" style="font-size:0.8rem;opacity:.7;"></i>History
+        <i class="fas fa-clock-rotate-left me-1" style="font-size: var(--fs-sm);opacity:.7;"></i>History
       </a>
 
       {% if user.profile.plan == 'free' %}
       <a href="{% url 'pricing' %}" class="btn-upgrade">
-        <i class="fas fa-star me-1" style="font-size:0.7rem;"></i>Upgrade
+        <i class="fas fa-star me-1" style="font-size: var(--fs-xs);"></i>Upgrade
       </a>
       {% endif %}
 
@@ -89,7 +89,7 @@
   <div class="mobile-backdrop" id="mobileBackdrop" onclick="toggleMobileNav()"></div>
   <div class="mobile-drawer" id="mobileDrawer" role="navigation" aria-label="Mobile menu">
     <div class="drawer-header">
-      <span class="logo-text" style="font-size:1.1rem;">CV<span style="-webkit-text-fill-color:var(--brand-2);">AI</span></span>
+      <span class="logo-text" style="font-size: var(--fs-lg);">CV<span style="-webkit-text-fill-color:var(--brand-2);">AI</span></span>
       <button class="drawer-close-btn" onclick="toggleMobileNav()" aria-label="Close menu">
         <i class="fas fa-times"></i>
       </button>
