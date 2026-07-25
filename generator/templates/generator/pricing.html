@@ -1,27 +1,12 @@
+{% extends 'generator/base_app.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pricing | CVAI — Choose Your Plan</title>
-    <meta name="description"
-        content="Unlock the full power of AI resume generation. Choose from Free, Pro, or Elite plans and land your dream job faster.">
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23080c14'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='monospace' font-weight='700' font-size='18' fill='%234cc9f0'>CV</text></svg>">
-    <!-- OG / Social -->
-    <meta property="og:title" content="CVAI Pricing — Free, Pro &amp; Elite Plans">
-    <meta property="og:description" content="Unlock the full power of AI resume generation. Start free, upgrade anytime.">
-    <meta property="og:type" content="website">
-    <meta name="twitter:card" content="summary_large_image">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
-        rel="stylesheet">
-    <!-- Global Design System (canonical tokens; local :root removed in Phase 1) -->
-    <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}?v=4">
+{% block title %}Pricing | CVAI — Choose Your Plan{% endblock %}
+{% block meta_desc %}Unlock the full power of AI resume generation. Choose from Free, Pro, or Elite plans and land your dream job faster.{% endblock %}
+{% block og_title %}CVAI Pricing — Free, Pro &amp; Elite Plans{% endblock %}
+{% block og_desc %}Unlock the full power of AI resume generation. Start free, upgrade anytime.{% endblock %}
+
+{% block extra_head %}
     <style>
         * { box-sizing: border-box; }
         body {
@@ -226,10 +211,10 @@
             outline-offset: 3px;
         }
     </style>
-</head>
+{% endblock extra_head %}
 
-<body>
-
+{# Public page: this nav switches on auth state, so it overrides the app nav. #}
+{% block navbar %}
     <!-- Mobile Drawer -->
     <div class="mobile-backdrop" id="mobileBackdrop" onclick="toggleMobileNav()"></div>
     <div class="mobile-drawer" id="mobileDrawer">
@@ -273,7 +258,9 @@
         </div>
         <button class="hamburger-btn" onclick="toggleMobileNav()" aria-label="Open menu"><i class="fas fa-bars"></i></button>
     </nav>
+{% endblock navbar %}
 
+{% block content %}
     <!-- HERO -->
     <section class="pricing-hero">
         <div class="eyebrow">Transparent Pricing</div>
@@ -425,12 +412,4 @@
         <a href="{% url 'privacy' %}">Privacy</a>
     </div>
 
-    <script>
-        function toggleMobileNav() {
-            document.getElementById('mobileDrawer').classList.toggle('open');
-            document.getElementById('mobileBackdrop').classList.toggle('open');
-        }
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+{% endblock content %}

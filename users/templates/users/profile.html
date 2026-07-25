@@ -1,17 +1,10 @@
+{% extends 'generator/base_app.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Profile | CVAI</title>
-    <meta name="description" content="Manage your CVAI account, subscription, and generation limits.">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}?v=4">
+{% block title %}My Profile | CVAI{% endblock %}
+{% block meta_desc %}Manage your CVAI account, subscription, and generation limits.{% endblock %}
 
+{% block extra_head %}
     <style>
 
         /* Vertical Tabs Styling */
@@ -140,74 +133,14 @@
             box-shadow: 0 10px 28px rgba(245, 158, 11, 0.45);
         }
     </style>
-</head>
+{% endblock extra_head %}
 
-<body>
-
-    <!-- NAVBAR -->
-    <nav class="navbar-custom">
-        <a href="{% url 'home' %}" class="logo-text">
-            <i class="fas fa-cube"></i>CV<span style="-webkit-text-fill-color: var(--brand-2);">AI</span>
-        </a>
-        <div id="desktop-nav" class="nav-group desktop-nav">
-            <a href="{% url 'home' %}"      class="nav-link-item">Generator</a>
-            <a href="{% url 'dashboard' %}" class="nav-link-item">Dashboard</a>
-            <a href="{% url 'tools' %}"     class="nav-link-item">AI Tools</a>
-            <a href="{% url 'tracker' %}"   class="nav-link-item">Tracker</a>
-            <a href="{% url 'history' %}"   class="nav-link-item">History</a>
-            <a href="{% url 'pricing' %}"   class="nav-link-item">Pricing</a>
-            <a href="{% url 'profile' %}"   class="user-badge" style="border-color: rgba(76,201,240,0.3);">
-                {% if user.profile.avatar %}<img src="{{ user.profile.avatar.url }}" alt="Avatar" style="width: 22px; height: 22px; border-radius: 50%; object-fit: cover; margin-right: 6px;">{% else %}<i class="fas fa-user"></i>{% endif %}{{ user.username }}
-            </a>
-            <form action="{% url 'logout' %}" method="post" style="margin:0;">
-                {% csrf_token %}
-                <button type="submit" class="btn-logout">
-                    <i class="fas fa-sign-out-alt"></i>Logout
-                </button>
-            </form>
-        </div>
-        <button class="hamburger-btn" onclick="toggleMobileNav()" aria-label="Open menu"><i class="fas fa-bars"></i></button>
-    </nav>
-
-    <!-- MOBILE DRAWER -->
-    <div class="mobile-backdrop" id="mobileBackdrop" onclick="toggleMobileNav()"></div>
-    <div class="mobile-drawer" id="mobileDrawer">
-        <div class="drawer-header">
-            <span class="logo-text" style="font-size: var(--fs-lg);">CV<span style="-webkit-text-fill-color:var(--brand-2);">AI</span></span>
-            <button class="drawer-close-btn" onclick="toggleMobileNav()" aria-label="Close menu"><i class="fas fa-times"></i></button>
-        </div>
-        <div class="drawer-nav-section">
-            {% if user.profile.plan == 'free' %}
-            <div class="drawer-plan-badge"><i class="fas fa-bolt me-1"></i>{{ user.profile.generations_count }} / {{ user.profile.get_limit }} · Free</div>
-            {% else %}
-            <div class="drawer-plan-badge" style="color: var(--gold); background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.2);">
-                <i class="fas fa-crown me-1"></i>{{ user.profile.plan|upper }} Plan
-            </div>
-            {% endif %}
-            <a href="{% url 'home' %}"      class="nav-link-item"><i class="fas fa-pen-ruler"></i>Generator</a>
-            <a href="{% url 'dashboard' %}" class="nav-link-item"><i class="fas fa-chart-pie"></i>Dashboard</a>
-            <a href="{% url 'tools' %}"     class="nav-link-item"><i class="fas fa-wand-magic-sparkles"></i>AI Tools</a>
-            <a href="{% url 'tracker' %}"   class="nav-link-item"><i class="fas fa-briefcase"></i>Tracker</a>
-            <a href="{% url 'history' %}"   class="nav-link-item"><i class="fas fa-clock-rotate-left"></i>History</a>
-            <div class="drawer-divider"></div>
-            <a href="{% url 'profile' %}"   class="nav-link-item active"><i class="fas fa-user"></i>Profile</a>
-            {% if user.profile.plan == 'free' %}
-            <a href="{% url 'pricing' %}"   class="btn-primary-grad mt-2" style="border-radius: var(--r-sm); font-size: var(--fs-base); padding: 11px;">
-                Upgrade to Pro ⚡
-            </a>
-            {% endif %}
-        </div>
-    </div>
+{% block content %}
+    {# Navbar, mobile drawer, toasts and confirm dialog come from base_app.html. #}
 
     <!-- PAGE CONTENT -->
     <div class="container pb-5" style="max-width: var(--content-narrow);">
-        {% if messages %}
-        <div class="mt-3">
-            {% for message in messages %}
-            <div class="alert bg-{{ message.tags }} bg-opacity-25 text-white rounded-3 border-0">{{ message }}</div>
-            {% endfor %}
-        </div>
-        {% endif %}
+        {# Django messages render as global toasts via base_app.html #}
 
         <!-- PAGE HEADER -->
         <div class="page-header anim-fade-up">
@@ -481,14 +414,4 @@
             </div>
         </div>
 
-    <script>
-        function toggleMobileNav() {
-            document.getElementById('mobileDrawer').classList.toggle('open');
-            document.getElementById('mobileBackdrop').classList.toggle('open');
-        }
-    </script>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-
-</html>
+{% endblock content %}
