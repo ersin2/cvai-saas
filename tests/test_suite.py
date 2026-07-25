@@ -498,6 +498,33 @@ class PDFParserTest(TestCase):
         self.assertNotEqual(r.status_code, 403)
         self.assertNotEqual(r.status_code, 500)
 
+    def test_real_pdf_text_is_actually_extracted(self):
+        """
+        Regression: pdfminer.six only accepts io.IOBase, but Django hands the
+        view an InMemoryUploadedFile. Passing the upload straight through raised
+        "Unsupported input type", so EVERY PDF resume upload silently failed as
+        though the file were unreadable. The older assertion above allowed 400,
+        which is why this went unnoticed — so assert on the extracted text.
+        """
+        from reportlab.pdfgen import canvas
+
+        buf = io.BytesIO()
+        c = canvas.Canvas(buf)
+        c.drawString(72, 720, "Priya Raman")
+        c.drawString(72, 700, "Staff Data Engineer")
+        c.save()
+        buf.seek(0)
+
+        r = self.client.post(
+            reverse("parse_resume_pdf"),
+            {"pdf_file": ("resume.pdf", buf, "application/pdf")},
+            format="multipart",
+        )
+        self.assertEqual(r.status_code, 200, r.content[:300])
+        text = r.json().get("text", "")
+        self.assertIn("Priya Raman", text)
+        self.assertIn("Staff Data Engineer", text)
+
     def test_non_pdf_magic_bytes_rejected(self):
         """A ZIP file with .pdf extension must be rejected with HTTP 400."""
         fake_pdf = io.BytesIO(b"PK\x03\x04This is actually a ZIP")

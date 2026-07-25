@@ -136,7 +136,15 @@
       display: flex; align-items: stretch;
     }
     .vs-right.preview-hidden { display: none !important; }
+    /* Preview collapsed: the panel takes the freed space, but the form itself
+       stays in a centred reading column — stretching inputs edge-to-edge across
+       a 1900px monitor is unusable. */
     .vs-left.full-width { max-width: 100%; width: calc(100vw - 6px); }
+    .vs-left.full-width .vs-left-header,
+    .vs-left.full-width .vs-left-scroll > * {
+      padding-inline: max(0px, calc((100% - 980px) / 2));
+    }
+    .vs-left.full-width .vs-left-header { padding-inline: max(20px, calc((100% - 980px) / 2)); }
     .vs-left-header {
       padding: 14px 20px 10px;
       border-bottom: 1px solid var(--panel-border);
@@ -230,8 +238,13 @@
     input[type="range"].vs-range::-webkit-slider-thumb:active { transform: scale(1.2); }
 
     /* ── Template Gallery ─────────────────────────────────── */
+    /* Auto-fitting columns: 2-up in the default 400px panel, but more as the
+       panel is widened or the preview is collapsed — a fixed 2-col grid turned
+       the cards into 480px slabs at full width. */
     .tpl-gallery {
-      display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+      gap: 10px;
       padding: 4px 0;
     }
     .tpl-card {
@@ -252,28 +265,47 @@
     }
     .tpl-card.active .tpl-name { color: var(--accent); }
     .tpl-card.active .tpl-info { background: rgba(76,201,240,.06); }
+    /* A4 proportion — the thumbnails are real page-1 renders, so the card
+       should have the same shape as the document it is previewing. */
     .tpl-card .tpl-thumb {
-      width: 100%; aspect-ratio: 3/4; background: #1a1f35;
-      display: flex; align-items: center; justify-content: center;
+      width: 100%; aspect-ratio: 1 / 1.414; background: #f8fafc;
       position: relative; overflow: hidden;
     }
     .tpl-card .tpl-thumb img {
-      width: 100%; height: 100%; object-fit: cover; display: block;
-      transition: transform var(--t-base);
+      width: 100%; height: 100%; object-fit: cover; object-position: top center;
+      display: block; transition: transform var(--t-base);
     }
-    .tpl-card:hover .tpl-thumb img { transform: scale(1.05); }
-    /* Colour swatch fallback when image doesn't exist yet */
-    .tpl-card .tpl-thumb .tpl-fallback {
-      position: absolute; inset: 0; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; font-size: var(--fs-2xl); gap: 4px;
+    .tpl-card:hover .tpl-thumb img { transform: scale(1.04); }
+    /* Page edge — keeps a white resume from bleeding into the panel */
+    .tpl-card .tpl-thumb::after {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.10);
     }
-    .tpl-card .tpl-thumb .tpl-swatch {
-      width: 100%; height: 8px; position: absolute; top: 0; left: 0;
+
+    .tpl-card .tpl-info {
+      padding: 8px 10px 9px;
+      border-top: 1px solid var(--input-border);
+      background: rgba(255,255,255,.02);
     }
-    .tpl-card .tpl-info { padding: 6px 8px 7px; }
     .tpl-card .tpl-name { font-size: var(--fs-xs); font-weight: 700; color: var(--text-1);
                            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .tpl-card .tpl-cat  { font-size: var(--fs-2xs); color: var(--text-3); margin-top: 1px; }
+    .tpl-card .tpl-cat  { font-size: var(--fs-2xs); color: var(--text-3); margin-top: 2px;
+                           line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2;
+                           -webkit-box-orient: vertical; overflow: hidden; }
+
+    /* ── Locked (plan-gated) templates ──────────────────────────
+       download_pdf already refuses these and silently falls back to
+       template 1; showing it here means the user is never surprised. */
+    .tpl-card.locked .tpl-thumb img { filter: grayscale(.85) brightness(.55); }
+    .tpl-card.locked:hover { border-color: rgba(245,158,11,.5); }
+    .tpl-card .tpl-lock {
+      position: absolute; top: 6px; right: 6px;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--gold); color: #1a1200;
+      display: flex; align-items: center; justify-content: center;
+      font-size: var(--fs-2xs);
+      box-shadow: 0 2px 10px rgba(0,0,0,.45);
+    }
     .tpl-card .tpl-check {
       position: absolute; top: 6px; right: 6px;
       width: 22px; height: 22px; border-radius: 50%;
@@ -1071,168 +1103,28 @@
             <div class="vs-section-body open" id="sec-templates">
 
               <!-- All 10 Unique Layouts -->
-              <div class="tpl-gallery" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
-
-                <div class="tpl-card active" data-slug="minimal_centered" onclick="selectTemplate(this)">
+              <div class="tpl-gallery">
+                {% for tpl in templates %}
+                <div class="tpl-card{% if forloop.first %} active{% endif %}{% if tpl.locked %} locked{% endif %}"
+                     data-slug="{{ tpl.slug }}"
+                     {% if tpl.locked %}data-locked="1"{% endif %}
+                     onclick="selectTemplate(this)">
                   <div class="tpl-thumb">
-                    <img src="/static/img/templates/minimal_centered.jpg" alt="Minimal Centered"
-                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#ffffff;border:1px solid #c9a84c;">
-                      <div class="tpl-swatch" style="background:#1a1a2e;"></div>
-                      📄
-                    </div>
+                    <img src="{% static 'img/templates/'|add:tpl.slug|add:'.jpg' %}"
+                         alt="{{ tpl.name }} resume template preview" loading="lazy">
                   </div>
+                  {% if tpl.locked %}
+                  <div class="tpl-lock" title="Upgrade to unlock this template">
+                    <i class="fas fa-lock"></i>
+                  </div>
+                  {% endif %}
                   <div class="tpl-info">
-                    <div class="tpl-name">Minimal Centered</div>
-                    <div class="tpl-cat">1-Col · Serif Elegance</div>
+                    <div class="tpl-name">{{ tpl.name }}</div>
+                    <div class="tpl-cat">{{ tpl.desc }}</div>
                   </div>
                   <div class="tpl-check"><i class="fas fa-check"></i></div>
                 </div>
-
-                <div class="tpl-card" data-slug="left_sidebar_dark" onclick="selectTemplate(this)">
-                  <div class="tpl-thumb">
-                    <img src="/static/img/templates/left_sidebar_dark.jpg" alt="Dark Sidebar"
-                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#1e2a38;">
-                      <div class="tpl-swatch" style="background:#4cc9f0;"></div>
-                      🌑
-                    </div>
-                  </div>
-                  <div class="tpl-info">
-                    <div class="tpl-name">Dark Sidebar</div>
-                    <div class="tpl-cat">25% Dark Left Sidebar</div>
-                  </div>
-                  <div class="tpl-check"><i class="fas fa-check"></i></div>
-                </div>
-
-                <div class="tpl-card" data-slug="right_sidebar_light" onclick="selectTemplate(this)">
-                  <div class="tpl-thumb">
-                    <img src="/static/img/templates/right_sidebar_light.jpg" alt="Light Right Panel"
-                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#f3f0ff;">
-                      <div class="tpl-swatch" style="background:#7c3aed;"></div>
-                      💜
-                    </div>
-                  </div>
-                  <div class="tpl-info">
-                    <div class="tpl-name">Light Right Panel</div>
-                    <div class="tpl-cat">70% Main + 30% Right</div>
-                  </div>
-                  <div class="tpl-check"><i class="fas fa-check"></i></div>
-                </div>
-
-                <div class="tpl-card" data-slug="split_header" onclick="selectTemplate(this)">
-                  <div class="tpl-thumb">
-                    <img src="/static/img/templates/split_header.jpg" alt="Bold Split Header"
-                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#2d3436;">
-                      <div class="tpl-swatch" style="background:#ff6b6b;"></div>
-                      🎨
-                    </div>
-                  </div>
-                  <div class="tpl-info">
-                    <div class="tpl-name">Bold Split Header</div>
-                    <div class="tpl-cat">Full-Width Color Band</div>
-                  </div>
-                  <div class="tpl-check"><i class="fas fa-check"></i></div>
-                </div>
-
-                <div class="tpl-card" data-slug="timeline_modern" onclick="selectTemplate(this)">
-                  <div class="tpl-thumb">
-                    <img src="/static/img/templates/timeline_modern.jpg" alt="Timeline Modern"
-                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#ffffff;border:1px solid #caf0f8;">
-                      <div class="tpl-swatch" style="background:#00b4d8;"></div>
-                      ⏱️
-                    </div>
-                  </div>
-                  <div class="tpl-info">
-                    <div class="tpl-name">Timeline Modern</div>
-                    <div class="tpl-cat">Left Timeline Line</div>
-                  </div>
-                  <div class="tpl-check"><i class="fas fa-check"></i></div>
-                </div>
-
-                <div class="tpl-card" data-slug="two_column_equal" onclick="selectTemplate(this)">
-                  <div class="tpl-thumb">
-                    <img src="/static/img/templates/two_column_equal.jpg" alt="50/50 Grid"
-                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#f8fafb;border:1px solid #d1fae5;">
-                      <div class="tpl-swatch" style="background:#059669;"></div>
-                      ⚖️
-                    </div>
-                  </div>
-                  <div class="tpl-info">
-                    <div class="tpl-name">50/50 Grid</div>
-                    <div class="tpl-cat">Equal Two-Column Split</div>
-                  </div>
-                  <div class="tpl-check"><i class="fas fa-check"></i></div>
-                </div>
-
-                <div class="tpl-card" data-slug="hacker_terminal" onclick="selectTemplate(this)">
-                  <div class="tpl-thumb">
-                    <img src="/static/img/templates/hacker_terminal.jpg" alt="Hacker Terminal"
-                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#0d0d0d;">
-                      <div class="tpl-swatch" style="background:#00ff41;"></div>
-                      💻
-                    </div>
-                  </div>
-                  <div class="tpl-info">
-                    <div class="tpl-name">Hacker Terminal</div>
-                    <div class="tpl-cat">Green Monospace · Dev</div>
-                  </div>
-                  <div class="tpl-check"><i class="fas fa-check"></i></div>
-                </div>
-
-                <div class="tpl-card" data-slug="academic_classic" onclick="selectTemplate(this)">
-                  <div class="tpl-thumb">
-                    <img src="/static/img/templates/academic_classic.jpg" alt="Academic Classic"
-                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#ffffff;border:1px solid #333;">
-                      <div class="tpl-swatch" style="background:#1a1a1a;"></div>
-                      🎓
-                    </div>
-                  </div>
-                  <div class="tpl-info">
-                    <div class="tpl-name">Academic Classic</div>
-                    <div class="tpl-cat">ATS-Optimised · Dense</div>
-                  </div>
-                  <div class="tpl-check"><i class="fas fa-check"></i></div>
-                </div>
-
-                <div class="tpl-card" data-slug="top_bottom_split" onclick="selectTemplate(this)">
-                  <div class="tpl-thumb">
-                    <img src="/static/img/templates/top_bottom_split.jpg" alt="Top/Bottom Split"
-                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#1e3a5f;">
-                      <div class="tpl-swatch" style="background:#2563eb;"></div>
-                      🔷
-                    </div>
-                  </div>
-                  <div class="tpl-info">
-                    <div class="tpl-name">Top/Bottom Split</div>
-                    <div class="tpl-cat">30% Color Top Header</div>
-                  </div>
-                  <div class="tpl-check"><i class="fas fa-check"></i></div>
-                </div>
-
-                <div class="tpl-card" data-slug="creative_masonry" onclick="selectTemplate(this)">
-                  <div class="tpl-thumb">
-                    <img src="/static/img/templates/creative_masonry.jpg" alt="Creative Masonry"
-                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="tpl-fallback" style="display:none;background:#0f0f1a;">
-                      <div class="tpl-swatch" style="background:#e879f9;"></div>
-                      ✨
-                    </div>
-                  </div>
-                  <div class="tpl-info">
-                    <div class="tpl-name">Creative Masonry</div>
-                    <div class="tpl-cat">Dark · Asymmetric</div>
-                  </div>
-                  <div class="tpl-check"><i class="fas fa-check"></i></div>
-                </div>
-
+                {% endfor %}
               </div>
             </div><!-- /sec-templates -->
           </div><!-- /§1 -->
@@ -1854,6 +1746,12 @@
      TEMPLATE SELECTION
   ──────────────────────────────────────────────────────── */
   function selectTemplate(card) {
+    // Locked templates would be swapped back to #1 server-side on download —
+    // say so instead of letting the user pick something they can't export.
+    if (card.dataset.locked) {
+      showToast('That template needs a paid plan — open Pricing to unlock it.', 'danger');
+      return;
+    }
     document.querySelectorAll('.tpl-card').forEach(c => c.classList.remove('active'));
     card.classList.add('active');
     const slug = card.dataset.slug;
