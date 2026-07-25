@@ -34,7 +34,14 @@ from django.urls import reverse
 
 from generator.models import Generation, JobApplication, AIResult
 from generator.pdf_engine import build_pdf, TEMPLATES
-from generator.views import _check_rate_limit, RATE_LIMITS
+from generator.views import (
+    _check_rate_limit,
+    RATE_LIMITS,
+    _validate_resume_json,
+    _repair_truncated_json,
+    _parse_and_validate_resume,
+    _truncate_on_boundary,
+)
 from users.models import Profile
 
 
@@ -531,6 +538,101 @@ class PDFParserTest(TestCase):
         data = r.json()
         self.assertIn("error", data)
         self.assertIn("5MB", data["error"])
+
+
+# ===========================================================================
+# 7b. AI RESUME JSON VALIDATION
+# A partial AI response used to be accepted as a complete resume, billed, and
+# rendered with silently empty fields. These cover the validator that catches it.
+# ===========================================================================
+
+class ResumeJSONValidationTest(TestCase):
+
+    def test_complete_response_has_no_problems(self):
+        payload = {
+            "full_name": "Jane Doe",
+            "target_role": "Engineer",
+            "summary": "Backend engineer.",
+            "experience": [
+                {"title": "Dev", "company": "Acme", "dates": "2020-2023", "bullets": ["Shipped"]}
+            ],
+            "education": [{"degree": "BSc", "school": "MIT", "dates": "2016-2020"}],
+            "skills": [{"name": "Python"}],
+        }
+        out, problems = _validate_resume_json(payload)
+        self.assertEqual(problems, [])
+        self.assertEqual(out["full_name"], "Jane Doe")
+
+    def test_missing_keys_are_normalized_not_dropped(self):
+        """Absent keys come back as ''/[] so the frontend never sees undefined."""
+        out, _ = _validate_resume_json({"full_name": "Jane", "summary": "x"})
+        for key in ("email", "phone", "location", "linkedin", "github", "target_role"):
+            self.assertEqual(out[key], "")
+        for key in ("experience", "projects", "skills", "education", "languages"):
+            self.assertEqual(out[key], [])
+
+    def test_name_only_response_is_flagged_as_empty(self):
+        """The exact failure mode users reported: a near-empty extraction."""
+        out, problems = _validate_resume_json({"full_name": "Jane Doe"})
+        self.assertTrue(problems)
+        self.assertTrue(any("effectively empty" in p for p in problems))
+
+    def test_missing_full_name_flagged(self):
+        _, problems = _validate_resume_json({"summary": "Engineer.", "experience": []})
+        self.assertTrue(any("full_name" in p for p in problems))
+
+    def test_wrong_types_flagged_and_coerced(self):
+        out, problems = _validate_resume_json(
+            {"full_name": "Jane", "summary": "s", "experience": "not-a-list"}
+        )
+        self.assertTrue(any("experience" in p and "array" in p for p in problems))
+        self.assertEqual(out["experience"], [])
+
+    def test_experience_entry_without_title_or_company_flagged(self):
+        _, problems = _validate_resume_json({
+            "full_name": "Jane", "summary": "s",
+            "experience": [{"dates": "2020-2023", "bullets": ["did stuff"]}],
+        })
+        self.assertTrue(any("experience[0]" in p for p in problems))
+
+    def test_non_dict_response_rejected(self):
+        out, problems = _validate_resume_json(["not", "an", "object"])
+        self.assertIsNone(out)
+        self.assertTrue(problems)
+
+    def test_truncated_json_is_repaired(self):
+        """A response cut off by the token limit should be salvaged, not lost."""
+        truncated = (
+            '{"full_name": "Jane Doe", "summary": "Engineer.", '
+            '"experience": [{"title": "Dev", "company": "Acme", "bullets": ["Shipped a thing"'
+        )
+        parsed = _repair_truncated_json(truncated)
+        self.assertIsNotNone(parsed)
+        self.assertEqual(parsed["full_name"], "Jane Doe")
+
+    def test_unrecoverable_garbage_returns_none(self):
+        self.assertIsNone(_repair_truncated_json("this is not json at all"))
+
+    def test_short_text_is_not_truncated(self):
+        text = "Jane Doe\nEngineer"
+        self.assertEqual(_truncate_on_boundary(text, 1000), text)
+
+    def test_truncation_marks_the_cut_and_breaks_on_a_line(self):
+        """The old code sliced mid-word with no signal that content was lost."""
+        text = "\n".join(f"Line {i} of the resume" for i in range(200))
+        out = _truncate_on_boundary(text, 500, "uploaded resume")
+        self.assertIn("truncated", out)
+        self.assertLess(len(out), len(text))
+        # Content before the marker must end on a whole line, not mid-word.
+        body = out.split("\n\n[...")[0]
+        self.assertTrue(text.startswith(body))
+
+    def test_parse_and_validate_strips_markdown_fences(self):
+        raw = '```json\n{"full_name": "Jane", "summary": "Engineer."}\n```'
+        out, problems = _parse_and_validate_resume(raw)
+        self.assertIsNotNone(out)
+        self.assertEqual(out["full_name"], "Jane")
+        self.assertEqual(problems, [])
 
 
 # ===========================================================================

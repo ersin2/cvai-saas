@@ -72,6 +72,16 @@ class GenerateRequest(BaseModel):
         description="LLM provider: 'groq' (default) or 'anthropic'",
     )
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
+    json_mode: bool = Field(
+        default=False,
+        description="Force strict JSON output. Used by the resume parser; "
+                    "prose callers (cover letter, ATS) leave this off.",
+    )
+    max_tokens: int = Field(
+        default=4096, ge=256, le=32000,
+        description="Upper bound on the completion. Structured resume JSON needs "
+                    "more headroom than a cover letter, or the object is cut off.",
+    )
 
 
 class GenerateResponse(BaseModel):
@@ -83,15 +93,32 @@ class GenerateResponse(BaseModel):
 # LLM helpers (both async — no thread blocking)
 # ---------------------------------------------------------------------------
 async def _call_groq(
-    system_prompt: str, user_prompt: str, temperature: float
+    system_prompt: str, user_prompt: str, temperature: float,
+    json_mode: bool = False, max_tokens: int = 4096,
 ) -> str:
     """
     Async Groq/Llama call via raw httpx.
     httpx.AsyncClient is used so the uvicorn event loop is never blocked
     while waiting for the upstream LLM response.
+
+    `max_tokens` is always sent explicitly — relying on the provider default
+    silently truncated long structured resumes mid-object.
     """
     if not GROQ_API_KEY:
         raise HTTPException(status_code=503, detail="GROQ_API_KEY not configured on AI service.")
+
+    payload = {
+        "model": GROQ_MODEL,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    }
+    if json_mode:
+        # Constrained decoding — the model cannot emit prose or code fences.
+        payload["response_format"] = {"type": "json_object"}
 
     async with httpx.AsyncClient(timeout=90.0) as client:
         resp = await client.post(
@@ -100,21 +127,21 @@ async def _call_groq(
                 "Authorization": f"Bearer {GROQ_API_KEY}",
                 "Content-Type": "application/json",
             },
-            json={
-                "model": GROQ_MODEL,
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ],
-                "temperature": temperature,
-            },
+            json=payload,
         )
     resp.raise_for_status()
-    return resp.json()["choices"][0]["message"]["content"]
+    data = resp.json()
+    choice = data["choices"][0]
+    # A 'length' finish reason means the completion was cut off — surface it so
+    # Django can retry rather than trying to parse a half-written object.
+    if choice.get("finish_reason") == "length":
+        logger.warning("Groq completion hit max_tokens (%s) — output truncated.", max_tokens)
+    return choice["message"]["content"]
 
 
 async def _call_anthropic(
-    system_prompt: str, user_prompt: str, temperature: float
+    system_prompt: str, user_prompt: str, temperature: float,
+    max_tokens: int = 4096,
 ) -> str:
     """
     Async Anthropic / Claude call using the official SDK's AsyncAnthropic client.
@@ -131,7 +158,7 @@ async def _call_anthropic(
     client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
     message = await client.messages.create(
         model=ANTHROPIC_MODEL,
-        max_tokens=4096,
+        max_tokens=max_tokens,
         system=system_prompt,
         messages=[{"role": "user", "content": user_prompt}],
         temperature=temperature,
@@ -177,9 +204,15 @@ async def generate(body: GenerateRequest) -> GenerateResponse:
 
     try:
         if body.provider == "anthropic":
-            text = await _call_anthropic(body.system_prompt, body.user_prompt, body.temperature)
+            text = await _call_anthropic(
+                body.system_prompt, body.user_prompt, body.temperature,
+                max_tokens=body.max_tokens,
+            )
         else:
-            text = await _call_groq(body.system_prompt, body.user_prompt, body.temperature)
+            text = await _call_groq(
+                body.system_prompt, body.user_prompt, body.temperature,
+                json_mode=body.json_mode, max_tokens=body.max_tokens,
+            )
 
         logger.info("[/generate] success, result_len=%d", len(text))
         return GenerateResponse(result=text)

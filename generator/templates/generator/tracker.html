@@ -40,7 +40,7 @@
         }
 
         .tracker-stat-label {
-            font-size: 0.72rem;
+            font-size: var(--fs-xs);
             color: var(--text-2);
             text-transform: uppercase;
             letter-spacing: 1.2px;
@@ -52,12 +52,12 @@
         /* ── KANBAN BOARD ── */
         .kanban-controls { display: flex; gap: 12px; margin-bottom: 24px; align-items: center; justify-content: space-between; }
         .view-toggles { display: flex; background: var(--surface-2); padding: 4px; border-radius: var(--r-sm); border: 1px solid var(--border); }
-        .view-btn { background: transparent; border: none; color: var(--text-3); padding: 6px 16px; border-radius: 4px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; }
+        .view-btn { background: transparent; border: none; color: var(--text-3); padding: 6px 16px; border-radius: 4px; font-weight: 600; font-size: var(--fs-base); cursor: pointer; transition: all 0.2s; }
         .view-btn.active { background: var(--brand-dim); color: var(--brand); }
         
         .kanban-board { display: none; gap: 16px; overflow-x: auto; padding-bottom: 20px; scrollbar-width: thin; }
         .kanban-col { background: rgba(0,0,0,0.2); border-radius: var(--r-lg); border: 1px solid var(--border); width: 300px; flex-shrink: 0; display: flex; flex-direction: column; }
-        .kanban-col-header { padding: 12px 16px; font-weight: 700; font-size: 0.85rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; text-transform: uppercase; letter-spacing: 0.5px; }
+        .kanban-col-header { padding: 12px 16px; font-weight: 700; font-size: var(--fs-base); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; text-transform: uppercase; letter-spacing: 0.5px; }
         .kanban-dropzone { flex: 1; padding: 12px; min-height: 300px; display: flex; flex-direction: column; gap: 12px; }
         /* CSS-only empty-column hint — no DOM node, so SortableJS ignores it */
         .kanban-dropzone:not(:has(.kanban-card))::after {
@@ -65,7 +65,7 @@
             display: block;
             text-align: center;
             padding: 28px 14px;
-            font-size: 0.75rem;
+            font-size: var(--fs-sm);
             color: var(--text-3);
             border: 1px dashed var(--border);
             border-radius: var(--r-sm);
@@ -85,14 +85,14 @@
         
         .drawer-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .drawer-body { padding: 24px; overflow-y: auto; flex: 1; }
-        .drawer-title { font-weight: 800; font-size: 1.25rem; margin: 0; }
-        .drawer-close { background: none; border: none; color: var(--text-3); font-size: 1.25rem; cursor: pointer; transition: color 0.2s; }
+        .drawer-title { font-weight: 800; font-size: var(--fs-xl); margin: 0; }
+        .drawer-close { background: none; border: none; color: var(--text-3); font-size: var(--fs-xl); cursor: pointer; transition: color 0.2s; }
         .drawer-close:hover { color: #fff; }
         
         /* ── CHARTS ── */
         .charts-container { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 28px; max-width: 520px; }
         .chart-card { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 20px; }
-        .chart-title { font-size: 0.85rem; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+        .chart-title { font-size: var(--fs-base); font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
         
         @media (max-width: 992px) { .charts-container { grid-template-columns: 1fr; } .app-drawer { width: 100%; right: -100%; } }
 
@@ -127,7 +127,7 @@
 
         .app-table th {
             color: var(--text-3);
-            font-size: 0.72rem;
+            font-size: var(--fs-xs);
             text-transform: uppercase;
             letter-spacing: 1.5px;
             border-bottom: 1px solid var(--border);
@@ -154,20 +154,20 @@
 
         .company-name {
             font-weight: 700;
-            font-size: 0.95rem;
+            font-size: var(--fs-md);
             color: var(--text-1);
             letter-spacing: 0.3px;
         }
 
         .job-title-text {
             color: var(--text-2);
-            font-size: 0.82rem;
+            font-size: var(--fs-base);
             margin-top: 3px;
         }
 
         .url-link {
             color: var(--brand);
-            font-size: 0.78rem;
+            font-size: var(--fs-sm);
             text-decoration: none;
             display: inline-flex;
             align-items: center;
@@ -183,7 +183,7 @@
         .status-select-wrap { position: relative; }
         .status-select-wrap::after {
             content: '▼';
-            font-size: 0.6rem;
+            font-size: var(--fs-2xs);
             color: inherit;
             position: absolute;
             right: 12px;
@@ -201,7 +201,7 @@
             border-radius: var(--r-pill) !important;
             padding: 6px 30px 6px 14px !important;
             font-weight: 600;
-            font-size: 0.75rem !important;
+            font-size: var(--fs-sm) !important;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             cursor: pointer;
@@ -222,7 +222,7 @@
             color: var(--text-2);
             padding: 5px 10px;
             border-radius: var(--r-sm);
-            font-size: 0.75rem;
+            font-size: var(--fs-sm);
             cursor: pointer;
             transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
         }
@@ -250,7 +250,7 @@
             border-radius: var(--r-lg);
             font-weight: 700;
             transition: transform var(--t-fast), box-shadow var(--t-fast);
-            font-size: 0.9rem;
+            font-size: var(--fs-md);
             cursor: pointer;
             text-decoration: none;
         }
@@ -288,7 +288,7 @@
                 content: attr(data-label);
                 font-weight: 700;
                 color: var(--text-3);
-                font-size: 0.72rem;
+                font-size: var(--fs-xs);
                 text-transform: uppercase;
                 letter-spacing: 0.8px;
             }
@@ -369,7 +369,7 @@
                 <button class="view-btn" id="btnBoardView" onclick="switchView('board')"><i class="fas fa-columns me-2"></i>Board</button>
             </div>
             <div class="d-flex gap-2">
-                <span style="font-size: 0.8rem; color: var(--text-3);"><i class="fas fa-info-circle me-1"></i>Switch to Board to drag cards between stages</span>
+                <span style="font-size: var(--fs-sm); color: var(--text-3);"><i class="fas fa-info-circle me-1"></i>Switch to Board to drag cards between stages</span>
             </div>
         </div>
         {% endif %}
@@ -429,10 +429,10 @@
                                 </form>
                             </td>
                             <td data-label="Salary">
-                                <span style="color: var(--text-2); font-size: 0.88rem;">{{ app.salary_range|default:"—" }}</span>
+                                <span style="color: var(--text-2); font-size: var(--fs-base);">{{ app.salary_range|default:"—" }}</span>
                             </td>
                             <td data-label="Added">
-                                <span style="color: var(--text-2); font-size: 0.82rem; font-family: var(--font-mono);">
+                                <span style="color: var(--text-2); font-size: var(--fs-base); font-family: var(--font-mono);">
                                     {{ app.created_at|date:"M d, Y" }}
                                 </span>
                             </td>
@@ -479,11 +479,11 @@
                     <div class="kanban-card" data-id="{{ app.pk }}" onclick="openDrawer('{{ app.company_name|escapejs }}', '{{ app.job_title|escapejs }}', '{{ app.status|escapejs }}', '{{ app.salary_range|escapejs }}', '{{ app.notes|escapejs }}', '{{ app.job_url|escapejs }}', '{{ app.created_at|date:"M d, Y" }}')">
                         <div class="d-flex align-items-center gap-2 mb-2">
                             <div class="company-avatar avatar-sm" aria-hidden="true">{{ app.company_name|first|upper }}</div>
-                            <div class="company-name" style="font-size: 0.85rem;">{{ app.company_name }}</div>
+                            <div class="company-name" style="font-size: var(--fs-base);">{{ app.company_name }}</div>
                         </div>
                         <div class="job-title-text fw-bold mb-2 text-white">{{ app.job_title }}</div>
                         <div class="d-flex justify-content-between align-items-center">
-                            <span style="font-size: 0.7rem; color: var(--text-3);"><i class="far fa-clock me-1"></i>{{ app.created_at|date:"M d" }}</span>
+                            <span style="font-size: var(--fs-xs); color: var(--text-3);"><i class="far fa-clock me-1"></i>{{ app.created_at|date:"M d" }}</span>
                         </div>
                     </div>
                     {% endif %}{% endfor %}
@@ -506,12 +506,12 @@
             <div class="d-flex gap-3 mb-4 align-items-center">
                 <div id="dr-logo" class="company-avatar avatar-lg" aria-hidden="true"></div>
                 <div>
-                    <div style="font-size: 1.1rem; color: var(--brand);" id="dr-job">Job Title</div>
-                    <div class="badge mt-2" id="dr-status" style="font-family: var(--font-mono); font-size: 0.75rem;">Status</div>
+                    <div style="font-size: var(--fs-lg); color: var(--brand);" id="dr-job">Job Title</div>
+                    <div class="badge mt-2" id="dr-status" style="font-family: var(--font-mono); font-size: var(--fs-sm);">Status</div>
                 </div>
             </div>
             
-            <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.75rem; letter-spacing: 1px;">Details</h6>
+            <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: var(--fs-sm); letter-spacing: 1px;">Details</h6>
             <div class="glass-card p-3 mb-4" style="background: rgba(0,0,0,0.2);">
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted"><i class="fas fa-money-bill-wave me-2"></i>Salary</span>
@@ -527,11 +527,11 @@
                 </div>
             </div>
 
-            <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.75rem; letter-spacing: 1px;">Notes & Timeline</h6>
+            <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: var(--fs-sm); letter-spacing: 1px;">Notes & Timeline</h6>
             <div class="glass-card p-3" style="background: rgba(0,0,0,0.2); min-height: 150px;">
-                <p id="dr-notes" style="white-space: pre-wrap; font-size: 0.9rem; color: var(--text-2);"></p>
-                <div id="dr-no-notes" style="display:none; text-align:center; padding: 20px; color: var(--text-3); font-size: 0.85rem;">
-                    <i class="fas fa-pencil-alt mb-2" style="font-size: 1.5rem; opacity: 0.5;"></i><br>No notes added.
+                <p id="dr-notes" style="white-space: pre-wrap; font-size: var(--fs-md); color: var(--text-2);"></p>
+                <div id="dr-no-notes" style="display:none; text-align:center; padding: 20px; color: var(--text-3); font-size: var(--fs-base);">
+                    <i class="fas fa-pencil-alt mb-2" style="font-size: var(--fs-2xl); opacity: 0.5;"></i><br>No notes added.
                 </div>
             </div>
         </div>

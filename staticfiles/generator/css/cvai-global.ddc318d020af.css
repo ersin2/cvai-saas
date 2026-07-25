@@ -170,16 +170,10 @@ h1, h2, .display-title {
 
 /* Page Header block */
 .page-header {
-  padding: var(--sp-6) 0 var(--sp-5);
+  padding: 28px 0 24px;
   border-bottom: 1px solid rgba(255,255,255,0.04);
-  margin-bottom: var(--sp-6);
+  margin-bottom: 32px;
 }
-
-/* ── SPACING POLICY ───────────────────────────────────────────────
-   --sp-* is a LAYOUT scale: cards, panels, page sections, grid gaps.
-   It is deliberately NOT applied to control padding (buttons, pills,
-   badges, inputs), whose values are optically tuned to their text —
-   snapping those to a 4px grid distorts them for no visual gain. */
 
 /* ── 4. NAVBAR ───────────────────────────────────────────────── */
 .navbar-custom {
@@ -439,7 +433,7 @@ h1, h2, .display-title {
   border: 1px solid var(--border);
   border-radius: var(--r-xl);
   box-shadow: var(--shadow-3);
-  padding: var(--sp-6);
+  padding: 28px;
   position: relative;
   overflow: hidden;
 }
@@ -456,7 +450,7 @@ h1, h2, .display-title {
 
 /* Card variants */
 .glass-card-sm {
-  padding: var(--sp-5);
+  padding: 20px;
   border-radius: var(--r-lg);
 }
 
@@ -671,7 +665,7 @@ h1, h2, .display-title {
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: var(--r-xl);
-  padding: var(--sp-5);
+  padding: 24px;
   position: relative;
   overflow: hidden;
   transition: transform var(--t-base), border-color var(--t-base);
@@ -803,7 +797,7 @@ h1, h2, .display-title {
   border: 1px solid var(--border);
   border-radius: var(--r-xl);
   box-shadow: var(--shadow-3);
-  padding: var(--sp-6);
+  padding: 28px 26px;
   max-width: 380px;
   width: 100%;
   text-align: center;
@@ -965,19 +959,19 @@ h1, h2, .display-title {
   }
 
   .glass-card {
-    padding: var(--sp-5);
+    padding: 20px;
     border-radius: var(--r-lg);
   }
 
   .page-header {
-    padding: var(--sp-5) 0 var(--sp-4);
-    margin-bottom: var(--sp-5);
+    padding: 20px 0 18px;
+    margin-bottom: 24px;
   }
 }
 
 @media (max-width: 480px) {
   .glass-card {
-    padding: var(--sp-4);
+    padding: 16px;
   }
 
   .toast-container {

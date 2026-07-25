@@ -16,6 +16,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 from pdfminer.high_level import extract_text as pdf_extract_text
+from pdfminer.layout import LAParams
 from users.models import Profile
 from .models import Generation, JobApplication, AIResult
 from .pdf_engine import build_pdf, TEMPLATES
@@ -151,6 +152,178 @@ def _validate_pdf_upload(pdf_file):
 
 
 # ---------------------------------------------------------------------------
+# RESUME TEXT EXTRACTION
+# ---------------------------------------------------------------------------
+# pdfminer's default layout analysis (boxes_flow=0.5) tries to reconstruct
+# natural reading flow, which interleaves the columns of a two-column resume —
+# "Skills" ends up spliced line-by-line into "Experience" and the model parses
+# garbage. boxes_flow=None disables flow ordering and emits each text box whole,
+# top-to-bottom / left-to-right, which is what a sectioned resume actually wants.
+_RESUME_LAPARAMS = LAParams(
+    boxes_flow=None,
+    line_margin=0.4,   # tighter: keeps bullet lines inside their own block
+    char_margin=1.5,
+    word_margin=0.1,
+)
+
+# Total characters of resume context handed to the model. The previous 10k cap
+# silently amputated 3-page CVs; Llama 3.1 has ample context for this.
+RESUME_TEXT_BUDGET = 24000
+
+
+def _truncate_on_boundary(text, limit, label='resume'):
+    """
+    Trim `text` to `limit` chars on a line boundary rather than mid-word, and
+    mark the cut explicitly so the model knows the input was incomplete instead
+    of silently treating a severed resume as the whole document.
+    """
+    if len(text) <= limit:
+        return text
+    cut = text[:limit]
+    nl = cut.rfind('\n')
+    if nl > limit * 0.6:      # only back up to a newline if it isn't far back
+        cut = cut[:nl]
+    logger.info("Truncated %s text from %d to %d chars", label, len(text), len(cut))
+    return cut.rstrip() + f"\n\n[...{label} truncated — later sections omitted]"
+
+
+def _extract_resume_text(pdf_file):
+    """
+    Extract resume text from an uploaded PDF, preserving section structure.
+
+    Returns (text, error_message). Shared by parse_resume_pdf and
+    generate_resume so both paths get identical layout handling.
+    """
+    try:
+        text = pdf_extract_text(pdf_file, laparams=_RESUME_LAPARAMS) or ''
+    except Exception as exc:
+        logger.warning("PDF extraction failed: %s", exc)
+        return '', 'Failed to parse PDF. Try pasting your resume text instead.'
+
+    # Collapse runs of blank lines (pdfminer emits many) without destroying the
+    # single blank line that separates one section from the next.
+    text = re.sub(r'\n{3,}', '\n\n', text).strip()
+    if not text:
+        return '', 'Could not extract text from this PDF. It may be image-based.'
+    return text, None
+
+
+# ---------------------------------------------------------------------------
+# AI RESUME JSON — SCHEMA VALIDATION
+# ---------------------------------------------------------------------------
+# The parser used to accept any JSON that json.loads() survived, so a response
+# containing only {"full_name": "..."} was billed and rendered as a complete
+# resume with every other field silently blank. These helpers make an incomplete
+# response detectable so it can be retried or flagged.
+_RESUME_STR_FIELDS = (
+    'full_name', 'target_role', 'email', 'phone',
+    'location', 'linkedin', 'github', 'summary',
+)
+_RESUME_LIST_FIELDS = ('experience', 'projects', 'skills', 'education', 'languages')
+
+
+def _repair_truncated_json(raw):
+    """
+    Best-effort recovery of a JSON object cut off mid-write (the usual shape of
+    a max_tokens truncation): drop the dangling tail and close open brackets.
+    Returns a parsed dict or None.
+    """
+    start = raw.find('{')
+    if start == -1:
+        return None
+    candidate = raw[start:]
+    # Walk back to the last plausible value end, then balance the brackets.
+    for end in range(len(candidate) - 1, 0, -1):
+        if candidate[end] not in '}]"0123456789truefalsnl':
+            continue
+        stack, in_str, esc = [], False, False
+        for ch in candidate[:end + 1]:
+            if esc:
+                esc = False
+            elif ch == '\\':
+                esc = True
+            elif ch == '"':
+                in_str = not in_str
+            elif not in_str and ch in '{[':
+                stack.append(ch)
+            elif not in_str and ch in '}]':
+                if stack:
+                    stack.pop()
+        if in_str:
+            continue
+        closed = candidate[:end + 1].rstrip().rstrip(',')
+        closed += ''.join('}' if b == '{' else ']' for b in reversed(stack))
+        try:
+            parsed = json.loads(closed)
+            if isinstance(parsed, dict):
+                logger.info("Recovered truncated resume JSON (%d chars salvaged)", end)
+                return parsed
+        except (json.JSONDecodeError, ValueError):
+            continue
+    return None
+
+
+def _validate_resume_json(parsed):
+    """
+    Normalize an AI resume object and report what's wrong with it.
+
+    Returns (normalized_dict, problems) where `problems` is a list of
+    human-readable strings. An empty list means the response is usable.
+    Missing keys are filled with ""/[] so the frontend never sees undefined.
+    """
+    problems = []
+    if not isinstance(parsed, dict):
+        return None, ['Response was not a JSON object.']
+
+    out = {}
+    for key in _RESUME_STR_FIELDS:
+        val = parsed.get(key, '')
+        if val is None:
+            val = ''
+        if not isinstance(val, str):
+            problems.append(f'"{key}" must be a string, got {type(val).__name__}.')
+            val = str(val)
+        out[key] = val.strip()
+
+    for key in _RESUME_LIST_FIELDS:
+        val = parsed.get(key, [])
+        if val is None:
+            val = []
+        if not isinstance(val, list):
+            problems.append(f'"{key}" must be an array, got {type(val).__name__}.')
+            val = []
+        out[key] = val
+
+    # Structural checks on the repeating sections.
+    for i, job in enumerate(out['experience']):
+        if not isinstance(job, dict):
+            problems.append(f'experience[{i}] must be an object.')
+            continue
+        if not str(job.get('title', '')).strip() and not str(job.get('company', '')).strip():
+            problems.append(f'experience[{i}] has neither a title nor a company.')
+        bullets = job.get('bullets', [])
+        if bullets is not None and not isinstance(bullets, list):
+            problems.append(f'experience[{i}].bullets must be an array.')
+
+    for i, edu in enumerate(out['education']):
+        if not isinstance(edu, dict):
+            problems.append(f'education[{i}] must be an object.')
+        elif not str(edu.get('degree', '')).strip() and not str(edu.get('school', '')).strip():
+            problems.append(f'education[{i}] has neither a degree nor a school.')
+
+    # Completeness: a resume with a name but no content whatsoever means the
+    # model gave up partway. This is the signal the old code never had.
+    if not out['full_name']:
+        problems.append('"full_name" is empty — the candidate name was not extracted.')
+    if not (out['summary'] or out['experience'] or out['education']):
+        problems.append(
+            'No summary, experience or education was extracted — '
+            'the response is effectively empty.'
+        )
+    return out, problems
+
+
+# ---------------------------------------------------------------------------
 # ASYNC AI MICROSERVICE CLIENT
 # Django forwards prompts to the FastAPI ai_worker service.
 # Uses a global httpx.AsyncClient to ensure connection pooling across requests.
@@ -161,10 +334,15 @@ async def _call_ai_service(
     system_prompt: str,
     user_prompt: str,
     temperature: float = 0.7,
+    json_mode: bool = False,
+    max_tokens: int = 4096,
 ):
     """
     Async POST to the FastAPI /generate endpoint.
     Returns (result_text | None, error_message | None).
+
+    json_mode  — ask the provider for constrained JSON decoding (resume parser).
+    max_tokens — structured resumes need more headroom than prose responses.
     """
     ai_url = getattr(settings, "AI_SERVICE_URL", "http://127.0.0.1:8001").rstrip("/")
     payload = {
@@ -172,6 +350,8 @@ async def _call_ai_service(
         "user_prompt": user_prompt,
         "provider": "groq",
         "temperature": temperature,
+        "json_mode": json_mode,
+        "max_tokens": max_tokens,
     }
     try:
         resp = await _ai_client.post(f"{ai_url}/generate", json=payload)
@@ -371,6 +551,7 @@ async def generate_resume(request):
     any typed text the user also entered.
     """
     error_message = None
+    warning = None
     result = None
     profile, _ = await Profile.objects.aget_or_create(user=request.user)
 
@@ -379,13 +560,16 @@ async def generate_resume(request):
     if throttled:
         return throttled
 
-    resume_text  = request.POST.get('resume', '')[:10000]
+    typed_text   = request.POST.get('resume', '')
     language     = request.POST.get('language', 'English')[:200]
     full_name    = (request.POST.get('full_name', '').strip()[:400]
                     or request.user.get_full_name().strip()
                     or request.user.username)
 
-    # ── PDF upload: extract text and prepend to typed resume text ───────
+    # ── PDF upload: extract text and combine with any typed text ───────
+    # Each source gets its own budget so a long PDF can never evict what the
+    # user typed (the old code concatenated then re-sliced the whole thing).
+    pdf_text = ''
     pdf_file = request.FILES.get('resume_pdf')
     if pdf_file:
         # Same server-side guard as parse_resume_pdf — client checks are bypassable.
@@ -396,14 +580,25 @@ async def generate_resume(request):
                 request.user.id, pdf_error, pdf_file.name,
             )
             return JsonResponse({'resume': None, 'error': pdf_error})
-        try:
-            pdf_text = await sync_to_async(pdf_extract_text)(pdf_file)
-            pdf_text = (pdf_text or '').strip()
-            if pdf_text:
-                # Combine PDF text + typed text, then re-enforce the cap
-                resume_text = f"{pdf_text}\n\n{resume_text}".strip()[:10000]
-        except Exception as exc:
-            logger.warning("PDF extraction failed in generate_resume: %s", exc)
+        pdf_text, extract_error = await sync_to_async(_extract_resume_text)(pdf_file)
+        if extract_error and not typed_text.strip():
+            # Nothing typed to fall back on — tell the user instead of sending
+            # an empty prompt to the model and billing them for the round trip.
+            return JsonResponse({'resume': None, 'error': extract_error})
+
+    typed_budget = min(len(typed_text), RESUME_TEXT_BUDGET // 3)
+    pdf_budget   = RESUME_TEXT_BUDGET - typed_budget
+    parts = []
+    if pdf_text:
+        parts.append(_truncate_on_boundary(pdf_text, pdf_budget, 'uploaded resume'))
+    if typed_text.strip():
+        parts.append(_truncate_on_boundary(typed_text.strip(), typed_budget, 'pasted text'))
+    resume_text = '\n\n'.join(parts).strip()
+
+    if not resume_text:
+        return JsonResponse(
+            {'resume': None, 'error': 'No resume content provided. Paste your resume or upload a PDF.'}
+        )
 
     if not profile.has_generations_left():
         error_message = "You've used all free generations! Upgrade to Pro for more."
@@ -490,23 +685,54 @@ Output Language: {language}
 
 Generate the structured JSON resume now."""
 
-        raw_result, error_message = await _call_ai_service(system_prompt, user_prompt, temperature=0.4)
+        # Extraction is a fidelity task, not a creative one — near-zero
+        # temperature, constrained JSON decoding, and enough completion
+        # headroom that a long resume is not cut off mid-object.
+        raw_result, error_message = await _call_ai_service(
+            system_prompt, user_prompt,
+            temperature=0.1, json_mode=True, max_tokens=8192,
+        )
 
+        problems = ['No response from the AI service.'] if not raw_result else None
         if raw_result:
-            # Attempt to parse the JSON from the AI response
-            try:
-                # Strip markdown code fences if the AI wrapped them
-                cleaned = raw_result.strip()
-                if cleaned.startswith('```'):
-                    cleaned = re.sub(r'^```(?:json)?\s*', '', cleaned)
-                    cleaned = re.sub(r'\s*```$', '', cleaned)
-                parsed = json.loads(cleaned)
-                result = parsed
-            except (json.JSONDecodeError, ValueError) as exc:
-                logger.warning("AI returned non-JSON for resume: %s", exc)
-                # Fallback: return raw text so the frontend can still display something
-                result = {'_raw': raw_result}
+            result, problems = _parse_and_validate_resume(raw_result)
 
+            # ── One repair attempt when the first response is unusable ──────
+            # Previously any parseable JSON was accepted as final, so a partial
+            # extraction was billed and shown as a complete resume.
+            if problems:
+                logger.info(
+                    "Resume JSON incomplete for user=%s (%d problem(s)) — retrying: %s",
+                    request.user.id, len(problems), '; '.join(problems[:3]),
+                )
+                repair_prompt = (
+                    f"{user_prompt}\n\n"
+                    "━━━ REPAIR PASS ━━━\n"
+                    "Your previous attempt was rejected by the schema validator:\n"
+                    + '\n'.join(f'- {p}' for p in problems[:10])
+                    + "\n\nRe-read the candidate text above and emit the COMPLETE JSON object "
+                      "conforming exactly to the schema. Extract every experience, education "
+                      "and skill entry present in the source. Output ONLY the JSON object."
+                )
+                retry_raw, retry_error = await _call_ai_service(
+                    system_prompt, repair_prompt,
+                    temperature=0.0, json_mode=True, max_tokens=8192,
+                )
+                if retry_raw:
+                    retry_result, retry_problems = _parse_and_validate_resume(retry_raw)
+                    # Keep the retry only if it is genuinely better.
+                    if retry_result is not None and len(retry_problems) < len(problems):
+                        result, problems = retry_result, retry_problems
+                        raw_result = retry_raw
+                elif retry_error:
+                    logger.warning("Resume repair pass failed: %s", retry_error)
+
+        # A usable result has a name and at least one populated section.
+        usable = result is not None and not any(
+            p.startswith('Response was not') or p.startswith('No summary') for p in problems
+        )
+
+        if usable:
             await Generation.objects.acreate(
                 user=request.user,
                 resume_text=resume_text,
@@ -515,14 +741,55 @@ Generate the structured JSON resume now."""
                 job_title='',
                 tone='Professional',
                 language=language,
-                result=json.dumps(result, ensure_ascii=False) if isinstance(result, dict) else raw_result,
+                result=json.dumps(result, ensure_ascii=False),
             )
+            # Only bill a generation once we actually have something to show.
             await sync_to_async(profile.use_generation)()
+            if problems:
+                warning = (
+                    'Some details could not be read from your resume — '
+                    'please check the fields before exporting.'
+                )
+        else:
+            result = None
+            if not error_message:
+                error_message = (
+                    "The AI couldn't read a complete resume from that input. "
+                    "Try pasting the text directly, or upload a text-based PDF."
+                )
+            logger.warning(
+                "Resume extraction failed for user=%s: %s",
+                request.user.id, '; '.join(problems[:3]) if problems else 'no result',
+            )
 
     return JsonResponse({
         'resume': result,
         'error': error_message,
+        'warning': warning,
     })
+
+
+def _parse_and_validate_resume(raw_result):
+    """
+    Turn a raw AI response into (normalized_resume | None, problems).
+
+    Handles markdown fences, then a brace-balance repair for responses cut off
+    by the token limit, then schema/completeness validation.
+    """
+    cleaned = raw_result.strip()
+    if cleaned.startswith('```'):
+        cleaned = re.sub(r'^```(?:json)?\s*', '', cleaned)
+        cleaned = re.sub(r'\s*```$', '', cleaned)
+
+    try:
+        parsed = json.loads(cleaned)
+    except (json.JSONDecodeError, ValueError) as exc:
+        parsed = _repair_truncated_json(cleaned)
+        if parsed is None:
+            logger.warning("AI returned unparseable JSON for resume: %s", exc)
+            return None, ['The AI response was not valid JSON.']
+
+    return _validate_resume_json(parsed)
 
 
 # === SECTION REWRITER (Visual Resume Studio — micro-AI per field) ===
@@ -860,15 +1127,12 @@ def parse_resume_pdf(request):
         )
         return JsonResponse({'error': pdf_error}, status=400)
 
-    try:
-        text = pdf_extract_text(pdf_file)
-        text = text.strip()
-        if not text:
-            return JsonResponse({'error': 'Could not extract text from this PDF. It may be image-based.'}, status=400)
-        return JsonResponse({'text': text[:10000]})  # Max 10k chars
-    except Exception as e:
-        logger.warning("PDF parse error: %s", e)
-        return JsonResponse({'error': 'Failed to parse PDF. Try pasting your resume text instead.'}, status=400)
+    # Shared extractor: column-aware layout params + structure-preserving cleanup,
+    # so this path and generate_resume see identical text.
+    text, extract_error = _extract_resume_text(pdf_file)
+    if extract_error:
+        return JsonResponse({'error': extract_error}, status=400)
+    return JsonResponse({'text': _truncate_on_boundary(text, RESUME_TEXT_BUDGET)})
 
 
 # === DASHBOARD ===

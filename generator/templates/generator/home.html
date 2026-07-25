@@ -14,7 +14,9 @@
   <!-- Font Awesome 6 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <!-- Inter is loaded at a single weight only: it is no longer the studio UI
+       font, but the resume font-picker renders a live sample of it. -->
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   <!-- Global Design System -->
   <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}?v=4">
   <!-- Legacy studio_styles.html include removed in Phase 4: its selectors
@@ -40,7 +42,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; overflow: hidden; }
     body { background: var(--studio-bg); color: var(--text-1);
-           font-family: 'Inter', system-ui, sans-serif; }
+           font-family: var(--font-body); }
 
     /* ── Navbar ─────────────────────────────────────────────── */
     .vs-nav {
@@ -51,20 +53,20 @@
       backdrop-filter: blur(20px) saturate(180%);
       display: flex; align-items: center; padding: 0 20px; gap: 16px;
     }
-    .vs-nav-logo { font-size: 1.15rem; font-weight: 800; color: #fff;
+    .vs-nav-logo { font-size: var(--fs-lg); font-weight: 800; color: #fff;
                    text-decoration: none; letter-spacing: -0.5px; }
     .vs-nav-logo span { color: var(--accent); }
     .vs-nav-spacer { flex: 1; }
-    .vs-nav-link { font-size: 0.8rem; color: var(--text-3);
+    .vs-nav-link { font-size: var(--fs-sm); color: var(--text-3);
                    text-decoration: none; transition: color .2s; }
     .vs-nav-link:hover { color: var(--text-1); }
     .vs-nav-badge {
-      font-size: 0.72rem; font-weight: 700; padding: 3px 10px;
-      border-radius: 99px; border: 1px solid rgba(76,201,240,0.25);
+      font-size: var(--fs-xs); font-weight: 700; padding: 3px 10px;
+      border-radius: var(--r-pill); border: 1px solid rgba(76,201,240,0.25);
       color: var(--accent); background: rgba(76,201,240,0.07);
     }
     .vs-nav-btn-dl {
-      font-size: 0.8rem; font-weight: 700; padding: 6px 18px;
+      font-size: var(--fs-sm); font-weight: 700; padding: 6px 18px;
       background: var(--grad-cta);
       border: none; border-radius: var(--r-pill); color: #fff; cursor: pointer;
       transition: opacity var(--t-fast), transform var(--t-fast); white-space: nowrap;
@@ -100,16 +102,22 @@
     .vs-resizer:hover, .vs-resizer.dragging {
       background: rgba(76,201,240,0.35);
     }
+    /* Widened grab area — starts below the toggle button so the two
+       targets never overlap. */
     .vs-resizer::after {
       content: '';
-      position: absolute; inset: 0;
+      position: absolute;
+      top: 68px; bottom: 0;
       width: 18px; left: -6px;
     }
-    /* ── COLLAPSE TOGGLE BUTTON ─────────────────────────────── */
+    /* ── COLLAPSE TOGGLE BUTTON ─────────────────────────────────
+       Sits BELOW the preview bar, not at 50% — centring it put a
+       22x44px click target directly on top of the 6px drag divider,
+       so aiming for the divider hit the toggle and switched the
+       preview off (it read as "resizing deleted my preview"). */
     .vs-collapse-btn {
       position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
+      top: 12px;
       width: 22px; height: 44px;
       background: var(--panel-bg);
       border: 1px solid rgba(76,201,240,0.2);
@@ -118,7 +126,7 @@
       color: var(--text-3);
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      font-size: 0.65rem;
+      font-size: var(--fs-2xs);
       transition: color 0.2s, background 0.2s;
       z-index: 20;
     }
@@ -134,9 +142,9 @@
       border-bottom: 1px solid var(--panel-border);
       flex-shrink: 0;
     }
-    .vs-left-header h2 { font-size: .85rem; font-weight: 700;
+    .vs-left-header h2 { font-size: var(--fs-base); font-weight: 700;
                           color: var(--text-1); margin-bottom: 2px; }
-    .vs-left-header p  { font-size: .72rem; color: var(--text-3); }
+    .vs-left-header p  { font-size: var(--fs-xs); color: var(--text-3); }
     .vs-left-scroll { flex: 1; overflow-y: auto; padding: 0;
                       scrollbar-width: thin;
                       scrollbar-color: rgba(76,201,240,0.2) transparent; }
@@ -146,26 +154,26 @@
     .vs-section-toggle {
       width: 100%; display: flex; align-items: center; gap: 10px;
       padding: 12px 20px; background: none; border: none;
-      color: var(--text-1); font-size: .82rem; font-weight: 600;
+      color: var(--text-1); font-size: var(--fs-base); font-weight: 600;
       cursor: pointer; text-align: left; transition: background .2s;
     }
     .vs-section-toggle:hover { background: rgba(255,255,255,.03); }
     .vs-section-toggle:hover .toggle-icon { color: var(--accent); }
     .vs-section-toggle i.toggle-icon { margin-left: auto; color: var(--text-3);
-                                        font-size: .75rem;
+                                        font-size: var(--fs-sm);
                                         transition: transform var(--t-base), color var(--t-fast); }
     .vs-section-toggle.open .toggle-icon { transform: rotate(180deg); }
     .vs-section-body { display: none; padding: 4px 20px 16px; }
     .vs-section-body.open { display: block; }
 
     /* ── Form inputs ──────────────────────────────────────────  */
-    .vs-label { font-size: .72rem; font-weight: 600; color: var(--text-3);
+    .vs-label { font-size: var(--fs-xs); font-weight: 600; color: var(--text-3);
                 text-transform: uppercase; letter-spacing: .5px;
                 margin-bottom: 4px; display: block; }
     .vs-input, .vs-textarea, .vs-select {
       width: 100%; background: var(--input-bg);
       border: 1px solid var(--input-border); border-radius: var(--r-sm);
-      color: var(--text-1); font-size: .85rem; padding: 8px 12px;
+      color: var(--text-1); font-size: var(--fs-base); padding: 8px 12px;
       outline: none; transition: border-color var(--t-fast), box-shadow var(--t-fast), background var(--t-fast);
       font-family: inherit;
     }
@@ -194,8 +202,8 @@
     .photo-zone input[type="file"] {
       position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%;
     }
-    .photo-zone-icon { font-size: 1.6rem; color: var(--text-3); margin-bottom: 6px; }
-    .photo-zone-label { font-size: .78rem; color: var(--text-3); }
+    .photo-zone-icon { font-size: var(--fs-2xl); color: var(--text-3); margin-bottom: 6px; }
+    .photo-zone-label { font-size: var(--fs-sm); color: var(--text-3); }
     .photo-preview {
       width: 64px; height: 64px; border-radius: 50%;
       object-fit: cover; border: 2px solid var(--accent);
@@ -206,12 +214,12 @@
     .slider-wrap { margin-bottom: 14px; }
     .slider-header { display: flex; justify-content: space-between;
                      align-items: center; margin-bottom: 6px; }
-    .slider-name { font-size: .78rem; color: var(--text-3); }
-    .slider-val  { font-size: .72rem; font-weight: 700; color: var(--accent);
+    .slider-name { font-size: var(--fs-sm); color: var(--text-3); }
+    .slider-val  { font-size: var(--fs-xs); font-weight: 700; color: var(--accent);
                    font-family: 'JetBrains Mono', monospace; }
     input[type="range"].vs-range {
       -webkit-appearance: none; width: 100%; height: 4px;
-      background: var(--input-border); border-radius: 99px; outline: none; cursor: pointer;
+      background: var(--input-border); border-radius: var(--r-pill); outline: none; cursor: pointer;
     }
     input[type="range"].vs-range::-webkit-slider-thumb {
       -webkit-appearance: none; width: 16px; height: 16px;
@@ -257,26 +265,26 @@
     /* Colour swatch fallback when image doesn't exist yet */
     .tpl-card .tpl-thumb .tpl-fallback {
       position: absolute; inset: 0; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; font-size: 1.6rem; gap: 4px;
+      align-items: center; justify-content: center; font-size: var(--fs-2xl); gap: 4px;
     }
     .tpl-card .tpl-thumb .tpl-swatch {
       width: 100%; height: 8px; position: absolute; top: 0; left: 0;
     }
     .tpl-card .tpl-info { padding: 6px 8px 7px; }
-    .tpl-card .tpl-name { font-size: .72rem; font-weight: 700; color: var(--text-1);
+    .tpl-card .tpl-name { font-size: var(--fs-xs); font-weight: 700; color: var(--text-1);
                            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .tpl-card .tpl-cat  { font-size: .65rem; color: var(--text-3); margin-top: 1px; }
+    .tpl-card .tpl-cat  { font-size: var(--fs-2xs); color: var(--text-3); margin-top: 1px; }
     .tpl-card .tpl-check {
       position: absolute; top: 6px; right: 6px;
       width: 22px; height: 22px; border-radius: 50%;
       background: var(--accent); display: none;
-      align-items: center; justify-content: center; font-size: .65rem; color: #000;
+      align-items: center; justify-content: center; font-size: var(--fs-2xs); color: #000;
       box-shadow: 0 2px 10px rgba(76,201,240,.5);
     }
     .tpl-card.active .tpl-check { display: flex; }
     .cat-badge {
-      display: inline-block; font-size: .65rem; font-weight: 700; padding: 2px 8px;
-      border-radius: 99px; margin-bottom: 8px; margin-top: 4px; text-transform: uppercase;
+      display: inline-block; font-size: var(--fs-2xs); font-weight: 700; padding: 2px 8px;
+      border-radius: var(--r-pill); margin-bottom: 8px; margin-top: 4px; text-transform: uppercase;
       letter-spacing: .5px;
     }
     .cat-classic    { background: rgba(76,201,240,.12);   color: #4cc9f0; }
@@ -289,7 +297,7 @@
     .btn-ai-fill {
       width: 100%; padding: 10px; border-radius: var(--r-sm); border: none;
       background: var(--grad-cta);
-      color: #fff; font-weight: 700; font-size: .85rem; cursor: pointer;
+      color: #fff; font-weight: 700; font-size: var(--fs-base); cursor: pointer;
       transition: opacity .2s, transform .15s; margin-top: 6px;
     }
     .btn-ai-fill:hover { opacity: .88; transform: translateY(-1px); }
@@ -301,6 +309,10 @@
       flex: 1; background: #05080f; display: flex;
       flex-direction: column; overflow: hidden;
       position: relative;
+      /* Floor: as a flex item with overflow:hidden its automatic minimum
+         size resolves to 0, so without this the preview can be squeezed
+         out of existence by the (flex-shrink:0) form panel. */
+      min-width: 360px;
     }
     .vs-preview-bar {
       height: 48px; flex-shrink: 0;
@@ -308,7 +320,7 @@
       border-bottom: 1px solid var(--panel-border);
       display: flex; align-items: center; padding: 0 20px; gap: 12px;
     }
-    .vs-preview-label { font-size: .72rem; font-weight: 700;
+    .vs-preview-label { font-size: var(--fs-xs); font-weight: 700;
                          color: var(--text-3); text-transform: uppercase;
                          letter-spacing: 1px; }
     .vs-preview-spinner {
@@ -318,7 +330,7 @@
       animation: spin .7s linear infinite; display: none;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .vs-preview-status { font-size: .72rem; color: var(--text-3); }
+    .vs-preview-status { font-size: var(--fs-xs); color: var(--text-3); }
     .vs-preview-spacer { flex: 1; }
 
     /* PDF preview — two stacked iframes we crossfade between (no white flash) */
@@ -335,7 +347,7 @@
       color: var(--text-3);
     }
     .vs-preview-placeholder i { font-size: 3rem; opacity: .3; }
-    .vs-preview-placeholder p { font-size: .85rem; }
+    .vs-preview-placeholder p { font-size: var(--fs-base); }
 
     /* ── Loading overlay ─────────────────────────────────── */
     .vs-loading-overlay {
@@ -346,7 +358,7 @@
     .vs-loading-overlay.show { display: flex; }
     .vs-loading-card {
       background: rgba(13,17,32,.96); border: 1px solid rgba(76,201,240,.2);
-      border-radius: 24px; padding: 44px 52px; text-align: center;
+      border-radius: var(--r-xl); padding: 44px 52px; text-align: center;
       width: min(440px,90vw);
       box-shadow: 0 40px 80px rgba(0,0,0,.6);
       animation: fadeUp .35s ease both;
@@ -360,15 +372,15 @@
                border: 2px solid rgba(247,37,133,.12); border-top-color: var(--accent2);
                animation: spin .65s linear infinite reverse; }
     .vs-loading-title { font-weight: 700; color: var(--text-1);
-                         margin-bottom: 6px; font-size: 1rem; }
-    .vs-loading-sub   { color: var(--text-3); font-size: .78rem; }
+                         margin-bottom: 6px; font-size: var(--fs-md); }
+    .vs-loading-sub   { color: var(--text-3); font-size: var(--fs-sm); }
 
     /* ── Toast ───────────────────────────────────────────── */
     .vs-toast {
       position: fixed; bottom: 24px; right: 24px; z-index: 9999;
       background: rgba(13,17,32,.96); border: 1px solid rgba(76,201,240,.2);
       border-radius: var(--radius); padding: 12px 20px;
-      font-size: .82rem; color: var(--text-1);
+      font-size: var(--fs-base); color: var(--text-1);
       box-shadow: 0 12px 40px rgba(0,0,0,.5);
       transform: translateY(120%); transition: transform .3s cubic-bezier(.34,1.56,.64,1);
       display: flex; align-items: center; gap: 8px;
@@ -379,8 +391,8 @@
 
     /* Autosave indicator (in the left header) */
     .autosave-ind {
-      font-size: .62rem; font-weight: 700; margin-left: 10px;
-      padding: 2px 9px; border-radius: 99px; vertical-align: middle;
+      font-size: var(--fs-2xs); font-weight: 700; margin-left: 10px;
+      padding: 2px 9px; border-radius: var(--r-pill); vertical-align: middle;
       letter-spacing: .02em; opacity: 0; transition: opacity .2s ease;
     }
     .autosave-ind.saving { opacity: 1; color: var(--text-3); background: rgba(255,255,255,.06); }
@@ -396,14 +408,14 @@
     .vs-confirm-overlay.show { display: flex; }
     .vs-confirm-box {
       background: rgba(13,17,32,.98); border: 1px solid rgba(76,201,240,.2);
-      border-radius: 20px; padding: 26px; max-width: 380px; width: 100%;
+      border-radius: var(--r-lg); padding: 26px; max-width: 380px; width: 100%;
       text-align: center; box-shadow: 0 30px 70px rgba(0,0,0,.6);
     }
-    .vs-confirm-msg { color: var(--text-1); font-size: .95rem; line-height: 1.5; margin-bottom: 22px; }
+    .vs-confirm-msg { color: var(--text-1); font-size: var(--fs-md); line-height: 1.5; margin-bottom: 22px; }
     .vs-confirm-actions { display: flex; gap: 10px; justify-content: center; }
     .vs-confirm-actions button {
-      min-width: 112px; padding: 10px 18px; border-radius: 12px;
-      font-weight: 700; font-size: .85rem; cursor: pointer; border: none;
+      min-width: 112px; padding: 10px 18px; border-radius: var(--r-md);
+      font-weight: 700; font-size: var(--fs-base); cursor: pointer; border: none;
     }
     .vs-btn-ghost { background: rgba(255,255,255,.06); color: var(--text-2); }
     .vs-btn-ghost:hover { background: rgba(255,255,255,.1); }
@@ -419,7 +431,7 @@
     [tabindex]:focus-visible {
       outline: 2px solid var(--accent);
       outline-offset: 2px;
-      border-radius: 8px;
+      border-radius: var(--r-sm);
     }
     .vs-input:focus-visible, .vs-textarea:focus-visible, .vs-select:focus-visible {
       outline: 2px solid var(--accent); outline-offset: 1px;
@@ -446,7 +458,9 @@
       /* !important overrides any inline width left by a desktop drag-resize */
       .vs-left   { width: 100% !important; max-width: 100%; border-right: none;
                    border-bottom: 1px solid var(--panel-border); }
-      .vs-right  { min-height: 70vh; }
+      /* Stacked layout: drop the desktop width floor so narrow phones
+         (375px) never get a horizontal scrollbar. */
+      .vs-right  { min-height: 70vh; min-width: 0; }
       /* The vertical drag divider + collapse toggle are meaningless when stacked */
       .vs-resizer-wrap { display: none; }
       html, body  { overflow: auto; }
@@ -466,24 +480,24 @@
       margin-bottom: 10px;
     }
     .ai-magic-header .ai-icon {
-      width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+      width: 28px; height: 28px; border-radius: var(--r-sm); flex-shrink: 0;
       background: linear-gradient(135deg,#4361ee,#f72585);
       display: flex; align-items: center; justify-content: center;
-      font-size: .82rem; color: #fff;
+      font-size: var(--fs-base); color: #fff;
     }
     .ai-magic-header h3 {
-      font-size: .82rem; font-weight: 800; color: var(--text-1);
+      font-size: var(--fs-base); font-weight: 800; color: var(--text-1);
       margin: 0; letter-spacing: -.2px;
     }
     .ai-magic-header p {
-      font-size: .68rem; color: var(--text-3); margin: 0;
+      font-size: var(--fs-xs); color: var(--text-3); margin: 0;
     }
     .ai-magic-textarea {
       width: 100%; min-height: 90px; max-height: 200px;
       background: rgba(0,0,0,.25);
       border: 1px solid rgba(76,201,240,.15);
       border-radius: var(--r-sm);
-      color: var(--text-1); font-size: .82rem;
+      color: var(--text-1); font-size: var(--fs-base);
       padding: 9px 12px; line-height: 1.55;
       resize: vertical; font-family: inherit; outline: none;
       transition: border-color .2s, box-shadow .2s;
@@ -499,11 +513,11 @@
     }
     .ai-pdf-label {
       display: flex; align-items: center; gap: 6px;
-      font-size: .75rem; font-weight: 600; color: var(--text-2);
+      font-size: var(--fs-sm); font-weight: 600; color: var(--text-2);
       margin-bottom: 4px; cursor: default;
     }
     .ai-pdf-hint {
-      font-weight: 400; color: var(--text-3); font-size: .7rem;
+      font-weight: 400; color: var(--text-3); font-size: var(--fs-xs);
     }
     .ai-pdf-custom-upload {
       display: flex; align-items: center; gap: 10px;
@@ -512,7 +526,7 @@
       border: 1px dashed rgba(248,113,113,.4);
       border-radius: var(--r-sm);
       color: var(--text-2);
-      font-size: .78rem;
+      font-size: var(--fs-sm);
       padding: 10px 14px;
       cursor: pointer;
       transition: all .2s ease;
@@ -524,7 +538,7 @@
     }
     .ai-pdf-custom-upload i {
       color: #f87171;
-      font-size: 1.1rem;
+      font-size: var(--fs-lg);
     }
     .ai-magic-row {
       display: flex; gap: 8px; align-items: center; margin-top: 8px;
@@ -540,7 +554,7 @@
       border: 1px solid rgba(255,255,255,.15);
       border-radius: var(--r-sm);
       color: var(--text-1);
-      font-size: .78rem;
+      font-size: var(--fs-sm);
       padding: 8px 30px 8px 12px;
       outline: none; cursor: pointer;
       transition: border-color .2s, box-shadow .2s;
@@ -558,7 +572,7 @@
       right: 10px;
       top: 50%;
       transform: translateY(-50%);
-      font-size: 0.65rem;
+      font-size: var(--fs-2xs);
       color: var(--text-3);
       pointer-events: none;
     }
@@ -566,7 +580,7 @@
       flex: 1; padding: 9px 14px;
       border: none; border-radius: var(--r-sm);
       background: var(--grad-cta);
-      color: #fff; font-weight: 800; font-size: .82rem;
+      color: #fff; font-weight: 800; font-size: var(--fs-base);
       cursor: pointer; display: flex; align-items: center;
       justify-content: center; gap: 7px;
       transition: opacity .2s, transform .15s;
@@ -601,8 +615,8 @@
     }
     /* Generations counter pill inside magic box */
     .ai-gens-pill {
-      font-size: .65rem; font-weight: 700;
-      padding: 2px 8px; border-radius: 99px;
+      font-size: var(--fs-2xs); font-weight: 700;
+      padding: 2px 8px; border-radius: var(--r-pill);
       border: 1px solid rgba(76,201,240,.25);
       color: var(--accent); background: rgba(76,201,240,.07);
       white-space: nowrap; flex-shrink: 0;
@@ -621,12 +635,12 @@
       align-items: center;
       gap: 5px;
       padding: 4px 10px;
-      font-size: .68rem;
+      font-size: var(--fs-xs);
       font-weight: 700;
       color: var(--accent);
       background: rgba(13,17,32,.82);
       border: 1px solid rgba(76,201,240,.22);
-      border-radius: 99px;
+      border-radius: var(--r-pill);
       cursor: pointer;
       /* glassmorphism */
       backdrop-filter: blur(8px) saturate(160%);
@@ -680,7 +694,7 @@
       border-radius: var(--r-sm);
       background: rgba(248,113,113,.08);
       color: #f87171;
-      font-size: .78rem; font-weight: 700; cursor: pointer;
+      font-size: var(--fs-sm); font-weight: 700; cursor: pointer;
       transition: background .2s, border-color .2s, transform .15s;
     }
     .btn-reset-form:hover {
@@ -699,14 +713,14 @@
       display: flex; flex-direction: column; gap: 5px;
     }
     .color-field label {
-      font-size: .68rem; font-weight: 700;
+      font-size: var(--fs-xs); font-weight: 700;
       color: var(--text-3); text-transform: uppercase; letter-spacing: .5px;
     }
     .color-row {
       display: flex; align-items: center; gap: 8px;
     }
     .color-row input[type="color"] {
-      width: 36px; height: 36px; border-radius: 8px;
+      width: 36px; height: 36px; border-radius: var(--r-sm);
       border: 2px solid rgba(255,255,255,.12);
       background: transparent; cursor: pointer; padding: 2px;
       flex-shrink: 0;
@@ -714,13 +728,13 @@
     .color-row input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; border-radius: 6px; }
     .color-row input[type="color"]::-webkit-color-swatch         { border-radius: 6px; border: none; }
     .color-hex-label {
-      font-size: .7rem; color: var(--text-3); font-family: 'Courier New', monospace;
+      font-size: var(--fs-xs); color: var(--text-3); font-family: 'Courier New', monospace;
     }
     .font-select {
       width: 100%; background: var(--input-bg);
       border: 1px solid rgba(255,255,255,.10);
       border-radius: var(--r-sm);
-      color: var(--text-1); font-size: .82rem;
+      color: var(--text-1); font-size: var(--fs-base);
       padding: 8px 10px; outline: none; cursor: pointer;
       transition: border-color .2s;
     }
@@ -734,10 +748,10 @@
       display: flex; gap: 6px; flex-wrap: wrap;
     }
     .skill-preset-tab {
-      padding: 4px 12px; border-radius: 99px;
+      padding: 4px 12px; border-radius: var(--r-pill);
       border: 1px solid rgba(255,255,255,.12);
       background: rgba(255,255,255,.04);
-      color: var(--text-3); font-size: .72rem; font-weight: 700;
+      color: var(--text-3); font-size: var(--fs-xs); font-weight: 700;
       cursor: pointer; transition: all .2s; white-space: nowrap;
       letter-spacing: .3px;
     }
@@ -756,10 +770,10 @@
     }
     .skill-preset-pills.active { display: flex; }
     .skill-preset-pill {
-      padding: 3px 10px; border-radius: 99px;
+      padding: 3px 10px; border-radius: var(--r-pill);
       border: 1px dashed rgba(255,255,255,.14);
       background: rgba(255,255,255,.03);
-      color: var(--text-2); font-size: .72rem; font-weight: 600;
+      color: var(--text-2); font-size: var(--fs-xs); font-weight: 600;
       cursor: pointer; transition: all .18s;
     }
     .skill-preset-pill:hover {
@@ -780,7 +794,7 @@
       border: 1px solid var(--accent);
       border-radius: var(--r-sm);
       background: rgba(76,201,240,.08);
-      color: var(--accent); font-weight: 800; font-size: .82rem;
+      color: var(--accent); font-weight: 800; font-size: var(--fs-base);
       cursor: pointer; white-space: nowrap;
       transition: background .2s, transform .15s;
     }
@@ -788,7 +802,7 @@
 
     /* Bulk import toggle */
     .skill-bulk-toggle {
-      font-size: .7rem; color: var(--text-3);
+      font-size: var(--fs-xs); color: var(--text-3);
       cursor: pointer; background: none; border: none;
       padding: 0; display: flex; align-items: center; gap: 4px;
       transition: color .2s;
@@ -803,7 +817,7 @@
       background: var(--input-bg);
       border: 1px dashed rgba(76,201,240,.3);
       border-radius: var(--r-sm);
-      color: var(--text-1); font-size: .82rem;
+      color: var(--text-1); font-size: var(--fs-base);
       padding: 8px 12px; resize: vertical;
       font-family: inherit; outline: none;
       transition: border-color .2s;
@@ -814,7 +828,7 @@
       border: 1px solid rgba(76,201,240,.3);
       border-radius: var(--r-sm);
       background: rgba(76,201,240,.07);
-      color: var(--accent); font-size: .78rem; font-weight: 700;
+      color: var(--accent); font-size: var(--fs-sm); font-weight: 700;
       cursor: pointer; transition: background .2s;
     }
     .btn-bulk-add:hover { background: rgba(76,201,240,.18); }
@@ -823,12 +837,12 @@
     .skill-level-wrap { display: flex; flex-direction: column; gap: 6px; }
     .skill-level-header { display: flex; justify-content: space-between; align-items: center; }
     .skill-level-label {
-      font-size: .7rem; font-weight: 700; color: var(--text-3);
+      font-size: var(--fs-xs); font-weight: 700; color: var(--text-3);
       text-transform: uppercase; letter-spacing: .5px;
     }
     .skill-level-badge {
-      font-size: .65rem; font-weight: 800; padding: 2px 8px;
-      border-radius: 99px; letter-spacing: .5px;
+      font-size: var(--fs-2xs); font-weight: 800; padding: 2px 8px;
+      border-radius: var(--r-pill); letter-spacing: .5px;
       background: rgba(76,201,240,.12); color: var(--accent);
       border: 1px solid rgba(76,201,240,.25);
       transition: background .3s, color .3s;
@@ -839,7 +853,7 @@
     .skill-level-badge.lvl-expert { background: rgba(139,92,246,.12);  color:#8b5cf6; border-color:rgba(139,92,246,.25); }
     .skill-range {
       -webkit-appearance: none; appearance: none;
-      width: 100%; height: 8px; border-radius: 99px;
+      width: 100%; height: 8px; border-radius: var(--r-pill);
       background: linear-gradient(
         to right,
         var(--accent) 0%,
@@ -863,8 +877,8 @@
     .skill-chip {
       display: inline-flex; align-items: center; gap: 5px;
       padding: 4px 10px 4px 12px;
-      border-radius: 99px;
-      font-size: .75rem; font-weight: 600; color: var(--text-1);
+      border-radius: var(--r-pill);
+      font-size: var(--fs-sm); font-weight: 600; color: var(--text-1);
       animation: chipIn .2s ease;
       /* default = tech/cyan */
       background: rgba(76,201,240,.1); border: 1px solid rgba(76,201,240,.25);
@@ -872,7 +886,7 @@
     .skill-chip[data-cat="design"]  { background: rgba(139,92,246,.12); border-color: rgba(139,92,246,.3); }
     .skill-chip[data-cat="soft"]    { background: rgba(34,197,94,.1);   border-color: rgba(34,197,94,.28); }
     .skill-chip[data-cat="lang"]    { background: rgba(251,191,36,.1);  border-color: rgba(251,191,36,.28); }
-    .skill-chip .chip-level { font-size: .6rem; color: var(--accent); font-weight: 800; }
+    .skill-chip .chip-level { font-size: var(--fs-2xs); color: var(--accent); font-weight: 800; }
     .skill-chip[data-cat="design"] .chip-level { color: #a78bfa; }
     .skill-chip[data-cat="soft"]   .chip-level { color: #4ade80; }
     .skill-chip[data-cat="lang"]   .chip-level { color: #fbbf24; }
@@ -881,11 +895,11 @@
       background: rgba(248,113,113,.15);
       border: none; cursor: pointer; display: flex;
       align-items: center; justify-content: center;
-      font-size: .6rem; color: #f87171;
+      font-size: var(--fs-2xs); color: #f87171;
       transition: background .2s; padding: 0; line-height: 1;
     }
     .skill-chip .chip-del:hover { background: rgba(248,113,113,.4); }
-    .skill-empty-hint { font-size: .72rem; color: var(--text-3); font-style: italic; align-self: center; }
+    .skill-empty-hint { font-size: var(--fs-xs); color: var(--text-3); font-style: italic; align-self: center; }
   </style>
 </head>
 
@@ -1051,7 +1065,7 @@
             <button type="button" class="vs-section-toggle open" data-target="sec-templates">
               <i class="fas fa-palette" style="color:var(--accent);"></i>
               Template Gallery
-              <span style="font-size:.65rem;font-weight:400;color:var(--text-3);margin-left:4px;">(10 designs)</span>
+              <span style="font-size: var(--fs-2xs);font-weight:400;color:var(--text-3);margin-left:4px;">(10 designs)</span>
               <i class="fas fa-chevron-down toggle-icon"></i>
             </button>
             <div class="vs-section-body open" id="sec-templates">
@@ -1324,7 +1338,7 @@
               <i class="fas fa-chevron-down toggle-icon"></i>
             </button>
             <div class="vs-section-body" id="sec-exp">
-              <p style="font-size:.75rem;color:var(--text-3);margin-bottom:10px;">
+              <p style="font-size: var(--fs-sm);color:var(--text-3);margin-bottom:10px;">
                 <i class="fas fa-circle-info me-1" style="color:var(--accent);"></i>
                 Use lines starting with <code style="color:var(--accent);">-</code> for bullet points.
                 Short lines become job titles/meta rows.
@@ -1357,7 +1371,7 @@
               <i class="fas fa-chevron-down toggle-icon"></i>
             </button>
             <div class="vs-section-body" id="sec-projects">
-              <p style="font-size:.75rem;color:var(--text-3);margin-bottom:10px;">
+              <p style="font-size: var(--fs-sm);color:var(--text-3);margin-bottom:10px;">
                 <i class="fas fa-circle-info me-1" style="color:var(--accent);"></i>
                 Same format as Experience: bold titles, <code style="color:var(--accent);">-</code> for bullets.
               </p>
@@ -1472,7 +1486,7 @@
                   <!-- Bulk import toggle -->
                   <button type="button" class="skill-bulk-toggle" id="btnBulkToggle"
                           onclick="document.getElementById('skillBulkWrap').classList.toggle('open'); this.querySelector('.bulk-arrow').style.transform = document.getElementById('skillBulkWrap').classList.contains('open') ? 'rotate(90deg)' : 'rotate(0deg)'">
-                    <i class="fas fa-chevron-right bulk-arrow" style="font-size:.6rem;transition:transform .2s;"></i>
+                    <i class="fas fa-chevron-right bulk-arrow" style="font-size: var(--fs-2xs);transition:transform .2s;"></i>
                     Add multiple at once (paste comma-separated)
                   </button>
                   <div class="skill-bulk-wrap" id="skillBulkWrap">
@@ -1597,14 +1611,14 @@
             <button type="button" class="vs-section-toggle" data-target="sec-theme">
               <i class="fas fa-palette" style="color:#e879f9;"></i>
               Theme Customization
-              <span style="font-size:.62rem;font-weight:400;color:var(--text-3);margin-left:4px;">override template colors</span>
+              <span style="font-size: var(--fs-2xs);font-weight:400;color:var(--text-3);margin-left:4px;">override template colors</span>
               <i class="fas fa-chevron-down toggle-icon"></i>
             </button>
             <div class="vs-section-body" id="sec-theme">
 
               <!-- Theme Presets -->
               <div style="margin-bottom: 12px;">
-                <label style="font-size:.75rem;font-weight:600;color:var(--text-2);margin-bottom:8px;display:block;">One-Click Presets</label>
+                <label style="font-size: var(--fs-sm);font-weight:600;color:var(--text-2);margin-bottom:8px;display:block;">One-Click Presets</label>
                 <div class="theme-presets-row">
                   <div class="theme-preset-pill" title="Midnight Neon" onclick="applyThemePreset('#4cc9f0', '#060810', '#f72585', this)">
                     <div class="split-bg" style="background: linear-gradient(135deg, #4cc9f0 50%, #060810 50%);"></div>
@@ -1682,7 +1696,7 @@
 
               </div><!-- /.theme-grid -->
 
-              <p style="font-size:.68rem;color:var(--text-3);">
+              <p style="font-size: var(--fs-xs);color:var(--text-3);">
                 <i class="fas fa-circle-info me-1" style="color:var(--accent);"></i>
                 These overrides apply on top of the selected template.
                 Reset to original by clicking <strong>Clear</strong>.
@@ -1698,8 +1712,9 @@
     <!-- ────── DRAG-TO-RESIZE DIVIDER ────── -->
     <div class="vs-resizer-wrap" id="vsResizerWrap">
       <div class="vs-resizer" id="vsResizer" title="Drag to resize · Ctrl+\ to toggle preview"></div>
-      <button class="vs-collapse-btn" id="vsCollapseBtn"
-              onclick="togglePreview()"
+      <!-- Click handled in initResizer() so a drag that ends here is ignored -->
+      <button class="vs-collapse-btn" id="vsCollapseBtn" type="button"
+              aria-label="Toggle preview panel"
               title="Ctrl+\ — Toggle preview">
         <i class="fas fa-chevron-left" id="vsCollapseIcon"></i>
       </button>
@@ -1713,7 +1728,7 @@
         <span class="vs-preview-status" id="previewStatus">Select a template and fill in your details</span>
         <div class="vs-preview-spacer"></div>
         <button class="vs-nav-btn-dl" onclick="downloadPdf()" id="btnDlRight"
-                style="font-size:.78rem; padding:5px 14px;">
+                style="font-size: var(--fs-sm); padding:5px 14px;">
           <i class="fas fa-download me-1"></i>Download PDF
         </button>
       </div>
@@ -2344,7 +2359,19 @@
       // ── Auto-save the new data ───────────────────────────────
       saveDraft();
 
-      showToast('✨ Resume auto-filled! Preview updating…', 'success');
+      // Report what was actually extracted so a partial parse is visible
+      // rather than silently presented as a complete resume.
+      const expCount = Array.isArray(r.experience) ? r.experience.length : 0;
+      const eduCount = Array.isArray(r.education)  ? r.education.length  : 0;
+      if (data.warning) {
+        showToast(data.warning, 'danger');
+      } else {
+        showToast(
+          `✨ Auto-filled — ${expCount} role${expCount === 1 ? '' : 's'}, ` +
+          `${eduCount} education entr${eduCount === 1 ? 'y' : 'ies'}. Check before exporting.`,
+          'success'
+        );
+      }
 
     } catch (err) {
       console.error('AI auto-fill error:', err);
@@ -2696,38 +2723,100 @@
   (function initResizer() {
     const resizer = document.getElementById('vsResizer');
     const vsLeft  = document.querySelector('.vs-left');
-    const MIN_W   = 280, MAX_W = 620;
-    let dragging  = false, startX, startW;
+    const vsRight = document.getElementById('vsRight');
+    const MIN_W = 280, HARD_MAX_W = 620;
+    const PREVIEW_MIN = 360, RESIZER_W = 6;   // must match .vs-right min-width
+    let dragging = false, startX, startW, moved = 0, dragEndedAt = 0;
 
-    resizer.addEventListener('mousedown', e => {
-      dragging = true; startX = e.clientX;
+    /* The form panel is flex-shrink:0, so it never gives space back on its
+       own — the ceiling has to account for the viewport or the preview gets
+       squeezed to nothing on narrow windows. */
+    function maxWidth() {
+      return Math.max(MIN_W, Math.min(HARD_MAX_W, window.innerWidth - PREVIEW_MIN - RESIZER_W));
+    }
+
+    /* Pointer Events + setPointerCapture, NOT mouse events on document.
+       The preview panel contains PDF iframes; once the cursor crosses into
+       an iframe it owns the mouse events, so a document-level mousemove/
+       mouseup never fires. That froze the drag at the iframe's edge and left
+       `dragging` stuck true forever — which also killed the collapse button.
+       Capturing the pointer routes every move/up back here regardless. */
+    resizer.addEventListener('pointerdown', e => {
+      if (e.button !== 0) return;
+      dragging = true; startX = e.clientX; moved = 0;
       startW   = vsLeft.getBoundingClientRect().width;
+      resizer.setPointerCapture(e.pointerId);
       resizer.classList.add('dragging');
       document.body.style.cursor = 'col-resize';
       document.body.style.userSelect = 'none';
+      // Belt and braces for older engines without capture support.
+      vsRight.style.pointerEvents = 'none';
+      e.preventDefault();
     });
-    document.addEventListener('mousemove', e => {
+
+    resizer.addEventListener('pointermove', e => {
       if (!dragging) return;
-      let newW = Math.max(MIN_W, Math.min(MAX_W, startW + (e.clientX - startX)));
-      vsLeft.style.width = newW + 'px';
+      moved = Math.max(moved, Math.abs(e.clientX - startX));
+      // Dragging the divider means the user wants the split view back.
+      if (vsRight.classList.contains('preview-hidden')) setPreviewHidden(false);
+      vsLeft.style.width =
+        Math.max(MIN_W, Math.min(maxWidth(), startW + (e.clientX - startX))) + 'px';
     });
-    document.addEventListener('mouseup', () => {
+
+    function endDrag(e) {
       if (!dragging) return;
       dragging = false;
+      // Timestamp the drag rather than leaving `moved` set: a sticky flag
+      // would swallow the next legitimate click on the toggle.
+      if (moved > 4) dragEndedAt = Date.now();
+      moved = 0;
+      if (e && e.pointerId !== undefined && resizer.hasPointerCapture(e.pointerId)) {
+        resizer.releasePointerCapture(e.pointerId);
+      }
       resizer.classList.remove('dragging');
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
+      vsRight.style.pointerEvents = '';
+    }
+    resizer.addEventListener('pointerup', endDrag);
+    resizer.addEventListener('pointercancel', endDrag);
+    // Safety net: if a pointerup is ever missed, never leave the UI wedged.
+    window.addEventListener('blur', () => endDrag());
+
+    /* A drag that ends over the collapse button must not also fire its click,
+       but a plain click any time after that must still toggle. */
+    document.getElementById('vsCollapseBtn').addEventListener('click', e => {
+      if (dragging || Date.now() - dragEndedAt < 300) {
+        e.preventDefault(); e.stopPropagation(); return;
+      }
+      togglePreview();
+    });
+
+    /* Re-clamp on window resize: an inline width set at a wider viewport
+       would otherwise strand the preview below its minimum. */
+    window.addEventListener('resize', () => {
+      if (!vsLeft.style.width || vsRight.classList.contains('preview-hidden')) return;
+      const cur = parseFloat(vsLeft.style.width);
+      const max = maxWidth();
+      if (cur > max) vsLeft.style.width = max + 'px';
     });
   })();
 
   /* Toggle preview panel visibility (also triggered by Ctrl+\) */
-  function togglePreview() {
+  function setPreviewHidden(hidden) {
     const vsRight = document.getElementById('vsRight');
-    const icon    = document.getElementById('vsCollapseIcon');
     const vsLeft  = document.querySelector('.vs-left');
-    const hidden  = vsRight.classList.toggle('preview-hidden');
+    const icon    = document.getElementById('vsCollapseIcon');
+    vsRight.classList.toggle('preview-hidden', hidden);
+    // Use the .full-width class — an inline width is silently capped by the
+    // panel's max-width:620px, so collapsing used to leave a dead void.
+    vsLeft.classList.toggle('full-width', hidden);
+    if (!hidden) vsLeft.style.width = '';
     icon.style.transform = hidden ? 'rotate(180deg)' : 'rotate(0deg)';
-    vsLeft.style.width   = hidden ? 'calc(100vw - 28px)' : '';
+  }
+
+  function togglePreview() {
+    setPreviewHidden(!document.getElementById('vsRight').classList.contains('preview-hidden'));
   }
 
   document.addEventListener('keydown', e => {

@@ -70,11 +70,11 @@
     .act-icon {
       width: 34px;
       height: 34px;
-      border-radius: 9px;
+      border-radius: var(--r-sm);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.8rem;
+      font-size: var(--fs-sm);
       flex-shrink: 0;
       transition: transform 0.22s ease;
     }
@@ -86,7 +86,7 @@
       min-width: 0;
     }
     .act-title {
-      font-size: 0.83rem;
+      font-size: var(--fs-base);
       font-weight: 600;
       color: #e2e8f0;
       white-space: nowrap;
@@ -95,7 +95,7 @@
       line-height: 1.3;
     }
     .act-sub {
-      font-size: 0.72rem;
+      font-size: var(--fs-xs);
       color: var(--text-3);
       white-space: nowrap;
       overflow: hidden;
@@ -103,7 +103,7 @@
       margin-top: 1px;
     }
     .act-meta {
-      font-size: 0.68rem;
+      font-size: var(--fs-xs);
       color: var(--text-3);
       font-family: 'JetBrains Mono', monospace;
       white-space: nowrap;
@@ -115,8 +115,8 @@
       display: inline-flex;
       align-items: center;
       padding: 3px 8px;
-      border-radius: 99px;
-      font-size: 0.62rem;
+      border-radius: var(--r-pill);
+      font-size: var(--fs-2xs);
       font-weight: 700;
       letter-spacing: 0.5px;
       text-transform: uppercase;
@@ -134,7 +134,7 @@
     /* Chevron indicator */
     .act-chevron {
       color: var(--text-3);
-      font-size: 0.65rem;
+      font-size: var(--fs-2xs);
       opacity: 0;
       transform: translateX(-4px);
       transition: opacity 0.2s ease, transform 0.2s ease;
@@ -151,7 +151,7 @@
     #activityModal .modal-content {
       background: rgba(10, 14, 26, 0.97) !important;
       border: 1px solid rgba(76, 201, 240, 0.18) !important;
-      border-radius: 20px !important;
+      border-radius: var(--r-lg) !important;
       backdrop-filter: blur(30px);
       -webkit-backdrop-filter: blur(30px);
       box-shadow:
@@ -175,7 +175,7 @@
     }
 
     #activityModal .modal-title {
-      font-size: 1rem;
+      font-size: var(--fs-md);
       font-weight: 700;
       color: #f1f5f9;
       display: flex;
@@ -183,7 +183,7 @@
       gap: 10px;
     }
     #activityModal .modal-title i {
-      font-size: 0.9rem;
+      font-size: var(--fs-md);
     }
     #activityModal .modal-body {
       padding: 24px;
@@ -203,12 +203,12 @@
 
     /* Modal content area */
     .modal-result-text {
-      font-size: 0.86rem;
+      font-size: var(--fs-base);
       color: #94a3b8;
       line-height: 1.75;
       white-space: pre-wrap;
       word-break: break-word;
-      font-family: 'Inter', sans-serif;
+      font-family: var(--font-body);
     }
     .modal-result-text strong, .modal-result-text b {
       color: #e2e8f0;
@@ -224,20 +224,20 @@
       padding: 10px 14px;
       background: rgba(255,255,255,0.03);
       border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 10px;
+      border-radius: var(--r-sm);
       margin-bottom: 18px;
     }
     .modal-meta-item {
       display: flex;
       align-items: center;
       gap: 5px;
-      font-size: 0.72rem;
+      font-size: var(--fs-xs);
       color: var(--text-3);
       font-family: 'JetBrains Mono', monospace;
     }
     .modal-meta-item i {
       color: var(--brand);
-      font-size: 0.65rem;
+      font-size: var(--fs-2xs);
     }
 
     /* ATS score ring in modal */
@@ -249,7 +249,7 @@
       padding: 18px;
       background: rgba(168,85,247,0.06);
       border: 1px solid rgba(168,85,247,0.15);
-      border-radius: 14px;
+      border-radius: var(--r-md);
       margin-bottom: 18px;
     }
     .ats-score-ring {
@@ -272,19 +272,19 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.05rem;
+      font-size: var(--fs-lg);
       font-weight: 800;
       color: #a855f7;
       font-family: 'JetBrains Mono', monospace;
     }
-    .ats-score-label { font-size: 0.78rem; color: #94a3b8; }
-    .ats-score-label strong { display: block; font-size: 1rem; color: #e2e8f0; margin-bottom: 2px; }
+    .ats-score-label { font-size: var(--fs-sm); color: #94a3b8; }
+    .ats-score-label strong { display: block; font-size: var(--fs-md); color: #e2e8f0; margin-bottom: 2px; }
 
     /* Letter preview card */
     .letter-preview-card {
       background: rgba(76,201,240,0.04);
       border: 1px solid rgba(76,201,240,0.12);
-      border-radius: 12px;
+      border-radius: var(--r-md);
       padding: 16px 18px;
       margin-bottom: 16px;
     }
@@ -297,7 +297,7 @@
       border-bottom: 1px solid rgba(76,201,240,0.1);
     }
     .letter-preview-card .lpc-title {
-      font-size: 0.72rem;
+      font-size: var(--fs-xs);
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 1px;
@@ -312,29 +312,29 @@
     .dash-empty-icon {
       width: 52px;
       height: 52px;
-      border-radius: 14px;
+      border-radius: var(--r-md);
       display: flex;
       align-items: center;
       justify-content: center;
       margin: 0 auto 14px;
-      font-size: 1.4rem;
+      font-size: var(--fs-xl);
     }
     .dash-empty-title {
       font-weight: 700;
-      font-size: 0.9rem;
+      font-size: var(--fs-md);
       color: #e2e8f0;
       margin-bottom: 5px;
     }
     .dash-empty-desc {
       color: var(--text-3);
-      font-size: 0.78rem;
+      font-size: var(--fs-sm);
       margin-bottom: 16px;
       line-height: 1.6;
     }
 
     /* Panel section title */
     .panel-title {
-      font-size: 0.72rem;
+      font-size: var(--fs-xs);
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 1.5px;
@@ -344,7 +344,7 @@
       align-items: center;
       gap: 7px;
     }
-    .panel-title i { font-size: 0.75rem; }
+    .panel-title i { font-size: var(--fs-sm); }
 
     /* Section header with count pill */
     .feed-header {
@@ -354,10 +354,10 @@
       margin-bottom: 14px;
     }
     .feed-count-pill {
-      font-size: 0.62rem;
+      font-size: var(--fs-2xs);
       font-weight: 700;
       padding: 3px 8px;
-      border-radius: 99px;
+      border-radius: var(--r-pill);
       background: rgba(76,201,240,0.1);
       color: var(--brand);
       border: 1px solid rgba(76,201,240,0.2);
@@ -401,7 +401,7 @@
       gap: 6px;
       padding: 7px 16px;
       border-radius: var(--r-sm);
-      font-size: 0.76rem;
+      font-size: var(--fs-sm);
       font-weight: 700;
       border: 1px solid rgba(255,255,255,0.1);
       background: rgba(255,255,255,0.04);
@@ -421,7 +421,7 @@
       gap: 6px;
       padding: 7px 18px;
       border-radius: var(--r-sm);
-      font-size: 0.76rem;
+      font-size: var(--fs-sm);
       font-weight: 700;
       border: none;
       background: var(--grad-cta);
@@ -437,7 +437,7 @@
 {% endblock extra_head %}
 
 {% block content %}
-  <div class="container-fluid px-3 px-md-4 pb-5" style="max-width:1300px; margin:0 auto;">
+  <div class="container-fluid px-3 px-md-4 pb-5" style="max-width: var(--content-wide); margin:0 auto;">
 
     <!-- PAGE HEADER -->
     <div class="page-header anim-fade-up" style="padding-top:28px;">
@@ -447,10 +447,10 @@
           <p class="page-subtitle">Your career command center — everything at a glance.</p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
-          <a href="{% url 'home' %}" class="btn-primary-grad" style="font-size:0.78rem; padding:8px 18px;">
+          <a href="{% url 'home' %}" class="btn-primary-grad" style="font-size: var(--fs-sm); padding:8px 18px;">
             <i class="fas fa-plus me-1"></i>New Resume
           </a>
-          <a href="{% url 'tools' %}" class="btn-ghost" style="font-size:0.78rem; padding:8px 18px;">
+          <a href="{% url 'tools' %}" class="btn-ghost" style="font-size: var(--fs-sm); padding:8px 18px;">
             <i class="fas fa-wand-magic-sparkles me-1"></i>AI Tools
           </a>
         </div>
@@ -511,7 +511,7 @@
             </div>
             <div class="dash-empty-title">No applications tracked yet</div>
             <p class="dash-empty-desc">Your funnel fills in as you move applications from Saved to Offer</p>
-            <a href="{% url 'tracker' %}" class="btn-primary-grad" style="font-size:0.78rem;padding:8px 20px;">
+            <a href="{% url 'tracker' %}" class="btn-primary-grad" style="font-size: var(--fs-sm);padding:8px 20px;">
               Open Tracker <i class="fas fa-arrow-right ms-1"></i>
             </a>
           </div>
@@ -530,40 +530,40 @@
               <i class="fas fa-pen-ruler"></i>
             </div>
             <div>
-              <div class="fw-bold" style="font-size:0.88rem;">Resume Studio</div>
+              <div class="fw-bold" style="font-size: var(--fs-base);">Resume Studio</div>
               <small class="text-white-50">Build & export your A4 resume</small>
             </div>
-            <i class="fas fa-chevron-right ms-auto" style="color:var(--text-3);font-size:0.75rem;"></i>
+            <i class="fas fa-chevron-right ms-auto" style="color:var(--text-3);font-size: var(--fs-sm);"></i>
           </a>
           <a href="{% url 'tools' %}" class="quick-action-v2">
             <div class="quick-action-icon" style="background:var(--brand-2-dim);color:var(--brand-2);">
               <i class="fas fa-brain"></i>
             </div>
             <div>
-              <div class="fw-bold" style="font-size:0.88rem;">Interview Prep AI</div>
+              <div class="fw-bold" style="font-size: var(--fs-base);">Interview Prep AI</div>
               <small class="text-white-50">Get tailored interview Q&A</small>
             </div>
-            <i class="fas fa-chevron-right ms-auto" style="color:var(--text-3);font-size:0.75rem;"></i>
+            <i class="fas fa-chevron-right ms-auto" style="color:var(--text-3);font-size: var(--fs-sm);"></i>
           </a>
           <a href="{% url 'tools' %}" class="quick-action-v2">
             <div class="quick-action-icon" style="background:rgba(234,179,8,0.1);color:var(--warning);">
               <i class="fas fa-chart-bar"></i>
             </div>
             <div>
-              <div class="fw-bold" style="font-size:0.88rem;">ATS Score Checker</div>
+              <div class="fw-bold" style="font-size: var(--fs-base);">ATS Score Checker</div>
               <small class="text-white-50">Analyze resume compatibility</small>
             </div>
-            <i class="fas fa-chevron-right ms-auto" style="color:var(--text-3);font-size:0.75rem;"></i>
+            <i class="fas fa-chevron-right ms-auto" style="color:var(--text-3);font-size: var(--fs-sm);"></i>
           </a>
           <a href="{% url 'tracker' %}" class="quick-action-v2">
             <div class="quick-action-icon" style="background:rgba(34,197,94,0.1);color:#22c55e;">
               <i class="fas fa-briefcase"></i>
             </div>
             <div>
-              <div class="fw-bold" style="font-size:0.88rem;">Application Tracker</div>
+              <div class="fw-bold" style="font-size: var(--fs-base);">Application Tracker</div>
               <small class="text-white-50">Track and manage applications</small>
             </div>
-            <i class="fas fa-chevron-right ms-auto" style="color:var(--text-3);font-size:0.75rem;"></i>
+            <i class="fas fa-chevron-right ms-auto" style="color:var(--text-3);font-size: var(--fs-sm);"></i>
           </a>
         </div>
       </div>
@@ -639,7 +639,7 @@
             </div>
             <div class="dash-empty-title">No resumes yet</div>
             <p class="dash-empty-desc">Open the Studio and generate your first AI resume</p>
-            <a href="{% url 'home' %}" class="btn-primary-grad" style="font-size:0.78rem;padding:8px 20px;">
+            <a href="{% url 'home' %}" class="btn-primary-grad" style="font-size: var(--fs-sm);padding:8px 20px;">
               Create Now <i class="fas fa-arrow-right ms-1"></i>
             </a>
           </div>
@@ -691,7 +691,7 @@
             </div>
             <div class="dash-empty-title">Start tracking applications</div>
             <p class="dash-empty-desc">Never lose track of where you applied</p>
-            <a href="{% url 'tracker' %}" class="btn-primary-grad" style="font-size:0.78rem;padding:8px 20px;">
+            <a href="{% url 'tracker' %}" class="btn-primary-grad" style="font-size: var(--fs-sm);padding:8px 20px;">
               Add Application <i class="fas fa-arrow-right ms-1"></i>
             </a>
           </div>
@@ -794,7 +794,7 @@
             </div>
             <div class="dash-empty-title">Unlock your AI arsenal</div>
             <p class="dash-empty-desc">Interview prep, ATS scoring, follow-ups & more</p>
-            <a href="{% url 'tools' %}" class="btn-primary-grad" style="font-size:0.78rem;padding:8px 20px;">
+            <a href="{% url 'tools' %}" class="btn-primary-grad" style="font-size: var(--fs-sm);padding:8px 20px;">
               Explore AI Tools <i class="fas fa-arrow-right ms-1"></i>
             </a>
           </div>
@@ -962,7 +962,7 @@
           </div>
           ${row.dataset.company ? `<div class="modal-meta-item"><i class="fas fa-building"></i>${row.dataset.company}</div>` : ''}
           ${row.dataset.role    ? `<div class="modal-meta-item"><i class="fas fa-user-tie"></i>${row.dataset.role}</div>` : ''}
-          ${row.dataset.status  ? `<div class="modal-meta-item"><i class="fas fa-circle-dot"></i><span class="act-badge act-badge-${row.dataset.status}" style="font-size:0.6rem;">${row.dataset.status}</span></div>` : ''}
+          ${row.dataset.status  ? `<div class="modal-meta-item"><i class="fas fa-circle-dot"></i><span class="act-badge act-badge-${row.dataset.status}" style="font-size: var(--fs-2xs);">${row.dataset.status}</span></div>` : ''}
         </div>`;
 
       /* ATS score ring */
@@ -1028,12 +1028,12 @@
         if (isJson && parsedJson) {
           // Dynamic JSON Formatter for Resumes
           let data = parsedJson;
-          let rHtml = '<div class="resume-preview-card" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 24px; color: #f1f5f9;">';
+          let rHtml = '<div class="resume-preview-card" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--r-md); padding: 24px; color: #f1f5f9;">';
           
           // Header
-          rHtml += `<h2 style="font-size: 1.5rem; font-weight: 800; color: #fff; margin-bottom: 4px;">${escHtml(data.full_name || 'Candidate Name')}</h2>`;
+          rHtml += `<h2 style="font-size: var(--fs-2xl); font-weight: 800; color: #fff; margin-bottom: 4px;">${escHtml(data.full_name || 'Candidate Name')}</h2>`;
           if (data.target_role) {
-            rHtml += `<div style="font-size: 1rem; color: var(--brand); font-weight: 600; margin-bottom: 12px;">${escHtml(data.target_role)}</div>`;
+            rHtml += `<div style="font-size: var(--fs-md); color: var(--brand); font-weight: 600; margin-bottom: 12px;">${escHtml(data.target_role)}</div>`;
           }
           
           // Contact info
@@ -1044,31 +1044,31 @@
           if (data.linkedin) contactItems.push(`<i class="fab fa-linkedin" style="color:var(--text-3); margin-right:4px;"></i>${escHtml(data.linkedin)}`);
           
           if (contactItems.length > 0) {
-            rHtml += `<div style="display:flex; flex-wrap:wrap; gap:16px; font-size:0.8rem; color:#94a3b8; margin-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 16px;">
+            rHtml += `<div style="display:flex; flex-wrap:wrap; gap:16px; font-size: var(--fs-sm); color:#94a3b8; margin-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 16px;">
                 ${contactItems.map(item => `<div>${item}</div>`).join('')}
             </div>`;
           }
           
           // Summary Block
           if (data.summary) {
-            rHtml += `<h3 style="font-size: 0.9rem; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Professional Summary</h3>`;
-            rHtml += `<p style="font-size: 0.88rem; color: #cbd5e1; line-height: 1.6; margin-bottom: 24px; white-space: pre-wrap;">${escHtml(data.summary)}</p>`;
+            rHtml += `<h3 style="font-size: var(--fs-md); font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Professional Summary</h3>`;
+            rHtml += `<p style="font-size: var(--fs-base); color: #cbd5e1; line-height: 1.6; margin-bottom: 24px; white-space: pre-wrap;">${escHtml(data.summary)}</p>`;
           }
           
           // Experience Block
           if (data.experience && data.experience.length > 0) {
-            rHtml += `<h3 style="font-size: 0.9rem; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Experience</h3>`;
+            rHtml += `<h3 style="font-size: var(--fs-md); font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Experience</h3>`;
             data.experience.forEach(exp => {
-              rHtml += `<div style="background: rgba(76,201,240,0.05); border: 1px solid rgba(76,201,240,0.1); border-radius: 8px; padding: 16px; margin-bottom: 12px;">`;
+              rHtml += `<div style="background: rgba(76,201,240,0.05); border: 1px solid rgba(76,201,240,0.1); border-radius: var(--r-sm); padding: 16px; margin-bottom: 12px;">`;
               rHtml += `<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">`;
               rHtml += `<div>
-                  <strong style="font-size: 0.95rem; color: #fff; display: block;">${escHtml(exp.title || '')}</strong>
-                  <span style="font-size: 0.85rem; color: var(--brand); font-weight: 600;">${escHtml(exp.company || '')}</span>
+                  <strong style="font-size: var(--fs-md); color: #fff; display: block;">${escHtml(exp.title || '')}</strong>
+                  <span style="font-size: var(--fs-base); color: var(--brand); font-weight: 600;">${escHtml(exp.company || '')}</span>
               </div>`;
-              rHtml += `<div style="font-size: 0.8rem; color: #94a3b8; font-family: 'JetBrains Mono', monospace;">${escHtml(exp.dates || '')}</div>`;
+              rHtml += `<div style="font-size: var(--fs-sm); color: #94a3b8; font-family: 'JetBrains Mono', monospace;">${escHtml(exp.dates || '')}</div>`;
               rHtml += `</div>`;
               if (exp.bullets && exp.bullets.length > 0) {
-                rHtml += `<ul style="margin: 0; padding-left: 20px; font-size: 0.85rem; color: #cbd5e1; line-height: 1.5;">`;
+                rHtml += `<ul style="margin: 0; padding-left: 20px; font-size: var(--fs-base); color: #cbd5e1; line-height: 1.5;">`;
                 exp.bullets.forEach(bullet => {
                   rHtml += `<li style="margin-bottom: 4px;">${escHtml(bullet)}</li>`;
                 });
@@ -1080,12 +1080,12 @@
           
           // Skills Block
           if (data.skills && data.skills.length > 0) {
-            rHtml += `<h3 style="font-size: 0.9rem; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; margin-top: 24px;">Skills</h3>`;
+            rHtml += `<h3 style="font-size: var(--fs-md); font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; margin-top: 24px;">Skills</h3>`;
             rHtml += `<div style="display: flex; flex-wrap: wrap; gap: 8px;">`;
             data.skills.forEach(skill => {
               let name = typeof skill === 'string' ? skill : (skill.name || '');
-              let level = typeof skill === 'string' ? '' : (skill.level ? `<span style="opacity:0.6; margin-left: 6px; font-size: 0.7rem;">${skill.level}%</span>` : '');
-              rHtml += `<div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 99px; padding: 4px 12px; font-size: 0.8rem; font-weight: 600; color: #e2e8f0; display: flex; align-items: center;">
+              let level = typeof skill === 'string' ? '' : (skill.level ? `<span style="opacity:0.6; margin-left: 6px; font-size: var(--fs-xs);">${skill.level}%</span>` : '');
+              rHtml += `<div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--r-pill); padding: 4px 12px; font-size: var(--fs-sm); font-weight: 600; color: #e2e8f0; display: flex; align-items: center;">
                   ${escHtml(name)}${level}
               </div>`;
             });

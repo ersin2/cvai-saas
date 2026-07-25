@@ -12,16 +12,10 @@
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
         rel="stylesheet">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23080c14'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='monospace' font-weight='700' font-size='18' fill='%234cc9f0'>CV</text></svg>">
-    <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}">
+    <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}?v=4">
     <style>
-        :root {
-            --primary: #4cc9f0;
-            --secondary: #f72585;
-            --dark-bg: #0a0e17;
-        }
-
         body {
-            background-color: var(--dark-bg);
+            background-color: var(--bg);
             font-family: 'Outfit', sans-serif;
             color: #e2e8f0;
             min-height: 100vh;
@@ -44,7 +38,7 @@
             font-size: 8rem;
             font-weight: 800;
             line-height: 1;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background: linear-gradient(135deg, var(--brand), var(--brand-2));
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -52,15 +46,15 @@
         }
 
         .error-title {
-            font-size: 1.5rem;
+            font-size: var(--fs-2xl);
             font-weight: 700;
             color: white;
             margin-bottom: 12px;
         }
 
         .error-desc {
-            color: #64748b;
-            font-size: 1rem;
+            color: var(--text-2);
+            font-size: var(--fs-md);
             line-height: 1.6;
             margin-bottom: 32px;
         }
@@ -70,9 +64,9 @@
             border: none;
             color: white;
             padding: 14px 36px;
-            border-radius: 14px;
+            border-radius: var(--r-md);
             font-weight: 700;
-            font-size: 1rem;
+            font-size: var(--fs-md);
             text-decoration: none;
             display: inline-flex;
             align-items: center;
@@ -94,14 +88,14 @@
         }
 
         .links-row a {
-            color: #475569;
+            color: var(--text-3);
             text-decoration: none;
-            font-size: 0.88rem;
+            font-size: var(--fs-base);
             transition: 0.2s;
         }
 
         .links-row a:hover {
-            color: var(--primary);
+            color: var(--brand);
         }
 
         .error-icon {

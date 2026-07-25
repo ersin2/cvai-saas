@@ -14,14 +14,8 @@
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23080c14'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='monospace' font-weight='700' font-size='18' fill='%234cc9f0'>CV</text></svg>">
     <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}">
     <style>
-        :root {
-            --primary: #4cc9f0;
-            --secondary: #f72585;
-            --dark-bg: #0a0e17;
-        }
-
         body {
-            background-color: var(--dark-bg);
+            background-color: var(--bg);
             font-family: 'Outfit', sans-serif;
             color: #e2e8f0;
             min-height: 100vh;
@@ -51,15 +45,15 @@
         }
 
         .error-title {
-            font-size: 1.5rem;
+            font-size: var(--fs-2xl);
             font-weight: 700;
             color: white;
             margin-bottom: 12px;
         }
 
         .error-desc {
-            color: #64748b;
-            font-size: 1rem;
+            color: var(--text-2);
+            font-size: var(--fs-md);
             line-height: 1.6;
             margin-bottom: 32px;
         }
@@ -69,9 +63,9 @@
             border: none;
             color: white;
             padding: 14px 36px;
-            border-radius: 14px;
+            border-radius: var(--r-md);
             font-weight: 700;
-            font-size: 1rem;
+            font-size: var(--fs-md);
             text-decoration: none;
             display: inline-flex;
             align-items: center;
@@ -92,8 +86,8 @@
         }
 
         .retry-text {
-            color: #475569;
-            font-size: 0.88rem;
+            color: var(--text-3);
+            font-size: var(--fs-base);
             margin-top: 24px;
         }
     </style>

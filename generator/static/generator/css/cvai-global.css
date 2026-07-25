@@ -34,18 +34,23 @@
   --danger:  #ef4444;
   --info:    var(--brand);
 
-  /* Type — 2 families + mono, 8-step scale */
+  /* Type — 2 families + mono, 10-step scale */
   --font-display: 'Syne', 'Outfit', sans-serif;
   --font-body:    'Outfit', sans-serif;
   --font-mono:    'JetBrains Mono', monospace;
-  --fs-xs:   0.72rem;
-  --fs-sm:   0.8rem;
-  --fs-base: 0.875rem;
-  --fs-md:   0.95rem;
-  --fs-lg:   1.125rem;
-  --fs-xl:   1.5rem;
-  --fs-2xl:  clamp(1.75rem, 3.5vw, 2.75rem);
-  --fs-hero: clamp(2.4rem, 6vw, 4.5rem);
+  /* Steps are sized to the real distribution measured across the templates
+     (52 distinct ad-hoc sizes), so adopting the scale moves any given piece
+     of text by at most ~8% — no badge or pill reflows. */
+  --fs-2xs:  0.65rem;   /* micro badges, count pills */
+  --fs-xs:   0.72rem;   /* labels, captions, meta */
+  --fs-sm:   0.8rem;    /* secondary UI text */
+  --fs-base: 0.875rem;  /* body */
+  --fs-md:   0.95rem;   /* emphasised body, card titles */
+  --fs-lg:   1.125rem;  /* lead text */
+  --fs-xl:   1.35rem;   /* subsection headings */
+  --fs-2xl:  1.6rem;    /* panel headings */
+  --fs-3xl:  clamp(1.75rem, 3.5vw, 2.75rem);  /* section titles */
+  --fs-hero: clamp(2.4rem, 6vw, 4.5rem);      /* landing hero only */
   --lh-tight: 1.1;
   --lh-base:  1.55;
   --lh-loose: 1.7;
@@ -55,7 +60,10 @@
   --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px; --sp-5: 24px;
   --sp-6: 32px; --sp-7: 48px; --sp-8: 64px; --sp-9: 96px; --sp-10: 128px;
   --section-pad: clamp(72px, 10vw, 120px);
-  --content-max: 1200px;
+  /* Content widths — three intents, replacing the per-screen 860/920/1300px */
+  --content-narrow: 900px;    /* reading columns: history, profile, legal */
+  --content-max:    1200px;   /* standard app + marketing sections */
+  --content-wide:   1320px;   /* data-dense screens: dashboard */
 
   /* Radius — 5 values, nothing else */
   --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 24px; --r-pill: 999px;
@@ -76,6 +84,7 @@
   --brand-dim:   rgba(76, 201, 240, 0.12);
   --brand-glow:  rgba(76, 201, 240, 0.25);
   --brand-2-dim: rgba(247, 37, 133, 0.12);
+  --brand-3:     #7209b7;   /* deep purple — landing accents only */
 }
 
 /* ── 2. RESET & BASE ─────────────────────────────────────────── */
@@ -121,8 +130,8 @@ body {
   font-size: clamp(1.5rem, 3vw, 2rem);
   font-weight: 800;
   color: var(--text-1);
-  letter-spacing: -0.02em;
-  line-height: 1.2;
+  letter-spacing: var(--track-tight);
+  line-height: var(--lh-tight);
   margin-bottom: 6px;
 }
 
@@ -131,14 +140,22 @@ body {
 }
 
 .page-subtitle {
-  font-size: 0.92rem;
+  font-size: var(--fs-md);
   color: var(--text-3);
   font-weight: 400;
+  line-height: var(--lh-base);
   margin-bottom: 0;
 }
 
+/* Headings at --fs-xl and above get the tighter tracking/leading that keeps
+   large type from looking loose. Applied here once rather than per screen. */
+h1, h2, .display-title {
+  letter-spacing: var(--track-tight);
+  line-height: var(--lh-tight);
+}
+
 .section-title {
-  font-size: 1rem;
+  font-size: var(--fs-md);
   font-weight: 700;
   color: var(--text-1);
   margin-bottom: 0;
@@ -153,10 +170,16 @@ body {
 
 /* Page Header block */
 .page-header {
-  padding: 28px 0 24px;
+  padding: var(--sp-6) 0 var(--sp-5);
   border-bottom: 1px solid rgba(255,255,255,0.04);
-  margin-bottom: 32px;
+  margin-bottom: var(--sp-6);
 }
+
+/* ── SPACING POLICY ───────────────────────────────────────────────
+   --sp-* is a LAYOUT scale: cards, panels, page sections, grid gaps.
+   It is deliberately NOT applied to control padding (buttons, pills,
+   badges, inputs), whose values are optically tuned to their text —
+   snapping those to a 4px grid distorts them for no visual gain. */
 
 /* ── 4. NAVBAR ───────────────────────────────────────────────── */
 .navbar-custom {
@@ -177,7 +200,7 @@ body {
 .logo-text {
   font-family: var(--font-mono);
   font-weight: 700;
-  font-size: 1.35rem;
+  font-size: var(--fs-xl);
   background: linear-gradient(90deg, #ffffff, var(--brand));
   -webkit-background-clip: text;
   background-clip: text;
@@ -191,7 +214,7 @@ body {
 
 .logo-text i {
   -webkit-text-fill-color: var(--brand);
-  font-size: 1.1rem;
+  font-size: var(--fs-lg);
 }
 
 /* Nav links */
@@ -204,7 +227,7 @@ body {
 .nav-link-item {
   color: var(--text-2);
   text-decoration: none;
-  font-size: 0.875rem;
+  font-size: var(--fs-base);
   font-weight: 600;
   padding: 6px 14px;
   border-radius: var(--r-sm);
@@ -229,7 +252,7 @@ body {
   color: var(--brand);
   padding: 5px 12px;
   border-radius: var(--r-pill);
-  font-size: 0.775rem;
+  font-size: var(--fs-sm);
   font-weight: 700;
   font-family: var(--font-mono);
   white-space: nowrap;
@@ -243,7 +266,7 @@ body {
   font-weight: 800;
   padding: 7px 16px;
   border-radius: var(--r-sm);
-  font-size: 0.775rem;
+  font-size: var(--fs-sm);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   white-space: nowrap;
@@ -266,7 +289,7 @@ body {
   color: var(--text-1);
   padding: 6px 14px;
   border-radius: var(--r-pill);
-  font-size: 0.85rem;
+  font-size: var(--fs-base);
   font-weight: 600;
   text-decoration: none;
   transition: background var(--t-fast), border-color var(--t-fast);
@@ -291,7 +314,7 @@ body {
   background: none;
   border: none;
   color: var(--text-1);
-  font-size: 1.4rem;
+  font-size: var(--fs-xl);
   cursor: pointer;
   padding: 6px 8px;
   border-radius: var(--r-sm);
@@ -350,7 +373,7 @@ body {
   background: var(--surface-3);
   border: none;
   color: var(--text-2);
-  font-size: 1rem;
+  font-size: var(--fs-md);
   width: 34px;
   height: 34px;
   border-radius: 50%;
@@ -379,7 +402,7 @@ body {
   align-items: center;
   gap: 10px;
   padding: 12px 14px;
-  font-size: 0.95rem;
+  font-size: var(--fs-md);
   border-radius: var(--r-sm);
 }
 
@@ -401,7 +424,7 @@ body {
   color: var(--brand);
   padding: 10px 16px;
   border-radius: var(--r-sm);
-  font-size: 0.82rem;
+  font-size: var(--fs-base);
   font-weight: 700;
   text-align: center;
   margin: 8px 12px;
@@ -416,7 +439,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--r-xl);
   box-shadow: var(--shadow-3);
-  padding: 28px;
+  padding: var(--sp-6);
   position: relative;
   overflow: hidden;
 }
@@ -433,7 +456,7 @@ body {
 
 /* Card variants */
 .glass-card-sm {
-  padding: 20px;
+  padding: var(--sp-5);
   border-radius: var(--r-lg);
 }
 
@@ -459,7 +482,7 @@ body {
   border: none;
   color: #fff;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: var(--fs-md);
   padding: 13px 28px;
   border-radius: var(--r-lg);
   text-decoration: none;
@@ -489,7 +512,7 @@ body {
   border: 1px solid var(--border);
   color: var(--text-2);
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: var(--fs-base);
   padding: 10px 20px;
   border-radius: var(--r-sm);
   text-decoration: none;
@@ -510,7 +533,7 @@ body {
   color: var(--danger);
   border-radius: var(--r-sm);
   padding: 5px 10px;
-  font-size: 0.78rem;
+  font-size: var(--fs-sm);
   line-height: 1;
   cursor: pointer;
   transition: background var(--t-fast), border-color var(--t-fast);
@@ -529,7 +552,7 @@ body {
   color: var(--text-1) !important;
   padding: 13px 16px;
   border-radius: var(--r-sm);
-  font-size: 0.95rem;
+  font-size: var(--fs-md);
   transition: border-color var(--t-fast), box-shadow var(--t-fast);
 }
 
@@ -548,7 +571,7 @@ body {
 .form-label {
   color: rgba(255, 255, 255, 0.72);
   font-weight: 600;
-  font-size: 0.84rem;
+  font-size: var(--fs-base);
   margin-bottom: 7px;
   letter-spacing: 0.01em;
 }
@@ -564,7 +587,7 @@ body {
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-3);
-  font-size: 0.9rem;
+  font-size: var(--fs-md);
   pointer-events: none;
   transition: color var(--t-fast);
 }
@@ -584,7 +607,7 @@ body {
   gap: 5px;
   padding: 4px 10px;
   border-radius: var(--r-pill);
-  font-size: 0.72rem;
+  font-size: var(--fs-xs);
   font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -633,22 +656,22 @@ body {
   border: 1px solid rgba(76, 201, 240, 0.2);
   font-family: var(--font-mono);
   font-weight: 800;
-  font-size: 1rem;
+  font-size: var(--fs-md);
   text-transform: uppercase;
   line-height: 1;
   flex-shrink: 0;
   user-select: none;
 }
 
-.company-avatar.avatar-sm { width: 32px; height: 32px; font-size: 0.82rem; border-radius: var(--r-sm); }
-.company-avatar.avatar-lg { width: 50px; height: 50px; font-size: 1.2rem; border-radius: var(--r-md); }
+.company-avatar.avatar-sm { width: 32px; height: 32px; font-size: var(--fs-base); border-radius: var(--r-sm); }
+.company-avatar.avatar-lg { width: 50px; height: 50px; font-size: var(--fs-lg); border-radius: var(--r-md); }
 
 /* ── 11. STAT CARDS ─────────────────────────────────────────── */
 .stat-card-v2 {
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: var(--r-xl);
-  padding: 24px;
+  padding: var(--sp-5);
   position: relative;
   overflow: hidden;
   transition: transform var(--t-base), border-color var(--t-base);
@@ -683,7 +706,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.15rem;
+  font-size: var(--fs-lg);
   margin-bottom: 16px;
   background: var(--card-icon-bg, var(--brand-dim));
   color: var(--card-icon-color, var(--brand));
@@ -699,7 +722,7 @@ body {
 }
 
 .stat-label-v2 {
-  font-size: 0.78rem;
+  font-size: var(--fs-sm);
   color: var(--text-3);
   font-weight: 600;
   margin-top: 6px;
@@ -749,7 +772,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.05rem;
+  font-size: var(--fs-lg);
   flex-shrink: 0;
 }
 
@@ -780,7 +803,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--r-xl);
   box-shadow: var(--shadow-3);
-  padding: 28px 26px;
+  padding: var(--sp-6);
   max-width: 380px;
   width: 100%;
   text-align: center;
@@ -795,13 +818,13 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.3rem;
+  font-size: var(--fs-xl);
   margin: 0 auto 16px;
 }
 
 .confirm-message {
   color: var(--text-1);
-  font-size: 0.95rem;
+  font-size: var(--fs-md);
   line-height: 1.55;
   margin-bottom: 22px;
 }
@@ -942,19 +965,19 @@ body {
   }
 
   .glass-card {
-    padding: 20px;
+    padding: var(--sp-5);
     border-radius: var(--r-lg);
   }
 
   .page-header {
-    padding: 20px 0 18px;
-    margin-bottom: 24px;
+    padding: var(--sp-5) 0 var(--sp-4);
+    margin-bottom: var(--sp-5);
   }
 }
 
 @media (max-width: 480px) {
   .glass-card {
-    padding: 16px;
+    padding: var(--sp-4);
   }
 
   .toast-container {
@@ -1023,7 +1046,7 @@ body {
   color: white;
   padding: 2px 6px;
   border-radius: 4px;
-  font-size: 0.65rem;
+  font-size: var(--fs-2xs);
   white-space: nowrap;
   opacity: 0;
   pointer-events: none;
@@ -1086,7 +1109,7 @@ body {
   border: 1px solid rgba(255,255,255,.15);
   border-radius: var(--r-sm);
   color: var(--text-1);
-  font-size: .8rem;
+  font-size: var(--fs-sm);
   padding: 10px 30px 10px 12px;
   text-align: left;
   cursor: pointer;
@@ -1121,7 +1144,7 @@ body {
 .font-dropdown-option {
   padding: 10px 12px;
   cursor: pointer;
-  font-size: .85rem;
+  font-size: var(--fs-base);
   color: var(--text-1);
   transition: background var(--t-fast);
 }
@@ -1150,7 +1173,7 @@ body {
 .vs-left-nav::-webkit-scrollbar { display: none; }
 .vs-left-nav a {
   color: var(--text-3);
-  font-size: 0.72rem;
+  font-size: var(--fs-xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -1213,7 +1236,7 @@ textarea:focus-visible,
   gap: 10px;
   padding: 12px 18px;
   border-radius: var(--r-sm);
-  font-size: 0.875rem;
+  font-size: var(--fs-base);
   font-weight: 600;
   color: #fff;
   backdrop-filter: blur(16px);
@@ -1237,7 +1260,7 @@ textarea:focus-visible,
 .toast-item.toast-warning { background: rgba(202, 138, 4, 0.92); }
 .toast-item.toast-info    { background: rgba(14, 116, 144, 0.92); }
 
-.toast-item i { font-size: 0.9rem; flex-shrink: 0; }
+.toast-item i { font-size: var(--fs-md); flex-shrink: 0; }
 
 /* ── Empty State Component ───────────────────────────────────── */
 .empty-state-v2 {
@@ -1259,19 +1282,19 @@ textarea:focus-visible,
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.6rem;
+  font-size: var(--fs-2xl);
   margin-bottom: 20px;
 }
 
 .empty-title {
-  font-size: 1rem;
+  font-size: var(--fs-md);
   font-weight: 700;
   color: var(--text-1);
   margin-bottom: 8px;
 }
 
 .empty-desc {
-  font-size: 0.875rem;
+  font-size: var(--fs-base);
   color: var(--text-3);
   line-height: 1.65;
   max-width: 340px;
@@ -1289,5 +1312,5 @@ textarea:focus-visible,
   gap: 8px;
   opacity: 0.55;
 }
-.kanban-empty i  { font-size: 1.5rem; color: var(--text-3); }
-.kanban-empty p  { font-size: 0.78rem; color: var(--text-3); margin: 0; }
+.kanban-empty i  { font-size: var(--fs-2xl); color: var(--text-3); }
+.kanban-empty p  { font-size: var(--fs-sm); color: var(--text-3); margin: 0; }
