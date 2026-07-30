@@ -341,9 +341,31 @@ class AuthGuardTest(TestCase):
         r = self._anon_post("scrape_job", {"url": "https://example.com"})
         self.assertIn(r.status_code, [301, 302, 403])
 
-    def test_generate_resume_requires_login(self):
-        r = self._anon_post("generate_resume", {"resume": "test"})
-        self.assertIn(r.status_code, [301, 302, 403])
+    # The async endpoints below are JSON-only APIs called from fetch(), so they
+    # answer an unauthenticated request with 401 JSON rather than redirecting to
+    # an HTML login page — a redirect reaches the caller as 200 + HTML and fails
+    # as a JSON parse error. See json_login_required in generator/views.py.
+    JSON_API_ENDPOINTS = [
+        ("generate_resume", {"resume": "test"}),
+        ("generate_letter", {"resume": "test"}),
+        ("rewrite_section", {"section_type": "summary", "content": "x"}),
+        ("interview_prep", {}),
+        ("followup_email", {}),
+        ("ats_score", {}),
+    ]
+
+    def test_json_api_endpoints_return_401_when_anonymous(self):
+        for url_name, payload in self.JSON_API_ENDPOINTS:
+            with self.subTest(endpoint=url_name):
+                r = self._anon_post(url_name, payload)
+                self.assertEqual(r.status_code, 401)
+                self.assertEqual(r["Content-Type"], "application/json")
+
+    def test_delete_generation_requires_login(self):
+        r = self.client.post(
+            reverse("delete_generation", args=[1]), follow=False
+        )
+        self.assertEqual(r.status_code, 401)
 
     def test_dashboard_requires_login(self):
         r = self.client.get(reverse("dashboard"), follow=False)
