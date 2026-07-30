@@ -1868,18 +1868,86 @@
       return;
     }
 
-    const preview = document.getElementById('photoPreview');
-    const icon    = document.getElementById('photoIcon');
-    const label   = document.getElementById('photoLabel');
-    const reader  = new FileReader();
-    reader.onload = e => {
-      preview.src = e.target.result;
+    downscalePhoto(file).then(({ blob, url, scaled }) => {
+      const preview = document.getElementById('photoPreview');
+      const icon    = document.getElementById('photoIcon');
+      const label   = document.getElementById('photoLabel');
+
+      // Swap the downscaled image into the input so every later upload — live
+      // preview and final export — sends the small one.
+      if (blob) {
+        const dt = new DataTransfer();
+        dt.items.add(new File([blob], renamePhoto(file.name), { type: blob.type }));
+        input.files = dt.files;
+      }
+
+      const finalSize = blob ? blob.size : file.size;
+      preview.src = url;
       preview.style.display = 'block';
       icon.style.display    = 'none';
-      label.textContent     = file.name + ' (' + (file.size / 1024).toFixed(0) + ' KB)';
-    };
-    reader.readAsDataURL(file);
-    scheduleLivePreview();
+      label.textContent =
+        file.name + ' (' + (finalSize / 1024).toFixed(0) + ' KB' +
+        (scaled ? ', resized' : '') + ')';
+
+      scheduleLivePreview();
+    });
+  }
+
+  function renamePhoto(name) {
+    return name.replace(/\.[^.]+$/, '') + '.jpg';
+  }
+
+  /*
+    Downscale to PHOTO_MAX_EDGE before upload.
+
+    The avatar prints at 28-40mm (~470px at 300dpi), so a phone original is
+    ~100x more pixels than the PDF can use. Sending the original made the
+    server decode a 48MP bitmap per keystroke-debounced preview, which
+    exhausted the worker's memory and surfaced as a failed preview.
+
+    Falls back to the original file if anything here fails - the server-side
+    guards handle that case, this is an optimisation not a validation.
+  */
+  const PHOTO_MAX_EDGE = 1000;
+
+  function downscalePhoto(file) {
+    return new Promise(resolve => {
+      const objectUrl = URL.createObjectURL(file);
+      const img = new Image();
+
+      img.onload = () => {
+        const { width: w, height: h } = img;
+        const scale = Math.min(1, PHOTO_MAX_EDGE / Math.max(w, h));
+        if (scale === 1) {                    // already small enough
+          resolve({ blob: null, url: objectUrl, scaled: false });
+          return;
+        }
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width  = Math.round(w * scale);
+          canvas.height = Math.round(h * scale);
+          const ctx = canvas.getContext('2d');
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob(blob => {
+            URL.revokeObjectURL(objectUrl);
+            blob
+              ? resolve({ blob, url: URL.createObjectURL(blob), scaled: true })
+              : resolve({ blob: null, url: objectUrl, scaled: false });
+          }, 'image/jpeg', 0.9);
+        } catch (err) {
+          console.warn('Photo downscale failed, sending original:', err);
+          resolve({ blob: null, url: objectUrl, scaled: false });
+        }
+      };
+
+      img.onerror = () => {
+        // Not a decodable image; let the server reject it with a real message.
+        resolve({ blob: null, url: objectUrl, scaled: false });
+      };
+
+      img.src = objectUrl;
+    });
   }
 
   // Drag-over highlight
@@ -1976,8 +2044,26 @@
         return;
       }
       if (!res.ok) {
-        showToast('Preview failed. Please check your inputs or try a smaller photo.', 'danger');
+        // Report what actually went wrong. This used to guess ("try a smaller
+        // photo") and discard the status, so a 400, a 403 and a dead worker
+        // were indistinguishable — and the guess was often wrong.
+        let detail = '';
+        try {
+          const ct = res.headers.get('content-type') || '';
+          if (ct.includes('application/json')) {
+            const body = await res.json();
+            detail = body.error || '';
+          }
+        } catch (_) { /* non-JSON error page — fall through to the status code */ }
+
+        if (!detail) {
+          detail = res.status === 401 || res.status === 403
+            ? 'Your session expired. Please sign in again.'
+            : `Preview failed (HTTP ${res.status}). Please try again.`;
+        }
+        showToast(detail, 'danger');
         status.textContent = '⚠ Preview unavailable';
+        console.error('Live preview failed:', res.status, detail);
         return;  // bail — do NOT touch blob or iframe
       }
 

@@ -10,6 +10,7 @@ Django acts as a thin client that forwards pre-built prompts here and
 awaits the response without blocking its own worker threads.
 """
 
+import asyncio
 import os
 import logging
 from typing import Optional
@@ -42,7 +43,10 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
-ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5")
+# claude-sonnet-4-5 was a legacy ID. Opus 5 is the current default; override with
+# the env var (claude-sonnet-5 is the cheaper option and also supports the
+# structured outputs the resume parser relies on).
+ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-opus-5")
 
 # ---------------------------------------------------------------------------
 # App & Logging
@@ -80,7 +84,22 @@ class GenerateRequest(BaseModel):
     max_tokens: int = Field(
         default=4096, ge=256, le=32000,
         description="Upper bound on the completion. Structured resume JSON needs "
-                    "more headroom than a cover letter, or the object is cut off.",
+                    "more headroom than a cover letter, or the object is cut off. "
+                    "On Claude this budget covers thinking AND response text.",
+    )
+    json_schema: Optional[dict] = Field(
+        default=None,
+        description="JSON Schema for constrained decoding on the Anthropic path. "
+                    "When set, Claude is guaranteed to return an object matching "
+                    "it — no markdown fences, no prose, no truncation repair. "
+                    "Ignored by the Groq path, which uses json_mode instead.",
+    )
+    effort: Optional[str] = Field(
+        default=None,
+        pattern="^(low|medium|high|xhigh|max)$",
+        description="Anthropic-only reasoning depth. Extraction is a fidelity "
+                    "task, so the resume parser sends 'low' to keep thinking "
+                    "from eating the max_tokens budget.",
     )
 
 
@@ -92,6 +111,18 @@ class GenerateResponse(BaseModel):
 # ---------------------------------------------------------------------------
 # LLM helpers (both async — no thread blocking)
 # ---------------------------------------------------------------------------
+def _retry_after_seconds(resp, default: float = 8.0, cap: float = 30.0) -> float:
+    """
+    Seconds to wait from a 429's Retry-After header, clamped so a long
+    provider-suggested delay can't stall the request past its timeout.
+    """
+    raw = resp.headers.get("retry-after", "")
+    try:
+        return max(0.0, min(float(raw), cap))
+    except (TypeError, ValueError):
+        return default
+
+
 async def _call_groq(
     system_prompt: str, user_prompt: str, temperature: float,
     json_mode: bool = False, max_tokens: int = 4096,
@@ -120,15 +151,27 @@ async def _call_groq(
         # Constrained decoding — the model cannot emit prose or code fences.
         payload["response_format"] = {"type": "json_object"}
 
+    # Groq's free tier meters tokens-per-minute and counts the max_tokens
+    # reservation, not just the prompt — so a burst of normal-sized requests
+    # rate-limits. One bounded retry on the window boundary turns a user-visible
+    # error into a pause. A request that is structurally over the limit will
+    # 429 again and fall through, which is correct: retrying can't fix that.
     async with httpx.AsyncClient(timeout=90.0) as client:
-        resp = await client.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {GROQ_API_KEY}",
-                "Content-Type": "application/json",
-            },
-            json=payload,
-        )
+        for attempt in range(2):
+            resp = await client.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {GROQ_API_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json=payload,
+            )
+            if resp.status_code != 429 or attempt == 1:
+                break
+            delay = _retry_after_seconds(resp, default=8.0)
+            logger.warning("Groq 429 — retrying once in %.1fs", delay)
+            await asyncio.sleep(delay)
+
     resp.raise_for_status()
     data = resp.json()
     choice = data["choices"][0]
@@ -139,13 +182,28 @@ async def _call_groq(
     return choice["message"]["content"]
 
 
+class _AnthropicRefusal(Exception):
+    """Model declined or returned nothing usable — surfaced as a clean error."""
+
+
 async def _call_anthropic(
-    system_prompt: str, user_prompt: str, temperature: float,
+    system_prompt: str, user_prompt: str,
     max_tokens: int = 4096,
+    json_schema: Optional[dict] = None,
+    effort: Optional[str] = None,
 ) -> str:
     """
     Async Anthropic / Claude call using the official SDK's AsyncAnthropic client.
     Switch via provider='anthropic' in the request payload.
+
+    Deliberately does NOT accept `temperature`. On the current Claude models
+    (Opus 5, Opus 4.8/4.7, Fable 5) the sampling parameters were removed and
+    sending one returns a 400 — so the value Django uses for Groq must not be
+    forwarded here. Steer behaviour with the prompt and `effort` instead.
+
+    When `json_schema` is supplied the response is constrained to that schema,
+    which is what lets the resume parser skip markdown-fence stripping and the
+    truncated-JSON repair pass entirely.
     """
     if not ANTHROPIC_API_KEY:
         raise HTTPException(status_code=503, detail="ANTHROPIC_API_KEY not configured on AI service.")
@@ -156,14 +214,60 @@ async def _call_anthropic(
         raise HTTPException(status_code=503, detail="'anthropic' package not installed in ai_service env.")
 
     client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
-    message = await client.messages.create(
-        model=ANTHROPIC_MODEL,
-        max_tokens=max_tokens,
-        system=system_prompt,
-        messages=[{"role": "user", "content": user_prompt}],
-        temperature=temperature,
-    )
-    return message.content[0].text
+
+    kwargs = {
+        "model": ANTHROPIC_MODEL,
+        "max_tokens": max_tokens,
+        "system": system_prompt,
+        "messages": [{"role": "user", "content": user_prompt}],
+    }
+
+    output_config = {}
+    if json_schema:
+        output_config["format"] = {"type": "json_schema", "schema": json_schema}
+    if effort:
+        # Thinking is ON by default and shares the max_tokens budget with the
+        # response, so a low effort keeps a long resume from truncating.
+        output_config["effort"] = effort
+    if output_config:
+        kwargs["output_config"] = output_config
+
+    # The SDK raises its own typed exceptions, not httpx ones, so they have to
+    # be caught here where `anthropic` is in scope (it is imported lazily so a
+    # Groq-only deploy doesn't need the package).
+    try:
+        message = await client.messages.create(**kwargs)
+    except anthropic.RateLimitError:
+        logger.warning("[anthropic] rate limited")
+        raise _AnthropicRefusal("The AI is rate limited right now. Please try again in a moment.")
+    except anthropic.APIConnectionError as exc:
+        logger.error("[anthropic] connection error: %s", exc)
+        raise _AnthropicRefusal("Could not reach the AI provider. Please try again.")
+    except anthropic.APIStatusError as exc:
+        logger.error("[anthropic] API error %s: %s", exc.status_code, str(exc)[:300])
+        raise _AnthropicRefusal(f"AI provider error ({exc.status_code}). Please try again.")
+
+    # Safety classifiers can decline with HTTP 200 and an empty/partial body.
+    # Check before touching content — indexing it here would IndexError.
+    if getattr(message, "stop_reason", None) == "refusal":
+        detail = getattr(getattr(message, "stop_details", None), "category", None)
+        logger.warning("[anthropic] request declined by safety classifiers (category=%s)", detail)
+        raise _AnthropicRefusal(
+            "The AI declined this request. Please rephrase and try again."
+        )
+
+    if getattr(message, "stop_reason", None) == "max_tokens":
+        logger.warning("[anthropic] hit max_tokens (%s) — output truncated.", max_tokens)
+
+    # content is a list of blocks. Thinking is on by default on Opus 5, so
+    # content[0] is a ThinkingBlock, not the answer — find the text block.
+    for block in message.content:
+        if getattr(block, "type", None) == "text":
+            return block.text
+
+    logger.error("[anthropic] no text block in response (blocks=%s)",
+                 [getattr(b, "type", "?") for b in message.content])
+    raise _AnthropicRefusal("The AI returned an empty response. Please try again.")
 
 
 # ---------------------------------------------------------------------------
@@ -204,9 +308,12 @@ async def generate(body: GenerateRequest) -> GenerateResponse:
 
     try:
         if body.provider == "anthropic":
+            # NB: body.temperature is deliberately not forwarded — see _call_anthropic.
             text = await _call_anthropic(
-                body.system_prompt, body.user_prompt, body.temperature,
+                body.system_prompt, body.user_prompt,
                 max_tokens=body.max_tokens,
+                json_schema=body.json_schema,
+                effort=body.effort,
             )
         else:
             text = await _call_groq(
@@ -216,6 +323,9 @@ async def generate(body: GenerateRequest) -> GenerateResponse:
 
         logger.info("[/generate] success, result_len=%d", len(text))
         return GenerateResponse(result=text)
+
+    except _AnthropicRefusal as exc:
+        return GenerateResponse(error=str(exc))
 
     except httpx.TimeoutException:
         logger.warning("[/generate] LLM call timed out")

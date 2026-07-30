@@ -911,3 +911,130 @@ class PlanEnforcementTest(TestCase):
             r = c.post(reverse("download_pdf") + "?mode=preview", data=data)
             with self.subTest(template=tpl["slug"]):
                 self.assertEqual(r.status_code, 200)
+
+
+# ===========================================================================
+# 11. RESUME JSON SCHEMA  (structured outputs contract)
+# ===========================================================================
+
+class ResumeJsonSchemaTest(TestCase):
+    """
+    The schema sent to the model and the validator run on the way back are
+    derived from the same field tuples. These lock that in — a field added to
+    one without the other is the failure mode this guards.
+    """
+
+    def setUp(self):
+        from generator.views import RESUME_JSON_SCHEMA
+        self.schema = RESUME_JSON_SCHEMA
+
+    def test_schema_keys_match_validator_fields(self):
+        from generator.views import _RESUME_STR_FIELDS, _RESUME_LIST_FIELDS
+        self.assertEqual(
+            set(self.schema["properties"]),
+            set(_RESUME_STR_FIELDS) | set(_RESUME_LIST_FIELDS),
+        )
+
+    def test_structured_output_constraints(self):
+        """additionalProperties:false and a full `required` list, at every level."""
+        def walk(node, path="root"):
+            if node.get("type") == "object":
+                self.assertIs(node.get("additionalProperties"), False, path)
+                self.assertEqual(set(node.get("required", [])), set(node["properties"]), path)
+                for key, child in node["properties"].items():
+                    walk(child, f"{path}.{key}")
+            elif node.get("type") == "array":
+                walk(node["items"], f"{path}[]")
+        walk(self.schema)
+
+    def test_repeating_sections_have_expected_shape(self):
+        props = self.schema["properties"]
+        self.assertEqual(
+            set(props["experience"]["items"]["properties"]),
+            {"title", "company", "location", "dates", "bullets"},
+        )
+        self.assertEqual(set(props["skills"]["items"]["properties"]), {"name"})
+        self.assertEqual(props["languages"]["items"]["type"], "string")
+
+    def test_a_conforming_object_passes_the_validator(self):
+        """An object built to the schema must satisfy _validate_resume_json."""
+        obj = {k: "x" for k in self.schema["properties"] if
+               self.schema["properties"][k]["type"] == "string"}
+        obj.update({
+            "experience": [{"title": "Engineer", "company": "Acme",
+                            "location": "NYC", "dates": "2020-", "bullets": ["did a thing"]}],
+            "projects": [], "skills": [{"name": "Python"}],
+            "education": [{"degree": "BSc", "school": "MIT", "dates": "2015-2019"}],
+            "languages": ["English"],
+        })
+        _out, problems = _validate_resume_json(obj)
+        self.assertEqual(problems, [])
+
+
+# ===========================================================================
+# 12. PHOTO UPLOAD VALIDATION
+# ===========================================================================
+
+_PNG_1PX = (
+    b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01'
+    b'\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00\x01'
+    b'\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82'
+)
+
+
+class PhotoUploadValidationTest(TestCase):
+
+    def _upload(self, content, name="p.png"):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        return SimpleUploadedFile(name, content)
+
+    def test_no_photo_is_valid(self):
+        from generator.views import _validate_photo_upload
+        ok, err = _validate_photo_upload(None)
+        self.assertTrue(ok)
+        self.assertIsNone(err)
+
+    def test_accepts_real_image_formats(self):
+        from generator.views import _validate_photo_upload
+        cases = {
+            "png":  _PNG_1PX,
+            "jpeg": b'\xff\xd8\xff\xe0' + b'\x00' * 32,
+            "gif":  b'GIF89a' + b'\x00' * 32,
+            "webp": b'RIFF' + b'\x00\x00\x00\x00' + b'WEBP' + b'\x00' * 32,
+        }
+        for label, content in cases.items():
+            with self.subTest(fmt=label):
+                ok, err = _validate_photo_upload(self._upload(content))
+                self.assertTrue(ok, err)
+
+    def test_rejects_non_image(self):
+        from generator.views import _validate_photo_upload
+        ok, err = _validate_photo_upload(self._upload(b'%PDF-1.4 not an image'))
+        self.assertFalse(ok)
+        self.assertIn("format", err.lower())
+
+    def test_rejects_oversized_photo_with_specific_message(self):
+        from generator.views import _validate_photo_upload, PHOTO_MAX_BYTES
+        big = self._upload(_PNG_1PX + b'\x00' * (PHOTO_MAX_BYTES + 1))
+        ok, err = _validate_photo_upload(big)
+        self.assertFalse(ok)
+        # The point of this path is that the user learns the photo is the problem.
+        self.assertIn("too large", err.lower())
+
+    def test_leaves_pointer_at_zero_for_caller(self):
+        from generator.views import _validate_photo_upload
+        f = self._upload(_PNG_1PX)
+        _validate_photo_upload(f)
+        self.assertEqual(f.tell(), 0)
+
+    def test_generate_pdf_rejects_bad_photo_with_400_json(self):
+        """The preview must get a specific reason, not a dead request."""
+        user, _ = _make_user(username="photouser", plan="pro")
+        c = Client()
+        c.force_login(user)
+        data = dict(_RESUME_FORM, template_name="minimal_centered")
+        data["photo"] = self._upload(b'this is not an image at all', name="x.png")
+        r = c.post(reverse("download_pdf") + "?mode=preview", data=data)
+        self.assertEqual(r.status_code, 400)
+        self.assertEqual(r["Content-Type"], "application/json")
+        self.assertIn("format", r.json()["error"].lower())
