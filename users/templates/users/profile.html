@@ -132,6 +132,23 @@
             transform: translateY(-2px);
             box-shadow: 0 10px 28px rgba(245, 158, 11, 0.45);
         }
+
+        /* ── FILE INPUT OVERRIDE ── */
+        input[type="file"].form-control::file-selector-button {
+            background-color: var(--brand-dim);
+            color: var(--brand);
+            border: none;
+            border-right: 1px solid var(--border);
+            padding: 8px 16px;
+            margin-right: 16px;
+            transition: background-color var(--t-fast), color var(--t-fast);
+            font-weight: 600;
+            cursor: pointer;
+        }
+        input[type="file"].form-control::file-selector-button:hover {
+            background-color: var(--brand-glow);
+            color: var(--text-1);
+        }
     </style>
 {% endblock extra_head %}
 
