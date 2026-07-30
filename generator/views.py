@@ -16,6 +16,7 @@ from django.http import FileResponse, JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.contrib import messages
+from functools import wraps
 from pdfminer.high_level import extract_text as pdf_extract_text
 from pdfminer.layout import LAParams
 from users.models import Profile
@@ -23,6 +24,61 @@ from .models import Generation, JobApplication, AIResult
 from .pdf_engine import build_pdf, TEMPLATES
 
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# AUTH GUARD FOR THE ASYNC JSON ENDPOINTS
+# ---------------------------------------------------------------------------
+# Django's @login_required is async-aware (it detects a coroutine view and
+# wraps it correctly), so it works here — but it answers an unauthenticated
+# request with a 302 to the login page. Every view below returns JsonResponse
+# exclusively and is only ever reached from fetch(), where following that
+# redirect yields 200 + HTML and surfaces as a confusing JSON parse error
+# instead of "your session expired". A 401 lets the caller detect it directly.
+#
+# This deliberately does NOT sniff the path or X-Requested-With: these routes
+# have no HTML representation, so the JSON answer is always the right one.
+# For method checks keep Django's @require_POST — its 405 is already correct.
+# ---------------------------------------------------------------------------
+def _language_rule(language=None):
+    """
+    The output-language instruction shared by every AI prompt in this module.
+
+    Was previously spelled out inline in five places — three byte-identical
+    copies plus two near-variants — so tuning the wording meant editing five
+    prompts and hoping they stayed in sync. Pass `language` when the caller
+    has an explicit user selection (cover letter, section rewrite); omit it for
+    the Tools endpoints, whose forms have no language field and which rely on
+    detection alone.
+    """
+    rule = (
+        "⚠️ ABSOLUTE LANGUAGE RULE ⚠️\n"
+        "You MUST automatically detect the language of the candidate's raw input "
+        "text. YOU MUST GENERATE YOUR ENTIRE RESPONSE IN THAT EXACT SAME LANGUAGE — "
+        "every section header, bullet point, analysis line, question and tip. "
+        "DO NOT write even one word in another language. If you fail to match the "
+        "input language, you fail the task.\n"
+    )
+    if language:
+        rule += (
+            f"The user has also selected: {language} — use this as a fallback ONLY "
+            "if you cannot detect the input language.\n"
+        )
+    return rule + "\n"
+
+
+def json_login_required(view_func):
+    """Async login guard that answers 401 JSON instead of redirecting."""
+    @wraps(view_func)
+    async def _wrapped(request, *args, **kwargs):
+        user = await request.auser()
+        if not user.is_authenticated:
+            return JsonResponse(
+                {'error': 'Authentication required. Please sign in again.'},
+                status=401,
+            )
+        return await view_func(request, *args, **kwargs)
+    return _wrapped
 
 
 # ---------------------------------------------------------------------------
@@ -444,7 +500,7 @@ def home(request):
 
 
 # === AI COVER LETTER GENERATION ===
-@login_required
+@json_login_required
 @require_POST
 async def generate_letter(request):
     """
@@ -483,13 +539,7 @@ async def generate_letter(request):
 You are an elite career strategist, senior recruiter, ATS expert, and professional
 resume writer with experience at top global companies (FAANG, startups, enterprise).
 
-⚠️ ABSOLUTE LANGUAGE RULE ⚠️
-You MUST automatically detect the language of the candidate's raw input text. YOU MUST GENERATE YOUR ENTIRE RESPONSE IN THAT EXACT SAME LANGUAGE.
-If the input is in Russian, EVERY SINGLE WORD of your output MUST be in Russian. This includes ALL section headers, bullet points, analysis, and tips.
-DO NOT write even one word in English if the input is not English. If you fail to match the user's input language, you fail the task.
-The user has also selected: {language} — use this as a fallback ONLY if you cannot detect the input language.
-
-OUTPUT STRUCTURE — use these EXACT section tags (the tags themselves stay in English,
+{_language_rule(language)}OUTPUT STRUCTURE — use these EXACT section tags (the tags themselves stay in English,
 but ALL content between tags must be in {language}):
 
 [SECTION: MAIN_LETTER]
@@ -563,7 +613,7 @@ Generate the elite career response now.
 
 
 # === AI RESUME GENERATION (Structured JSON for Visual Studio) ===
-@login_required
+@json_login_required
 @require_POST
 async def generate_resume(request):
     """
@@ -781,7 +831,7 @@ def _parse_and_validate_resume(raw_result):
 
 
 # === SECTION REWRITER (Visual Resume Studio — micro-AI per field) ===
-@login_required
+@json_login_required
 @require_POST
 async def rewrite_section(request):
     """
@@ -830,12 +880,7 @@ async def rewrite_section(request):
         )
 
     # ── Build prompts ─────────────────────────────────────────────────────────
-    LANG_RULE = (
-        "⚠️ ABSOLUTE LANGUAGE RULE ⚠️\n"
-        "Automatically detect the language of the INPUT TEXT. "
-        "Your ENTIRE output MUST be in that same language — not a single word in any other language. "
-        f"The user's selected language is '{language}'; use it as a tiebreaker only.\n\n"
-    )
+    LANG_RULE = _language_rule(language)
 
     if section_type == 'summary':
         system_prompt = (
@@ -931,7 +976,7 @@ def history(request):
 
 
 # === DELETE GENERATION (AJAX) ===
-@login_required
+@json_login_required
 @require_POST
 async def delete_generation(request, pk):
     """
@@ -1181,7 +1226,7 @@ def tools(request):
 
 
 # === INTERVIEW PREP AI ===
-@login_required
+@json_login_required
 @require_POST
 async def interview_prep(request):
     """Async interview question generation."""
@@ -1204,14 +1249,7 @@ async def interview_prep(request):
     job_desc = request.POST.get('job_description', '')[:10000]
     company  = request.POST.get('company_name', '')[:200]
 
-    system_prompt = """You are a senior technical interviewer and career coach.
-
-⚠️ ABSOLUTE LANGUAGE RULE ⚠️
-You MUST automatically detect the language of the candidate's raw input text. YOU MUST GENERATE YOUR ENTIRE RESPONSE IN THAT EXACT SAME LANGUAGE.
-If the input is in Russian, EVERY SINGLE WORD of your output MUST be in Russian. This includes ALL section headers, bullet points, analysis, questions, and tips.
-DO NOT write even one word in English if the input is not English. If you fail to match the user's input language, you fail the task.
-
-Generate exactly 10 likely interview questions for this candidate based on their resume
+    system_prompt = "You are a senior technical interviewer and career coach.\n\n" + _language_rule() + """Generate exactly 10 likely interview questions for this candidate based on their resume
 and the job description. For each question, provide:
 - The question
 - Why they'll ask it
@@ -1251,7 +1289,7 @@ Be specific to the role and company. No generic questions."""
 
 
 # === FOLLOW-UP EMAIL GENERATOR ===
-@login_required
+@json_login_required
 @require_POST
 async def followup_email(request):
     """Async follow-up email generation."""
@@ -1274,14 +1312,7 @@ async def followup_email(request):
     job_title = request.POST.get('job_title', '')[:200]
     context   = request.POST.get('context', '')[:10000]
 
-    system_prompt = """You are an expert career communication strategist.
-
-⚠️ ABSOLUTE LANGUAGE RULE ⚠️
-You MUST automatically detect the language of the candidate's raw input text. YOU MUST GENERATE YOUR ENTIRE RESPONSE IN THAT EXACT SAME LANGUAGE.
-If the input is in Russian, EVERY SINGLE WORD of your output MUST be in Russian. This includes ALL section headers, bullet points, analysis, questions, and tips.
-DO NOT write even one word in English if the input is not English. If you fail to match the user's input language, you fail the task.
-
-Generate 3 professional follow-up emails for a job application:
+    system_prompt = "You are an expert career communication strategist.\n\n" + _language_rule() + """Generate 3 professional follow-up emails for a job application:
 
 1. **3-Day Follow-Up** — Short, polite check-in after applying
 2. **7-Day Follow-Up** — Slightly more assertive, restate value
@@ -1320,7 +1351,7 @@ Do NOT be generic — reference the specific role and company."""
 
 
 # === ATS SCORE CHECKER ===
-@login_required
+@json_login_required
 @require_POST
 async def ats_score(request):
     """Async ATS score generation."""
@@ -1342,14 +1373,7 @@ async def ats_score(request):
     resume   = request.POST.get('resume', '')[:10000]
     job_desc = request.POST.get('job_description', '')[:10000]
 
-    system_prompt = """You are an ATS (Applicant Tracking System) expert.
-
-⚠️ ABSOLUTE LANGUAGE RULE ⚠️
-You MUST automatically detect the language of the candidate's raw input text. YOU MUST GENERATE YOUR ENTIRE RESPONSE IN THAT EXACT SAME LANGUAGE.
-If the input is in Russian, EVERY SINGLE WORD of your output MUST be in Russian. This includes ALL section headers, bullet points, analysis, questions, and tips.
-DO NOT write even one word in English if the input is not English. If you fail to match the user's input language, you fail the task.
-
-Analyze the resume against the job description and provide:
+    system_prompt = "You are an ATS (Applicant Tracking System) expert.\n\n" + _language_rule() + """Analyze the resume against the job description and provide:
 
 1. **ATS COMPATIBILITY SCORE: XX/100**
 

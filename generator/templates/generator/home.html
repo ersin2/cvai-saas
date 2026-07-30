@@ -82,7 +82,7 @@
 
     /* ── LEFT PANEL — Form ─────────────────────────────────── */
     .vs-left {
-      width: 400px; min-width: 280px; max-width: 620px;
+      width: 440px; min-width: 280px; max-width: 660px;
       flex-shrink: 0;
       background: var(--panel-bg);
       border-right: 1px solid var(--panel-border);
@@ -126,20 +126,65 @@
                       scrollbar-width: thin;
                       scrollbar-color: rgba(76,201,240,0.2) transparent; }
 
+    /* ── Sticky section jump nav ─────────────────────────── */
+    .vs-left-nav {
+      display: flex; align-items: center; gap: 2px;
+      padding: 8px 12px 8px;
+      background: rgba(7,10,20,0.6);
+      border-bottom: 1px solid var(--panel-border);
+      overflow-x: auto; scrollbar-width: none;
+      position: sticky; top: 0; z-index: 5;
+      backdrop-filter: blur(12px);
+      flex-shrink: 0;
+    }
+    .vs-left-nav::-webkit-scrollbar { display: none; }
+    .vs-left-nav a {
+      display: inline-block;
+      flex-shrink: 0;
+      padding: 4px 12px;
+      border-radius: var(--r-pill);
+      font-size: var(--fs-xs); font-weight: 700;
+      color: var(--text-3);
+      text-decoration: none;
+      white-space: nowrap;
+      border: 1px solid transparent;
+      transition: color .15s, background .15s, border-color .15s;
+      letter-spacing: .3px;
+    }
+    .vs-left-nav a:hover {
+      color: var(--accent);
+      background: rgba(76,201,240,.07);
+      border-color: rgba(76,201,240,.2);
+    }
+    .vs-left-nav a.active {
+      color: var(--accent);
+      background: rgba(76,201,240,.12);
+      border-color: rgba(76,201,240,.3);
+    }
+
     /* ── Form sections / accordion ──────────────────────────── */
     .vs-section { border-bottom: 1px solid var(--panel-border); }
     .vs-section-toggle {
       width: 100%; display: flex; align-items: center; gap: 10px;
-      padding: 12px 20px; background: none; border: none;
-      color: var(--text-1); font-size: var(--fs-base); font-weight: 600;
-      cursor: pointer; text-align: left; transition: background .2s;
+      padding: 13px 20px; background: none; border: none;
+      color: var(--text-1); font-size: var(--fs-sm); font-weight: 700;
+      cursor: pointer; text-align: left; transition: background .2s, border-left-color .2s;
+      border-left: 3px solid transparent;
+      letter-spacing: .1px;
     }
-    .vs-section-toggle:hover { background: rgba(255,255,255,.03); }
+    .vs-section-toggle:hover {
+      background: rgba(76,201,240,.04);
+      border-left-color: rgba(76,201,240,.35);
+    }
+    .vs-section-toggle.open {
+      border-left-color: var(--accent);
+      background: rgba(76,201,240,.03);
+    }
     .vs-section-toggle:hover .toggle-icon { color: var(--accent); }
     .vs-section-toggle i.toggle-icon { margin-left: auto; color: var(--text-3);
                                         font-size: var(--fs-sm);
                                         transition: transform var(--t-base), color var(--t-fast); }
-    .vs-section-toggle.open .toggle-icon { transform: rotate(180deg); }
+    .vs-section-toggle.open .toggle-icon { transform: rotate(180deg); color: var(--accent); }
     .vs-section-body { display: none; padding: 4px 20px 16px; }
     .vs-section-body.open { display: block; }
 
@@ -149,18 +194,19 @@
                 margin-bottom: 4px; display: block; }
     .vs-input, .vs-textarea, .vs-select {
       width: 100%; background: var(--input-bg);
-      border: 1px solid var(--input-border); border-radius: var(--r-sm);
+      border: 1px solid rgba(255,255,255,0.12); border-radius: var(--r-sm);
       color: var(--text-1); font-size: var(--fs-base); padding: 8px 12px;
       outline: none; transition: border-color var(--t-fast), box-shadow var(--t-fast), background var(--t-fast);
       font-family: inherit;
     }
     /* Hover affordance: editable areas visibly invite the cursor */
     .vs-input:hover:not(:focus), .vs-textarea:hover:not(:focus), .vs-select:hover:not(:focus) {
-      border-color: rgba(255,255,255,0.22);
-      background: rgba(255,255,255,0.055);
+      border-color: rgba(76,201,240,0.3);
+      background: rgba(76,201,240,0.04);
     }
     .vs-input:focus, .vs-textarea:focus, .vs-select:focus {
       border-color: var(--accent); box-shadow: 0 0 0 3px var(--input-focus);
+      background: rgba(76,201,240,0.05);
     }
     .vs-textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
     .vs-select { cursor: pointer; }
@@ -169,21 +215,25 @@
 
     /* ── Photo upload zone ────────────────────────────────── */
     .photo-zone {
-      border: 2px dashed var(--input-border); border-radius: var(--radius);
-      padding: 16px; text-align: center; cursor: pointer;
-      transition: border-color .25s, background .25s; position: relative;
+      border: 2px dashed rgba(76,201,240,0.25); border-radius: var(--radius);
+      padding: 18px 16px; text-align: center; cursor: pointer;
+      background: linear-gradient(135deg, rgba(76,201,240,0.03) 0%, rgba(247,37,133,0.03) 100%);
+      transition: border-color .25s, background .25s, box-shadow .25s; position: relative;
     }
     .photo-zone:hover, .photo-zone.drag-over {
-      border-color: var(--accent); background: rgba(76,201,240,.04);
+      border-color: var(--accent);
+      background: linear-gradient(135deg, rgba(76,201,240,0.08) 0%, rgba(247,37,133,0.06) 100%);
+      box-shadow: 0 0 20px rgba(76,201,240,0.08) inset;
     }
     .photo-zone input[type="file"] {
       position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%;
     }
-    .photo-zone-icon { font-size: var(--fs-2xl); color: var(--text-3); margin-bottom: 6px; }
+    .photo-zone-icon { font-size: var(--fs-2xl); color: var(--accent); opacity: 0.6; margin-bottom: 6px; }
     .photo-zone-label { font-size: var(--fs-sm); color: var(--text-3); }
     .photo-preview {
-      width: 64px; height: 64px; border-radius: 50%;
+      width: 68px; height: 68px; border-radius: 50%;
       object-fit: cover; border: 2px solid var(--accent);
+      box-shadow: 0 0 14px rgba(76,201,240,0.35);
       display: none; margin: 0 auto 8px;
     }
 
@@ -398,6 +448,50 @@
     .vs-toast.show { transform: translateY(0); }
     .vs-toast.success i { color: #22c55e; }
     .vs-toast.danger  i { color: #f72585; }
+
+    /* ── Preview empty state ───────────────────────────────── */
+    .vs-preview-empty {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 12px; pointer-events: none;
+      transition: opacity .4s ease;
+      z-index: 1;
+    }
+    .vs-preview-empty.hidden { opacity: 0; }
+    .preview-empty-icon {
+      width: 72px; height: 72px; border-radius: 20px;
+      background: linear-gradient(135deg, rgba(76,201,240,0.12), rgba(247,37,133,0.12));
+      border: 1px solid rgba(76,201,240,0.15);
+      display: flex; align-items: center; justify-content: center;
+      font-size: var(--fs-2xl); color: rgba(76,201,240,0.55);
+      animation: emptyPulse 3s ease-in-out infinite;
+    }
+    @keyframes emptyPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(76,201,240,0); }
+      50% { box-shadow: 0 0 0 10px rgba(76,201,240,0.06); }
+    }
+    .preview-empty-title {
+      font-size: var(--fs-base); font-weight: 700;
+      color: rgba(255,255,255,0.45); letter-spacing: -.2px;
+    }
+    .preview-empty-hint {
+      font-size: var(--fs-sm); color: rgba(255,255,255,0.22);
+      max-width: 280px; text-align: center; line-height: 1.5;
+    }
+    /* Loading dots */
+    .preview-empty-dots { display: flex; gap: 6px; margin-top: 4px; }
+    .preview-empty-dots span {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: rgba(76,201,240,0.3);
+      animation: dotBounce 1.4s ease-in-out infinite;
+    }
+    .preview-empty-dots span:nth-child(2) { animation-delay: .2s; }
+    .preview-empty-dots span:nth-child(3) { animation-delay: .4s; }
+    @keyframes dotBounce {
+      0%, 80%, 100% { transform: scale(0.6); opacity: .3; }
+      40% { transform: scale(1); opacity: 1; }
+    }
 
     /* Autosave indicator (in the left header) */
     .autosave-ind {
@@ -1601,6 +1695,15 @@
       <div class="vs-preview-stage" id="previewStage">
         <iframe id="pdf-preview"   class="active" title="Live Resume Preview"></iframe>
         <iframe id="pdf-preview-b" title="Live Resume Preview (buffer)" aria-hidden="true"></iframe>
+        <!-- Empty state: shown until first preview renders -->
+        <div class="vs-preview-empty" id="previewEmpty">
+          <div class="preview-empty-icon"><i class="fas fa-file-lines"></i></div>
+          <div class="preview-empty-title">Your resume preview will appear here</div>
+          <div class="preview-empty-hint">Fill in your details on the left — the PDF updates live as you type</div>
+          <div class="preview-empty-dots">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
       </div>
     </main><!-- /.vs-right -->
 
@@ -1817,6 +1920,12 @@
   /* Double-buffered swap: load the new PDF into the hidden iframe, then crossfade
      it in — the preview never white-flashes between renders. */
   function _swapPreview(url) {
+    // Hide the empty state on first successful render
+    const emptyEl = document.getElementById('previewEmpty');
+    if (emptyEl && !emptyEl.classList.contains('hidden')) {
+      emptyEl.classList.add('hidden');
+      setTimeout(() => { if (emptyEl) emptyEl.style.display = 'none'; }, 450);
+    }
     const backId = _frontFrameId === 'pdf-preview' ? 'pdf-preview-b' : 'pdf-preview';
     const back   = document.getElementById(backId);
     const front  = document.getElementById(_frontFrameId);
@@ -2013,6 +2122,14 @@
       document.getElementById('resume-form').addEventListener(ev, scheduleAutosave)
     );
     setInterval(saveDraft, 30000);
+
+    // Always auto-load a preview on page load (even with blank/default form).
+    // If the draft restore above already scheduled one at 1200ms, this one
+    // at 1500ms will be ignored (form signature will match). Otherwise it
+    // ensures the preview panel shows something meaningful immediately.
+    if (!draft) {
+      scheduleLivePreview(1200);
+    }
   });
 
   // Warn before leaving only if a save is still pending (protects the sub-second window)
@@ -2594,7 +2711,7 @@
     const resizer = document.getElementById('vsResizer');
     const vsLeft  = document.querySelector('.vs-left');
     const vsRight = document.getElementById('vsRight');
-    const MIN_W = 280, HARD_MAX_W = 620;
+    const MIN_W = 280, HARD_MAX_W = 660;
     const PREVIEW_MIN = 360, RESIZER_W = 6;   // must match .vs-right min-width
     let dragging = false, startX, startW, moved = 0, dragEndedAt = 0;
 
