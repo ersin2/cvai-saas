@@ -209,6 +209,55 @@ def _validate_pdf_upload(pdf_file):
 
 
 # ---------------------------------------------------------------------------
+# PHOTO UPLOAD VALIDATION  (avatar on the photo-bearing resume templates)
+# ---------------------------------------------------------------------------
+# Previously unvalidated: any file of any size reached PIL, and a large enough
+# image exhausted the worker's memory during decode. The worker died mid-render,
+# so the browser saw a failed request rather than an error page — which is what
+# produced the generic "Preview failed / try a smaller photo" toast with no way
+# to tell whether the photo was actually the problem.
+PHOTO_MAX_BYTES = 5 * 1024 * 1024  # 5 MB, matching PDF_MAX_BYTES
+
+# Leading bytes for the formats Pillow handles well here. WebP is RIFF....WEBP,
+# so the container tag is checked separately at offset 8.
+_PHOTO_MAGIC = (
+    (b'\xff\xd8\xff', 'JPEG'),
+    (b'\x89PNG\r\n\x1a\n', 'PNG'),
+    (b'GIF87a', 'GIF'),
+    (b'GIF89a', 'GIF'),
+)
+
+
+def _validate_photo_upload(photo_file):
+    """
+    Return (True, None) if the upload is a real image within the size cap,
+    else (False, error_message). Leaves the pointer at 0 for the caller.
+
+    Deliberately specific in its errors: the point is that a user who picks a
+    12MB camera original learns that, instead of being told the preview failed.
+    """
+    if not photo_file:
+        return True, None  # no photo is valid — the field is optional
+
+    if photo_file.size > PHOTO_MAX_BYTES:
+        mb = photo_file.size / 1024 / 1024
+        return False, (
+            f'Photo is too large ({mb:.1f}MB). Maximum size is 5MB — '
+            'try a smaller image or one exported at a lower resolution.'
+        )
+
+    head = photo_file.read(12)
+    photo_file.seek(0)
+    for magic, _label in _PHOTO_MAGIC:
+        if head.startswith(magic):
+            return True, None
+    if head[:4] == b'RIFF' and head[8:12] == b'WEBP':
+        return True, None
+
+    return False, 'Unsupported photo format. Please use a JPEG, PNG, GIF or WebP image.'
+
+
+# ---------------------------------------------------------------------------
 # RESUME TEXT EXTRACTION
 # ---------------------------------------------------------------------------
 # pdfminer's default layout analysis (boxes_flow=0.5) tries to reconstruct
@@ -285,6 +334,63 @@ _RESUME_STR_FIELDS = (
     'location', 'linkedin', 'github', 'summary',
 )
 _RESUME_LIST_FIELDS = ('experience', 'projects', 'skills', 'education', 'languages')
+
+# Shape of each repeating section, keyed by its list field above.
+_RESUME_ITEM_SHAPES = {
+    'experience': ('title', 'company', 'location', 'dates'),
+    'projects':   ('title', 'tech_stack'),
+    'skills':     ('name',),
+    'education':  ('degree', 'school', 'dates'),
+}
+# Sections whose items carry a free-form bullet list on top of their string keys.
+_RESUME_BULLET_SECTIONS = ('experience', 'projects')
+
+
+def _str_obj(*keys, bullets=False):
+    """One object in a repeating section: all-string keys, optional bullets."""
+    props = {k: {'type': 'string'} for k in keys}
+    if bullets:
+        props['bullets'] = {'type': 'array', 'items': {'type': 'string'}}
+    return {
+        'type': 'object',
+        'properties': props,
+        'required': list(props),
+        'additionalProperties': False,
+    }
+
+
+def _build_resume_schema():
+    """
+    JSON Schema for the resume object, derived from the same field tuples
+    _validate_resume_json checks — so the contract sent to the model and the
+    contract enforced on the way back cannot drift apart.
+
+    Sent to Claude as output_config.format, which *guarantees* a conforming
+    object. That is what makes the markdown-fence stripping and the
+    truncated-JSON repair in _parse_and_validate_resume dead code on this
+    path rather than load-bearing.
+
+    Every field is listed in `required` and every object sets
+    additionalProperties:false — both are structured-output requirements.
+    Missing data is an empty string or empty array, per the system prompt;
+    there is no "omit the key" option.
+    """
+    props = {k: {'type': 'string'} for k in _RESUME_STR_FIELDS}
+    for name, keys in _RESUME_ITEM_SHAPES.items():
+        props[name] = {
+            'type': 'array',
+            'items': _str_obj(*keys, bullets=name in _RESUME_BULLET_SECTIONS),
+        }
+    props['languages'] = {'type': 'array', 'items': {'type': 'string'}}
+    return {
+        'type': 'object',
+        'properties': props,
+        'required': list(props),
+        'additionalProperties': False,
+    }
+
+
+RESUME_JSON_SCHEMA = _build_resume_schema()
 
 
 def _repair_truncated_json(raw):
@@ -401,6 +507,9 @@ async def _call_ai_service(
     temperature: float = 0.7,
     json_mode: bool = False,
     max_tokens: int = 4096,
+    provider: str = "groq",
+    json_schema: dict | None = None,
+    effort: str | None = None,
 ):
     """
     Async POST to the FastAPI /generate endpoint.
@@ -408,16 +517,31 @@ async def _call_ai_service(
 
     json_mode  — ask the provider for constrained JSON decoding (resume parser).
     max_tokens — structured resumes need more headroom than prose responses.
+
+    provider    — 'groq' (default, prose endpoints) or 'anthropic'. Groq counts
+                  max_tokens against a 6000 tokens/minute budget, so the resume
+                  parser's 8192-token reservation can never fit there however
+                  short the prompt is; that path uses Anthropic instead.
+    json_schema — Anthropic only. Constrains the response to the schema.
+    effort      — Anthropic only. Reasoning depth; thinking shares max_tokens
+                  with the response, so extraction sends 'low'.
+
+    `temperature` is sent but the worker drops it on the Anthropic path — the
+    current Claude models reject sampling parameters with a 400.
     """
     ai_url = getattr(settings, "AI_SERVICE_URL", "http://127.0.0.1:8001").rstrip("/")
     payload = {
         "system_prompt": system_prompt,
         "user_prompt": user_prompt,
-        "provider": "groq",
+        "provider": provider,
         "temperature": temperature,
         "json_mode": json_mode,
         "max_tokens": max_tokens,
     }
+    if json_schema is not None:
+        payload["json_schema"] = json_schema
+    if effort is not None:
+        payload["effort"] = effort
     try:
         resp = await _ai_client.post(f"{ai_url}/generate", json=payload)
         resp.raise_for_status()
@@ -723,12 +847,19 @@ Output Language: {language}
 
 Generate the structured JSON resume now."""
 
-        # Extraction is a fidelity task, not a creative one — near-zero
-        # temperature, constrained JSON decoding, and enough completion
-        # headroom that a long resume is not cut off mid-object.
+        # Routed to Anthropic, not Groq. Groq counts the max_tokens reservation
+        # against a 6000 tokens/minute budget, so this call's 8192-token
+        # reservation is 137% of the entire budget on its own — it 413'd and
+        # then 429'd in production regardless of how short the prompt was.
+        #
+        # Extraction is a fidelity task, not a creative one: the schema is
+        # enforced by the provider rather than requested in prose, and effort
+        # is held low because thinking shares the max_tokens budget with the
+        # response and would otherwise crowd out a long resume.
         raw_result, error_message = await _call_ai_service(
             system_prompt, user_prompt,
             temperature=0.1, json_mode=True, max_tokens=8192,
+            provider="anthropic", json_schema=RESUME_JSON_SCHEMA, effort="low",
         )
 
         problems = ['No response from the AI service.'] if not raw_result else None
@@ -755,6 +886,7 @@ Generate the structured JSON resume now."""
                 retry_raw, retry_error = await _call_ai_service(
                     system_prompt, repair_prompt,
                     temperature=0.0, json_mode=True, max_tokens=8192,
+                    provider="anthropic", json_schema=RESUME_JSON_SCHEMA, effort="low",
                 )
                 if retry_raw:
                     retry_result, retry_problems = _parse_and_validate_resume(retry_raw)
@@ -1019,6 +1151,13 @@ def generate_pdf(request):
         throttled = _check_rate_limit(request.user, profile.plan)
     if throttled:
         return throttled
+
+    # Reject an unusable photo up front with a specific reason. Without this the
+    # file reaches PIL, and a large enough one takes the worker down with it —
+    # the browser then shows a generic failure that blames nothing in particular.
+    photo_ok, photo_error = _validate_photo_upload(request.FILES.get('photo'))
+    if not photo_ok:
+        return JsonResponse({'error': photo_error}, status=400)
 
     template_slug = request.POST.get('template_name', 'classic_navy')
     allowed_limit = profile.get_pdf_template_limit()
