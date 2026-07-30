@@ -632,77 +632,37 @@ async def generate_resume(request):
         error_message = "You've used all free generations! Upgrade to Pro for more."
     else:
         # ── STRUCTURED JSON RESUME PROMPT ──────────────────────────────────
-        system_prompt = f"""You are an expert resume parsing engine. Your sole function is to
-read unstructured candidate text and output it as a clean, structured JSON object.
+        # Kept deliberately terse: system + user must fit Groq's 6000 TPM limit
+        # for llama-3.1-8b-instant, which a 2900-char system prompt exceeded
+        # (HTTP 413). Every rule below is load-bearing — shorten further only by
+        # removing words, never rules, and re-check the token budget first.
+        system_prompt = f"""You are an expert resume parsing engine. Convert unstructured candidate text into one clean, structured JSON object.
 
-⚠️ ABSOLUTE LANGUAGE RULE ⚠️
-Detect the language of the input. ALL content values in your JSON output MUST be in that language.
-The user selected: {language} — use as fallback only.
+LANGUAGE: Detect the input's language. ALL content values MUST be in it. User selected {language} — fallback only.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-STRICT ANTI-HALLUCINATION POLICY
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-STRICT RULE: Do NOT invent, hallucinate, or guess any metrics, percentages, or business
-figures that are not explicitly present in the source text. Use ONLY the factual data
-provided by the candidate. If a date, location, or parameter is missing from the input,
-return an empty string "". NEVER return placeholders like "Not specified", "Unknown",
-"N/A", or invented numbers. If a section has no data, return an empty array [] or "".
+NEVER INVENT: Use only facts explicitly in the source. Never invent, guess or hallucinate metrics, percentages, figures, skills, dates or achievements. Missing field -> empty string ""; section with no data -> empty array []. Never emit placeholders like "Not specified", "Unknown" or "N/A".
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PRODUCT PHILOSOPHY
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-The core value of this system is to provide predictable, customisable templates for the
-user. Your role is strictly parsing and structuring data. Do NOT generate corporate fluff,
-overwrite the user's own descriptions with invented language, or add achievements the
-candidate did not claim. Preserve the candidate's original voice and factual content.
-You may lightly improve grammar and formatting of existing bullet points only.
+PRESERVE VOICE: Parse and structure only. No corporate fluff, no rewriting the candidate's descriptions in invented language, no achievements they did not claim. Light grammar/formatting cleanup of existing bullets is allowed.
 
-You MUST output ONLY a valid JSON object — no markdown, no commentary, no code fences.
-The JSON schema is:
+Schema (all keys required, nesting exactly as shown):
 {{
-  "full_name": "string",
-  "target_role": "string",
-  "email": "string or empty",
-  "phone": "string or empty",
-  "location": "string or empty",
-  "linkedin": "string or empty",
-  "github": "string or empty",
-  "summary": "2-3 sentence professional summary based strictly on provided data",
-  "experience": [
-    {{
-      "title": "Job Title",
-      "company": "Company Name",
-      "location": "City, Country or empty string",
-      "dates": "Jan 2022 – Present or empty string",
-      "bullets": ["Factual achievement bullet 1", "Factual achievement bullet 2"]
-    }}
-  ],
-  "projects": [
-    {{
-      "title": "Project Name",
-      "tech_stack": "Python, Django, PostgreSQL",
-      "bullets": ["What it does or achieved"]
-    }}
-  ],
-  "skills": [
-    {{"name": "Skill Name"}}
-  ],
-  "education": [
-    {{
-      "degree": "Degree Name",
-      "school": "University Name",
-      "dates": "2018 – 2022 or empty string"
-    }}
-  ],
-  "languages": ["English (Fluent)", "Spanish (Native)"]
+  "full_name": "string", "target_role": "string",
+  "email": "string", "phone": "string", "location": "string",
+  "linkedin": "string", "github": "string",
+  "summary": "2-3 sentences, strictly from provided data",
+  "experience": [{{"title": "string", "company": "string", "location": "string", "dates": "string", "bullets": ["string"]}}],
+  "projects": [{{"title": "string", "tech_stack": "string", "bullets": ["string"]}}],
+  "skills": [{{"name": "string"}}],
+  "education": [{{"degree": "string", "school": "string", "dates": "string"}}],
+  "languages": ["string"]
 }}
 
 RULES:
-- Extract skills exactly as named in the input — do not fabricate skill names or levels
-- Preserve job titles, company names, and date ranges exactly as given
-- If no projects section exists in the input, return an empty array for "projects"
-- If no GitHub URL is found, return "" for "github"
-- Output ONLY the JSON. No text before or after it."""
+- Extract skills exactly as named; do not fabricate skill names or levels
+- Preserve job titles, company names and date ranges exactly as given
+- No projects in the input -> "projects": []
+- No GitHub URL found -> "github": ""
+- Output ONLY the JSON object — no markdown, code fences, commentary or surrounding text."""
 
         user_prompt = f"""Candidate Name: {full_name}
 
