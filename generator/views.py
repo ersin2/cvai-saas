@@ -1,4 +1,5 @@
 import httpx
+import io
 import re
 import json
 import logging
@@ -193,9 +194,17 @@ def _extract_resume_text(pdf_file):
 
     Returns (text, error_message). Shared by parse_resume_pdf and
     generate_resume so both paths get identical layout handling.
+
+    The upload is copied into a BytesIO first: pdfminer.six only accepts
+    io.IOBase, and Django hands us an InMemoryUploadedFile/TemporaryUploadedFile,
+    which it rejects with "Unsupported input type". Passing the upload straight
+    through made every PDF resume upload fail as if the file were unreadable.
     """
     try:
-        text = pdf_extract_text(pdf_file, laparams=_RESUME_LAPARAMS) or ''
+        pdf_file.seek(0)
+        stream = io.BytesIO(pdf_file.read())
+        pdf_file.seek(0)
+        text = pdf_extract_text(stream, laparams=_RESUME_LAPARAMS) or ''
     except Exception as exc:
         logger.warning("PDF extraction failed: %s", exc)
         return '', 'Failed to parse PDF. Try pasting your resume text instead.'
@@ -363,11 +372,19 @@ async def _call_ai_service(
 
     except httpx.ConnectError:
         logger.error("Cannot reach AI service at %s — is ai_worker running?", ai_url)
-        return None, "AI service is unavailable. Please start the ai_worker and try again."
+        return None, ("AI service is not running. Start it with run_all.bat "
+                      "(uvicorn ai_service.main:app --port 8001) and try again.")
     except httpx.TimeoutException:
         return None, "AI took too long to respond. Please try again."
     except httpx.HTTPStatusError as exc:
-        logger.error("AI service HTTP error %s: %s", exc.response.status_code, exc.response.text[:200])
+        body = exc.response.text[:200]
+        logger.error("AI service HTTP error %s: %s", exc.response.status_code, body)
+        # A 404, or an HTML body, means something other than the AI worker is
+        # answering on AI_SERVICE_URL — most often a second Django dev server
+        # started on port 8001, which occupies the port the worker needs.
+        if exc.response.status_code == 404 or body.lstrip()[:9].lower() in ('<!doctype', '<html'):
+            return None, (f"{ai_url} is not the AI service — another app is running on "
+                          "that port. Stop it and start the AI worker (run_all.bat).")
         return None, f"AI service error ({exc.response.status_code}). Please try again."
     except Exception as exc:
         logger.exception("AI service unexpected error: %s", exc)
@@ -406,11 +423,22 @@ def privacy(request):
 # === HOME PAGE — Unified Resume Studio ===
 @login_required
 def home(request):
+    # The gallery renders from the engine registry rather than hardcoded markup,
+    # so template names/descriptions can never drift from what build_pdf ships.
+    allowed_limit = 2  # anonymous preview falls back to the free-plan allowance
     context = {}
     if request.user.is_authenticated:
         from users.models import Profile
         profile, _ = Profile.objects.get_or_create(user=request.user)
         context['profile'] = profile
+        allowed_limit = profile.get_pdf_template_limit()
+
+    # Mirror download_pdf's gating so locked templates are visible up front,
+    # instead of silently falling back to template 1 at download time.
+    context['templates'] = [
+        {**tpl, 'locked': idx >= allowed_limit}
+        for idx, tpl in enumerate(TEMPLATES)
+    ]
     return render(request, 'generator/home.html', context)
 
 
