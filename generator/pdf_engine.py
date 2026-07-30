@@ -39,6 +39,17 @@ from PIL import Image, ImageOps, ImageDraw as PILDraw
 
 logger = logging.getLogger(__name__)
 
+# Longest edge the uploaded photo is decoded to. The avatar is rendered at
+# 28–40mm (~470px at 300dpi) and masked to a 500px circle, so 1000px is already
+# 2x the pixels that reach the page — anything larger is memory spent on detail
+# the PDF throws away.
+_PHOTO_WORK_PX = 1000
+
+# Hard backstop against decompression bombs. Above this, Pillow raises rather
+# than allocating, and _process_photo's handler skips the photo. Generous
+# enough for any real camera (flagship phones top out around 50MP).
+Image.MAX_IMAGE_PIXELS = 80_000_000
+
 W_A4, H_A4 = A4   # 595.27 × 841.89 pts
 
 
@@ -224,12 +235,23 @@ def _process_photo(photo_file):
         except (AttributeError, OSError):
             pass
 
-        # Attempt to open and fully decode before any processing.
-        # img.load() forces decompression so format errors surface here,
-        # not inside doc.build() where they are much harder to handle.
+        # Decode at reduced scale, never full size.
+        #
+        # This used to be a bare open() + load(), which materialises the whole
+        # bitmap: a 50MP phone photo is ~200MB in RGBA and convert() copies it
+        # again. On a small container running several workers that exhausts
+        # memory and the worker dies mid-request — which reaches the browser as
+        # a failed preview, not as a Python error, because nothing here raised.
+        #
+        # draft() asks the JPEG decoder for a 1/2, 1/4 or 1/8 scale image
+        # directly in libjpeg, so the full-size bitmap is never allocated. It is
+        # a no-op for formats that don't support it, hence the thumbnail()
+        # below as the general-case bound.
         try:
             img = Image.open(photo_file)
+            img.draft('RGB', (_PHOTO_WORK_PX, _PHOTO_WORK_PX))
             img.load()
+            img.thumbnail((_PHOTO_WORK_PX, _PHOTO_WORK_PX), Image.LANCZOS)
             img = img.convert("RGBA")
         except Exception as img_exc:
             logger.warning("_process_photo: Image.open/decode failed — skipping: %s", img_exc)
