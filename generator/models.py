@@ -16,6 +16,9 @@ class Generation(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at'], name='gen_user_created_idx'),
+        ]
 
     def __str__(self):
         return f'{self.user.username} — {self.company_name} ({self.created_at:%Y-%m-%d})'
@@ -46,6 +49,10 @@ class JobApplication(models.Model):
 
     class Meta:
         ordering = ['-updated_at']
+        indexes = [
+            models.Index(fields=['user', '-updated_at'], name='job_user_updated_idx'),
+            models.Index(fields=['user', 'status'], name='job_user_status_idx'),
+        ]
 
     def __str__(self):
         return f'{self.company_name} — {self.job_title} ({self.status})'
@@ -69,6 +76,10 @@ class AIResult(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at'], name='ai_user_created_idx'),
+            models.Index(fields=['user', 'result_type'], name='ai_user_type_idx'),
+        ]
 
     def __str__(self):
         return f'{self.result_type} — {self.user.username} ({self.created_at:%Y-%m-%d})'

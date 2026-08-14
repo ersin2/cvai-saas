@@ -56,6 +56,7 @@ def register(request):
 @login_required
 def profile(request):
     from .models import Profile
+    from generator.views import _validate_photo_upload
     user_profile, created = Profile.objects.get_or_create(user=request.user)
     
     if request.method == 'POST':
@@ -64,7 +65,12 @@ def profile(request):
         user_profile.default_language = request.POST.get('default_language', 'English')
         
         if 'avatar' in request.FILES:
-            user_profile.avatar = request.FILES['avatar']
+            avatar_file = request.FILES['avatar']
+            ok, err = _validate_photo_upload(avatar_file)
+            if not ok:
+                messages.error(request, f'Avatar upload failed: {err}')
+                return redirect('profile')
+            user_profile.avatar = avatar_file
             
         user_profile.save()
         messages.success(request, 'Your global defaults have been saved.')

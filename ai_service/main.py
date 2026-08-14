@@ -16,7 +16,7 @@ import logging
 from typing import Optional
 
 import httpx
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 
@@ -47,6 +47,9 @@ ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 # the env var (claude-sonnet-5 is the cheaper option and also supports the
 # structured outputs the resume parser relies on).
 ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-opus-5")
+
+# Shared internal secret token between Django and FastAPI
+AI_SERVICE_TOKEN = os.getenv("AI_SERVICE_TOKEN", "")
 
 # ---------------------------------------------------------------------------
 # App & Logging
@@ -280,7 +283,10 @@ async def health() -> dict:
 
 
 @app.post("/generate", response_model=GenerateResponse, tags=["generation"])
-async def generate(body: GenerateRequest) -> GenerateResponse:
+async def generate(
+    body: GenerateRequest,
+    x_internal_token: Optional[str] = Header(default=None, alias="X-Internal-Token"),
+) -> GenerateResponse:
     """
     Central async generation endpoint.
 
@@ -299,6 +305,10 @@ async def generate(body: GenerateRequest) -> GenerateResponse:
                                                         │
       Django (async view) ◀──────────── GenerateResponse ───┘
     """
+    if AI_SERVICE_TOKEN and x_internal_token != AI_SERVICE_TOKEN:
+        logger.warning("[/generate] Unauthorized attempt — missing or invalid X-Internal-Token")
+        raise HTTPException(status_code=403, detail="Forbidden: Invalid or missing internal token.")
+
     logger.info(
         "[/generate] provider=%s  system_len=%d  user_len=%d",
         body.provider,

@@ -50,8 +50,8 @@ class Profile(models.Model):
         return self.PLAN_LIMITS.get(self.plan, 3)
 
     def get_pdf_template_limit(self):
-        """Free: 1 template, Pro: 3 templates, Elite: 5 (all) templates."""
-        return self.PDF_TEMPLATE_LIMITS.get(self.plan, 1)
+        """Free: 2 templates, Pro: 10 templates, Elite: 20 (all) templates."""
+        return self.PDF_TEMPLATE_LIMITS.get(self.plan, self.PDF_TEMPLATE_LIMITS.get('free', 2))
 
     def get_max_tracked_jobs(self):
         """Free: 10 jobs, Pro: 50 jobs, Elite: Unlimited (99999)."""

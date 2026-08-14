@@ -1038,3 +1038,83 @@ class PhotoUploadValidationTest(TestCase):
         self.assertEqual(r.status_code, 400)
         self.assertEqual(r["Content-Type"], "application/json")
         self.assertIn("format", r.json()["error"].lower())
+
+
+@override_settings(
+    STORAGES={
+        "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    }
+)
+class ProfileAvatarValidationTest(TestCase):
+    def _upload(self, content, name="avatar.png"):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        return SimpleUploadedFile(name, content)
+
+    def test_valid_avatar_upload(self):
+        user, profile = _make_user(username="avataruser1")
+        c = Client()
+        c.force_login(user)
+        r = c.post(reverse("profile"), {
+            "base_resume": "Test Career",
+            "default_font": "Inter",
+            "default_language": "English",
+            "avatar": self._upload(_PNG_1PX, name="valid.png"),
+        }, follow=True)
+        self.assertEqual(r.status_code, 200)
+        profile.refresh_from_db()
+        self.assertTrue(bool(profile.avatar))
+
+    def test_rejects_fake_avatar_file(self):
+        user, profile = _make_user(username="avataruser2")
+        c = Client()
+        c.force_login(user)
+        r = c.post(reverse("profile"), {
+            "base_resume": "Test Career",
+            "default_font": "Inter",
+            "default_language": "English",
+            "avatar": self._upload(b'MZ\x90\x00 fake binary exe', name="bad.png"),
+        }, follow=True)
+        self.assertEqual(r.status_code, 200)
+        profile.refresh_from_db()
+        self.assertFalse(bool(profile.avatar))
+        # Check flash error message was emitted
+        messages = list(r.context['messages'])
+        self.assertTrue(any('Avatar upload failed' in m.message for m in messages))
+
+
+class CompositeDatabaseIndexesTest(TestCase):
+    def test_indexes_exist_on_models(self):
+        gen_indexes = [idx.name for idx in Generation._meta.indexes]
+        self.assertIn("gen_user_created_idx", gen_indexes)
+
+        job_indexes = [idx.name for idx in JobApplication._meta.indexes]
+        self.assertIn("job_user_updated_idx", job_indexes)
+        self.assertIn("job_user_status_idx", job_indexes)
+
+        ai_indexes = [idx.name for idx in AIResult._meta.indexes]
+        self.assertIn("ai_user_created_idx", ai_indexes)
+        self.assertIn("ai_user_type_idx", ai_indexes)
+
+
+class AIServiceInternalTokenTest(TestCase):
+    @override_settings(AI_SERVICE_TOKEN="secret-test-token")
+    def test_call_ai_service_sends_token_header(self):
+        import asyncio
+        from unittest.mock import AsyncMock, patch
+        from generator.views import _call_ai_service
+
+        mock_resp = MagicMock()
+        mock_resp.raise_for_status = MagicMock()
+        mock_resp.json.return_value = {"result": "AI generated text", "error": None}
+
+        with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
+            mock_post.return_value = mock_resp
+            result, err = asyncio.run(_call_ai_service("sys", "user"))
+            self.assertEqual(result, "AI generated text")
+            self.assertIsNone(err)
+            # Verify X-Internal-Token header was forwarded
+            call_kwargs = mock_post.call_args[1]
+            self.assertEqual(call_kwargs.get("headers", {}).get("X-Internal-Token"), "secret-test-token")
+
+

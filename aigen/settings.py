@@ -168,6 +168,7 @@ STRIPE_PRICE_ID = STRIPE_PRICE_ID_PRO
 # AI Microservice — internal FastAPI worker URL
 # Local: http://127.0.0.1:8001  |  Docker: http://ai_worker:8001  |  Render: set via env var
 AI_SERVICE_URL = os.environ.get('AI_SERVICE_URL', 'http://127.0.0.1:8001')
+AI_SERVICE_TOKEN = os.environ.get('AI_SERVICE_TOKEN', '')
 
 
 # ── Cache (Redis in production, LocMem fallback for local dev) ──────────────

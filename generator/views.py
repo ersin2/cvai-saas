@@ -497,9 +497,15 @@ def _validate_resume_json(parsed):
 # ---------------------------------------------------------------------------
 # ASYNC AI MICROSERVICE CLIENT
 # Django forwards prompts to the FastAPI ai_worker service.
-# Uses a global httpx.AsyncClient to ensure connection pooling across requests.
+# Uses a lazily-managed httpx.AsyncClient with connection pooling across requests.
 # ---------------------------------------------------------------------------
-_ai_client = httpx.AsyncClient(timeout=90.0)
+_ai_client: httpx.AsyncClient | None = None
+
+def _get_ai_client() -> httpx.AsyncClient:
+    global _ai_client
+    if _ai_client is None or _ai_client.is_closed:
+        _ai_client = httpx.AsyncClient(timeout=90.0)
+    return _ai_client
 
 async def _call_ai_service(
     system_prompt: str,
@@ -530,6 +536,11 @@ async def _call_ai_service(
     current Claude models reject sampling parameters with a 400.
     """
     ai_url = getattr(settings, "AI_SERVICE_URL", "http://127.0.0.1:8001").rstrip("/")
+    headers = {}
+    token = getattr(settings, "AI_SERVICE_TOKEN", "")
+    if token:
+        headers["X-Internal-Token"] = token
+
     payload = {
         "system_prompt": system_prompt,
         "user_prompt": user_prompt,
@@ -543,7 +554,8 @@ async def _call_ai_service(
     if effort is not None:
         payload["effort"] = effort
     try:
-        resp = await _ai_client.post(f"{ai_url}/generate", json=payload)
+        client = _get_ai_client()
+        resp = await client.post(f"{ai_url}/generate", json=payload, headers=headers)
         resp.raise_for_status()
         data = resp.json()
         if data.get("error"):

@@ -50,6 +50,9 @@ services:
         sync: false
       - key: STRIPE_PRICE_ID_ELITE
         sync: false
+      # AI Service Token Authentication
+      - key: AI_SERVICE_TOKEN
+        sync: false
       # Sentry (set manually in Render dashboard)
       - key: SENTRY_DSN
         sync: false
@@ -67,6 +70,8 @@ services:
     # Private services always bind on port 10000 — do NOT use $PORT
     startCommand: "uvicorn main:app --host 0.0.0.0 --port 10000"
     envVars:
+      - key: AI_SERVICE_TOKEN
+        sync: false
       - key: GROQ_API_KEY
         sync: false
       - key: ANTHROPIC_API_KEY
