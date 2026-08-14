@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CVAI — The AI Resume Architect | Build ATS-Proof Resumes</title>
-    <meta name="description" content="Build ATS-optimized resumes with AI. 10 premium A4 vector templates, live double-buffered PDF preview, Google XYZ formula rewriter, and interactive career suite.">
+    <meta name="description" content="Build ATS-ready resumes with AI. Ten machine-readable templates, a live PDF preview as you type, bullet rewriting that adds specifics, and a tracker for every application.">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23080c14'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='monospace' font-weight='700' font-size='18' fill='%234cc9f0'>CV</text></svg>">
 
     <!-- OpenGraph -->
@@ -33,9 +33,14 @@
             --chrome-g: #27c93f;
             --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
             --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            --grad-hero: linear-gradient(135deg, #4cc9f0 0%, #4361ee 40%, #f72585 100%);
-            --grad-glow: radial-gradient(circle, rgba(76,201,240,0.22) 0%, rgba(67,97,238,0.09) 45%, transparent 70%);
-            --grad-border: linear-gradient(135deg, rgba(76,201,240,0.4), rgba(247,37,133,0.3), rgba(67,97,238,0.4));
+            /* Two adjacent hues, not three across the spectrum.
+               cyan -> indigo -> pink swept most of the colour wheel in one word,
+               which is the single strongest "AI landing page template" tell.
+               Neighbouring hues still read as a gradient up close but hold as one
+               colour at a glance, which is what makes it look considered. */
+            --grad-hero: linear-gradient(105deg, #4cc9f0 0%, #4361ee 100%);
+            --grad-glow: radial-gradient(circle, rgba(76,201,240,0.13) 0%, rgba(67,97,238,0.05) 45%, transparent 70%);
+            --grad-border: linear-gradient(135deg, rgba(76,201,240,0.32), rgba(67,97,238,0.24));
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -111,7 +116,10 @@
         }
 
         .container { max-width: var(--content-max); margin: 0 auto; padding: 0 var(--sp-5); position: relative; z-index: 10; }
-        .section { padding: 100px 0; position: relative; scroll-margin-top: 88px; }
+        /* One rhythm for every section, from the global spacing scale rather than a
+           fixed 100px — sections were reading at slightly different weights because
+           their internal padding varied against a constant outer gap. */
+        .section { padding: var(--section-pad) 0; position: relative; scroll-margin-top: 88px; }
 
         /* ── Buttons & Magnetic Wrappers ── */
         .magnetic-wrap { display: inline-block; padding: var(--sp-4); margin: calc(var(--sp-4) * -1); }
@@ -187,19 +195,22 @@
         /* ── Hero Section ── */
         .hero { padding: 165px 0 60px; text-align: center; position: relative; }
 
+        /* Quiet chip, not a glowing pill. The outer glow made a secondary element
+           compete with the headline directly under it. */
         .announcement-badge {
             display: inline-flex; align-items: center; gap: 9px;
-            padding: 6px 20px; border-radius: var(--r-pill);
-            background: rgba(76,201,240,0.08); border: 1px solid rgba(76,201,240,0.3);
-            font-size: var(--fs-xs); font-weight: 700; color: var(--brand);
+            padding: 6px 16px; border-radius: var(--r-pill);
+            background: var(--surface-2); border: 1px solid var(--border);
+            font-size: var(--fs-xs); font-weight: 600; color: var(--text-2);
+            letter-spacing: 0.01em;
             text-decoration: none; margin-bottom: var(--sp-6);
-            transition: all var(--t-fast);
-            box-shadow: 0 0 25px rgba(76,201,240,0.15);
+            transition: border-color var(--t-fast), color var(--t-fast), background var(--t-fast);
         }
         .announcement-badge:hover {
-            background: rgba(76,201,240,0.18); border-color: rgba(76,201,240,0.5);
-            transform: translateY(-2px); color: #fff;
+            background: var(--surface-3); border-color: var(--border-hover);
+            color: var(--text-1);
         }
+        .announcement-badge i { font-size: 0.75em; opacity: 0.6; }
         .badge-spark {
             width: 7px; height: 7px; border-radius: 50%; background: var(--brand);
             box-shadow: 0 0 10px var(--brand);
@@ -216,8 +227,19 @@
             font-size: var(--fs-lg); font-weight: 400; color: var(--text-2);
             max-width: 680px; margin: 0 auto var(--sp-7); line-height: var(--lh-loose);
         }
-        .hero-actions { display: flex; gap: var(--sp-4); justify-content: center; align-items: center; flex-wrap: wrap; }
+        .hero-actions { display: flex; gap: var(--sp-5); justify-content: center; align-items: center; flex-wrap: wrap; }
         .hero-actions .btn-cta { padding: 18px 44px; font-size: var(--fs-lg); }
+
+        /* Secondary action: readable, clearly clickable, visibly subordinate. */
+        .hero-link {
+            display: inline-flex; align-items: center; gap: 8px;
+            font-size: var(--fs-md); font-weight: 600; color: var(--text-2);
+            text-decoration: none; padding: 8px 4px;
+            transition: color var(--t-fast);
+        }
+        .hero-link:hover { color: var(--text-1); }
+        .hero-link i { font-size: 0.8em; transition: transform var(--t-base); }
+        .hero-link:hover i { transform: translateY(3px); }
 
         .hero-proof-row {
             display: flex; justify-content: center; align-items: center; gap: var(--sp-6);
@@ -334,23 +356,6 @@
         }
 
         /* ── Social Proof Marquee ── */
-        .marquee-section {
-            padding: 45px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
-            background: rgba(255,255,255,0.015);
-        }
-        .marquee-title {
-            text-align: center; font-size: var(--fs-xs); font-weight: 700;
-            text-transform: uppercase; letter-spacing: 0.16em; color: var(--text-3);
-            margin-bottom: var(--sp-5);
-        }
-        .marquee-track {
-            display: flex; justify-content: center; gap: 50px; align-items: center;
-            flex-wrap: wrap; opacity: 0.75;
-        }
-        .brand-logo-text {
-            font-family: var(--font-display); font-size: var(--fs-lg); font-weight: 800;
-            letter-spacing: 0.05em; color: var(--text-2); display: flex; align-items: center; gap: 8px;
-        }
 
         /* ── 10-Template Showcase Carousel with Filter Tabs ── */
         .template-filter-tabs {
@@ -625,26 +630,6 @@
         .feature-list i.fa-xmark { color: var(--text-3); margin-top: 3px; }
 
         /* ── Wall of Love ── */
-        .testimonials-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
-            margin-top: var(--sp-7);
-        }
-        .testi-card {
-            background: var(--surface-1); border: 1px solid var(--border);
-            border-radius: var(--r-xl); padding: 26px;
-            display: flex; flex-direction: column; justify-content: space-between;
-            box-shadow: var(--shadow-2); transition: all var(--t-base);
-        }
-        .testi-card:hover { border-color: var(--border-hover); transform: translateY(-4px); }
-        .testi-stars { color: #f59e0b; font-size: var(--fs-sm); margin-bottom: 14px; }
-        .testi-text { font-size: var(--fs-md); color: var(--text-2); line-height: 1.6; margin-bottom: 20px; font-style: italic; }
-        .testi-author { display: flex; align-items: center; gap: 12px; }
-        .testi-avatar {
-            width: 44px; height: 44px; border-radius: 50%; background: var(--grad-cta);
-            display: flex; align-items: center; justify-content: center; font-weight: 800; color: #fff;
-        }
-        .testi-name { font-weight: 700; font-size: var(--fs-md); color: var(--text-1); }
-        .testi-role { font-size: var(--fs-xs); color: var(--text-3); }
 
         /* ── FAQ with Instant Search ── */
         .faq-search-box {
@@ -733,7 +718,6 @@
             .bento-grid { grid-template-columns: repeat(2, 1fr); }
             .bento-col-2 { grid-column: span 2; }
             .bento-row-2 { grid-row: span 1; }
-            .testimonials-grid { grid-template-columns: 1fr; }
             .footer-grid { grid-template-columns: 1fr 1fr; }
             .hook-body { grid-template-columns: 1fr; }
             .roi-results-grid { grid-template-columns: 1fr; }
@@ -764,11 +748,12 @@
         <div class="nav-glass">
             <a href="/" class="logo"><span class="logo-dot" aria-hidden="true"></span> CV<span class="logo-hl">AI</span></a>
 
+            <!-- Four items, not six. Comparison and the calculator are still on the
+                 page; they were section links masquerading as navigation, which made
+                 the bar read as a sitemap. -->
             <div class="nav-links desktop-nav">
-                <a href="#templates" class="nav-link">10 Templates</a>
-                <a href="#features" class="nav-link">AI Features</a>
-                <a href="#compare" class="nav-link">Comparison</a>
-                <a href="#calculator" class="nav-link">ROI Calculator</a>
+                <a href="#templates" class="nav-link">Templates</a>
+                <a href="#features" class="nav-link">Features</a>
                 <a href="#pricing" class="nav-link">Pricing</a>
                 <a href="#faq" class="nav-link">FAQ</a>
             </div>
@@ -794,10 +779,8 @@
             </button>
         </div>
         <div class="drawer-nav-section">
-            <a href="#templates" class="nav-link-item drawer-link"><i class="fa-solid fa-file-lines"></i> 10 Templates</a>
-            <a href="#features" class="nav-link-item drawer-link"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Features</a>
-            <a href="#compare" class="nav-link-item drawer-link"><i class="fa-solid fa-code-compare"></i> Comparison</a>
-            <a href="#calculator" class="nav-link-item drawer-link"><i class="fa-solid fa-calculator"></i> Callback Calculator</a>
+            <a href="#templates" class="nav-link-item drawer-link"><i class="fa-solid fa-file-lines"></i> Templates</a>
+            <a href="#features" class="nav-link-item drawer-link"><i class="fa-solid fa-wand-magic-sparkles"></i> Features</a>
             <a href="#pricing" class="nav-link-item drawer-link"><i class="fa-solid fa-tag"></i> Pricing</a>
             <a href="#faq" class="nav-link-item drawer-link"><i class="fa-solid fa-circle-question"></i> FAQ</a>
             <div class="drawer-divider"></div>
@@ -815,7 +798,7 @@
             <div class="reveal-up">
                 <a href="#templates" class="announcement-badge">
                     <span class="badge-spark"></span>
-                    <span>CVAI 2.4 Live · 10 Vector PDF Layouts & Live XYZ Rewriter</span>
+                    <span>10 ATS-safe templates</span>
                     <i class="fa-solid fa-arrow-right-long"></i>
                 </a>
 
@@ -825,8 +808,9 @@
                 </h1>
 
                 <p class="hero-subtitle">
-                    Transform raw bullets into recruiter-proven, quantified achievements. 
-                    Live double-buffered PDF rendering, instant Claude-powered JSON extraction, and full application tracking.
+                    Paste your experience and the job you're targeting. CVAI rewrites vague
+                    bullets into specific, quantified achievements — then exports a clean PDF
+                    that reads well to the screening software and the person after it.
                 </p>
 
                 <div class="hero-actions">
@@ -835,15 +819,18 @@
                             Launch Resume Studio <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
                         </a>
                     </div>
-                    <a href="#interactive-simulator" class="btn btn-glass">
-                        <i class="fa-solid fa-bolt" style="color: var(--brand);"></i> Try Live Rewriter
+                    <!-- Secondary action is a quiet text link, not a second button: the
+                         rewriter it points at is the next thing on the page, so giving it
+                         button weight competed with the primary CTA for no gain. -->
+                    <a href="#interactive-simulator" class="hero-link">
+                        Try it below <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
                     </a>
                 </div>
 
                 <div class="hero-proof-row">
-                    <div class="hero-proof-item"><i class="fa-solid fa-circle-check"></i> 3 Free Generative Credits</div>
-                    <div class="hero-proof-item"><i class="fa-solid fa-circle-check"></i> Zero Credit Card Required</div>
-                    <div class="hero-proof-item"><i class="fa-solid fa-circle-check"></i> 100% Vector PDF Output</div>
+                    <div class="hero-proof-item"><i class="fa-solid fa-circle-check"></i> 3 free resumes</div>
+                    <div class="hero-proof-item"><i class="fa-solid fa-circle-check"></i> No credit card</div>
+                    <div class="hero-proof-item"><i class="fa-solid fa-circle-check"></i> Vector PDF export</div>
                 </div>
             </div>
 
@@ -856,8 +843,12 @@
                         <button class="role-pill" onclick="loadRolePreset('pm')">Product Lead</button>
                         <button class="role-pill" onclick="loadRolePreset('ai')">AI / ML Engineer</button>
                     </div>
-                    <div style="font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--brand); font-weight: 700;">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i> GOOGLE XYZ ENGINE
+                    <!-- Was "GOOGLE XYZ ENGINE", which read as a Google endorsement.
+                         The XYZ formula is a well-known bullet-writing pattern; naming
+                         it without the company name keeps the reference, drops the
+                         implied affiliation. -->
+                    <div style="font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--text-3); font-weight: 700; letter-spacing: 0.06em;">
+                        LIVE SAMPLE · XYZ FORMULA
                     </div>
                 </div>
                 <div class="hook-body">
@@ -891,7 +882,8 @@
 
                         <div class="hook-score-pill-card" style="margin-top: 18px;">
                             <div>
-                                <div style="font-size: var(--fs-2xs); color: var(--text-3); font-weight: 700;">ATS RECRUITER MATCH</div>
+                                <!-- placeholder: illustrative score for the sample bullet above, not a product guarantee -->
+                                <div style="font-size: var(--fs-2xs); color: var(--text-3); font-weight: 700;">SAMPLE ATS MATCH</div>
                                 <div style="color: var(--success); font-size: var(--fs-xs); font-weight: 800;" id="simMatchStatus">✓ Ready to Apply</div>
                             </div>
                             <div class="score-big" id="simScoreValue">98%</div>
@@ -902,28 +894,18 @@
         </div>
     </header>
 
-    <!-- ══ SOCIAL PROOF MARQUEE ══ -->
-    <div class="marquee-section">
-        <div class="container">
-            <div class="marquee-title">Trusted by developers & candidates interviewing at</div>
-            <div class="marquee-track">
-                <span class="brand-logo-text"><i class="fa-brands fa-google"></i> Google</span>
-                <span class="brand-logo-text"><i class="fa-brands fa-meta"></i> Meta</span>
-                <span class="brand-logo-text"><i class="fa-brands fa-amazon"></i> Amazon</span>
-                <span class="brand-logo-text"><i class="fa-brands fa-stripe"></i> Stripe</span>
-                <span class="brand-logo-text"><i class="fa-brands fa-microsoft"></i> Microsoft</span>
-                <span class="brand-logo-text"><i class="fa-brands fa-airbnb"></i> Airbnb</span>
-            </div>
-        </div>
-    </div>
+    <!-- A "Trusted by Google / Meta / Amazon…" logo strip used to sit here. It was
+         removed: it claimed named companies as customers with nothing behind it,
+         which is the fastest thing on a landing page for a reader to disbelieve.
+         If real logos are ever permitted, this is the slot for them. -->
 
     <!-- ══ 10-TEMPLATE SHOWCASE CAROUSEL ══ -->
     <section class="section" id="templates">
         <div class="container">
             <div class="section-header reveal-up">
-                <span class="section-tag">PDF Template Engine</span>
-                <h2 class="landing-section-title">10 Vector-Engineered Layouts.</h2>
-                <p class="section-sub">Built in ReportLab Platypus. Every template maintains strict typography hierarchy, margin balance, and single-stream ATS compliance.</p>
+                <span class="section-tag">Templates</span>
+                <h2 class="landing-section-title">Ten layouts, all machine-readable.</h2>
+                <p class="section-sub">Every template keeps a single text column underneath the design, so the parser reads it in the right order — and a person still wants to read it.</p>
             </div>
 
             <!-- Filter tabs -->
@@ -1102,9 +1084,9 @@
     <section class="section" id="features">
         <div class="container">
             <div class="section-header reveal-up">
-                <span class="section-tag">AI Engineering</span>
-                <h2 class="landing-section-title">A Complete Career Suite.</h2>
-                <p class="section-sub">Engineered to give you absolute control over resume formatting, keyword matching, and job pipeline tracking.</p>
+                <span class="section-tag">Features</span>
+                <h2 class="landing-section-title">Everything the application needs.</h2>
+                <p class="section-sub">Write it, check it against the posting, export it, and keep track of where you sent it — without leaving the app.</p>
             </div>
 
             <div class="bento-grid" id="bentoGrid">
@@ -1112,7 +1094,7 @@
                 <div class="bento-card bento-col-2 bento-row-2 reveal-up">
                     <div class="bento-icon"><i class="fa-solid fa-pen-nib"></i></div>
                     <h3 class="bento-title">Real-Time Visual Studio</h3>
-                    <p class="bento-desc">Edit form data on the left with double-buffered live vector preview on the right. Zero preview drift — what you see on your monitor matches your downloaded PDF bit-for-bit.</p>
+                    <p class="bento-desc">Edit on the left, watch the page redraw on the right. The preview is the same renderer that produces your download, so what you approve on screen is exactly what you send.</p>
                     <div style="margin-top: 22px; background: rgba(0,0,0,0.35); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 18px;">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                             <span style="font-size: var(--fs-xs); font-weight: 700; color: var(--brand);">Live Vector Stream</span>
@@ -1171,9 +1153,9 @@
     <section class="section" id="compare">
         <div class="container">
             <div class="section-header reveal-up">
-                <span class="section-tag">Why CVAI Wins</span>
-                <h2 class="landing-section-title">Built Different.</h2>
-                <p class="section-sub">Why traditional graphic canvas tools and generic AI generators fail modern recruiter ATS screening.</p>
+                <span class="section-tag">Comparison</span>
+                <h2 class="landing-section-title">How CVAI compares.</h2>
+                <p class="section-sub">Design tools make good-looking files that parsers read out of order. General-purpose chatbots write good sentences with no idea what a resume has to survive.</p>
             </div>
 
             <div class="compare-table-card reveal-up">
@@ -1189,7 +1171,7 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td><strong>ReportLab Vector PDF</strong></td>
+                            <td><strong>Real vector PDF</strong></td>
                             <td class="col-cvai"><i class="fa-solid fa-circle-check" style="color: var(--success);"></i> 100% Vector Stream</td>
                             <td><i class="fa-solid fa-circle-xmark" style="color: var(--danger);"></i> Rasterized Canvas</td>
                             <td><i class="fa-solid fa-circle-check" style="color: var(--warning);"></i> Plain text</td>
@@ -1226,95 +1208,70 @@
     <section class="section" id="calculator">
         <div class="container">
             <div class="section-header reveal-up">
-                <span class="section-tag">Candidate Impact</span>
-                <h2 class="landing-section-title">See Your Interview Boost.</h2>
-                <p class="section-sub">Candidates using CVAI's ATS keyword optimization and XYZ bullet structuring see an average 3.4x jump in recruiter responses.</p>
+                <span class="section-tag">Time saved</span>
+                <h2 class="landing-section-title">What tailoring every application costs you.</h2>
+                <!-- The previous subhead claimed "an average 3.4x jump in recruiter
+                     responses". There is no such measurement — it was invented, and a
+                     specific falsifiable number is the worst kind of claim to invent.
+                     This estimates the reader's own time from their own inputs, which
+                     is something we can actually stand behind. -->
+                <p class="section-sub">Rewriting a resume for each posting by hand takes most people 30–40 minutes. Put your own numbers in and see what that adds up to.</p>
             </div>
 
             <div class="roi-calculator-card reveal-up">
                 <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                    <span style="font-weight: 700; font-size: var(--fs-md); color: var(--text-1);">Applications Sent / Month:</span>
+                    <span style="font-weight: 700; font-size: var(--fs-md); color: var(--text-1);">Applications sent per month</span>
                     <span style="font-family: var(--font-display); font-size: 1.8rem; font-weight: 800; color: var(--brand);" id="appCountDisplay">25</span>
                 </div>
                 <div class="roi-slider-track">
                     <input type="range" min="5" max="100" value="25" class="roi-slider" id="appSlider" oninput="updateRoiCalc(this.value)">
                 </div>
 
+                <!-- This used to report callback rates ("Avg. 10%" vs "Avg. 38%") and a
+                     "3.4x interview multiplier". Those were invented — we have no such
+                     data, and presenting made-up conversion rates as a calculator is
+                     the most misleading shape a claim can take. It now computes time,
+                     which is arithmetic on an assumption we state openly below. -->
                 <div class="roi-results-grid">
                     <div>
-                        <div style="font-size: var(--fs-xs); color: var(--text-3); font-weight: 700; margin-bottom: 6px;">STANDARD RESUME</div>
-                        <div class="roi-val" style="color: var(--text-3);" id="stdCallbacks">2-3</div>
-                        <div style="font-size: var(--fs-2xs); color: var(--text-3);">Callbacks (Avg. 10%)</div>
+                        <div style="font-size: var(--fs-xs); color: var(--text-3); font-weight: 700; margin-bottom: 6px;">BY HAND</div>
+                        <div class="roi-val" style="color: var(--text-3);" id="roiManual">15h</div>
+                        <div style="font-size: var(--fs-2xs); color: var(--text-3);">per month, tailoring each one</div>
                     </div>
                     <div>
-                        <div style="font-size: var(--fs-xs); color: var(--brand); font-weight: 700; margin-bottom: 6px;">WITH CVAI OPTIMIZATION</div>
-                        <div class="roi-val" id="cvaiCallbacks">9-11</div>
-                        <div style="font-size: var(--fs-2xs); color: var(--success); font-weight: 700;">Callbacks (Avg. 38%)</div>
+                        <div style="font-size: var(--fs-xs); color: var(--brand); font-weight: 700; margin-bottom: 6px;">WITH CVAI</div>
+                        <div class="roi-val" id="roiWithCvai">2h</div>
+                        <div style="font-size: var(--fs-2xs); color: var(--text-3);">per month, reviewing and editing</div>
                     </div>
                     <div>
-                        <div style="font-size: var(--fs-xs); color: var(--gold); font-weight: 700; margin-bottom: 6px;">INTERVIEW MULTIPLIER</div>
-                        <div class="roi-val" style="color: var(--gold);">3.4x</div>
-                        <div style="font-size: var(--fs-2xs); color: var(--text-3);">More First Rounds</div>
+                        <div style="font-size: var(--fs-xs); color: var(--success); font-weight: 700; margin-bottom: 6px;">TIME BACK</div>
+                        <div class="roi-val" style="color: var(--success);" id="roiSaved">13h</div>
+                        <div style="font-size: var(--fs-2xs); color: var(--text-3);">to spend on interview prep</div>
                     </div>
                 </div>
+                <p style="margin-top: var(--sp-5); font-size: var(--fs-xs); color: var(--text-3); text-align: center; line-height: var(--lh-base);">
+                    Assumes 35 minutes to tailor a resume by hand and about 5 minutes to
+                    review and edit a generated one. Your own pace will differ — adjust
+                    the slider to match how you actually apply.
+                </p>
             </div>
         </div>
     </section>
 
     <!-- ══ WALL OF LOVE TESTIMONIALS ══ -->
-    <section class="section">
-        <div class="container">
-            <div class="section-header reveal-up">
-                <span class="section-tag">Candidate Success</span>
-                <h2 class="landing-section-title">Built for Serious Job Seekers.</h2>
-            </div>
-
-            <div class="testimonials-grid">
-                <div class="testi-card reveal-up">
-                    <div class="testi-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
-                    <p class="testi-text">"The live double-buffered preview and XYZ rewriter saved me hours. Received callbacks from 4 Tier-1 companies within 2 weeks of applying."</p>
-                    <div class="testi-author">
-                        <div class="testi-avatar">AK</div>
-                        <div>
-                            <div class="testi-name">Alexei K.</div>
-                            <div class="testi-role">Senior Full-Stack Engineer</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="testi-card reveal-up" style="transition-delay: 0.1s;">
-                    <div class="testi-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
-                    <p class="testi-text">"The Hacker Terminal and Dark Sidebar templates are by far the cleanest PDF designs I have seen. Landed a Staff role at a FinTech unicorn."</p>
-                    <div class="testi-author">
-                        <div class="testi-avatar" style="background: var(--brand-3);">MR</div>
-                        <div>
-                            <div class="testi-name">Marcus R.</div>
-                            <div class="testi-role">Staff Infrastructure Engineer</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="testi-card reveal-up" style="transition-delay: 0.2s;">
-                    <div class="testi-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
-                    <p class="testi-text">"ATS scoring pointed out three key missing keywords in my summary that were screening me out. Fixed it in 30 seconds."</p>
-                    <div class="testi-author">
-                        <div class="testi-avatar" style="background: var(--gold);">SL</div>
-                        <div>
-                            <div class="testi-name">Sarah L.</div>
-                            <div class="testi-role">Lead Product Manager</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+    <!-- A testimonials section sat here with three invented people (Alexei K.,
+         Marcus R., Sarah L.), five-star ratings and specific outcomes such as
+         "callbacks from 4 Tier-1 companies within 2 weeks". None of it was real.
+         Fabricated reviews attributed to named individuals are the kind of claim
+         a reader can act on, so it was removed rather than restyled.
+         Restore this slot when there are real, permitted quotes to put in it. -->
 
     <!-- ══ PRICING ══ -->
     <section class="section" id="pricing">
         <div class="container">
             <div class="section-header reveal-up">
-                <span class="section-tag">Flexible Pricing</span>
-                <h2 class="landing-section-title">Transparent Plans.</h2>
+                <span class="section-tag">Pricing</span>
+                <h2 class="landing-section-title">Simple plans, no surprises.</h2>
                 <p class="section-sub">Upgrade when you are ready to accelerate your search. Cancel anytime in one click.</p>
             </div>
 
@@ -1384,8 +1341,8 @@
     <section class="section" id="faq">
         <div class="container">
             <div class="section-header reveal-up">
-                <span class="section-tag">Frequently Asked Questions</span>
-                <h2 class="landing-section-title">Everything You Need to Know.</h2>
+                <span class="section-tag">FAQ</span>
+                <h2 class="landing-section-title">Before you start.</h2>
             </div>
 
             <!-- Instant Search -->
@@ -1397,7 +1354,7 @@
             <div class="faq-list reveal-up" id="faqList">
                 <details class="faq-item" open>
                     <summary>How does CVAI pass Applicant Tracking Systems (ATS)?</summary>
-                    <div class="faq-answer">CVAI generates true vector PDFs through ReportLab Platypus rather than canvas screenshot conversions. Text is selectable, searchable, and structured with clean single/double column streams that ATS parsers extract without scrambled text.</div>
+                    <div class="faq-answer">CVAI builds the PDF as real text rather than exporting a picture of your resume. You can select and search the text, and the screening software reads it in the order you wrote it instead of scrambling columns together.</div>
                 </details>
 
                 <details class="faq-item">
@@ -1671,15 +1628,30 @@
         }
 
         // 9. ROI Callback Calculator
+        // Time, not callback rates. The previous version multiplied the slider by
+        // invented conversion percentages (8-12% vs 32-44%) to produce a "3.4x
+        // interview multiplier" — numbers we had no basis for. These two constants
+        // are assumptions, stated on the page directly under the result.
+        var ROI_MINUTES_BY_HAND = 35;
+        var ROI_MINUTES_WITH_CVAI = 5;
+
         function updateRoiCalc(val) {
-            document.getElementById('appCountDisplay').textContent = val;
             var n = parseInt(val, 10);
-            var stdMin = Math.round(n * 0.08);
-            var stdMax = Math.round(n * 0.12);
-            var cvaiMin = Math.round(n * 0.32);
-            var cvaiMax = Math.round(n * 0.44);
-            document.getElementById('stdCallbacks').textContent = stdMin + '-' + stdMax;
-            document.getElementById('cvaiCallbacks').textContent = cvaiMin + '-' + cvaiMax;
+            if (!isFinite(n)) { return; }
+            document.getElementById('appCountDisplay').textContent = n;
+
+            var manual = (n * ROI_MINUTES_BY_HAND) / 60;
+            var assisted = (n * ROI_MINUTES_WITH_CVAI) / 60;
+
+            // Sub-hour totals read as "0h" when rounded; show minutes instead.
+            var fmt = function (hours) {
+                if (hours < 1) { return Math.round(hours * 60) + 'm'; }
+                return (hours < 10 ? hours.toFixed(1).replace(/\.0$/, '') : Math.round(hours)) + 'h';
+            };
+
+            document.getElementById('roiManual').textContent = fmt(manual);
+            document.getElementById('roiWithCvai').textContent = fmt(assisted);
+            document.getElementById('roiSaved').textContent = fmt(manual - assisted);
         }
 
         // 10. Billing Toggle
