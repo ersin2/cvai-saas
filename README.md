@@ -15,7 +15,7 @@
   A full-cycle SaaS career platform combining interactive A4 PDF resume generation, AI-powered writing assistance, ATS scoring, and job application pipeline tracking.
 </p>
 
-[🌐 **Live Demo Website**](https://cvai-saas.onrender.com) • [📖 **Documentation**](#-architecture--system-design) • [⚡ **Quickstart**](#-quickstart--local-development) • [🧪 **Testing**](#-testing--quality-assurance)
+[🌐 **Live Demo Website**](https://mysite-eari.onrender.com) • [📖 **Documentation**](#-architecture--system-design) • [⚡ **Quickstart**](#-quickstart--local-development) • [🧪 **Testing**](#-testing--quality-assurance)
 
 </div>
 
@@ -178,33 +178,33 @@ python manage.py runserver 127.0.0.1:8000
 
 ## 🔑 Environment Configuration (`.env`)
 
-Create a `.env` file in the root directory:
+Create a `.env` file in the root directory (refer to `.env.example`):
 
 ```ini
 # --- Django Core ---
-SECRET_KEY=your-super-secret-key
+SECRET_KEY=your_django_secret_key_here
 DEBUG=True
 ALLOWED_HOSTS=localhost,127.0.0.1
 
 # --- AI Microservice & Security ---
 AI_SERVICE_URL=http://127.0.0.1:8001
-AI_SERVICE_TOKEN=your-internal-shared-secret-token
-GROQ_API_KEY=gsk_your_groq_api_key
-ANTHROPIC_API_KEY=sk-ant-your_anthropic_api_key
+AI_SERVICE_TOKEN=your_internal_shared_token_here
+GROQ_API_KEY=your_groq_api_key_here
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
 
 # --- Stripe Payments ---
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_PUBLISHABLE_KEY=pk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-STRIPE_PRICE_ID_PRO=price_...
-STRIPE_PRICE_ID_ELITE=price_...
+STRIPE_SECRET_KEY=your_stripe_secret_key_here
+STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key_here
+STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret_here
+STRIPE_PRICE_ID_PRO=your_stripe_pro_price_id_here
+STRIPE_PRICE_ID_ELITE=your_stripe_elite_price_id_here
 
 # --- Optional: S3 / Supabase Storage ---
 USE_S3=False
-AWS_ACCESS_KEY_ID=...
-AWS_SECRET_ACCESS_KEY=...
-AWS_STORAGE_BUCKET_NAME=cvai-media
-AWS_S3_ENDPOINT_URL=https://<project-ref>.supabase.co/storage/v1/s3
+AWS_ACCESS_KEY_ID=your_access_key_id
+AWS_SECRET_ACCESS_KEY=your_secret_access_key
+AWS_STORAGE_BUCKET_NAME=your_bucket_name
+AWS_S3_ENDPOINT_URL=your_s3_endpoint_url
 
 # --- Optional: Error Tracking ---
 SENTRY_DSN=
