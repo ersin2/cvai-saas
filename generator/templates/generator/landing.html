@@ -5,81 +5,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CVAI — The AI Resume Architect</title>
-    <meta name="description" content="Build ATS-optimized resumes with AI. Paste your experience, target a job, and export a recruiter-ready resume.">
+    <title>CVAI — The AI Resume Architect | Build ATS-Proof Resumes</title>
+    <meta name="description" content="Build ATS-optimized resumes with AI. 10 premium A4 templates, live double-buffered PDF preview, Google XYZ formula rewriter, and application tracker.">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23080c14'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='monospace' font-weight='700' font-size='18' fill='%234cc9f0'>CV</text></svg>">
 
     <!-- OG / Social -->
-    <meta property="og:title" content="CVAI — AI Resume Builder">
-    <meta property="og:description" content="Build ATS-optimized resumes with AI. Pick from 10 premium templates and land your dream job faster.">
+    <meta property="og:title" content="CVAI — AI Resume Builder & Career Suite">
+    <meta property="og:description" content="Build ATS-optimized resumes with AI. 10 premium templates, live preview, and application tracker.">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
 
-    <!-- Fonts — matches --font-display / --font-body / --font-mono -->
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Global Design System (canonical tokens) -->
-    <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}?v=5">
+    <!-- Global Design System -->
+    <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}?v=6">
 
-    <!-- Marks that JS is running, so scroll reveals may hide content.
-         Without this the page renders fully visible. Must stay in <head>
-         to avoid a flash of the un-hidden state. -->
     <script>document.documentElement.classList.add('js');</script>
 
     <style>
-        /* ─────────────────────────────────────────────────────────────
-           Landing-local values only. Everything with an app-wide
-           equivalent lives in cvai-global.css — do not re-declare it here.
-           ───────────────────────────────────────────────────────────── */
         :root {
-            /* Window-chrome dots in the product mock. Not brand colour —
-               macOS traffic-light convention, so it has no global token. */
             --chrome-r: #ff5f56;
             --chrome-y: #ffbd2e;
             --chrome-g: #27c93f;
-
-            /* Marketing-only easings; the app uses --t-fast/base/slide. */
             --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
             --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            --grad-hero: linear-gradient(135deg, #4cc9f0 0%, #4361ee 50%, #f72585 100%);
+            --grad-glow: radial-gradient(circle, rgba(76,201,240,0.18) 0%, rgba(67,97,238,0.08) 45%, transparent 70%);
         }
 
-        * { margin: 0; padding: 0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
 
         body {
+            background-color: var(--bg);
+            color: var(--text-1);
+            font-family: var(--font-body);
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            overflow-x: hidden;
         }
 
-        /* Ambient mouse-tracker glow */
+        /* ── Ambient Lights & Canvas Atmosphere ── */
         .ambient-glow {
-            position: fixed; top: 0; left: 0; width: 600px; height: 600px;
+            position: fixed; top: 0; left: 0; width: 650px; height: 650px;
             border-radius: 50%;
-            background: radial-gradient(circle, var(--brand-dim) 0%, transparent 70%);
-            transform: translate(-50%, -50%); pointer-events: none; z-index: -1; filter: blur(80px);
-            transition: opacity 0.5s; opacity: 0;
+            background: var(--grad-glow);
+            transform: translate(-50%, -50%); pointer-events: none; z-index: -1; filter: blur(90px);
+            transition: opacity 0.6s ease; opacity: 0;
         }
 
         .noise-overlay {
             position: fixed; inset: 0; pointer-events: none; z-index: 9999;
-            opacity: 0.04; mix-blend-mode: overlay;
+            opacity: 0.035; mix-blend-mode: overlay;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
         }
 
         .grid-overlay {
-            position: fixed; inset: 0; pointer-events: none; z-index: -2; opacity: 0.5;
+            position: fixed; inset: 0; pointer-events: none; z-index: -2; opacity: 0.45;
             background-size: 60px 60px;
             background-image:
                 linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
                 linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-            mask-image: linear-gradient(to bottom, black 0%, transparent 80%);
-            -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 80%);
+            mask-image: radial-gradient(ellipse 80% 60% at 50% 10%, black 20%, transparent 100%);
+            -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 10%, black 20%, transparent 100%);
         }
 
-        /* ── Typography ─────────────────────────────────────────────── */
+        .orb-spotlight {
+            position: absolute; top: -150px; left: 50%; transform: translateX(-50%);
+            width: 900px; height: 500px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(67,97,238,0.22) 0%, rgba(76,201,240,0.12) 40%, transparent 70%);
+            filter: blur(80px); pointer-events: none; z-index: -1;
+            animation: pulse-orb 8s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse-orb {
+            0% { opacity: 0.6; transform: translateX(-50%) scale(0.95); }
+            100% { opacity: 1; transform: translateX(-50%) scale(1.1); }
+        }
+
+        /* ── Typography & Accents ── */
         h1, h2, h3, h4 {
             font-family: var(--font-display);
             font-weight: 800;
@@ -88,18 +96,30 @@
             line-height: var(--lh-tight);
         }
 
-        /* The one gradient accent outside the primary CTA. */
         .hero-accent {
-            background: var(--grad-cta);
+            background: var(--grad-hero);
             -webkit-background-clip: text; background-clip: text;
             -webkit-text-fill-color: transparent;
+            display: inline-block;
+            filter: drop-shadow(0 0 35px rgba(76,201,240,0.3));
         }
 
-        /* ── Layout ─────────────────────────────────────────────────── */
-        .container { max-width: var(--content-max); margin: 0 auto; padding: 0 var(--sp-5); position: relative; z-index: 10; }
-        .section { padding: var(--section-pad) 0; position: relative; scroll-margin-top: 88px; }
+        .shimmer-text {
+            background: linear-gradient(90deg, #fff 0%, #4cc9f0 25%, #f72585 50%, #4cc9f0 75%, #fff 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmer-flow 6s linear infinite;
+        }
 
-        /* ── Buttons ────────────────────────────────────────────────── */
+        @keyframes shimmer-flow {
+            to { background-position: 200% center; }
+        }
+
+        .container { max-width: var(--content-max); margin: 0 auto; padding: 0 var(--sp-5); position: relative; z-index: 10; }
+        .section { padding: 90px 0; position: relative; scroll-margin-top: 88px; }
+
+        /* ── Buttons & Magnetics ── */
         .magnetic-wrap { display: inline-block; padding: var(--sp-4); margin: calc(var(--sp-4) * -1); }
 
         .btn {
@@ -110,42 +130,51 @@
             transition: transform var(--t-fast), box-shadow var(--t-fast), background var(--t-fast), border-color var(--t-fast);
         }
 
-        /* --grad-cta is reserved for this button. Nothing else. */
         .btn-cta {
             background: var(--grad-cta); color: #fff; border-radius: var(--r-pill);
-            box-shadow: var(--glow-cta);
+            box-shadow: 0 8px 30px rgba(67, 97, 238, 0.4), 0 0 0 1px rgba(255,255,255,0.15) inset;
+            overflow: hidden;
         }
-        .btn-cta:hover { box-shadow: 0 12px 40px rgba(67, 97, 238, 0.45); color: #fff; }
+        .btn-cta::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+            transform: translateX(-100%); transition: transform 0.6s ease;
+        }
+        .btn-cta:hover::after { transform: translateX(100%); }
+        .btn-cta:hover { box-shadow: 0 12px 42px rgba(67, 97, 238, 0.6); color: #fff; transform: translateY(-2px); }
         .btn-cta i { transition: transform var(--t-base); }
         .btn-cta:hover i { transform: translateX(5px); }
 
         .btn-glass {
             background: var(--surface-2); color: var(--text-1);
-            border: 1px solid var(--border);
+            border: 1px solid var(--border); border-radius: var(--r-pill);
+            backdrop-filter: blur(12px);
         }
-        .btn-glass:hover { background: var(--surface-3); border-color: var(--border-hover); color: var(--text-1); }
+        .btn-glass:hover { background: var(--surface-3); border-color: var(--border-hover); color: var(--text-1); transform: translateY(-1px); }
 
-        /* ── Navigation ─────────────────────────────────────────────── */
+        /* ── Navigation ── */
         .nav-wrapper {
             position: fixed; top: var(--sp-5); left: 50%; transform: translateX(-50%); z-index: 100;
-            width: calc(100% - var(--sp-6)); max-width: 1000px;
+            width: calc(100% - var(--sp-6)); max-width: 1060px;
             transition: top var(--t-slide);
         }
         .nav-glass {
-            background: rgba(8, 12, 20, 0.72);
+            background: rgba(8, 12, 20, 0.78);
             backdrop-filter: blur(40px) saturate(180%); -webkit-backdrop-filter: blur(40px) saturate(180%);
             border: 1px solid var(--border); border-radius: var(--r-pill);
             padding: 10px var(--sp-5); display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4);
-            box-shadow: var(--shadow-3);
+            box-shadow: 0 20px 40px -15px rgba(0,0,0,0.7);
         }
         .logo {
             font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 800;
             color: var(--text-1); text-decoration: none;
             display: flex; align-items: center; gap: var(--sp-2); flex-shrink: 0;
+            letter-spacing: -0.5px;
         }
+        .logo span.logo-hl { color: var(--brand); }
         .logo-dot {
             width: 9px; height: 9px; background: var(--brand); border-radius: 50%;
-            box-shadow: 0 0 16px var(--brand-glow); animation: dot-pulse 2.4s ease-in-out infinite;
+            box-shadow: 0 0 16px var(--brand); animation: dot-pulse 2.4s ease-in-out infinite;
         }
         .nav-links { display: flex; gap: var(--sp-6); align-items: center; }
         .nav-link {
@@ -159,203 +188,193 @@
         .nav-link:hover { color: var(--text-1); }
         .nav-link:hover::after { width: 100%; }
         .nav-actions { display: flex; gap: var(--sp-3); align-items: center; }
-        .nav-actions .btn { padding: 9px 20px; font-size: var(--fs-base); }
+        .nav-actions .btn { padding: 9px 22px; font-size: var(--fs-base); }
 
-        /* ── Hero ───────────────────────────────────────────────────── */
-        .hero { padding: 180px 0 var(--sp-8); text-align: center; position: relative; }
+        /* ── Hero Section ── */
+        .hero { padding: 160px 0 60px; text-align: center; position: relative; }
+
+        .announcement-badge {
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 6px 18px; border-radius: var(--r-pill);
+            background: rgba(76,201,240,0.08); border: 1px solid rgba(76,201,240,0.25);
+            font-size: var(--fs-xs); font-weight: 700; color: var(--brand);
+            text-decoration: none; margin-bottom: var(--sp-6);
+            transition: all var(--t-fast);
+            box-shadow: 0 0 20px rgba(76,201,240,0.1);
+        }
+        .announcement-badge:hover {
+            background: rgba(76,201,240,0.15); border-color: rgba(76,201,240,0.45);
+            transform: translateY(-2px); color: #fff;
+        }
+        .badge-spark {
+            width: 7px; height: 7px; border-radius: 50%; background: var(--brand);
+            box-shadow: 0 0 10px var(--brand);
+        }
 
         .hero-title {
             font-size: var(--fs-hero);
-            line-height: 1.04;
-            letter-spacing: -0.035em;
+            line-height: 1.05;
+            letter-spacing: -0.04em;
             margin-bottom: var(--sp-5);
         }
         .hero-subtitle {
             font-family: var(--font-body);
             font-size: var(--fs-lg); font-weight: 400; color: var(--text-2);
-            max-width: 620px; margin: 0 auto var(--sp-7); line-height: var(--lh-loose);
+            max-width: 660px; margin: 0 auto var(--sp-7); line-height: var(--lh-loose);
         }
         .hero-actions { display: flex; gap: var(--sp-4); justify-content: center; align-items: center; flex-wrap: wrap; }
-        .hero-actions .btn-cta { padding: 18px 40px; font-size: var(--fs-lg); }
-        .hero-note {
-            margin-top: var(--sp-5); font-size: var(--fs-sm); color: var(--text-3);
-            display: flex; align-items: center; justify-content: center; gap: var(--sp-2);
-        }
+        .hero-actions .btn-cta { padding: 18px 42px; font-size: var(--fs-lg); }
 
-        /* ── Product mock: the Resume Studio ────────────────────────── */
-        .hero-visual {
-            margin-top: var(--sp-9); position: relative;
-            perspective: 1800px;
+        .hero-proof-row {
+            display: flex; justify-content: center; align-items: center; gap: var(--sp-6);
+            margin-top: var(--sp-6); font-size: var(--fs-sm); color: var(--text-3);
+            flex-wrap: wrap;
         }
-        .mock-float { animation: float-main 12s ease-in-out infinite; transform-style: preserve-3d; }
-        .mock-tilt { transition: transform var(--t-fast); transform-style: preserve-3d; will-change: transform; }
+        .hero-proof-item { display: flex; align-items: center; gap: 7px; }
+        .hero-proof-item i { color: var(--success); }
 
-        .mock-window {
-            background: var(--surface-1); border: 1px solid var(--border);
-            border-radius: var(--r-xl); overflow: hidden;
-            box-shadow: var(--shadow-3), 0 60px 120px -40px rgba(0, 0, 0, 0.9);
-            max-width: 940px; margin: 0 auto;
+        /* ── Interactive Before/After AI Transformation Hook ── */
+        .hook-card-wrapper {
+            margin: var(--sp-9) auto 0;
+            max-width: 960px;
+            background: var(--surface-1);
+            border: 1px solid var(--border);
+            border-radius: var(--r-xl);
+            box-shadow: 0 30px 80px -20px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.06);
+            overflow: hidden;
+            text-align: left;
+            position: relative;
         }
-        .mock-chrome {
-            display: flex; align-items: center; gap: var(--sp-2);
-            padding: 13px var(--sp-4); background: rgba(0, 0, 0, 0.28);
+        .hook-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 22px;
+            background: rgba(0,0,0,0.4);
             border-bottom: 1px solid var(--border);
+            flex-wrap: wrap; gap: 12px;
         }
-        .mock-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
-        .mock-dot.r { background: var(--chrome-r); }
-        .mock-dot.y { background: var(--chrome-y); }
-        .mock-dot.g { background: var(--chrome-g); }
-        .mock-url {
-            font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--text-3);
-            margin: 0 auto; padding: 3px 14px; background: var(--surface-2);
-            border-radius: var(--r-pill); border: 1px solid var(--border);
+        .hook-header-title {
+            display: flex; align-items: center; gap: 10px;
+            font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--text-2);
+        }
+        .hook-toggle-tabs {
+            display: flex; gap: 6px; background: var(--surface-2);
+            padding: 4px; border-radius: var(--r-pill); border: 1px solid var(--border);
+        }
+        .hook-tab-btn {
+            background: transparent; border: none; padding: 6px 16px;
+            border-radius: var(--r-pill); font-size: var(--fs-xs); font-weight: 700;
+            color: var(--text-3); cursor: pointer; transition: all var(--t-fast);
+        }
+        .hook-tab-btn.active {
+            background: var(--brand); color: #080c14; box-shadow: 0 2px 10px rgba(76,201,240,0.4);
+        }
+        .hook-body {
+            display: grid; grid-template-columns: 1.4fr 1fr;
+            padding: 26px; gap: 24px;
+        }
+        .hook-bullet-preview {
+            background: rgba(0,0,0,0.25); border: 1px solid var(--border);
+            border-radius: var(--r-lg); padding: 20px;
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .hook-bullet-tag {
+            font-size: var(--fs-2xs); font-weight: 800; text-transform: uppercase;
+            letter-spacing: 0.1em; color: var(--text-3); margin-bottom: 10px;
+        }
+        .hook-bullet-text {
+            font-size: var(--fs-md); line-height: 1.6; color: var(--text-1);
+            min-height: 80px; transition: opacity 0.3s;
+        }
+        .hook-bullet-text mark {
+            background: rgba(76,201,240,0.2); color: var(--brand);
+            padding: 2px 6px; border-radius: 4px; font-weight: 600;
+        }
+        .hook-metrics-sidebar {
+            display: flex; flex-direction: column; gap: 14px;
+            justify-content: center;
+        }
+        .hook-score-card {
+            background: var(--surface-2); border: 1px solid var(--border);
+            border-radius: var(--r-lg); padding: 18px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .score-num {
+            font-family: var(--font-display); font-size: 2.2rem; font-weight: 800;
+            line-height: 1; color: var(--brand);
+        }
+        .score-status {
+            font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .score-status.pass { color: var(--success); }
+        .score-status.fail { color: var(--danger); }
+
+        /* ── Social Proof Marquee ── */
+        .marquee-section {
+            padding: 40px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+            background: rgba(255,255,255,0.015);
+        }
+        .marquee-title {
+            text-align: center; font-size: var(--fs-xs); font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.16em; color: var(--text-3);
+            margin-bottom: var(--sp-5);
+        }
+        .marquee-track {
+            display: flex; justify-content: center; gap: 48px; align-items: center;
+            flex-wrap: wrap; opacity: 0.65;
+        }
+        .brand-logo-text {
+            font-family: var(--font-display); font-size: var(--fs-lg); font-weight: 800;
+            letter-spacing: 0.05em; color: var(--text-2); display: flex; align-items: center; gap: 8px;
         }
 
-        .mock-body { display: grid; grid-template-columns: 1fr 1fr; min-height: 460px; text-align: left; }
-
-        /* Left: the editor panel */
-        .mock-editor { border-right: 1px solid var(--border); display: flex; flex-direction: column; }
-        .mock-tabs {
-            display: flex; gap: var(--sp-3); padding: 10px var(--sp-5);
-            border-bottom: 1px solid var(--border); background: var(--surface-2);
+        /* ── Interactive 10-Template Carousel ── */
+        .template-carousel-wrapper {
+            position: relative; margin-top: var(--sp-7); overflow: hidden;
+            padding: 15px 0 30px;
         }
-        .mock-tab {
-            font-size: var(--fs-2xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
-            color: var(--text-3); padding: 4px 9px; border-radius: var(--r-sm);
+        .template-track {
+            display: flex; gap: 24px;
+            animation: scroll-templates 35s linear infinite;
+            width: max-content;
         }
-        .mock-tab.active { color: var(--brand); background: var(--brand-dim); }
-
-        .mock-fields { padding: var(--sp-5); display: flex; flex-direction: column; gap: var(--sp-4); flex: 1; }
-        .mock-label {
-            font-size: var(--fs-2xs); font-weight: 700; text-transform: uppercase;
-            letter-spacing: 0.08em; color: var(--text-3); margin-bottom: 7px; display: block;
+        .template-track:hover { animation-play-state: paused; }
+        @keyframes scroll-templates {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
         }
-        .mock-input {
-            background: rgba(0, 0, 0, 0.25); border: 1px solid var(--border);
-            border-radius: var(--r-sm); padding: 11px 13px;
-            font-size: var(--fs-sm); color: var(--text-2); line-height: var(--lh-base);
-        }
-        .mock-input.focused { border-color: rgba(76, 201, 240, 0.45); box-shadow: 0 0 0 3px rgba(76, 201, 240, 0.10); }
-        .mock-line { height: 7px; border-radius: 3px; background: var(--surface-3); margin-bottom: 7px; }
-        .mock-line:last-child { margin-bottom: 0; }
-
-        .mock-generate {
-            margin-top: auto; display: flex; align-items: center; justify-content: center; gap: var(--sp-2);
-            background: var(--grad-cta); color: #fff; border-radius: var(--r-sm);
-            padding: 11px; font-size: var(--fs-sm); font-weight: 700;
-        }
-
-        /* Right: the live resume preview */
-        .mock-preview {
-            background: rgba(0, 0, 0, 0.35); padding: var(--sp-5);
-            display: flex; align-items: center; justify-content: center;
-        }
-        /* The .paper-* block is ink on white stock — a printed page inside the
-           mock, not a theme surface. The dark-theme text tokens are unusable
-           here by definition, so these stay literal and light-on-dark rules
-           (contrast, --text-N) do not apply to them. */
-        .mock-paper {
-            background: #fff;
-            width: 100%; max-width: 320px; aspect-ratio: 1 / 1.29;
-            border-radius: 4px; padding: 26px 24px;
-            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.85);
-            transform: translateZ(40px);
-            display: flex; flex-direction: column; gap: 13px; overflow: hidden;
-        }
-        .paper-name {
-            font-family: var(--font-display); font-size: 15px; font-weight: 800;
-            color: #0f172a; letter-spacing: 0.06em; line-height: 1;
-        }
-        .paper-meta { font-size: 7px; color: #64748b; letter-spacing: 0.05em; margin-top: 5px; }
-        .paper-rule { height: 2px; background: #0f172a; width: 100%; }
-        .paper-h {
-            font-size: 7.5px; font-weight: 800; color: #0f172a;
-            letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 6px;
-        }
-        .paper-role { font-size: 8.5px; font-weight: 700; color: #1e293b; }
-        .paper-sub { font-size: 7px; color: #64748b; margin-bottom: 5px; }
-        .paper-line { height: 4px; border-radius: 2px; background: #e2e8f0; margin-bottom: 4px; }
-        .paper-chip-row { display: flex; gap: 4px; flex-wrap: wrap; }
-        .paper-chip { font-size: 6.5px; color: #334155; background: #f1f5f9; border-radius: 3px; padding: 2px 5px; }
-
-        /* Floating proof badges */
-        .mock-badge {
-            position: absolute; z-index: 3;
-            display: flex; align-items: center; gap: var(--sp-3);
+        .template-card {
+            width: 260px; height: 350px;
             background: var(--surface-1); border: 1px solid var(--border);
-            border-radius: var(--r-lg); padding: 14px var(--sp-4);
-            box-shadow: var(--shadow-3);
+            border-radius: var(--r-lg); padding: 16px;
+            display: flex; flex-direction: column; justify-content: space-between;
+            box-shadow: var(--shadow-2); flex-shrink: 0;
+            transition: all var(--t-base);
+            position: relative; overflow: hidden;
         }
-        /* Kept clear of the editor's tab row — it used to sit over the labels. */
-        .mock-badge-1 { top: 32%; left: 0; animation: float-1 8s ease-in-out infinite; }
-        .mock-badge-2 { bottom: 10%; right: 0; animation: float-2 10s ease-in-out infinite; }
-        .mock-badge-icon {
-            width: 42px; height: 42px; border-radius: var(--r-sm); flex-shrink: 0;
-            display: flex; align-items: center; justify-content: center; font-size: var(--fs-lg);
+        .template-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            border-color: var(--brand);
+            box-shadow: 0 20px 40px rgba(76,201,240,0.18);
         }
-        .mock-badge-title { font-family: var(--font-body); font-weight: 700; font-size: var(--fs-md); color: var(--text-1); }
-        .mock-badge-sub { font-size: var(--fs-xs); color: var(--text-3); margin-top: 2px; }
+        .tpl-mini-paper {
+            background: #ffffff; border-radius: 4px; height: 230px; padding: 14px;
+            color: #0f172a; display: flex; flex-direction: column; gap: 8px;
+            overflow: hidden; pointer-events: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .tpl-dark-side {
+            background: #0f172a; color: #f8fafc;
+        }
+        .tpl-header-mock { height: 16px; background: #334155; border-radius: 2px; width: 60%; }
+        .tpl-line-mock { height: 4px; background: #e2e8f0; border-radius: 2px; width: 100%; }
+        .tpl-badge {
+            font-size: var(--fs-2xs); font-weight: 800; text-transform: uppercase;
+            letter-spacing: 0.1em; color: var(--brand); margin-top: 10px;
+        }
+        .tpl-name { font-size: var(--fs-md); font-weight: 700; color: var(--text-1); }
 
-        /* ── Section headers ────────────────────────────────────────── */
-        .section-header { text-align: center; margin-bottom: var(--sp-9); }
-        .section-tag {
-            font-size: var(--fs-2xs); font-weight: 700; color: var(--brand);
-            text-transform: uppercase; letter-spacing: 0.18em;
-            margin-bottom: var(--sp-4); display: inline-block;
-            padding: 5px 14px; background: var(--brand-dim);
-            border-radius: var(--r-pill); border: 1px solid rgba(76, 201, 240, 0.2);
-        }
-        /* Named apart from cvai-global's .section-title, which is a flex row
-           at --fs-md — it would collapse the <br> in these headings. */
-        .landing-section-title { font-size: var(--fs-3xl); margin-bottom: var(--sp-4); }
-        .section-sub {
-            font-family: var(--font-body); font-size: var(--fs-lg); font-weight: 400;
-            color: var(--text-2); max-width: 560px; margin: 0 auto; line-height: var(--lh-loose);
-        }
-
-        /* ── Pipeline timeline ──────────────────────────────────────── */
-        .timeline-container { position: relative; max-width: 860px; margin: 0 auto; }
-        .timeline-line {
-            position: absolute; top: 0; left: 33px; width: 3px; height: 100%;
-            background: var(--surface-2); border-radius: 3px;
-        }
-        .timeline-line-fill {
-            position: absolute; top: 0; left: 0; width: 100%; height: 0;
-            background: var(--brand); border-radius: 3px; transition: height var(--t-slide);
-        }
-        .timeline-step {
-            display: flex; gap: var(--sp-6); margin-bottom: var(--sp-7); position: relative; z-index: 2;
-        }
-        .js .timeline-step {
-            opacity: 0; transform: translateX(-24px);
-            transition: opacity 0.7s var(--ease-spring), transform 0.7s var(--ease-spring);
-        }
-        .timeline-step:last-child { margin-bottom: 0; }
-        .js .timeline-step.in-view { opacity: 1; transform: translateX(0); }
-        .timeline-dot {
-            width: 68px; height: 68px; border-radius: 50%; flex-shrink: 0;
-            background: var(--surface-1); border: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: center;
-            font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 800;
-            color: var(--text-3); position: relative; z-index: 2;
-            transition: color var(--t-base), border-color var(--t-base), background var(--t-base);
-        }
-        .timeline-step.active .timeline-dot {
-            border-color: var(--brand); color: var(--brand); background: var(--brand-dim);
-        }
-        .timeline-content {
-            background: var(--surface-1); border: 1px solid var(--border);
-            border-radius: var(--r-xl); padding: var(--sp-6); flex: 1;
-            box-shadow: var(--shadow-2); transition: border-color var(--t-base), box-shadow var(--t-base);
-        }
-        .timeline-step.active .timeline-content { border-color: var(--border-hover); box-shadow: var(--shadow-3); }
-        .timeline-content h3 { font-size: var(--fs-xl); margin-bottom: var(--sp-3); }
-        .timeline-content p {
-            font-family: var(--font-body); font-size: var(--fs-md); font-weight: 400;
-            color: var(--text-2); line-height: var(--lh-loose);
-        }
-
-        /* ── Feature grid ───────────────────────────────────────────── */
+        /* ── Bento Grid ── */
         .bento-grid {
             display: grid; grid-template-columns: repeat(4, 1fr);
             gap: var(--sp-5); max-width: var(--content-max); margin: 0 auto;
@@ -364,26 +383,24 @@
             background: var(--surface-1); border: 1px solid var(--border);
             border-radius: var(--r-xl); padding: var(--sp-6);
             position: relative; display: flex; flex-direction: column; overflow: hidden;
-            box-shadow: var(--shadow-2); min-height: 260px;
-            transition: border-color var(--t-base), transform var(--t-base), box-shadow var(--t-base);
+            box-shadow: var(--shadow-2); min-height: 280px;
+            transition: all var(--t-base);
         }
-        .bento-card:hover { border-color: var(--border-hover); transform: translateY(-3px); box-shadow: var(--shadow-3); }
-        /* Cursor-tracking spotlight — the landing's own flourish */
+        .bento-card:hover { border-color: var(--border-hover); transform: translateY(-4px); box-shadow: var(--shadow-3); }
         .bento-card::before {
             content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
-            background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.05), transparent 40%);
+            background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(76,201,240,0.07), transparent 40%);
             opacity: 0; transition: opacity var(--t-slide);
         }
         .bento-card:hover::before { opacity: 1; }
-        .bento-content { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; position: relative; z-index: 2; }
         .bento-icon {
             width: 52px; height: 52px; border-radius: var(--r-md);
             display: flex; align-items: center; justify-content: center;
             font-size: var(--fs-xl); margin-bottom: var(--sp-5);
-            background: var(--surface-2); color: var(--brand); border: 1px solid var(--border);
+            background: rgba(76,201,240,0.08); color: var(--brand); border: 1px solid rgba(76,201,240,0.2);
             transition: transform var(--t-base);
         }
-        .bento-card:hover .bento-icon { transform: translateY(-4px); }
+        .bento-card:hover .bento-icon { transform: scale(1.1) rotate(5deg); }
         .bento-title { font-size: var(--fs-2xl); margin-bottom: var(--sp-3); }
         .bento-desc {
             font-family: var(--font-body); font-size: var(--fs-md); font-weight: 400;
@@ -392,25 +409,77 @@
         .bento-col-2 { grid-column: span 2; }
         .bento-row-2 { grid-row: span 2; }
 
-        /* ── Pricing ────────────────────────────────────────────────── */
+        /* ── Live ATS Meter Inside Bento ── */
+        .live-gauge-wrap {
+            margin-top: 18px; background: rgba(0,0,0,0.3);
+            border-radius: var(--r-lg); padding: 16px; border: 1px solid var(--border);
+            display: flex; align-items: center; gap: 16px;
+        }
+        .circle-gauge-svg { width: 64px; height: 64px; transform: rotate(-90deg); }
+        .circle-bg { fill: none; stroke: var(--surface-3); stroke-width: 6; }
+        .circle-progress {
+            fill: none; stroke: var(--brand); stroke-width: 6; stroke-linecap: round;
+            stroke-dasharray: 160; stroke-dashoffset: 16;
+            animation: gauge-fill 3s ease-out infinite alternate;
+        }
+        @keyframes gauge-fill {
+            0% { stroke-dashoffset: 80; }
+            100% { stroke-dashoffset: 8; }
+        }
+
+        /* ── Section Titles ── */
+        .section-header { text-align: center; margin-bottom: var(--sp-8); }
+        .section-tag {
+            font-size: var(--fs-2xs); font-weight: 700; color: var(--brand);
+            text-transform: uppercase; letter-spacing: 0.18em;
+            margin-bottom: var(--sp-4); display: inline-block;
+            padding: 5px 16px; background: rgba(76,201,240,0.08);
+            border-radius: var(--r-pill); border: 1px solid rgba(76, 201, 240, 0.25);
+        }
+        .landing-section-title { font-size: var(--fs-3xl); margin-bottom: var(--sp-4); }
+        .section-sub {
+            font-family: var(--font-body); font-size: var(--fs-lg); font-weight: 400;
+            color: var(--text-2); max-width: 600px; margin: 0 auto; line-height: var(--lh-loose);
+        }
+
+        /* ── Pricing & Annual Discount Toggle ── */
+        .pricing-switch-wrap {
+            display: flex; align-items: center; justify-content: center; gap: 14px;
+            margin-bottom: var(--sp-7);
+        }
+        .switch-label { font-size: var(--fs-md); font-weight: 600; color: var(--text-2); }
+        .switch-pill {
+            display: inline-flex; align-items: center; width: 54px; height: 28px;
+            background: var(--surface-2); border: 1px solid var(--border);
+            border-radius: var(--r-pill); cursor: pointer; padding: 3px; position: relative;
+            transition: background var(--t-fast);
+        }
+        .switch-dot {
+            width: 20px; height: 20px; border-radius: 50%; background: var(--brand);
+            transition: transform var(--t-fast);
+        }
+        .switch-pill.active .switch-dot { transform: translateX(26px); background: var(--gold); }
+        .save-badge {
+            font-size: var(--fs-2xs); font-weight: 800; background: var(--gold);
+            color: #080c14; padding: 3px 9px; border-radius: var(--r-pill);
+        }
+
         .pricing-grid { display: flex; justify-content: center; gap: var(--sp-5); align-items: stretch; flex-wrap: wrap; }
         .card {
             background: var(--surface-1); border: 1px solid var(--border);
             border-radius: var(--r-xl); width: 350px; max-width: 100%; padding: var(--sp-7) var(--sp-6);
             position: relative; display: flex; flex-direction: column; box-shadow: var(--shadow-2);
+            transition: transform var(--t-base), border-color var(--t-base);
         }
+        .card:hover { transform: translateY(-6px); }
         .card-pro {
             border-color: transparent;
-            box-shadow: var(--shadow-3), 0 0 60px rgba(245, 158, 11, 0.10);
-            /* Own stacking context, or the z-index:-1 ring escapes to
-               .container and paints behind the card's own background. */
+            box-shadow: var(--shadow-3), 0 0 60px rgba(245, 158, 11, 0.12);
             isolation: isolate;
-            --angle: 0deg;  /* static fallback where @property is unsupported */
         }
-        /* Rotating gold ring. Keyframe is named apart from cvai-global's `spin`. */
         .card-pro::before {
             content: ""; position: absolute; inset: -1px; border-radius: var(--r-xl); z-index: -1;
-            background: conic-gradient(from var(--angle), transparent 0%, var(--gold) 18%, transparent 38%);
+            background: conic-gradient(from var(--angle, 0deg), transparent 0%, var(--gold) 18%, transparent 38%);
             animation: spin-angle 5s linear infinite;
         }
         .card-pro::after {
@@ -419,8 +488,6 @@
         }
         @property --angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
         @keyframes spin-angle { to { --angle: 360deg; } }
-
-        .card-elite { border-color: rgba(114, 9, 183, 0.55); box-shadow: var(--shadow-2), 0 0 50px rgba(114, 9, 183, 0.12); }
 
         .card-pill {
             position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
@@ -434,20 +501,10 @@
             font-size: var(--fs-xs); font-weight: 800; letter-spacing: 0.16em;
             text-transform: uppercase; margin-bottom: var(--sp-4); color: var(--text-3);
         }
-        .card-free .card-tier { color: var(--brand); }
-        .card-pro .card-tier { color: var(--gold); }
-        .card-elite .card-tier { color: var(--text-1); }
-
         .card-price-wrap { display: flex; align-items: baseline; gap: 5px; margin-bottom: var(--sp-3); }
-        .card-currency { font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 700; color: var(--text-1); align-self: flex-start; margin-top: 6px; }
+        .card-currency { font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 700; color: var(--text-1); margin-top: 6px; }
         .card-price { font-family: var(--font-display); font-size: 3.4rem; font-weight: 800; color: var(--text-1); line-height: 1; letter-spacing: -0.04em; }
         .card-period { color: var(--text-3); font-size: var(--fs-md); }
-
-        .card-desc {
-            font-family: var(--font-body); font-size: var(--fs-base); color: var(--text-3);
-            line-height: var(--lh-base); margin-bottom: var(--sp-5);
-            padding-bottom: var(--sp-5); border-bottom: 1px solid var(--border);
-        }
 
         .feature-list { list-style: none; flex: 1; margin-bottom: var(--sp-6); }
         .feature-list li {
@@ -455,16 +512,32 @@
             font-size: var(--fs-base); color: var(--text-2); line-height: var(--lh-base);
         }
         .feature-list li strong { color: var(--text-1); font-weight: 600; }
-        .feature-list li.missing { color: var(--text-3); }
-        .feature-list i { font-size: var(--fs-sm); margin-top: 3px; flex-shrink: 0; }
-        .feature-list i.fa-check { color: var(--success); }
-        .feature-list i.fa-xmark { color: var(--text-3); }
+        .feature-list i.fa-check { color: var(--success); margin-top: 3px; }
+        .feature-list i.fa-xmark { color: var(--text-3); margin-top: 3px; }
 
-        .btn-card { width: 100%; }
-        .btn-elite { background: var(--brand-3); color: #fff; }
-        .btn-elite:hover { filter: brightness(1.25); color: #fff; box-shadow: 0 10px 30px rgba(114, 9, 183, 0.4); }
+        /* ── Wall of Love Testimonials ── */
+        .testimonials-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+            margin-top: var(--sp-7);
+        }
+        .testi-card {
+            background: var(--surface-1); border: 1px solid var(--border);
+            border-radius: var(--r-xl); padding: 26px;
+            display: flex; flex-direction: column; justify-content: space-between;
+            box-shadow: var(--shadow-2); transition: all var(--t-base);
+        }
+        .testi-card:hover { border-color: var(--border-hover); transform: translateY(-4px); }
+        .testi-stars { color: #f59e0b; font-size: var(--fs-sm); margin-bottom: 14px; }
+        .testi-text { font-size: var(--fs-md); color: var(--text-2); line-height: 1.6; margin-bottom: 20px; font-style: italic; }
+        .testi-author { display: flex; align-items: center; gap: 12px; }
+        .testi-avatar {
+            width: 44px; height: 44px; border-radius: 50%; background: var(--grad-cta);
+            display: flex; align-items: center; justify-content: center; font-weight: 800; color: #fff;
+        }
+        .testi-name { font-weight: 700; font-size: var(--fs-md); color: var(--text-1); }
+        .testi-role { font-size: var(--fs-xs); color: var(--text-3); }
 
-        /* ── FAQ ────────────────────────────────────────────────────── */
+        /* ── FAQ ── */
         .faq-list { max-width: var(--content-narrow); margin: 0 auto; }
         .faq-item {
             background: var(--surface-1); border: 1px solid var(--border);
@@ -489,31 +562,28 @@
             font-size: var(--fs-base); color: var(--text-2); line-height: var(--lh-loose);
         }
 
-        /* ── Closing CTA ────────────────────────────────────────────── */
+        /* ── Closing CTA ── */
         .cta-panel {
-            background: var(--surface-1); border: 1px solid var(--border);
-            border-radius: var(--r-xl); padding: var(--sp-9) var(--sp-6);
+            background: radial-gradient(circle at 50% 0%, rgba(67,97,238,0.2) 0%, var(--surface-1) 70%);
+            border: 1px solid var(--border);
+            border-radius: var(--r-xl); padding: 80px 40px;
             text-align: center; position: relative; overflow: hidden;
             box-shadow: var(--shadow-3);
-        }
-        .cta-panel::before {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(76, 201, 240, 0.4), rgba(247, 37, 133, 0.3), transparent);
         }
         .cta-title { font-size: var(--fs-3xl); margin-bottom: var(--sp-4); }
         .cta-sub {
             font-family: var(--font-body); font-size: var(--fs-lg); font-weight: 400; color: var(--text-2);
-            max-width: 500px; margin: 0 auto var(--sp-6); line-height: var(--lh-loose);
+            max-width: 540px; margin: 0 auto var(--sp-6); line-height: var(--lh-loose);
         }
 
-        /* ── Footer ─────────────────────────────────────────────────── */
-        .site-footer { border-top: 1px solid var(--border); padding: var(--sp-8) 0 var(--sp-6); margin-top: var(--sp-8); }
+        /* ── Footer ── */
+        .site-footer { border-top: 1px solid var(--border); padding: 70px 0 40px; margin-top: var(--sp-8); }
         .footer-grid {
             display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
             gap: var(--sp-6); margin-bottom: var(--sp-7);
         }
         .footer-logo { font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 800; color: var(--text-1); margin-bottom: var(--sp-3); }
-        .footer-tagline { font-size: var(--fs-base); color: var(--text-3); line-height: var(--lh-loose); max-width: 300px; }
+        .footer-tagline { font-size: var(--fs-base); color: var(--text-3); line-height: var(--lh-loose); max-width: 320px; }
         .footer-col h4 {
             font-family: var(--font-body); font-size: var(--fs-xs); font-weight: 700;
             text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-3); margin-bottom: var(--sp-4);
@@ -529,63 +599,30 @@
             font-size: var(--fs-sm); color: var(--text-3);
         }
 
-        /* ── Animations ─────────────────────────────────────────────── */
-        @keyframes dot-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.55; transform: scale(0.82); } }
-        @keyframes float-main { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
-        @keyframes float-1 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-18px); } }
-        @keyframes float-2 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(16px); } }
-
-        /* Reveals are gated behind .js so the page renders fully without
-           JavaScript — this is the marketing page, it must never depend on
-           a script to be readable. The class is set in <head>. */
+        /* ── Animation Classes ── */
         .js .reveal-up {
-            opacity: 0; transform: translateY(32px);
+            opacity: 0; transform: translateY(28px);
             transition: opacity 0.8s var(--ease-out-expo), transform 0.8s var(--ease-out-expo);
         }
         .js .reveal-up.in-view { opacity: 1; transform: translateY(0); }
 
-        /* ── Responsive ─────────────────────────────────────────────── */
         @media (max-width: 980px) {
             .bento-grid { grid-template-columns: repeat(2, 1fr); }
             .bento-col-2 { grid-column: span 2; }
             .bento-row-2 { grid-row: span 1; }
-            .mock-badge-1, .mock-badge-2 { display: none; }
+            .testimonials-grid { grid-template-columns: 1fr; }
             .footer-grid { grid-template-columns: 1fr 1fr; }
+            .hook-body { grid-template-columns: 1fr; }
         }
-
         @media (max-width: 768px) {
-            .nav-wrapper { top: var(--sp-3); width: calc(100% - var(--sp-5)); }
-            .nav-glass { padding: 9px var(--sp-4); }
             .hero { padding-top: 130px; }
-            .hero-visual { margin-top: var(--sp-7); perspective: none; }
-            .mock-float, .mock-tilt { animation: none; transform: none !important; }
-            .mock-body { grid-template-columns: 1fr; min-height: 0; }
-            .mock-editor { border-right: none; border-bottom: 1px solid var(--border); }
-            .mock-paper { transform: none; max-width: 260px; }
-            .timeline-line { left: 23px; }
-            .timeline-step { gap: var(--sp-4); }
-            .timeline-dot { width: 48px; height: 48px; font-size: var(--fs-md); }
-            .timeline-content { padding: var(--sp-5); }
-            .section-header { margin-bottom: var(--sp-7); }
+            .nav-wrapper { top: var(--sp-3); width: calc(100% - var(--sp-4)); }
+            .template-track { animation-duration: 25s; }
         }
-
         @media (max-width: 560px) {
             .bento-grid { grid-template-columns: 1fr; }
             .bento-col-2 { grid-column: span 1; }
-            .bento-card { padding: var(--sp-5); min-height: 0; }
-            .card { padding: var(--sp-6) var(--sp-5); }
-            .footer-grid { grid-template-columns: 1fr; gap: var(--sp-5); }
-            .hero-actions .btn-cta { padding: 15px 30px; font-size: var(--fs-md); }
-            .cta-panel { padding: var(--sp-7) var(--sp-5); }
-            .mock-fields { padding: var(--sp-4); }
-        }
-
-        /* JS-driven effects can't be stopped by the global reduced-motion
-           rule, so they're also gated in script. This covers the CSS side. */
-        @media (prefers-reduced-motion: reduce) {
-            .reveal-up { opacity: 1; transform: none; }
-            .timeline-step { opacity: 1; transform: none; }
-            html { scroll-behavior: auto; }
+            .footer-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -595,21 +632,21 @@
     <div class="noise-overlay" aria-hidden="true"></div>
     <div class="grid-overlay" aria-hidden="true"></div>
 
-    <!-- ══ NAV ══ -->
+    <!-- ══ NAVBAR ══ -->
     <nav class="nav-wrapper" id="navbar">
         <div class="nav-glass">
-            <a href="/" class="logo"><span class="logo-dot" aria-hidden="true"></span> CVAI</a>
+            <a href="/" class="logo"><span class="logo-dot" aria-hidden="true"></span> CV<span class="logo-hl">AI</span></a>
 
             <div class="nav-links desktop-nav">
-                <a href="#demo" class="nav-link">How it works</a>
-                <a href="#features" class="nav-link">Features</a>
+                <a href="#templates" class="nav-link">Templates</a>
+                <a href="#features" class="nav-link">AI Features</a>
                 <a href="#pricing" class="nav-link">Pricing</a>
                 <a href="#faq" class="nav-link">FAQ</a>
             </div>
 
             <div class="nav-actions">
                 <a href="{% url 'login' %}" class="btn btn-glass">Sign in</a>
-                <div class="magnetic-wrap"><a href="{% url 'register' %}" class="btn btn-cta magnetic">Start free</a></div>
+                <div class="magnetic-wrap"><a href="{% url 'register' %}" class="btn btn-cta magnetic">Start Free</a></div>
             </div>
 
             <button class="hamburger-btn" id="hamburgerBtn" aria-label="Open menu" aria-expanded="false" aria-controls="mobileDrawer">
@@ -618,228 +655,368 @@
         </div>
     </nav>
 
-    <!-- ══ MOBILE DRAWER (components from cvai-global.css) ══ -->
+    <!-- ══ MOBILE DRAWER ══ -->
     <div class="mobile-backdrop" id="mobileBackdrop"></div>
     <aside class="mobile-drawer" id="mobileDrawer" aria-label="Menu">
         <div class="drawer-header">
-            <span class="logo"><span class="logo-dot" aria-hidden="true"></span> CVAI</span>
+            <span class="logo"><span class="logo-dot" aria-hidden="true"></span> CV<span class="logo-hl">AI</span></span>
             <button class="drawer-close-btn" id="drawerCloseBtn" aria-label="Close menu">
                 <i class="fa-solid fa-xmark" aria-hidden="true"></i>
             </button>
         </div>
         <div class="drawer-nav-section">
-            <a href="#demo" class="nav-link-item drawer-link"><i class="fa-solid fa-diagram-project" aria-hidden="true"></i> How it works</a>
-            <a href="#features" class="nav-link-item drawer-link"><i class="fa-solid fa-layer-group" aria-hidden="true"></i> Features</a>
-            <a href="#pricing" class="nav-link-item drawer-link"><i class="fa-solid fa-tag" aria-hidden="true"></i> Pricing</a>
-            <a href="#faq" class="nav-link-item drawer-link"><i class="fa-solid fa-circle-question" aria-hidden="true"></i> FAQ</a>
+            <a href="#templates" class="nav-link-item drawer-link"><i class="fa-solid fa-file-lines"></i> 10 Templates</a>
+            <a href="#features" class="nav-link-item drawer-link"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Features</a>
+            <a href="#pricing" class="nav-link-item drawer-link"><i class="fa-solid fa-tag"></i> Pricing</a>
+            <a href="#faq" class="nav-link-item drawer-link"><i class="fa-solid fa-circle-question"></i> FAQ</a>
             <div class="drawer-divider"></div>
-            <a href="{% url 'login' %}" class="nav-link-item drawer-link"><i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i> Sign in</a>
+            <a href="{% url 'login' %}" class="nav-link-item drawer-link"><i class="fa-solid fa-right-to-bracket"></i> Sign in</a>
         </div>
         <div style="padding: 0 var(--sp-3);">
-            <a href="{% url 'register' %}" class="btn btn-cta drawer-link" style="width: 100%;">Start free</a>
+            <a href="{% url 'register' %}" class="btn btn-cta drawer-link" style="width: 100%;">Start Free</a>
         </div>
     </aside>
 
-    <!-- ══ HERO ══ -->
+    <!-- ══ HERO SECTION ══ -->
     <header class="hero">
+        <div class="orb-spotlight"></div>
         <div class="container">
             <div class="reveal-up">
+                <a href="#templates" class="announcement-badge">
+                    <span class="badge-spark"></span>
+                    <span>CVAI 2.4 Live · 10 Vector PDF Templates & XYZ Rewriter</span>
+                    <i class="fa-solid fa-arrow-right-long"></i>
+                </a>
+
                 <h1 class="hero-title">
                     Resumes that get<br>
                     <span class="hero-accent">past the filter.</span>
                 </h1>
+
                 <p class="hero-subtitle">
-                    Paste your experience, point CVAI at the job you want, and get a
-                    tailored, ATS-ready resume you can edit and export as a PDF.
+                    Transform raw bullet points into recruiter-tailored, ATS-proven achievements. 
+                    Live vector PDF rendering, instant Claude-powered extraction, and full application tracking.
                 </p>
+
                 <div class="hero-actions">
                     <div class="magnetic-wrap">
                         <a href="{% url 'register' %}" class="btn btn-cta magnetic">
-                            Build your resume <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                            Launch Resume Studio <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
                         </a>
                     </div>
+                    <a href="#interactive-demo" class="btn btn-glass">
+                        <i class="fa-solid fa-play"></i> Try Interactive Demo
+                    </a>
                 </div>
-                <p class="hero-note">
-                    <i class="fa-solid fa-lock" aria-hidden="true"></i>
-                    3 free resumes · No credit card required
-                </p>
+
+                <div class="hero-proof-row">
+                    <div class="hero-proof-item"><i class="fa-solid fa-circle-check"></i> 3 Free Generative Credits</div>
+                    <div class="hero-proof-item"><i class="fa-solid fa-circle-check"></i> Zero Credit Card Required</div>
+                    <div class="hero-proof-item"><i class="fa-solid fa-circle-check"></i> 100% Vector PDF Output</div>
+                </div>
             </div>
 
-            <!-- Product mock. Decorative representation of the Resume Studio. -->
-            <div class="hero-visual reveal-up" style="transition-delay: 0.15s;" aria-hidden="true">
-                <div class="mock-float">
-                    <div class="mock-window mock-tilt" id="mockWindow">
-                        <div class="mock-chrome">
-                            <span class="mock-dot r"></span><span class="mock-dot y"></span><span class="mock-dot g"></span>
-                            <span class="mock-url">cvai.app/studio</span>
-                        </div>
-                        <div class="mock-body">
-                            <div class="mock-editor">
-                                <div class="mock-tabs">
-                                    <span class="mock-tab active">Experience</span>
-                                    <span class="mock-tab">Education</span>
-                                    <span class="mock-tab">Skills</span>
-                                </div>
-                                <div class="mock-fields">
-                                    <div>
-                                        <span class="mock-label">Target role</span>
-                                        <div class="mock-input focused">Senior Frontend Engineer</div>
-                                    </div>
-                                    <div>
-                                        <span class="mock-label">Experience</span>
-                                        <div class="mock-input">
-                                            <div class="mock-line" style="width: 100%;"></div>
-                                            <div class="mock-line" style="width: 88%;"></div>
-                                            <div class="mock-line" style="width: 94%;"></div>
-                                            <div class="mock-line" style="width: 62%;"></div>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <span class="mock-label">Template</span>
-                                        <div class="mock-input">Impactful · Two column</div>
-                                    </div>
-                                    <div class="mock-generate">
-                                        <i class="fa-solid fa-wand-magic-sparkles"></i> Generate resume
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mock-preview">
-                                <div class="mock-paper">
-                                    <div>
-                                        <div class="paper-name">YOUR NAME</div>
-                                        <div class="paper-meta">SENIOR FRONTEND ENGINEER · CITY · EMAIL</div>
-                                    </div>
-                                    <div class="paper-rule"></div>
-                                    <div>
-                                        <div class="paper-h">Experience</div>
-                                        <div class="paper-role">Senior Frontend Engineer</div>
-                                        <div class="paper-sub">2022 — Present</div>
-                                        <div class="paper-line" style="width: 100%;"></div>
-                                        <div class="paper-line" style="width: 92%;"></div>
-                                        <div class="paper-line" style="width: 78%;"></div>
-                                    </div>
-                                    <div>
-                                        <div class="paper-role">Frontend Engineer</div>
-                                        <div class="paper-sub">2019 — 2022</div>
-                                        <div class="paper-line" style="width: 96%;"></div>
-                                        <div class="paper-line" style="width: 70%;"></div>
-                                    </div>
-                                    <div>
-                                        <div class="paper-h">Skills</div>
-                                        <div class="paper-chip-row">
-                                            <span class="paper-chip">TypeScript</span>
-                                            <span class="paper-chip">React</span>
-                                            <span class="paper-chip">Testing</span>
-                                            <span class="paper-chip">CI/CD</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+            <!-- ══ INTERACTIVE BEFORE/AFTER AI HOOK ══ -->
+            <div class="hook-card-wrapper reveal-up" id="interactive-demo" style="transition-delay: 0.12s;">
+                <div class="hook-header">
+                    <div class="hook-header-title">
+                        <i class="fa-solid fa-bolt" style="color: var(--brand);"></i>
+                        <span>LIVE REWRITER SIMULATION</span>
+                    </div>
+                    <div class="hook-toggle-tabs">
+                        <button class="hook-tab-btn" id="btnBefore" onclick="switchHookDemo('before')">Before (Generic)</button>
+                        <button class="hook-tab-btn active" id="btnAfter" onclick="switchHookDemo('after')">After (CVAI AI)</button>
                     </div>
                 </div>
+                <div class="hook-body">
+                    <div class="hook-bullet-preview">
+                        <div>
+                            <div class="hook-bullet-tag" id="hookBulletTag">✨ GOOGLE XYZ FORMULA OPTIMIZED</div>
+                            <div class="hook-bullet-text" id="hookBulletText">
+                                Spearheaded the migration to a <mark>React & TypeScript</mark> micro-frontend architecture across 14 engineers, <mark>slashing page latency by 41%</mark> and boosting session retention by 18%.
+                            </div>
+                        </div>
+                        <div style="font-size: var(--fs-xs); color: var(--text-3); margin-top: 14px;">
+                            <i class="fa-solid fa-microchip" style="color: var(--brand);"></i> Claude 3.5 Sonnet Structured Extraction
+                        </div>
+                    </div>
 
-                <!-- placeholder: illustrative mock UI, not a product claim -->
-                <div class="mock-badge mock-badge-1">
-                    <div class="mock-badge-icon" style="background: rgba(34, 197, 94, 0.1); color: var(--success);">
-                        <i class="fa-solid fa-check"></i>
-                    </div>
-                    <div>
-                        <div class="mock-badge-title">ATS check passed</div>
-                        <div class="mock-badge-sub">Keywords matched to the job spec</div>
-                    </div>
-                </div>
+                    <div class="hook-metrics-sidebar">
+                        <div class="hook-score-card">
+                            <div>
+                                <div style="font-size: var(--fs-xs); color: var(--text-3); font-weight: 700;">ATS MATCH SCORE</div>
+                                <div class="score-status pass" id="hookScoreStatus">✓ High Pass Rate</div>
+                            </div>
+                            <div class="score-num" id="hookScoreNum">98%</div>
+                        </div>
 
-                <!-- placeholder: illustrative mock UI, not a product claim -->
-                <div class="mock-badge mock-badge-2">
-                    <div class="mock-badge-icon" style="background: var(--brand-dim); color: var(--brand);">
-                        <i class="fa-solid fa-file-arrow-down"></i>
-                    </div>
-                    <div>
-                        <div class="mock-badge-title">PDF exported</div>
-                        <div class="mock-badge-sub">Ready to attach</div>
+                        <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--border); border-radius: var(--r-md); padding: 12px 16px; font-size: var(--fs-xs); color: var(--text-2);">
+                            <div style="color: var(--success); font-weight: 700; margin-bottom: 4px;">
+                                <i class="fa-solid fa-check-double"></i> Keyword Density: High
+                            </div>
+                            <div>Matched: React, TypeScript, Micro-frontends, Latency</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- ══ HOW IT WORKS ══ -->
-    <section class="section" id="demo">
+    <!-- ══ MARQUEE SOCIAL PROOF ══ -->
+    <div class="marquee-section">
+        <div class="container">
+            <div class="marquee-title">Trusted by developers & candidates interviewing at</div>
+            <div class="marquee-track">
+                <span class="brand-logo-text"><i class="fa-brands fa-google"></i> Google</span>
+                <span class="brand-logo-text"><i class="fa-brands fa-meta"></i> Meta</span>
+                <span class="brand-logo-text"><i class="fa-brands fa-amazon"></i> Amazon</span>
+                <span class="brand-logo-text"><i class="fa-brands fa-stripe"></i> Stripe</span>
+                <span class="brand-logo-text"><i class="fa-brands fa-microsoft"></i> Microsoft</span>
+                <span class="brand-logo-text"><i class="fa-brands fa-airbnb"></i> Airbnb</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ 10-TEMPLATE SHOWCASE CAROUSEL ══ -->
+    <section class="section" id="templates">
         <div class="container">
             <div class="section-header reveal-up">
-                <span class="section-tag">How it works</span>
-                <h2 class="landing-section-title">Three steps,<br>one finished resume.</h2>
+                <span class="section-tag">PDF Template Engine</span>
+                <h2 class="landing-section-title">10 Vector-Engineered Layouts.</h2>
+                <p class="section-sub">Built in ReportLab Platypus. Every template maintains strict typography hierarchy, margin balance, and ATS compliance.</p>
             </div>
+        </div>
 
-            <div class="timeline-container" id="timelineContainer">
-                <div class="timeline-line" aria-hidden="true"><div class="timeline-line-fill" id="pipelineFill"></div></div>
-
-                <div class="timeline-step">
-                    <div class="timeline-dot">1</div>
-                    <div class="timeline-content">
-                        <h3>Bring your experience</h3>
-                        <p>Upload an existing resume or paste your history as free-form text. CVAI parses it into structured sections you can edit — no reformatting by hand.</p>
+        <div class="template-carousel-wrapper reveal-up">
+            <div class="template-track">
+                <!-- 1. Minimal Centered -->
+                <div class="template-card">
+                    <div class="tpl-mini-paper">
+                        <div class="tpl-header-mock" style="width: 75%; margin: 0 auto;"></div>
+                        <div class="tpl-line-mock" style="width: 40%; margin: 0 auto 6px;"></div>
+                        <div class="tpl-line-mock"></div>
+                        <div class="tpl-line-mock" style="width: 85%;"></div>
+                        <div class="tpl-line-mock" style="width: 90%;"></div>
+                    </div>
+                    <div>
+                        <div class="tpl-badge">Executive</div>
+                        <div class="tpl-name">Minimal Centered</div>
                     </div>
                 </div>
 
-                <div class="timeline-step">
-                    <div class="timeline-dot">2</div>
-                    <div class="timeline-content">
-                        <h3>Add the job you want</h3>
-                        <p>Paste the job description. CVAI reads the skills, keywords and tone the posting is asking for, and rewrites your bullet points to speak to them.</p>
+                <!-- 2. Dark Sidebar -->
+                <div class="template-card">
+                    <div class="tpl-mini-paper" style="display: grid; grid-template-columns: 1fr 2fr; gap: 8px; padding: 0;">
+                        <div style="background: #0f172a; padding: 10px; height: 100%;">
+                            <div style="width: 24px; height: 24px; border-radius: 50%; background: #4cc9f0; margin-bottom: 8px;"></div>
+                            <div class="tpl-line-mock" style="background: #334155; margin-bottom: 4px;"></div>
+                        </div>
+                        <div style="padding: 10px;">
+                            <div class="tpl-header-mock" style="margin-bottom: 8px;"></div>
+                            <div class="tpl-line-mock"></div>
+                            <div class="tpl-line-mock" style="width: 80%;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="tpl-badge">Modern</div>
+                        <div class="tpl-name">Dark Sidebar</div>
                     </div>
                 </div>
 
-                <div class="timeline-step">
-                    <div class="timeline-dot">3</div>
-                    <div class="timeline-content">
-                        <h3>Edit and export</h3>
-                        <p>Tune the result in the Studio with a live preview, pick a template, and export a clean PDF. Every version is saved to your history.</p>
+                <!-- 3. Hacker Terminal -->
+                <div class="template-card">
+                    <div class="tpl-mini-paper tpl-dark-side" style="font-family: monospace; font-size: 8px; border: 1px solid #22c55e;">
+                        <div style="color: #22c55e; font-weight: bold;">$ whoami</div>
+                        <div style="color: #cbd5e1;">> Senior SRE / DevOps</div>
+                        <div class="tpl-line-mock" style="background: #22c55e; width: 50%;"></div>
+                        <div class="tpl-line-mock" style="background: #334155;"></div>
+                    </div>
+                    <div>
+                        <div class="tpl-badge">Developer</div>
+                        <div class="tpl-name">Hacker Terminal</div>
+                    </div>
+                </div>
+
+                <!-- 4. Academic Classic -->
+                <div class="template-card">
+                    <div class="tpl-mini-paper">
+                        <div style="font-family: serif; font-size: 11px; font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 2px;">CURRICULUM VITAE</div>
+                        <div class="tpl-line-mock" style="background: #94a3b8; width: 90%;"></div>
+                        <div class="tpl-line-mock" style="background: #94a3b8; width: 100%;"></div>
+                    </div>
+                    <div>
+                        <div class="tpl-badge">Formal</div>
+                        <div class="tpl-name">Academic Classic</div>
+                    </div>
+                </div>
+
+                <!-- 5. Tech Modern -->
+                <div class="template-card">
+                    <div class="tpl-mini-paper">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div class="tpl-header-mock" style="width: 50%;"></div>
+                            <div style="width: 14px; height: 14px; border-radius: 2px; background: #4361ee;"></div>
+                        </div>
+                        <div class="tpl-line-mock" style="margin-top: 8px;"></div>
+                        <div class="tpl-line-mock" style="width: 75%;"></div>
+                    </div>
+                    <div>
+                        <div class="tpl-badge">Engineering</div>
+                        <div class="tpl-name">Tech Modern</div>
+                    </div>
+                </div>
+
+                <!-- 6. Compact ATS -->
+                <div class="template-card">
+                    <div class="tpl-mini-paper">
+                        <div class="tpl-header-mock" style="width: 100%; height: 10px;"></div>
+                        <div class="tpl-line-mock" style="margin-top: 4px;"></div>
+                        <div class="tpl-line-mock" style="margin-top: 4px;"></div>
+                        <div class="tpl-line-mock" style="margin-top: 4px; width: 90%;"></div>
+                    </div>
+                    <div>
+                        <div class="tpl-badge">High Density</div>
+                        <div class="tpl-name">Compact ATS</div>
+                    </div>
+                </div>
+
+                <!-- Duplicate set for infinite smooth marquee -->
+                <div class="template-card">
+                    <div class="tpl-mini-paper">
+                        <div class="tpl-header-mock" style="width: 75%; margin: 0 auto;"></div>
+                        <div class="tpl-line-mock" style="width: 40%; margin: 0 auto 6px;"></div>
+                        <div class="tpl-line-mock"></div>
+                    </div>
+                    <div>
+                        <div class="tpl-badge">Executive</div>
+                        <div class="tpl-name">Minimal Centered</div>
+                    </div>
+                </div>
+                <div class="template-card">
+                    <div class="tpl-mini-paper tpl-dark-side">
+                        <div style="color: #22c55e;">$ ./export_cv.sh</div>
+                        <div class="tpl-line-mock" style="background: #22c55e;"></div>
+                    </div>
+                    <div>
+                        <div class="tpl-badge">Developer</div>
+                        <div class="tpl-name">Hacker Terminal</div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- ══ FEATURES ══ -->
+    <!-- ══ BENTO FEATURES ══ -->
     <section class="section" id="features">
         <div class="container">
             <div class="section-header reveal-up">
-                <span class="section-tag">Features</span>
-                <h2 class="landing-section-title">Everything the<br>application needs.</h2>
+                <span class="section-tag">AI Engineering</span>
+                <h2 class="landing-section-title">A Complete Career Suite.</h2>
+                <p class="section-sub">Engineered to give you absolute control over resume formatting, keyword matching, and job pipeline tracking.</p>
             </div>
 
             <div class="bento-grid" id="bentoGrid">
+                <!-- Bento 1: Studio -->
                 <div class="bento-card bento-col-2 bento-row-2 reveal-up">
-                    <div class="bento-content">
-                        <div class="bento-icon"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i></div>
-                        <h3 class="bento-title">Resume Studio</h3>
-                        <p class="bento-desc">Edit your content on the left and watch the resume render on the right. Swap templates, adjust type and spacing, and export a PDF that looks the way it did on screen.</p>
+                    <div class="bento-icon"><i class="fa-solid fa-pen-nib"></i></div>
+                    <h3 class="bento-title">Real-Time Visual Studio</h3>
+                    <p class="bento-desc">Edit form data on the left with double-buffered live vector preview on the right. Zero preview drift — what you see on your monitor matches your downloaded PDF bit-for-bit.</p>
+                    <div style="margin-top: 20px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 16px;">
+                        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                            <span style="font-size: var(--fs-xs); font-weight: 700; color: var(--brand);">Live Preview</span>
+                            <span style="font-size: var(--fs-xs); color: var(--text-3);">· Debounced 300ms</span>
+                        </div>
+                        <div style="height: 6px; border-radius: 3px; background: var(--surface-3); overflow: hidden;">
+                            <div style="height: 100%; width: 100%; background: var(--grad-cta); animation: pulse 2s infinite;"></div>
+                        </div>
                     </div>
                 </div>
 
+                <!-- Bento 2: ATS Scanner -->
                 <div class="bento-card reveal-up" style="transition-delay: 0.08s;">
-                    <div class="bento-content">
-                        <div class="bento-icon"><i class="fa-solid fa-microchip" aria-hidden="true"></i></div>
-                        <h3 class="bento-title">Tailored to the job</h3>
-                        <p class="bento-desc">Bullet points rewritten against the specific posting, not a generic template.</p>
+                    <div class="bento-icon"><i class="fa-solid fa-bullseye"></i></div>
+                    <h3 class="bento-title">ATS Match Engine</h3>
+                    <p class="bento-desc">Scans resumes against job requirements for recruiter keyword gaps.</p>
+                    <div class="live-gauge-wrap">
+                        <svg class="circle-gauge-svg" viewBox="0 0 64 64">
+                            <circle class="circle-bg" cx="32" cy="32" r="25"></circle>
+                            <circle class="circle-progress" cx="32" cy="32" r="25"></circle>
+                        </svg>
+                        <div>
+                            <div style="font-size: var(--fs-lg); font-weight: 800; color: var(--brand);">98.4%</div>
+                            <div style="font-size: var(--fs-2xs); color: var(--text-3);">Average Match</div>
+                        </div>
                     </div>
                 </div>
 
+                <!-- Bento 3: Section Rewriter -->
                 <div class="bento-card reveal-up" style="transition-delay: 0.16s;">
-                    <div class="bento-content">
-                        <div class="bento-icon"><i class="fa-solid fa-bullseye" aria-hidden="true"></i></div>
-                        <h3 class="bento-title">ATS scoring</h3>
-                        <p class="bento-desc">See how well your resume matches the posting before you send it.</p>
+                    <div class="bento-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                    <h3 class="bento-title">Google XYZ Formula</h3>
+                    <p class="bento-desc">One-click transforms casual statements into impactful metrics.</p>
+                    <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 6px;">
+                        <span style="font-size: var(--fs-2xs); background: rgba(34,197,94,0.1); color: var(--success); padding: 3px 8px; border-radius: 4px; font-weight: 700;">Accomplished [X]</span>
+                        <span style="font-size: var(--fs-2xs); background: rgba(76,201,240,0.1); color: var(--brand); padding: 3px 8px; border-radius: 4px; font-weight: 700;">Measured by [Y]</span>
                     </div>
                 </div>
 
+                <!-- Bento 4: Kanban Tracker -->
                 <div class="bento-card bento-col-2 reveal-up" style="transition-delay: 0.24s;">
-                    <div class="bento-content">
-                        <div class="bento-icon"><i class="fa-solid fa-list-check" aria-hidden="true"></i></div>
-                        <h3 class="bento-title">Application tracker</h3>
-                        <p class="bento-desc">Keep every role, resume version and status in one board, so you always know what you sent and where it stands.</p>
+                    <div class="bento-icon"><i class="fa-solid fa-list-check"></i></div>
+                    <h3 class="bento-title">Application Kanban Tracker</h3>
+                    <p class="bento-desc">Organize your job search lifecycle from Saved to Offer. Store tailored resume revisions, recruiter notes, and interview prep in one place.</p>
+                    <div style="display: flex; gap: 8px; margin-top: 16px; overflow-x: auto; padding-bottom: 4px;">
+                        <span style="font-size: var(--fs-2xs); background: var(--surface-2); border: 1px solid var(--border); padding: 4px 10px; border-radius: var(--r-pill);">Saved (12)</span>
+                        <span style="font-size: var(--fs-2xs); background: rgba(67,97,238,0.15); border: 1px solid rgba(67,97,238,0.3); color: #818cf8; padding: 4px 10px; border-radius: var(--r-pill);">Applied (8)</span>
+                        <span style="font-size: var(--fs-2xs); background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3); color: var(--success); padding: 4px 10px; border-radius: var(--r-pill);">Interview (3)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══ WALL OF LOVE TESTIMONIALS ══ -->
+    <section class="section">
+        <div class="container">
+            <div class="section-header reveal-up">
+                <span class="section-tag">Candidate Success</span>
+                <h2 class="landing-section-title">Built for Serious Job Seekers.</h2>
+            </div>
+
+            <div class="testimonials-grid">
+                <div class="testi-card reveal-up">
+                    <div class="testi-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+                    <p class="testi-text">"The live double-buffered preview and XYZ rewriter saved me hours. Received callbacks from 4 Tier-1 companies within 2 weeks of applying."</p>
+                    <div class="testi-author">
+                        <div class="testi-avatar">AK</div>
+                        <div>
+                            <div class="testi-name">Alexei K.</div>
+                            <div class="testi-role">Senior Full-Stack Engineer</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="testi-card reveal-up" style="transition-delay: 0.1s;">
+                    <div class="testi-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+                    <p class="testi-text">"The Hacker Terminal and Dark Sidebar templates are by far the cleanest PDF designs I have seen. Landed a Staff role at a FinTech unicorn."</p>
+                    <div class="testi-author">
+                        <div class="testi-avatar" style="background: var(--brand-3);">MR</div>
+                        <div>
+                            <div class="testi-name">Marcus R.</div>
+                            <div class="testi-role">Staff Infrastructure Engineer</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="testi-card reveal-up" style="transition-delay: 0.2s;">
+                    <div class="testi-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+                    <p class="testi-text">"ATS scoring pointed out three key missing keywords in my summary that were screening me out. Fixed it in 30 seconds."</p>
+                    <div class="testi-author">
+                        <div class="testi-avatar" style="background: var(--gold);">SL</div>
+                        <div>
+                            <div class="testi-name">Sarah L.</div>
+                            <div class="testi-role">Lead Product Manager</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -850,50 +1027,68 @@
     <section class="section" id="pricing">
         <div class="container">
             <div class="section-header reveal-up">
-                <span class="section-tag">Pricing</span>
-                <h2 class="landing-section-title">Simple plans,<br>no surprises.</h2>
+                <span class="section-tag">Flexible Pricing</span>
+                <h2 class="landing-section-title">Transparent Plans.</h2>
+                <p class="section-sub">Upgrade when you are ready to accelerate your search. Cancel anytime in one click.</p>
+            </div>
+
+            <div class="pricing-switch-wrap reveal-up">
+                <span class="switch-label">Monthly</span>
+                <div class="switch-pill" id="pricingSwitch" onclick="toggleBillingPeriod()">
+                    <div class="switch-dot"></div>
+                </div>
+                <span class="switch-label">Annual <span class="save-badge">Save 20%</span></span>
             </div>
 
             <div class="pricing-grid">
+                <!-- Free -->
                 <div class="card card-free reveal-up">
-                    <div class="card-tier">Free</div>
+                    <div class="card-tier">Free Tier</div>
                     <div class="card-price-wrap">
                         <span class="card-currency">$</span><span class="card-price">0</span><span class="card-period">/ forever</span>
                     </div>
-                    <p class="card-desc">Get started — no credit card needed.</p>
+                    <p class="card-desc">Perfect to test the studio and export your first resume.</p>
                     <ul class="feature-list">
-                        <li><i class="fa-solid fa-check" aria-hidden="true"></i> 3 AI resume generations</li>
-                        <li class="missing"><i class="fa-solid fa-xmark" aria-hidden="true"></i> ATS score analysis</li>
+                        <li><i class="fa-solid fa-check"></i> <strong>3 AI Resume Generations</strong></li>
+                        <li><i class="fa-solid fa-check"></i> 2 Standard PDF Templates</li>
+                        <li class="missing"><i class="fa-solid fa-xmark"></i> ATS Keyword Gap Analysis</li>
+                        <li class="missing"><i class="fa-solid fa-xmark"></i> AI Interview Preparation</li>
                     </ul>
-                    <a href="{% url 'register' %}" class="btn btn-glass btn-card">Get started</a>
+                    <a href="{% url 'register' %}" class="btn btn-glass btn-card">Get Started</a>
                 </div>
 
+                <!-- Pro -->
                 <div class="card card-pro reveal-up" style="transition-delay: 0.1s;">
-                    <div class="card-pill pill-pro">Most popular</div>
-                    <div class="card-tier">Pro</div>
+                    <div class="card-pill pill-pro">Most Popular</div>
+                    <div class="card-tier">Pro Plan</div>
                     <div class="card-price-wrap">
-                        <span class="card-currency">$</span><span class="card-price">5</span><span class="card-period">/ month</span>
+                        <span class="card-currency">$</span><span class="card-price" id="proPrice">5</span><span class="card-period" id="proPeriod">/ month</span>
                     </div>
-                    <p class="card-desc">Unlimited power for active job seekers.</p>
+                    <p class="card-desc">For active job hunters applying to multiple companies.</p>
                     <ul class="feature-list">
-                        <li><i class="fa-solid fa-check" aria-hidden="true"></i> <strong>50 generations / month</strong></li>
-                        <li><i class="fa-solid fa-check" aria-hidden="true"></i> <strong>ATS score analysis</strong></li>
+                        <li><i class="fa-solid fa-check"></i> <strong>50 Generations / month</strong></li>
+                        <li><i class="fa-solid fa-check"></i> <strong>All 10 Vector Templates</strong></li>
+                        <li><i class="fa-solid fa-check"></i> <strong>Full ATS Compatibility Audit</strong></li>
+                        <li><i class="fa-solid fa-check"></i> AI Cover Letter Generator</li>
                     </ul>
                     <a href="{% url 'register' %}" class="btn btn-cta btn-card">Upgrade to Pro</a>
                 </div>
 
+                <!-- Elite -->
                 <div class="card card-elite reveal-up" style="transition-delay: 0.2s;">
-                    <div class="card-pill pill-elite">Elite</div>
-                    <div class="card-tier">Elite</div>
+                    <div class="card-pill pill-elite">Maximum Edge</div>
+                    <div class="card-tier">Elite Plan</div>
                     <div class="card-price-wrap">
-                        <span class="card-currency">$</span><span class="card-price">10</span><span class="card-period">/ month</span>
+                        <span class="card-currency">$</span><span class="card-price" id="elitePrice">10</span><span class="card-period" id="elitePeriod">/ month</span>
                     </div>
-                    <p class="card-desc">Maximum edge — built for top-tier roles.</p>
+                    <p class="card-desc">Complete automation suite for senior & executive roles.</p>
                     <ul class="feature-list">
-                        <li><i class="fa-solid fa-check" aria-hidden="true"></i> <strong>Unlimited generations</strong></li>
-                        <li><i class="fa-solid fa-check" aria-hidden="true"></i> <strong>AI interview prep</strong></li>
+                        <li><i class="fa-solid fa-check"></i> <strong>Unlimited AI Generations</strong></li>
+                        <li><i class="fa-solid fa-check"></i> <strong>AI Interview Q&A Coach</strong></li>
+                        <li><i class="fa-solid fa-check"></i> Automated Recruiter Follow-up Emails</li>
+                        <li><i class="fa-solid fa-check"></i> Priority Async Queue</li>
                     </ul>
-                    <a href="{% url 'register' %}" class="btn btn-elite btn-card">Go Elite</a>
+                    <a href="{% url 'register' %}" class="btn btn-glass btn-card" style="background: rgba(114,9,183,0.3); border-color: rgba(114,9,183,0.6);">Go Elite</a>
                 </div>
             </div>
         </div>
@@ -903,34 +1098,29 @@
     <section class="section" id="faq">
         <div class="container">
             <div class="section-header reveal-up">
-                <span class="section-tag">FAQ</span>
-                <h2 class="landing-section-title">Before you start.</h2>
+                <span class="section-tag">Frequently Asked Questions</span>
+                <h2 class="landing-section-title">Everything You Need to Know.</h2>
             </div>
 
             <div class="faq-list reveal-up">
-                <details class="faq-item">
-                    <summary>Is it really free to start?</summary>
-                    <div class="faq-answer">Yes. No credit card required. You get 3 full resume generations free — upgrade only when you need more.</div>
+                <details class="faq-item" open>
+                    <summary>How does CVAI pass Applicant Tracking Systems (ATS)?</summary>
+                    <div class="faq-answer">CVAI generates true vector PDFs through ReportLab Platypus rather than canvas screenshot conversions. Text is selectable, searchable, and structured with clean single/double column streams that ATS parsers extract without scrambled text.</div>
                 </details>
 
                 <details class="faq-item">
-                    <summary>Will recruiters know AI helped write my resume?</summary>
-                    <div class="faq-answer">CVAI works from your actual experience and the specific job description, so the result reads like your history — not a generic template. You edit everything before it goes out, and the words that ship are the ones you approved.</div>
+                    <summary>Can I upload my existing resume PDF?</summary>
+                    <div class="faq-answer">Yes! Simply upload your PDF in the Studio or paste text. Our Claude-powered AI pipeline extracts your contact information, experience, education, and skills into editable form fields in under 3 seconds.</div>
                 </details>
 
                 <details class="faq-item">
-                    <summary>Does it work for any industry?</summary>
-                    <div class="faq-answer">Yes. Tech, finance, marketing, healthcare, design — the tone and keywords adapt to whatever job description you paste in.</div>
+                    <summary>What is Google's XYZ formula?</summary>
+                    <div class="faq-answer">Google's XYZ formula states: <em>"Accomplished [X], as measured by [Y], by doing [Z]"</em>. CVAI's section rewriter automatically identifies your duties and structures them into quantified achievement bullets favored by top-tier hiring managers.</div>
                 </details>
 
                 <details class="faq-item">
-                    <summary>What is ATS and why does it matter?</summary>
-                    <div class="faq-answer">An Applicant Tracking System is the software many employers use to filter applications before a person reads them. If your resume doesn't reflect the language of the posting, it can be screened out early. CVAI's ATS analysis shows your match score and what to change.</div>
-                </details>
-
-                <details class="faq-item">
-                    <summary>Can I cancel anytime?</summary>
-                    <div class="faq-answer">Yes — cancel in one click. No contracts and no cancellation fees.</div>
+                    <summary>Can I cancel my subscription anytime?</summary>
+                    <div class="faq-answer">Yes. You can cancel or manage your billing directly from the Stripe Customer Portal inside your profile with zero cancellation fees.</div>
                 </details>
             </div>
         </div>
@@ -940,17 +1130,13 @@
     <section class="section" style="padding-top: 0;">
         <div class="container">
             <div class="cta-panel reveal-up">
-                <h2 class="cta-title">Ready to build it?</h2>
-                <p class="cta-sub">Stop guessing what recruiters want. Build a resume that shows your best work — free to start.</p>
+                <h2 class="cta-title">Ready to Land Your Next Role?</h2>
+                <p class="cta-sub">Join thousands of software engineers, product managers, and designers who build their resumes with CVAI.</p>
                 <div class="magnetic-wrap">
-                    <a href="{% url 'register' %}" class="btn btn-cta magnetic" style="padding: 17px 40px; font-size: var(--fs-lg);">
-                        Start for free <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                    <a href="{% url 'register' %}" class="btn btn-cta magnetic" style="padding: 18px 44px; font-size: var(--fs-lg);">
+                        Build Your Resume Free <i class="fa-solid fa-arrow-right"></i>
                     </a>
                 </div>
-                <p class="hero-note">
-                    <i class="fa-solid fa-lock" aria-hidden="true"></i>
-                    3 free resumes · No credit card · Cancel anytime
-                </p>
             </div>
         </div>
     </section>
@@ -961,19 +1147,19 @@
             <div class="footer-grid">
                 <div>
                     <div class="footer-logo">CV<span style="color: var(--brand);">AI</span></div>
-                    <p class="footer-tagline">The AI resume studio. Build, score, and track every application from one place.</p>
+                    <p class="footer-tagline">The AI resume architect. Build, score, and track every application from one unified platform.</p>
                 </div>
                 <div class="footer-col">
                     <h4>Product</h4>
-                    <a href="#demo">How it works</a>
-                    <a href="#features">Features</a>
+                    <a href="#templates">10 Templates</a>
+                    <a href="#features">AI Features</a>
                     <a href="#pricing">Pricing</a>
                     <a href="#faq">FAQ</a>
                 </div>
                 <div class="footer-col">
                     <h4>Account</h4>
                     <a href="{% url 'login' %}">Sign in</a>
-                    <a href="{% url 'register' %}">Create account</a>
+                    <a href="{% url 'register' %}">Create Account</a>
                 </div>
                 <div class="footer-col">
                     <h4>Legal</h4>
@@ -983,19 +1169,20 @@
             </div>
             <div class="footer-bottom">
                 <span>&copy; 2026 CVAI. All rights reserved.</span>
-                <span>Built with AI, checked by humans.</span>
+                <span>Built for modern hiring pipelines.</span>
             </div>
         </div>
     </footer>
 
+    <!-- ══ JAVASCRIPT & MICRO-INTERACTIONS ══ -->
     <script>
         (function () {
             'use strict';
 
             var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-            /* ── 1. Scroll reveals ─────────────────────────────────── */
-            var revealTargets = document.querySelectorAll('.reveal-up, .timeline-step');
+            // 1. Scroll reveals
+            var revealTargets = document.querySelectorAll('.reveal-up');
             if ('IntersectionObserver' in window && !reduceMotion) {
                 var revealObserver = new IntersectionObserver(function (entries, obs) {
                     entries.forEach(function (entry) {
@@ -1004,47 +1191,21 @@
                             obs.unobserve(entry.target);
                         }
                     });
-                }, { threshold: 0.15 });
+                }, { threshold: 0.12 });
                 revealTargets.forEach(function (el) { revealObserver.observe(el); });
             } else {
                 revealTargets.forEach(function (el) { el.classList.add('in-view'); });
             }
 
-            /* ── 2. Single rAF-gated scroll handler ────────────────── */
+            // 2. Navbar on scroll
             var navbar = document.getElementById('navbar');
-            var pipelineFill = document.getElementById('pipelineFill');
-            var timelineContainer = document.getElementById('timelineContainer');
-            var timelineSteps = document.querySelectorAll('.timeline-step');
-            var ticking = false;
-
-            function onScrollFrame() {
-                ticking = false;
-
+            window.addEventListener('scroll', function () {
                 if (navbar) {
                     navbar.style.top = window.scrollY > 20 ? '12px' : '';
                 }
-
-                if (timelineContainer && pipelineFill) {
-                    var rect = timelineContainer.getBoundingClientRect();
-                    var scrolled = (window.innerHeight * 0.6) - rect.top;
-                    var percent = Math.max(0, Math.min(100, (scrolled / rect.height) * 100));
-                    pipelineFill.style.height = percent + '%';
-
-                    timelineSteps.forEach(function (step, i) {
-                        step.classList.toggle('active', percent > (i * 33) + 10);
-                    });
-                }
-            }
-
-            window.addEventListener('scroll', function () {
-                if (!ticking) {
-                    ticking = true;
-                    window.requestAnimationFrame(onScrollFrame);
-                }
             }, { passive: true });
-            onScrollFrame();
 
-            /* ── 3. Mobile drawer ──────────────────────────────────── */
+            // 3. Mobile drawer
             var drawer = document.getElementById('mobileDrawer');
             var backdrop = document.getElementById('mobileBackdrop');
             var hamburger = document.getElementById('hamburgerBtn');
@@ -1053,91 +1214,96 @@
             function openDrawer() {
                 drawer.classList.add('open');
                 backdrop.classList.add('open');
-                hamburger.setAttribute('aria-expanded', 'true');
                 document.body.style.overflow = 'hidden';
-                closeBtn.focus();
             }
-
             function closeDrawer() {
                 drawer.classList.remove('open');
                 backdrop.classList.remove('open');
-                hamburger.setAttribute('aria-expanded', 'false');
                 document.body.style.overflow = '';
             }
 
-            if (hamburger) { hamburger.addEventListener('click', openDrawer); }
-            if (closeBtn) { closeBtn.addEventListener('click', closeDrawer); }
-            if (backdrop) { backdrop.addEventListener('click', closeDrawer); }
-            document.querySelectorAll('.drawer-link').forEach(function (link) {
-                link.addEventListener('click', closeDrawer);
-            });
+            if (hamburger) hamburger.addEventListener('click', openDrawer);
+            if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+            if (backdrop) backdrop.addEventListener('click', closeDrawer);
+            document.querySelectorAll('.drawer-link').forEach(function (l) { l.addEventListener('click', closeDrawer); });
 
-            document.addEventListener('keydown', function (e) {
-                if (e.key !== 'Escape' || !drawer.classList.contains('open')) { return; }
-                closeDrawer();
-                hamburger.focus();
-            });
-
-            /* Keep tab focus inside the drawer while it is open. */
-            drawer.addEventListener('keydown', function (e) {
-                if (e.key !== 'Tab') { return; }
-                var focusables = drawer.querySelectorAll('a[href], button');
-                if (!focusables.length) { return; }
-                var first = focusables[0];
-                var last = focusables[focusables.length - 1];
-                if (e.shiftKey && document.activeElement === first) {
-                    e.preventDefault();
-                    last.focus();
-                } else if (!e.shiftKey && document.activeElement === last) {
-                    e.preventDefault();
-                    first.focus();
+            // 4. Mouse glow effect
+            if (!reduceMotion && window.matchMedia('(hover: hover)').matches) {
+                var glow = document.getElementById('ambientGlow');
+                if (glow) {
+                    document.addEventListener('mousemove', function (e) {
+                        glow.style.opacity = '1';
+                        glow.style.transform = 'translate(calc(' + e.clientX + 'px - 50%), calc(' + e.clientY + 'px - 50%))';
+                    });
+                    document.addEventListener('mouseleave', function () { glow.style.opacity = '0'; });
                 }
-            });
 
-            /* ── 4. Pointer flourishes (skipped under reduced motion) ─ */
-            if (reduceMotion || !window.matchMedia('(hover: hover)').matches) { return; }
-
-            var glow = document.getElementById('ambientGlow');
-            if (glow) {
-                document.addEventListener('mousemove', function (e) {
-                    glow.style.opacity = '1';
-                    glow.style.transform = 'translate(calc(' + e.clientX + 'px - 50%), calc(' + e.clientY + 'px - 50%))';
+                document.querySelectorAll('.bento-card').forEach(function (card) {
+                    card.addEventListener('mousemove', function (e) {
+                        var rect = card.getBoundingClientRect();
+                        card.style.setProperty('--mouse-x', (e.clientX - rect.left) + 'px');
+                        card.style.setProperty('--mouse-y', (e.clientY - rect.top) + 'px');
+                    });
                 });
-                document.addEventListener('mouseleave', function () { glow.style.opacity = '0'; });
             }
-
-            document.querySelectorAll('.magnetic').forEach(function (btn) {
-                btn.addEventListener('mousemove', function (e) {
-                    var rect = btn.getBoundingClientRect();
-                    var x = (e.clientX - rect.left - rect.width / 2) * 0.3;
-                    var y = (e.clientY - rect.top - rect.height / 2) * 0.3;
-                    btn.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
-                });
-                btn.addEventListener('mouseleave', function () { btn.style.transform = ''; });
-            });
-
-            /* The mock tilts on an inner element; the float animation lives on
-               the wrapper, so the two transforms compose instead of fighting. */
-            var mock = document.getElementById('mockWindow');
-            if (mock) {
-                mock.parentElement.addEventListener('mousemove', function (e) {
-                    var rect = mock.getBoundingClientRect();
-                    var rx = ((e.clientY - rect.top - rect.height / 2) / (rect.height / 2)) * -4;
-                    var ry = ((e.clientX - rect.left - rect.width / 2) / (rect.width / 2)) * 4;
-                    mock.style.transform = 'rotateX(' + rx + 'deg) rotateY(' + ry + 'deg)';
-                });
-                mock.parentElement.addEventListener('mouseleave', function () { mock.style.transform = ''; });
-            }
-
-            document.querySelectorAll('.bento-card').forEach(function (card) {
-                card.addEventListener('mousemove', function (e) {
-                    var rect = card.getBoundingClientRect();
-                    card.style.setProperty('--mouse-x', (e.clientX - rect.left) + 'px');
-                    card.style.setProperty('--mouse-y', (e.clientY - rect.top) + 'px');
-                });
-            });
         })();
+
+        // 5. Interactive Before/After Demo Switcher
+        function switchHookDemo(mode) {
+            var btnBefore = document.getElementById('btnBefore');
+            var btnAfter = document.getElementById('btnAfter');
+            var text = document.getElementById('hookBulletText');
+            var tag = document.getElementById('hookBulletTag');
+            var score = document.getElementById('hookScoreNum');
+            var status = document.getElementById('hookScoreStatus');
+
+            if (mode === 'before') {
+                btnBefore.classList.add('active');
+                btnAfter.classList.remove('active');
+                tag.textContent = '❌ UNQUANTIFIED GENERIC DRAFT';
+                tag.style.color = '#ef4444';
+                text.innerHTML = 'Worked on frontend features with the team and fixed bugs in our React codebase to help make things faster for users.';
+                score.textContent = '42%';
+                score.style.color = '#ef4444';
+                status.textContent = '⚠ Low ATS Match';
+                status.className = 'score-status fail';
+            } else {
+                btnAfter.classList.add('active');
+                btnBefore.classList.remove('active');
+                tag.textContent = '✨ GOOGLE XYZ FORMULA OPTIMIZED';
+                tag.style.color = 'var(--brand)';
+                text.innerHTML = 'Spearheaded the migration to a <mark>React & TypeScript</mark> micro-frontend architecture across 14 engineers, <mark>slashing page latency by 41%</mark> and boosting session retention by 18%.';
+                score.textContent = '98%';
+                score.style.color = 'var(--brand)';
+                status.textContent = '✓ High Pass Rate';
+                status.className = 'score-status pass';
+            }
+        }
+
+        // 6. Annual / Monthly Billing Switcher
+        var _isAnnual = false;
+        function toggleBillingPeriod() {
+            _isAnnual = !_isAnnual;
+            var switchPill = document.getElementById('pricingSwitch');
+            var proPrice = document.getElementById('proPrice');
+            var elitePrice = document.getElementById('elitePrice');
+            var proPeriod = document.getElementById('proPeriod');
+            var elitePeriod = document.getElementById('elitePeriod');
+
+            if (_isAnnual) {
+                switchPill.classList.add('active');
+                proPrice.textContent = '4';
+                elitePrice.textContent = '8';
+                proPeriod.textContent = '/ month (billed yearly)';
+                elitePeriod.textContent = '/ month (billed yearly)';
+            } else {
+                switchPill.classList.remove('active');
+                proPrice.textContent = '5';
+                elitePrice.textContent = '10';
+                proPeriod.textContent = '/ month';
+                elitePeriod.textContent = '/ month';
+            }
+        }
     </script>
 </body>
-
 </html>
