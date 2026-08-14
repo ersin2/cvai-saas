@@ -1,4 +1,31 @@
+# Environment & Secrets
 .env
-venv
-__pycache__
-db.sqlite3
+.env.local
+.env.*.local
+
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Databases & SQLite
+*.sqlite3
+*.db
+
+# Media & Static artifacts
+media/
+staticfiles/
+*.log
+
+# Test Artifacts
+test_out.pdf
