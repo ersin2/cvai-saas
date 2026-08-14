@@ -6,23 +6,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CVAI — The AI Resume Architect | Build ATS-Proof Resumes</title>
-    <meta name="description" content="Build ATS-optimized resumes with AI. 10 premium A4 templates, live double-buffered PDF preview, Google XYZ formula rewriter, and application tracker.">
+    <meta name="description" content="Build ATS-optimized resumes with AI. 10 premium A4 vector templates, live double-buffered PDF preview, Google XYZ formula rewriter, and interactive career suite.">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23080c14'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='monospace' font-weight='700' font-size='18' fill='%234cc9f0'>CV</text></svg>">
 
-    <!-- OG / Social -->
-    <meta property="og:title" content="CVAI — AI Resume Builder & Career Suite">
-    <meta property="og:description" content="Build ATS-optimized resumes with AI. 10 premium templates, live preview, and application tracker.">
+    <!-- OpenGraph -->
+    <meta property="og:title" content="CVAI — AI Resume Builder & Career SaaS">
+    <meta property="og:description" content="Build ATS-optimized resumes with AI. 10 premium vector templates, live preview, and application tracker.">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
 
-    <!-- Fonts -->
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Global Design System -->
-    <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}?v=6">
+    <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}?v=7">
 
     <script>document.documentElement.classList.add('js');</script>
 
@@ -33,8 +33,8 @@
             --chrome-g: #27c93f;
             --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
             --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            --grad-hero: linear-gradient(135deg, #4cc9f0 0%, #4361ee 50%, #f72585 100%);
-            --grad-glow: radial-gradient(circle, rgba(76,201,240,0.18) 0%, rgba(67,97,238,0.08) 45%, transparent 70%);
+            --grad-hero: linear-gradient(135deg, #4cc9f0 0%, #4361ee 40%, #f72585 100%);
+            --grad-glow: radial-gradient(circle, rgba(76,201,240,0.22) 0%, rgba(67,97,238,0.09) 45%, transparent 70%);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -47,14 +47,19 @@
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
             overflow-x: hidden;
+            position: relative;
         }
 
-        /* ── Ambient Lights & Canvas Atmosphere ── */
+        /* ── Canvas Constellation Mesh ── */
+        #constellationCanvas {
+            position: fixed; inset: 0; pointer-events: none; z-index: -1;
+            opacity: 0.75;
+        }
+
         .ambient-glow {
-            position: fixed; top: 0; left: 0; width: 650px; height: 650px;
-            border-radius: 50%;
-            background: var(--grad-glow);
-            transform: translate(-50%, -50%); pointer-events: none; z-index: -1; filter: blur(90px);
+            position: fixed; top: 0; left: 0; width: 700px; height: 700px;
+            border-radius: 50%; background: var(--grad-glow);
+            transform: translate(-50%, -50%); pointer-events: none; z-index: -1; filter: blur(95px);
             transition: opacity 0.6s ease; opacity: 0;
         }
 
@@ -65,26 +70,26 @@
         }
 
         .grid-overlay {
-            position: fixed; inset: 0; pointer-events: none; z-index: -2; opacity: 0.45;
-            background-size: 60px 60px;
+            position: fixed; inset: 0; pointer-events: none; z-index: -2; opacity: 0.4;
+            background-size: 64px 64px;
             background-image:
                 linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
                 linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-            mask-image: radial-gradient(ellipse 80% 60% at 50% 10%, black 20%, transparent 100%);
-            -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 10%, black 20%, transparent 100%);
+            mask-image: radial-gradient(ellipse 85% 65% at 50% 12%, black 25%, transparent 100%);
+            -webkit-mask-image: radial-gradient(ellipse 85% 65% at 50% 12%, black 25%, transparent 100%);
         }
 
         .orb-spotlight {
-            position: absolute; top: -150px; left: 50%; transform: translateX(-50%);
-            width: 900px; height: 500px; border-radius: 50%;
-            background: radial-gradient(circle, rgba(67,97,238,0.22) 0%, rgba(76,201,240,0.12) 40%, transparent 70%);
-            filter: blur(80px); pointer-events: none; z-index: -1;
-            animation: pulse-orb 8s ease-in-out infinite alternate;
+            position: absolute; top: -160px; left: 50%; transform: translateX(-50%);
+            width: 1000px; height: 550px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(67,97,238,0.26) 0%, rgba(76,201,240,0.14) 40%, transparent 70%);
+            filter: blur(90px); pointer-events: none; z-index: -1;
+            animation: pulse-orb 9s ease-in-out infinite alternate;
         }
 
         @keyframes pulse-orb {
-            0% { opacity: 0.6; transform: translateX(-50%) scale(0.95); }
-            100% { opacity: 1; transform: translateX(-50%) scale(1.1); }
+            0% { opacity: 0.55; transform: translateX(-50%) scale(0.92); }
+            100% { opacity: 1; transform: translateX(-50%) scale(1.12); }
         }
 
         /* ── Typography & Accents ── */
@@ -101,25 +106,13 @@
             -webkit-background-clip: text; background-clip: text;
             -webkit-text-fill-color: transparent;
             display: inline-block;
-            filter: drop-shadow(0 0 35px rgba(76,201,240,0.3));
-        }
-
-        .shimmer-text {
-            background: linear-gradient(90deg, #fff 0%, #4cc9f0 25%, #f72585 50%, #4cc9f0 75%, #fff 100%);
-            background-size: 200% auto;
-            -webkit-background-clip: text; background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: shimmer-flow 6s linear infinite;
-        }
-
-        @keyframes shimmer-flow {
-            to { background-position: 200% center; }
+            filter: drop-shadow(0 0 35px rgba(76,201,240,0.35));
         }
 
         .container { max-width: var(--content-max); margin: 0 auto; padding: 0 var(--sp-5); position: relative; z-index: 10; }
-        .section { padding: 90px 0; position: relative; scroll-margin-top: 88px; }
+        .section { padding: 100px 0; position: relative; scroll-margin-top: 88px; }
 
-        /* ── Buttons & Magnetics ── */
+        /* ── Buttons & Magnetic Wrappers ── */
         .magnetic-wrap { display: inline-block; padding: var(--sp-4); margin: calc(var(--sp-4) * -1); }
 
         .btn {
@@ -132,7 +125,7 @@
 
         .btn-cta {
             background: var(--grad-cta); color: #fff; border-radius: var(--r-pill);
-            box-shadow: 0 8px 30px rgba(67, 97, 238, 0.4), 0 0 0 1px rgba(255,255,255,0.15) inset;
+            box-shadow: 0 8px 32px rgba(67, 97, 238, 0.45), 0 0 0 1px rgba(255,255,255,0.18) inset;
             overflow: hidden;
         }
         .btn-cta::after {
@@ -141,29 +134,29 @@
             transform: translateX(-100%); transition: transform 0.6s ease;
         }
         .btn-cta:hover::after { transform: translateX(100%); }
-        .btn-cta:hover { box-shadow: 0 12px 42px rgba(67, 97, 238, 0.6); color: #fff; transform: translateY(-2px); }
+        .btn-cta:hover { box-shadow: 0 12px 48px rgba(67, 97, 238, 0.65); color: #fff; transform: translateY(-2px); }
         .btn-cta i { transition: transform var(--t-base); }
         .btn-cta:hover i { transform: translateX(5px); }
 
         .btn-glass {
             background: var(--surface-2); color: var(--text-1);
             border: 1px solid var(--border); border-radius: var(--r-pill);
-            backdrop-filter: blur(12px);
+            backdrop-filter: blur(14px);
         }
         .btn-glass:hover { background: var(--surface-3); border-color: var(--border-hover); color: var(--text-1); transform: translateY(-1px); }
 
-        /* ── Navigation ── */
+        /* ── Navbar ── */
         .nav-wrapper {
             position: fixed; top: var(--sp-5); left: 50%; transform: translateX(-50%); z-index: 100;
-            width: calc(100% - var(--sp-6)); max-width: 1060px;
+            width: calc(100% - var(--sp-6)); max-width: 1080px;
             transition: top var(--t-slide);
         }
         .nav-glass {
-            background: rgba(8, 12, 20, 0.78);
+            background: rgba(8, 12, 20, 0.82);
             backdrop-filter: blur(40px) saturate(180%); -webkit-backdrop-filter: blur(40px) saturate(180%);
             border: 1px solid var(--border); border-radius: var(--r-pill);
-            padding: 10px var(--sp-5); display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4);
-            box-shadow: 0 20px 40px -15px rgba(0,0,0,0.7);
+            padding: 11px var(--sp-5); display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4);
+            box-shadow: 0 20px 45px -15px rgba(0,0,0,0.75);
         }
         .logo {
             font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 800;
@@ -191,19 +184,19 @@
         .nav-actions .btn { padding: 9px 22px; font-size: var(--fs-base); }
 
         /* ── Hero Section ── */
-        .hero { padding: 160px 0 60px; text-align: center; position: relative; }
+        .hero { padding: 165px 0 60px; text-align: center; position: relative; }
 
         .announcement-badge {
             display: inline-flex; align-items: center; gap: 9px;
-            padding: 6px 18px; border-radius: var(--r-pill);
-            background: rgba(76,201,240,0.08); border: 1px solid rgba(76,201,240,0.25);
+            padding: 6px 20px; border-radius: var(--r-pill);
+            background: rgba(76,201,240,0.08); border: 1px solid rgba(76,201,240,0.3);
             font-size: var(--fs-xs); font-weight: 700; color: var(--brand);
             text-decoration: none; margin-bottom: var(--sp-6);
             transition: all var(--t-fast);
-            box-shadow: 0 0 20px rgba(76,201,240,0.1);
+            box-shadow: 0 0 25px rgba(76,201,240,0.15);
         }
         .announcement-badge:hover {
-            background: rgba(76,201,240,0.15); border-color: rgba(76,201,240,0.45);
+            background: rgba(76,201,240,0.18); border-color: rgba(76,201,240,0.5);
             transform: translateY(-2px); color: #fff;
         }
         .badge-spark {
@@ -220,10 +213,10 @@
         .hero-subtitle {
             font-family: var(--font-body);
             font-size: var(--fs-lg); font-weight: 400; color: var(--text-2);
-            max-width: 660px; margin: 0 auto var(--sp-7); line-height: var(--lh-loose);
+            max-width: 680px; margin: 0 auto var(--sp-7); line-height: var(--lh-loose);
         }
         .hero-actions { display: flex; gap: var(--sp-4); justify-content: center; align-items: center; flex-wrap: wrap; }
-        .hero-actions .btn-cta { padding: 18px 42px; font-size: var(--fs-lg); }
+        .hero-actions .btn-cta { padding: 18px 44px; font-size: var(--fs-lg); }
 
         .hero-proof-row {
             display: flex; justify-content: center; align-items: center; gap: var(--sp-6);
@@ -233,85 +226,119 @@
         .hero-proof-item { display: flex; align-items: center; gap: 7px; }
         .hero-proof-item i { color: var(--success); }
 
-        /* ── Interactive Before/After AI Transformation Hook ── */
+        /* ── Live Interactive AI Simulator in Hero ── */
         .hook-card-wrapper {
             margin: var(--sp-9) auto 0;
-            max-width: 960px;
+            max-width: 980px;
             background: var(--surface-1);
             border: 1px solid var(--border);
             border-radius: var(--r-xl);
-            box-shadow: 0 30px 80px -20px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.06);
+            box-shadow: 0 35px 90px -20px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.08);
             overflow: hidden;
             text-align: left;
             position: relative;
         }
         .hook-header {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 14px 22px;
-            background: rgba(0,0,0,0.4);
+            padding: 16px 24px;
+            background: rgba(0,0,0,0.45);
             border-bottom: 1px solid var(--border);
-            flex-wrap: wrap; gap: 12px;
+            flex-wrap: wrap; gap: 14px;
         }
-        .hook-header-title {
-            display: flex; align-items: center; gap: 10px;
-            font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--text-2);
+        .role-selector-pills {
+            display: flex; gap: 8px; flex-wrap: wrap;
         }
-        .hook-toggle-tabs {
-            display: flex; gap: 6px; background: var(--surface-2);
-            padding: 4px; border-radius: var(--r-pill); border: 1px solid var(--border);
+        .role-pill {
+            background: var(--surface-2); border: 1px solid var(--border);
+            color: var(--text-2); font-size: var(--fs-xs); font-weight: 700;
+            padding: 5px 14px; border-radius: var(--r-pill); cursor: pointer;
+            transition: all var(--t-fast);
         }
-        .hook-tab-btn {
-            background: transparent; border: none; padding: 6px 16px;
-            border-radius: var(--r-pill); font-size: var(--fs-xs); font-weight: 700;
-            color: var(--text-3); cursor: pointer; transition: all var(--t-fast);
-        }
-        .hook-tab-btn.active {
-            background: var(--brand); color: #080c14; box-shadow: 0 2px 10px rgba(76,201,240,0.4);
+        .role-pill.active {
+            background: var(--brand); color: #080c14; border-color: var(--brand);
+            box-shadow: 0 2px 10px rgba(76,201,240,0.35);
         }
         .hook-body {
-            display: grid; grid-template-columns: 1.4fr 1fr;
-            padding: 26px; gap: 24px;
+            display: grid; grid-template-columns: 1.35fr 1fr;
+            padding: 28px; gap: 26px;
         }
-        .hook-bullet-preview {
+        .hook-interactive-input-box {
+            display: flex; flex-direction: column; gap: 14px;
+        }
+        .hook-textarea {
+            width: 100%; height: 95px; background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border); border-radius: var(--r-md);
+            padding: 14px; color: var(--text-1); font-family: var(--font-body);
+            font-size: var(--fs-base); line-height: 1.5; resize: none;
+            outline: none; transition: border-color var(--t-fast);
+        }
+        .hook-textarea:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(76,201,240,0.15); }
+        .hook-btn-run {
+            align-self: flex-start;
+            background: var(--grad-cta); color: #fff; border: none;
+            padding: 10px 24px; border-radius: var(--r-pill); font-weight: 700;
+            font-size: var(--fs-sm); cursor: pointer; display: flex; align-items: center; gap: 8px;
+            box-shadow: 0 4px 18px rgba(67,97,238,0.4);
+            transition: all var(--t-fast);
+        }
+        .hook-btn-run:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(67,97,238,0.6); }
+
+        .hook-output-card {
             background: rgba(0,0,0,0.25); border: 1px solid var(--border);
             border-radius: var(--r-lg); padding: 20px;
             display: flex; flex-direction: column; justify-content: space-between;
+            position: relative;
         }
-        .hook-bullet-tag {
-            font-size: var(--fs-2xs); font-weight: 800; text-transform: uppercase;
-            letter-spacing: 0.1em; color: var(--text-3); margin-bottom: 10px;
+        .laser-scan-line {
+            position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--brand), transparent);
+            opacity: 0; pointer-events: none;
         }
-        .hook-bullet-text {
+        .laser-scanning .laser-scan-line {
+            opacity: 1; animation: laser-sweep 1.2s infinite ease-in-out;
+        }
+        @keyframes laser-sweep {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+
+        .hook-output-text {
             font-size: var(--fs-md); line-height: 1.6; color: var(--text-1);
-            min-height: 80px; transition: opacity 0.3s;
+            min-height: 90px;
         }
-        .hook-bullet-text mark {
+        .hook-output-text mark {
             background: rgba(76,201,240,0.2); color: var(--brand);
             padding: 2px 6px; border-radius: 4px; font-weight: 600;
         }
-        .hook-metrics-sidebar {
+        .xyz-breakdown-tags {
+            display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px;
+        }
+        .xyz-tag {
+            font-size: var(--fs-2xs); font-weight: 800; text-transform: uppercase;
+            padding: 4px 10px; border-radius: var(--r-sm);
+        }
+        .xyz-x { background: rgba(67,97,238,0.15); color: #818cf8; border: 1px solid rgba(67,97,238,0.3); }
+        .xyz-y { background: rgba(34,197,94,0.15); color: var(--success); border: 1px solid rgba(34,197,94,0.3); }
+        .xyz-z { background: rgba(76,201,240,0.15); color: var(--brand); border: 1px solid rgba(76,201,240,0.3); }
+
+        .hook-side-stats {
             display: flex; flex-direction: column; gap: 14px;
             justify-content: center;
         }
-        .hook-score-card {
+        .hook-score-pill-card {
             background: var(--surface-2); border: 1px solid var(--border);
             border-radius: var(--r-lg); padding: 18px;
             display: flex; align-items: center; justify-content: space-between;
         }
-        .score-num {
-            font-family: var(--font-display); font-size: 2.2rem; font-weight: 800;
+        .score-big {
+            font-family: var(--font-display); font-size: 2.5rem; font-weight: 800;
             line-height: 1; color: var(--brand);
+            transition: color 0.4s;
         }
-        .score-status {
-            font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase;
-            letter-spacing: 0.08em;
-        }
-        .score-status.pass { color: var(--success); }
-        .score-status.fail { color: var(--danger); }
 
         /* ── Social Proof Marquee ── */
         .marquee-section {
-            padding: 40px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+            padding: 45px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
             background: rgba(255,255,255,0.015);
         }
         .marquee-title {
@@ -320,22 +347,36 @@
             margin-bottom: var(--sp-5);
         }
         .marquee-track {
-            display: flex; justify-content: center; gap: 48px; align-items: center;
-            flex-wrap: wrap; opacity: 0.65;
+            display: flex; justify-content: center; gap: 50px; align-items: center;
+            flex-wrap: wrap; opacity: 0.7;
         }
         .brand-logo-text {
             font-family: var(--font-display); font-size: var(--fs-lg); font-weight: 800;
             letter-spacing: 0.05em; color: var(--text-2); display: flex; align-items: center; gap: 8px;
         }
 
-        /* ── Interactive 10-Template Carousel ── */
+        /* ── 10-Template Carousel Showcase with Filter Tabs ── */
+        .template-filter-tabs {
+            display: flex; justify-content: center; gap: 10px; margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .tpl-tab-btn {
+            background: var(--surface-2); border: 1px solid var(--border);
+            color: var(--text-2); font-size: var(--fs-xs); font-weight: 700;
+            padding: 8px 18px; border-radius: var(--r-pill); cursor: pointer;
+            transition: all var(--t-fast);
+        }
+        .tpl-tab-btn.active {
+            background: var(--brand); color: #080c14; border-color: var(--brand);
+            box-shadow: 0 2px 14px rgba(76,201,240,0.4);
+        }
+
         .template-carousel-wrapper {
-            position: relative; margin-top: var(--sp-7); overflow: hidden;
-            padding: 15px 0 30px;
+            position: relative; overflow: hidden; padding: 15px 0 35px;
         }
         .template-track {
-            display: flex; gap: 24px;
-            animation: scroll-templates 35s linear infinite;
+            display: flex; gap: 26px;
+            animation: scroll-templates 40s linear infinite;
             width: max-content;
         }
         .template-track:hover { animation-play-state: paused; }
@@ -344,28 +385,26 @@
             100% { transform: translateX(-50%); }
         }
         .template-card {
-            width: 260px; height: 350px;
+            width: 270px; height: 360px;
             background: var(--surface-1); border: 1px solid var(--border);
-            border-radius: var(--r-lg); padding: 16px;
+            border-radius: var(--r-xl); padding: 16px;
             display: flex; flex-direction: column; justify-content: space-between;
             box-shadow: var(--shadow-2); flex-shrink: 0;
             transition: all var(--t-base);
-            position: relative; overflow: hidden;
+            position: relative; overflow: hidden; cursor: pointer;
         }
         .template-card:hover {
             transform: translateY(-8px) scale(1.02);
             border-color: var(--brand);
-            box-shadow: 0 20px 40px rgba(76,201,240,0.18);
+            box-shadow: 0 22px 45px rgba(76,201,240,0.2);
         }
         .tpl-mini-paper {
-            background: #ffffff; border-radius: 4px; height: 230px; padding: 14px;
+            background: #ffffff; border-radius: 4px; height: 235px; padding: 14px;
             color: #0f172a; display: flex; flex-direction: column; gap: 8px;
             overflow: hidden; pointer-events: none;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
-        .tpl-dark-side {
-            background: #0f172a; color: #f8fafc;
-        }
+        .tpl-dark-side { background: #0f172a; color: #f8fafc; }
         .tpl-header-mock { height: 16px; background: #334155; border-radius: 2px; width: 60%; }
         .tpl-line-mock { height: 4px; background: #e2e8f0; border-radius: 2px; width: 100%; }
         .tpl-badge {
@@ -373,6 +412,31 @@
             letter-spacing: 0.1em; color: var(--brand); margin-top: 10px;
         }
         .tpl-name { font-size: var(--fs-md); font-weight: 700; color: var(--text-1); }
+
+        /* ── Template Inspector Modal ── */
+        .tpl-modal-backdrop {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            z-index: 10000; display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        .tpl-modal-backdrop.open { opacity: 1; pointer-events: auto; }
+        .tpl-modal-content {
+            background: var(--surface-1); border: 1px solid var(--border);
+            border-radius: var(--r-xl); width: 90%; max-width: 820px;
+            max-height: 90vh; overflow-y: auto; padding: 32px;
+            box-shadow: var(--shadow-3); position: relative;
+            transform: scale(0.95); transition: transform 0.3s var(--ease-spring);
+        }
+        .tpl-modal-backdrop.open .tpl-modal-content { transform: scale(1); }
+        .tpl-modal-close {
+            position: absolute; top: 20px; right: 20px;
+            background: var(--surface-2); border: 1px solid var(--border);
+            color: var(--text-2); width: 36px; height: 36px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            transition: all var(--t-fast);
+        }
+        .tpl-modal-close:hover { background: var(--surface-3); color: #fff; }
 
         /* ── Bento Grid ── */
         .bento-grid {
@@ -383,13 +447,13 @@
             background: var(--surface-1); border: 1px solid var(--border);
             border-radius: var(--r-xl); padding: var(--sp-6);
             position: relative; display: flex; flex-direction: column; overflow: hidden;
-            box-shadow: var(--shadow-2); min-height: 280px;
+            box-shadow: var(--shadow-2); min-height: 290px;
             transition: all var(--t-base);
         }
         .bento-card:hover { border-color: var(--border-hover); transform: translateY(-4px); box-shadow: var(--shadow-3); }
         .bento-card::before {
             content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
-            background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(76,201,240,0.07), transparent 40%);
+            background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(76,201,240,0.08), transparent 40%);
             opacity: 0; transition: opacity var(--t-slide);
         }
         .bento-card:hover::before { opacity: 1; }
@@ -409,22 +473,51 @@
         .bento-col-2 { grid-column: span 2; }
         .bento-row-2 { grid-row: span 2; }
 
-        /* ── Live ATS Meter Inside Bento ── */
+        /* ── Live ATS Meter ── */
         .live-gauge-wrap {
             margin-top: 18px; background: rgba(0,0,0,0.3);
             border-radius: var(--r-lg); padding: 16px; border: 1px solid var(--border);
             display: flex; align-items: center; gap: 16px;
         }
-        .circle-gauge-svg { width: 64px; height: 64px; transform: rotate(-90deg); }
+        .circle-gauge-svg { width: 68px; height: 68px; transform: rotate(-90deg); }
         .circle-bg { fill: none; stroke: var(--surface-3); stroke-width: 6; }
         .circle-progress {
             fill: none; stroke: var(--brand); stroke-width: 6; stroke-linecap: round;
-            stroke-dasharray: 160; stroke-dashoffset: 16;
+            stroke-dasharray: 160; stroke-dashoffset: 14;
             animation: gauge-fill 3s ease-out infinite alternate;
         }
         @keyframes gauge-fill {
             0% { stroke-dashoffset: 80; }
-            100% { stroke-dashoffset: 8; }
+            100% { stroke-dashoffset: 6; }
+        }
+
+        /* ── Interactive ROI & Callback Calculator ── */
+        .roi-calculator-card {
+            background: var(--surface-1); border: 1px solid var(--border);
+            border-radius: var(--r-xl); padding: 40px;
+            margin: var(--sp-8) auto 0; max-width: 860px;
+            box-shadow: var(--shadow-3);
+        }
+        .roi-slider-track {
+            margin: 24px 0 30px;
+        }
+        .roi-slider {
+            width: 100%; height: 8px; border-radius: 4px;
+            background: var(--surface-3); outline: none; -webkit-appearance: none;
+            cursor: pointer;
+        }
+        .roi-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%;
+            background: var(--brand); box-shadow: 0 0 15px var(--brand); cursor: pointer;
+        }
+        .roi-results-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
+            background: rgba(0,0,0,0.25); border: 1px solid var(--border);
+            border-radius: var(--r-lg); padding: 22px; text-align: center;
+        }
+        .roi-val {
+            font-family: var(--font-display); font-size: 2.2rem; font-weight: 800;
+            color: var(--brand); line-height: 1.1;
         }
 
         /* ── Section Titles ── */
@@ -439,10 +532,10 @@
         .landing-section-title { font-size: var(--fs-3xl); margin-bottom: var(--sp-4); }
         .section-sub {
             font-family: var(--font-body); font-size: var(--fs-lg); font-weight: 400;
-            color: var(--text-2); max-width: 600px; margin: 0 auto; line-height: var(--lh-loose);
+            color: var(--text-2); max-width: 640px; margin: 0 auto; line-height: var(--lh-loose);
         }
 
-        /* ── Pricing & Annual Discount Toggle ── */
+        /* ── Pricing ── */
         .pricing-switch-wrap {
             display: flex; align-items: center; justify-content: center; gap: 14px;
             margin-bottom: var(--sp-7);
@@ -515,7 +608,7 @@
         .feature-list i.fa-check { color: var(--success); margin-top: 3px; }
         .feature-list i.fa-xmark { color: var(--text-3); margin-top: 3px; }
 
-        /* ── Wall of Love Testimonials ── */
+        /* ── Wall of Love ── */
         .testimonials-grid {
             display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
             margin-top: var(--sp-7);
@@ -564,7 +657,7 @@
 
         /* ── Closing CTA ── */
         .cta-panel {
-            background: radial-gradient(circle at 50% 0%, rgba(67,97,238,0.2) 0%, var(--surface-1) 70%);
+            background: radial-gradient(circle at 50% 0%, rgba(67,97,238,0.22) 0%, var(--surface-1) 70%);
             border: 1px solid var(--border);
             border-radius: var(--r-xl); padding: 80px 40px;
             text-align: center; position: relative; overflow: hidden;
@@ -573,11 +666,11 @@
         .cta-title { font-size: var(--fs-3xl); margin-bottom: var(--sp-4); }
         .cta-sub {
             font-family: var(--font-body); font-size: var(--fs-lg); font-weight: 400; color: var(--text-2);
-            max-width: 540px; margin: 0 auto var(--sp-6); line-height: var(--lh-loose);
+            max-width: 560px; margin: 0 auto var(--sp-6); line-height: var(--lh-loose);
         }
 
         /* ── Footer ── */
-        .site-footer { border-top: 1px solid var(--border); padding: 70px 0 40px; margin-top: var(--sp-8); }
+        .site-footer { border-top: 1px solid var(--border); padding: 75px 0 45px; margin-top: var(--sp-8); }
         .footer-grid {
             display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
             gap: var(--sp-6); margin-bottom: var(--sp-7);
@@ -599,12 +692,14 @@
             font-size: var(--fs-sm); color: var(--text-3);
         }
 
-        /* ── Animation Classes ── */
+        /* ── Animations ── */
         .js .reveal-up {
             opacity: 0; transform: translateY(28px);
             transition: opacity 0.8s var(--ease-out-expo), transform 0.8s var(--ease-out-expo);
         }
         .js .reveal-up.in-view { opacity: 1; transform: translateY(0); }
+
+        @keyframes dot-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.55; transform: scale(0.82); } }
 
         @media (max-width: 980px) {
             .bento-grid { grid-template-columns: repeat(2, 1fr); }
@@ -613,6 +708,7 @@
             .testimonials-grid { grid-template-columns: 1fr; }
             .footer-grid { grid-template-columns: 1fr 1fr; }
             .hook-body { grid-template-columns: 1fr; }
+            .roi-results-grid { grid-template-columns: 1fr; }
         }
         @media (max-width: 768px) {
             .hero { padding-top: 130px; }
@@ -628,6 +724,8 @@
 </head>
 
 <body>
+    <!-- Constellation particle mesh -->
+    <canvas id="constellationCanvas"></canvas>
     <div class="ambient-glow" id="ambientGlow" aria-hidden="true"></div>
     <div class="noise-overlay" aria-hidden="true"></div>
     <div class="grid-overlay" aria-hidden="true"></div>
@@ -638,8 +736,9 @@
             <a href="/" class="logo"><span class="logo-dot" aria-hidden="true"></span> CV<span class="logo-hl">AI</span></a>
 
             <div class="nav-links desktop-nav">
-                <a href="#templates" class="nav-link">Templates</a>
+                <a href="#templates" class="nav-link">10 Templates</a>
                 <a href="#features" class="nav-link">AI Features</a>
+                <a href="#calculator" class="nav-link">ROI Calculator</a>
                 <a href="#pricing" class="nav-link">Pricing</a>
                 <a href="#faq" class="nav-link">FAQ</a>
             </div>
@@ -667,6 +766,7 @@
         <div class="drawer-nav-section">
             <a href="#templates" class="nav-link-item drawer-link"><i class="fa-solid fa-file-lines"></i> 10 Templates</a>
             <a href="#features" class="nav-link-item drawer-link"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Features</a>
+            <a href="#calculator" class="nav-link-item drawer-link"><i class="fa-solid fa-calculator"></i> Callback Calculator</a>
             <a href="#pricing" class="nav-link-item drawer-link"><i class="fa-solid fa-tag"></i> Pricing</a>
             <a href="#faq" class="nav-link-item drawer-link"><i class="fa-solid fa-circle-question"></i> FAQ</a>
             <div class="drawer-divider"></div>
@@ -684,7 +784,7 @@
             <div class="reveal-up">
                 <a href="#templates" class="announcement-badge">
                     <span class="badge-spark"></span>
-                    <span>CVAI 2.4 Live · 10 Vector PDF Templates & XYZ Rewriter</span>
+                    <span>CVAI 2.4 Live · 10 Vector PDF Layouts & Live XYZ Rewriter</span>
                     <i class="fa-solid fa-arrow-right-long"></i>
                 </a>
 
@@ -694,8 +794,8 @@
                 </h1>
 
                 <p class="hero-subtitle">
-                    Transform raw bullet points into recruiter-tailored, ATS-proven achievements. 
-                    Live vector PDF rendering, instant Claude-powered extraction, and full application tracking.
+                    Transform raw bullets into recruiter-proven, quantified achievements. 
+                    Live double-buffered PDF rendering, instant Claude-powered JSON extraction, and full application tracking.
                 </p>
 
                 <div class="hero-actions">
@@ -704,8 +804,8 @@
                             Launch Resume Studio <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
                         </a>
                     </div>
-                    <a href="#interactive-demo" class="btn btn-glass">
-                        <i class="fa-solid fa-play"></i> Try Interactive Demo
+                    <a href="#interactive-simulator" class="btn btn-glass">
+                        <i class="fa-solid fa-bolt" style="color: var(--brand);"></i> Try Live Rewriter
                     </a>
                 </div>
 
@@ -716,45 +816,54 @@
                 </div>
             </div>
 
-            <!-- ══ INTERACTIVE BEFORE/AFTER AI HOOK ══ -->
-            <div class="hook-card-wrapper reveal-up" id="interactive-demo" style="transition-delay: 0.12s;">
+            <!-- ══ LIVE INTERACTIVE AI REWRITER SANDBOX ══ -->
+            <div class="hook-card-wrapper reveal-up" id="interactive-simulator" style="transition-delay: 0.12s;">
                 <div class="hook-header">
-                    <div class="hook-header-title">
-                        <i class="fa-solid fa-bolt" style="color: var(--brand);"></i>
-                        <span>LIVE REWRITER SIMULATION</span>
+                    <div class="role-selector-pills">
+                        <span style="font-size: var(--fs-xs); color: var(--text-3); font-weight: 700; align-self: center; margin-right: 4px;">Role Presets:</span>
+                        <button class="role-pill active" onclick="loadRolePreset('swe')">Full-Stack SWE</button>
+                        <button class="role-pill" onclick="loadRolePreset('pm')">Product Lead</button>
+                        <button class="role-pill" onclick="loadRolePreset('ai')">AI / ML Engineer</button>
                     </div>
-                    <div class="hook-toggle-tabs">
-                        <button class="hook-tab-btn" id="btnBefore" onclick="switchHookDemo('before')">Before (Generic)</button>
-                        <button class="hook-tab-btn active" id="btnAfter" onclick="switchHookDemo('after')">After (CVAI AI)</button>
+                    <div style="font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--brand); font-weight: 700;">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> GOOGLE XYZ ENGINE
                     </div>
                 </div>
                 <div class="hook-body">
-                    <div class="hook-bullet-preview">
+                    <div class="hook-interactive-input-box">
                         <div>
-                            <div class="hook-bullet-tag" id="hookBulletTag">✨ GOOGLE XYZ FORMULA OPTIMIZED</div>
-                            <div class="hook-bullet-text" id="hookBulletText">
-                                Spearheaded the migration to a <mark>React & TypeScript</mark> micro-frontend architecture across 14 engineers, <mark>slashing page latency by 41%</mark> and boosting session retention by 18%.
+                            <div style="font-size: var(--fs-2xs); font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-3); margin-bottom: 8px;">
+                                ✍️ Edit or Enter Your Raw Bullet Point:
                             </div>
+                            <textarea class="hook-textarea" id="simInputText">Worked on frontend features with the team and fixed bugs in our React codebase to help make things faster for users.</textarea>
                         </div>
-                        <div style="font-size: var(--fs-xs); color: var(--text-3); margin-top: 14px;">
-                            <i class="fa-solid fa-microchip" style="color: var(--brand);"></i> Claude 3.5 Sonnet Structured Extraction
-                        </div>
+                        <button class="hook-btn-run" id="btnSimulateRewrite" onclick="runSimulatedRewrite()">
+                            <i class="fa-solid fa-bolt"></i> ⚡ Transform with AI
+                        </button>
                     </div>
 
-                    <div class="hook-metrics-sidebar">
-                        <div class="hook-score-card">
-                            <div>
-                                <div style="font-size: var(--fs-xs); color: var(--text-3); font-weight: 700;">ATS MATCH SCORE</div>
-                                <div class="score-status pass" id="hookScoreStatus">✓ High Pass Rate</div>
+                    <div class="hook-output-card" id="simOutputBox">
+                        <div class="laser-scan-line"></div>
+                        <div>
+                            <div style="font-size: var(--fs-2xs); font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--brand); margin-bottom: 10px;">
+                                ✨ CVAI REWRITTEN ACHIEVEMENT:
                             </div>
-                            <div class="score-num" id="hookScoreNum">98%</div>
+                            <div class="hook-output-text" id="simOutputText">
+                                Spearheaded the migration to a <mark>React & TypeScript</mark> micro-frontend architecture across 14 engineers, <mark>slashing page latency by 41%</mark> and boosting session retention by 18%.
+                            </div>
+                            <div class="xyz-breakdown-tags">
+                                <span class="xyz-tag xyz-x">[X] React Architecture</span>
+                                <span class="xyz-tag xyz-y">[Y] -41% Latency</span>
+                                <span class="xyz-tag xyz-z">[Z] 14 Engineers</span>
+                            </div>
                         </div>
 
-                        <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--border); border-radius: var(--r-md); padding: 12px 16px; font-size: var(--fs-xs); color: var(--text-2);">
-                            <div style="color: var(--success); font-weight: 700; margin-bottom: 4px;">
-                                <i class="fa-solid fa-check-double"></i> Keyword Density: High
+                        <div class="hook-score-pill-card" style="margin-top: 18px;">
+                            <div>
+                                <div style="font-size: var(--fs-2xs); color: var(--text-3); font-weight: 700;">ATS RECRUITER MATCH</div>
+                                <div style="color: var(--success); font-size: var(--fs-xs); font-weight: 800;" id="simMatchStatus">✓ Ready to Apply</div>
                             </div>
-                            <div>Matched: React, TypeScript, Micro-frontends, Latency</div>
+                            <div class="score-big" id="simScoreValue">98%</div>
                         </div>
                     </div>
                 </div>
@@ -762,7 +871,7 @@
         </div>
     </header>
 
-    <!-- ══ MARQUEE SOCIAL PROOF ══ -->
+    <!-- ══ SOCIAL PROOF MARQUEE ══ -->
     <div class="marquee-section">
         <div class="container">
             <div class="marquee-title">Trusted by developers & candidates interviewing at</div>
@@ -783,20 +892,27 @@
             <div class="section-header reveal-up">
                 <span class="section-tag">PDF Template Engine</span>
                 <h2 class="landing-section-title">10 Vector-Engineered Layouts.</h2>
-                <p class="section-sub">Built in ReportLab Platypus. Every template maintains strict typography hierarchy, margin balance, and ATS compliance.</p>
+                <p class="section-sub">Built in ReportLab Platypus. Every template maintains strict typography hierarchy, margin balance, and single-stream ATS compliance.</p>
+            </div>
+
+            <!-- Filter tabs -->
+            <div class="template-filter-tabs reveal-up">
+                <button class="tpl-tab-btn active" onclick="filterTemplates('all', this)">All (10)</button>
+                <button class="tpl-tab-btn" onclick="filterTemplates('engineering', this)">💻 Engineering</button>
+                <button class="tpl-tab-btn" onclick="filterTemplates('executive', this)">👔 Executive</button>
+                <button class="tpl-tab-btn" onclick="filterTemplates('ats', this)">📄 High-Density ATS</button>
             </div>
         </div>
 
         <div class="template-carousel-wrapper reveal-up">
-            <div class="template-track">
+            <div class="template-track" id="tplTrack">
                 <!-- 1. Minimal Centered -->
-                <div class="template-card">
+                <div class="template-card" data-category="executive" onclick="openTemplateModal('Minimal Centered', 'Executive single-column layout with perfect balance and authoritative typography.', 'minimal_centered')">
                     <div class="tpl-mini-paper">
                         <div class="tpl-header-mock" style="width: 75%; margin: 0 auto;"></div>
                         <div class="tpl-line-mock" style="width: 40%; margin: 0 auto 6px;"></div>
                         <div class="tpl-line-mock"></div>
                         <div class="tpl-line-mock" style="width: 85%;"></div>
-                        <div class="tpl-line-mock" style="width: 90%;"></div>
                     </div>
                     <div>
                         <div class="tpl-badge">Executive</div>
@@ -805,7 +921,7 @@
                 </div>
 
                 <!-- 2. Dark Sidebar -->
-                <div class="template-card">
+                <div class="template-card" data-category="engineering" onclick="openTemplateModal('Dark Sidebar', 'Modern split-column format featuring a high-contrast dark left rail for contact and skill chips.', 'dark_sidebar')">
                     <div class="tpl-mini-paper" style="display: grid; grid-template-columns: 1fr 2fr; gap: 8px; padding: 0;">
                         <div style="background: #0f172a; padding: 10px; height: 100%;">
                             <div style="width: 24px; height: 24px; border-radius: 50%; background: #4cc9f0; margin-bottom: 8px;"></div>
@@ -814,7 +930,6 @@
                         <div style="padding: 10px;">
                             <div class="tpl-header-mock" style="margin-bottom: 8px;"></div>
                             <div class="tpl-line-mock"></div>
-                            <div class="tpl-line-mock" style="width: 80%;"></div>
                         </div>
                     </div>
                     <div>
@@ -824,12 +939,11 @@
                 </div>
 
                 <!-- 3. Hacker Terminal -->
-                <div class="template-card">
+                <div class="template-card" data-category="engineering" onclick="openTemplateModal('Hacker Terminal', 'Monospace green-terminal aesthetic designed specifically for DevOps, SRE, and Backend Engineers.', 'hacker_terminal')">
                     <div class="tpl-mini-paper tpl-dark-side" style="font-family: monospace; font-size: 8px; border: 1px solid #22c55e;">
                         <div style="color: #22c55e; font-weight: bold;">$ whoami</div>
-                        <div style="color: #cbd5e1;">> Senior SRE / DevOps</div>
-                        <div class="tpl-line-mock" style="background: #22c55e; width: 50%;"></div>
-                        <div class="tpl-line-mock" style="background: #334155;"></div>
+                        <div style="color: #cbd5e1;">> Senior SRE</div>
+                        <div class="tpl-line-mock" style="background: #22c55e; width: 60%;"></div>
                     </div>
                     <div>
                         <div class="tpl-badge">Developer</div>
@@ -838,11 +952,10 @@
                 </div>
 
                 <!-- 4. Academic Classic -->
-                <div class="template-card">
+                <div class="template-card" data-category="executive" onclick="openTemplateModal('Academic Classic', 'Formal serif layout suitable for researchers, PhD candidates, and legal/finance professionals.', 'academic_classic')">
                     <div class="tpl-mini-paper">
                         <div style="font-family: serif; font-size: 11px; font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 2px;">CURRICULUM VITAE</div>
                         <div class="tpl-line-mock" style="background: #94a3b8; width: 90%;"></div>
-                        <div class="tpl-line-mock" style="background: #94a3b8; width: 100%;"></div>
                     </div>
                     <div>
                         <div class="tpl-badge">Formal</div>
@@ -851,14 +964,13 @@
                 </div>
 
                 <!-- 5. Tech Modern -->
-                <div class="template-card">
+                <div class="template-card" data-category="engineering" onclick="openTemplateModal('Tech Modern', 'High-density engineering format with skill rating indicators and project blocks.', 'tech_modern')">
                     <div class="tpl-mini-paper">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div class="tpl-header-mock" style="width: 50%;"></div>
                             <div style="width: 14px; height: 14px; border-radius: 2px; background: #4361ee;"></div>
                         </div>
                         <div class="tpl-line-mock" style="margin-top: 8px;"></div>
-                        <div class="tpl-line-mock" style="width: 75%;"></div>
                     </div>
                     <div>
                         <div class="tpl-badge">Engineering</div>
@@ -867,12 +979,10 @@
                 </div>
 
                 <!-- 6. Compact ATS -->
-                <div class="template-card">
+                <div class="template-card" data-category="ats" onclick="openTemplateModal('Compact ATS', 'Zero-whitespace layout maximized for parsing score on Taleo, Workday, and Greenhouse.', 'compact_ats')">
                     <div class="tpl-mini-paper">
                         <div class="tpl-header-mock" style="width: 100%; height: 10px;"></div>
                         <div class="tpl-line-mock" style="margin-top: 4px;"></div>
-                        <div class="tpl-line-mock" style="margin-top: 4px;"></div>
-                        <div class="tpl-line-mock" style="margin-top: 4px; width: 90%;"></div>
                     </div>
                     <div>
                         <div class="tpl-badge">High Density</div>
@@ -880,11 +990,34 @@
                     </div>
                 </div>
 
-                <!-- Duplicate set for infinite smooth marquee -->
-                <div class="template-card">
+                <!-- 7. Nordic Clean -->
+                <div class="template-card" data-category="executive" onclick="openTemplateModal('Nordic Clean', 'Scandinavian minimalist layout with generous whitespace and elegant font weights.', 'nordic_clean')">
+                    <div class="tpl-mini-paper">
+                        <div class="tpl-header-mock" style="width: 45%;"></div>
+                        <div class="tpl-line-mock" style="width: 70%; margin-top: 8px;"></div>
+                    </div>
+                    <div>
+                        <div class="tpl-badge">Minimal</div>
+                        <div class="tpl-name">Nordic Clean</div>
+                    </div>
+                </div>
+
+                <!-- 8. Corporate Pro -->
+                <div class="template-card" data-category="executive" onclick="openTemplateModal('Corporate Pro', 'Traditional corporate layout favored by management consultants and Fortune 500 recruiters.', 'corporate_pro')">
+                    <div class="tpl-mini-paper">
+                        <div style="background: #1e293b; height: 14px; border-radius: 2px; margin-bottom: 6px;"></div>
+                        <div class="tpl-line-mock"></div>
+                    </div>
+                    <div>
+                        <div class="tpl-badge">Consulting</div>
+                        <div class="tpl-name">Corporate Pro</div>
+                    </div>
+                </div>
+
+                <!-- Duplicates for smooth marquee wrap -->
+                <div class="template-card" data-category="executive" onclick="openTemplateModal('Minimal Centered', 'Executive single-column layout with perfect balance and authoritative typography.', 'minimal_centered')">
                     <div class="tpl-mini-paper">
                         <div class="tpl-header-mock" style="width: 75%; margin: 0 auto;"></div>
-                        <div class="tpl-line-mock" style="width: 40%; margin: 0 auto 6px;"></div>
                         <div class="tpl-line-mock"></div>
                     </div>
                     <div>
@@ -892,19 +1025,47 @@
                         <div class="tpl-name">Minimal Centered</div>
                     </div>
                 </div>
-                <div class="template-card">
-                    <div class="tpl-mini-paper tpl-dark-side">
-                        <div style="color: #22c55e;">$ ./export_cv.sh</div>
-                        <div class="tpl-line-mock" style="background: #22c55e;"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══ TEMPLATE INSPECTOR MODAL ══ -->
+    <div class="tpl-modal-backdrop" id="tplModal">
+        <div class="tpl-modal-content">
+            <button class="tpl-modal-close" onclick="closeTemplateModal()"><i class="fa-solid fa-xmark"></i></button>
+            <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 260px;">
+                    <span class="tpl-badge" id="modalTplBadge">ENGINEERING</span>
+                    <h2 style="font-size: var(--fs-2xl); margin: 8px 0 14px;" id="modalTplTitle">Template Name</h2>
+                    <p style="color: var(--text-2); line-height: 1.6; margin-bottom: 24px;" id="modalTplDesc">Template description goes here.</p>
+                    
+                    <div style="margin-bottom: 24px;">
+                        <span style="font-size: var(--fs-xs); font-weight: 700; color: var(--text-3); text-transform: uppercase;">Color Scheme Accent:</span>
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <div style="width: 28px; height: 28px; border-radius: 50%; background: #4cc9f0; border: 2px solid #fff; cursor: pointer;"></div>
+                            <div style="width: 28px; height: 28px; border-radius: 50%; background: #22c55e; cursor: pointer;"></div>
+                            <div style="width: 28px; height: 28px; border-radius: 50%; background: #f59e0b; cursor: pointer;"></div>
+                            <div style="width: 28px; height: 28px; border-radius: 50%; background: #7209b7; cursor: pointer;"></div>
+                        </div>
                     </div>
-                    <div>
-                        <div class="tpl-badge">Developer</div>
-                        <div class="tpl-name">Hacker Terminal</div>
+
+                    <a href="{% url 'register' %}" class="btn btn-cta" style="width: 100%;">
+                        Use This Template in Studio <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
+                <div style="flex: 1.2; min-width: 280px; background: #fff; border-radius: var(--r-md); padding: 24px; color: #0f172a; box-shadow: var(--shadow-3);">
+                    <div style="font-family: var(--font-display); font-size: 16px; font-weight: 800; letter-spacing: 1px;" id="modalPreviewName">ALEXEI KOROLEV</div>
+                    <div style="font-size: 8px; color: #64748b; margin-bottom: 12px;">SENIOR STAFF ENGINEER · SAN FRANCISCO, CA</div>
+                    <div style="height: 2px; background: #0f172a; width: 100%; margin-bottom: 12px;"></div>
+                    <div style="font-size: 9px; font-weight: 800; text-transform: uppercase;">EXPERIENCE</div>
+                    <div style="font-size: 8px; margin-top: 4px; line-height: 1.5; color: #334155;">
+                        • Architected distributed streaming pipeline processing 1.4B events/day with 99.99% availability.<br>
+                        • Reduced cloud infrastructure spend by $340k/year through Kubernetes autoscaling optimizations.
                     </div>
                 </div>
             </div>
         </div>
-    </section>
+    </div>
 
     <!-- ══ BENTO FEATURES ══ -->
     <section class="section" id="features">
@@ -921,9 +1082,9 @@
                     <div class="bento-icon"><i class="fa-solid fa-pen-nib"></i></div>
                     <h3 class="bento-title">Real-Time Visual Studio</h3>
                     <p class="bento-desc">Edit form data on the left with double-buffered live vector preview on the right. Zero preview drift — what you see on your monitor matches your downloaded PDF bit-for-bit.</p>
-                    <div style="margin-top: 20px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 16px;">
-                        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-                            <span style="font-size: var(--fs-xs); font-weight: 700; color: var(--brand);">Live Preview</span>
+                    <div style="margin-top: 22px; background: rgba(0,0,0,0.35); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 18px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span style="font-size: var(--fs-xs); font-weight: 700; color: var(--brand);">Live Vector Stream</span>
                             <span style="font-size: var(--fs-xs); color: var(--text-3);">· Debounced 300ms</span>
                         </div>
                         <div style="height: 6px; border-radius: 3px; background: var(--surface-3); overflow: hidden;">
@@ -938,9 +1099,9 @@
                     <h3 class="bento-title">ATS Match Engine</h3>
                     <p class="bento-desc">Scans resumes against job requirements for recruiter keyword gaps.</p>
                     <div class="live-gauge-wrap">
-                        <svg class="circle-gauge-svg" viewBox="0 0 64 64">
-                            <circle class="circle-bg" cx="32" cy="32" r="25"></circle>
-                            <circle class="circle-progress" cx="32" cy="32" r="25"></circle>
+                        <svg class="circle-gauge-svg" viewBox="0 0 68 68">
+                            <circle class="circle-bg" cx="34" cy="34" r="27"></circle>
+                            <circle class="circle-progress" cx="34" cy="34" r="27"></circle>
                         </svg>
                         <div>
                             <div style="font-size: var(--fs-lg); font-weight: 800; color: var(--brand);">98.4%</div>
@@ -953,10 +1114,10 @@
                 <div class="bento-card reveal-up" style="transition-delay: 0.16s;">
                     <div class="bento-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
                     <h3 class="bento-title">Google XYZ Formula</h3>
-                    <p class="bento-desc">One-click transforms casual statements into impactful metrics.</p>
+                    <p class="bento-desc">One-click transforms casual statements into quantified achievements.</p>
                     <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 6px;">
-                        <span style="font-size: var(--fs-2xs); background: rgba(34,197,94,0.1); color: var(--success); padding: 3px 8px; border-radius: 4px; font-weight: 700;">Accomplished [X]</span>
-                        <span style="font-size: var(--fs-2xs); background: rgba(76,201,240,0.1); color: var(--brand); padding: 3px 8px; border-radius: 4px; font-weight: 700;">Measured by [Y]</span>
+                        <span style="font-size: var(--fs-2xs); background: rgba(34,197,94,0.12); color: var(--success); padding: 4px 9px; border-radius: 4px; font-weight: 700;">Accomplished [X]</span>
+                        <span style="font-size: var(--fs-2xs); background: rgba(76,201,240,0.12); color: var(--brand); padding: 4px 9px; border-radius: 4px; font-weight: 700;">Measured by [Y]</span>
                     </div>
                 </div>
 
@@ -966,9 +1127,48 @@
                     <h3 class="bento-title">Application Kanban Tracker</h3>
                     <p class="bento-desc">Organize your job search lifecycle from Saved to Offer. Store tailored resume revisions, recruiter notes, and interview prep in one place.</p>
                     <div style="display: flex; gap: 8px; margin-top: 16px; overflow-x: auto; padding-bottom: 4px;">
-                        <span style="font-size: var(--fs-2xs); background: var(--surface-2); border: 1px solid var(--border); padding: 4px 10px; border-radius: var(--r-pill);">Saved (12)</span>
-                        <span style="font-size: var(--fs-2xs); background: rgba(67,97,238,0.15); border: 1px solid rgba(67,97,238,0.3); color: #818cf8; padding: 4px 10px; border-radius: var(--r-pill);">Applied (8)</span>
-                        <span style="font-size: var(--fs-2xs); background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3); color: var(--success); padding: 4px 10px; border-radius: var(--r-pill);">Interview (3)</span>
+                        <span style="font-size: var(--fs-2xs); background: var(--surface-2); border: 1px solid var(--border); padding: 5px 12px; border-radius: var(--r-pill);">Saved (12)</span>
+                        <span style="font-size: var(--fs-2xs); background: rgba(67,97,238,0.18); border: 1px solid rgba(67,97,238,0.35); color: #818cf8; padding: 5px 12px; border-radius: var(--r-pill);">Applied (8)</span>
+                        <span style="font-size: var(--fs-2xs); background: rgba(34,197,94,0.18); border: 1px solid rgba(34,197,94,0.35); color: var(--success); padding: 5px 12px; border-radius: var(--r-pill);">Interview (3)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══ INTERACTIVE ROI & CALLBACK CALCULATOR ══ -->
+    <section class="section" id="calculator">
+        <div class="container">
+            <div class="section-header reveal-up">
+                <span class="section-tag">Candidate Impact</span>
+                <h2 class="landing-section-title">See Your Interview Boost.</h2>
+                <p class="section-sub">Candidates using CVAI's ATS keyword optimization and XYZ bullet structuring see an average 3.4x jump in recruiter responses.</p>
+            </div>
+
+            <div class="roi-calculator-card reveal-up">
+                <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                    <span style="font-weight: 700; font-size: var(--fs-md); color: var(--text-1);">Applications Sent / Month:</span>
+                    <span style="font-family: var(--font-display); font-size: 1.8rem; font-weight: 800; color: var(--brand);" id="appCountDisplay">25</span>
+                </div>
+                <div class="roi-slider-track">
+                    <input type="range" min="5" max="100" value="25" class="roi-slider" id="appSlider" oninput="updateRoiCalc(this.value)">
+                </div>
+
+                <div class="roi-results-grid">
+                    <div>
+                        <div style="font-size: var(--fs-xs); color: var(--text-3); font-weight: 700; margin-bottom: 6px;">STANDARD RESUME</div>
+                        <div class="roi-val" style="color: var(--text-3);" id="stdCallbacks">2-3</div>
+                        <div style="font-size: var(--fs-2xs); color: var(--text-3);">Callbacks (Avg. 10%)</div>
+                    </div>
+                    <div>
+                        <div style="font-size: var(--fs-xs); color: var(--brand); font-weight: 700; margin-bottom: 6px;">WITH CVAI OPTIMIZATION</div>
+                        <div class="roi-val" id="cvaiCallbacks">9-11</div>
+                        <div style="font-size: var(--fs-2xs); color: var(--success); font-weight: 700;">Callbacks (Avg. 38%)</div>
+                    </div>
+                    <div>
+                        <div style="font-size: var(--fs-xs); color: var(--gold); font-weight: 700; margin-bottom: 6px;">INTERVIEW MULTIPLIER</div>
+                        <div class="roi-val" style="color: var(--gold);">3.4x</div>
+                        <div style="font-size: var(--fs-2xs); color: var(--text-3);">More First Rounds</div>
                     </div>
                 </div>
             </div>
@@ -1133,7 +1333,7 @@
                 <h2 class="cta-title">Ready to Land Your Next Role?</h2>
                 <p class="cta-sub">Join thousands of software engineers, product managers, and designers who build their resumes with CVAI.</p>
                 <div class="magnetic-wrap">
-                    <a href="{% url 'register' %}" class="btn btn-cta magnetic" style="padding: 18px 44px; font-size: var(--fs-lg);">
+                    <a href="{% url 'register' %}" class="btn btn-cta magnetic" style="padding: 18px 46px; font-size: var(--fs-lg);">
                         Build Your Resume Free <i class="fa-solid fa-arrow-right"></i>
                     </a>
                 </div>
@@ -1153,6 +1353,7 @@
                     <h4>Product</h4>
                     <a href="#templates">10 Templates</a>
                     <a href="#features">AI Features</a>
+                    <a href="#calculator">ROI Calculator</a>
                     <a href="#pricing">Pricing</a>
                     <a href="#faq">FAQ</a>
                 </div>
@@ -1227,7 +1428,7 @@
             if (backdrop) backdrop.addEventListener('click', closeDrawer);
             document.querySelectorAll('.drawer-link').forEach(function (l) { l.addEventListener('click', closeDrawer); });
 
-            // 4. Mouse glow effect
+            // 4. Mouse glow
             if (!reduceMotion && window.matchMedia('(hover: hover)').matches) {
                 var glow = document.getElementById('ambientGlow');
                 if (glow) {
@@ -1246,41 +1447,149 @@
                     });
                 });
             }
+
+            // 5. Constellation particle canvas
+            var canvas = document.getElementById('constellationCanvas');
+            if (canvas && !reduceMotion) {
+                var ctx = canvas.getContext('2d');
+                var width, height;
+                var particles = [];
+                var numParticles = 40;
+
+                function resizeCanvas() {
+                    width = canvas.width = window.innerWidth;
+                    height = canvas.height = window.innerHeight;
+                }
+                window.addEventListener('resize', resizeCanvas);
+                resizeCanvas();
+
+                for (var i = 0; i < numParticles; i++) {
+                    particles.push({
+                        x: Math.random() * width,
+                        y: Math.random() * height,
+                        vx: (Math.random() - 0.5) * 0.4,
+                        vy: (Math.random() - 0.5) * 0.4,
+                        r: Math.random() * 1.8 + 1
+                    });
+                }
+
+                function drawConstellation() {
+                    ctx.clearRect(0, 0, width, height);
+                    ctx.fillStyle = 'rgba(76, 201, 240, 0.4)';
+                    ctx.strokeStyle = 'rgba(76, 201, 240, 0.08)';
+
+                    for (var i = 0; i < numParticles; i++) {
+                        var p = particles[i];
+                        p.x += p.vx;
+                        p.y += p.vy;
+
+                        if (p.x < 0 || p.x > width) p.vx *= -1;
+                        if (p.y < 0 || p.y > height) p.vy *= -1;
+
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        for (var j = i + 1; j < numParticles; j++) {
+                            var p2 = particles[j];
+                            var dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+                            if (dist < 130) {
+                                ctx.lineWidth = 1 - (dist / 130);
+                                ctx.beginPath();
+                                ctx.moveTo(p.x, p.y);
+                                ctx.lineTo(p2.x, p2.y);
+                                ctx.stroke();
+                            }
+                        }
+                    }
+                    requestAnimationFrame(drawConstellation);
+                }
+                drawConstellation();
+            }
         })();
 
-        // 5. Interactive Before/After Demo Switcher
-        function switchHookDemo(mode) {
-            var btnBefore = document.getElementById('btnBefore');
-            var btnAfter = document.getElementById('btnAfter');
-            var text = document.getElementById('hookBulletText');
-            var tag = document.getElementById('hookBulletTag');
-            var score = document.getElementById('hookScoreNum');
-            var status = document.getElementById('hookScoreStatus');
-
-            if (mode === 'before') {
-                btnBefore.classList.add('active');
-                btnAfter.classList.remove('active');
-                tag.textContent = '❌ UNQUANTIFIED GENERIC DRAFT';
-                tag.style.color = '#ef4444';
-                text.innerHTML = 'Worked on frontend features with the team and fixed bugs in our React codebase to help make things faster for users.';
-                score.textContent = '42%';
-                score.style.color = '#ef4444';
-                status.textContent = '⚠ Low ATS Match';
-                status.className = 'score-status fail';
-            } else {
-                btnAfter.classList.add('active');
-                btnBefore.classList.remove('active');
-                tag.textContent = '✨ GOOGLE XYZ FORMULA OPTIMIZED';
-                tag.style.color = 'var(--brand)';
-                text.innerHTML = 'Spearheaded the migration to a <mark>React & TypeScript</mark> micro-frontend architecture across 14 engineers, <mark>slashing page latency by 41%</mark> and boosting session retention by 18%.';
-                score.textContent = '98%';
-                score.style.color = 'var(--brand)';
-                status.textContent = '✓ High Pass Rate';
-                status.className = 'score-status pass';
+        // 6. Live Interactive Simulator Logic
+        var _rolePresets = {
+            swe: {
+                raw: "Worked on frontend features with the team and fixed bugs in our React codebase to help make things faster for users.",
+                rewritten: "Spearheaded the migration to a <mark>React & TypeScript</mark> micro-frontend architecture across 14 engineers, <mark>slashing page latency by 41%</mark> and boosting session retention by 18%.",
+                x: "[X] React Architecture", y: "[Y] -41% Latency", z: "[Z] 14 Engineers", score: "98%"
+            },
+            pm: {
+                raw: "Helped launch the new checkout redesign with design and engineering teams to increase payments.",
+                rewritten: "Directed end-to-end product rollout for the <mark>1-Click Stripe Checkout</mark> flow across 3 squads, <mark>lifting conversion rate by 24.6%</mark> and generating $1.8M in annualized GMV.",
+                x: "[X] 1-Click Checkout", y: "[Y] +24.6% Conversion", z: "[Z] $1.8M Annualized", score: "96%"
+            },
+            ai: {
+                raw: "Trained some LLM models for customer support chatbot to answer questions automatically.",
+                rewritten: "Engineered a high-throughput <mark>RAG pipeline using Claude 3.5 & PostgreSQL pgvector</mark>, <mark>resolving 78% of tier-1 support tickets</mark> autonomously with sub-450ms TTFT.",
+                x: "[X] RAG & pgvector", y: "[Y] 78% Ticket Resolution", z: "[Z] <450ms TTFT", score: "99%"
             }
+        };
+
+        function loadRolePreset(role) {
+            document.querySelectorAll('.role-pill').forEach(function (btn) { btn.classList.remove('active'); });
+            event.target.classList.add('active');
+            var data = _rolePresets[role];
+            document.getElementById('simInputText').value = data.raw;
+            runSimulatedRewrite(role);
         }
 
-        // 6. Annual / Monthly Billing Switcher
+        function runSimulatedRewrite(roleKey) {
+            var activeRole = roleKey || 'swe';
+            var data = _rolePresets[activeRole] || _rolePresets.swe;
+            var box = document.getElementById('simOutputBox');
+            var textEl = document.getElementById('simOutputText');
+            var scoreEl = document.getElementById('simScoreValue');
+
+            box.classList.add('laser-scanning');
+            textEl.style.opacity = '0.3';
+
+            setTimeout(function () {
+                box.classList.remove('laser-scanning');
+                textEl.style.opacity = '1';
+                textEl.innerHTML = data.rewritten;
+                scoreEl.textContent = data.score;
+            }, 600);
+        }
+
+        // 7. Interactive Template Modal
+        function openTemplateModal(title, desc, slug) {
+            document.getElementById('modalTplTitle').textContent = title;
+            document.getElementById('modalTplDesc').textContent = desc;
+            document.getElementById('tplModal').classList.add('open');
+        }
+        function closeTemplateModal() {
+            document.getElementById('tplModal').classList.remove('open');
+        }
+
+        // 8. Template Filter
+        function filterTemplates(cat, btn) {
+            document.querySelectorAll('.tpl-tab-btn').forEach(function (b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            var cards = document.querySelectorAll('.template-card');
+            cards.forEach(function (c) {
+                if (cat === 'all' || c.dataset.category === cat) {
+                    c.style.display = 'flex';
+                } else {
+                    c.style.display = 'none';
+                }
+            });
+        }
+
+        // 9. ROI Callback Calculator
+        function updateRoiCalc(val) {
+            document.getElementById('appCountDisplay').textContent = val;
+            var n = parseInt(val, 10);
+            var stdMin = Math.round(n * 0.08);
+            var stdMax = Math.round(n * 0.12);
+            var cvaiMin = Math.round(n * 0.32);
+            var cvaiMax = Math.round(n * 0.44);
+            document.getElementById('stdCallbacks').textContent = stdMin + '-' + stdMax;
+            document.getElementById('cvaiCallbacks').textContent = cvaiMin + '-' + cvaiMax;
+        }
+
+        // 10. Billing Toggle
         var _isAnnual = false;
         function toggleBillingPeriod() {
             _isAnnual = !_isAnnual;
