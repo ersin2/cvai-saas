@@ -375,14 +375,15 @@
       min-width: 360px;
     }
     .vs-preview-bar {
-      height: 48px; flex-shrink: 0;
-      background: rgba(13,17,32,.9);
+      height: 52px; flex-shrink: 0;
+      background: rgba(13,17,32,.95);
       border-bottom: 1px solid var(--panel-border);
-      display: flex; align-items: center; padding: 0 20px; gap: 12px;
+      display: flex; align-items: center; padding: 0 16px; gap: 10px;
+      backdrop-filter: blur(16px);
     }
-    .vs-preview-label { font-size: var(--fs-xs); font-weight: 700;
-                         color: var(--text-3); text-transform: uppercase;
-                         letter-spacing: 1px; }
+    .vs-preview-label { font-size: var(--fs-xs); font-weight: 800;
+                         color: var(--brand); text-transform: uppercase;
+                         letter-spacing: 1px; display: flex; align-items: center; gap: 6px; }
     .vs-preview-spinner {
       width: 16px; height: 16px; border-radius: 50%;
       border: 2px solid rgba(76,201,240,.2);
@@ -393,12 +394,36 @@
     .vs-preview-status { font-size: var(--fs-xs); color: var(--text-3); }
     .vs-preview-spacer { flex: 1; }
 
+    /* Zoom & View Controls */
+    .preview-ctrl-group {
+      display: flex; align-items: center; gap: 4px;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--r-pill); padding: 2px 6px;
+    }
+    .btn-preview-ctrl {
+      background: transparent; border: none; color: var(--text-2);
+      width: 26px; height: 26px; border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: var(--fs-xs); transition: all var(--t-fast);
+    }
+    .btn-preview-ctrl:hover { background: rgba(255,255,255,0.1); color: var(--text-1); }
+    .preview-zoom-val {
+      font-family: var(--font-mono); font-size: var(--fs-2xs); font-weight: 700;
+      color: var(--text-2); min-width: 38px; text-align: center; cursor: pointer;
+    }
+    .badge-a4-tag {
+      font-size: var(--fs-2xs); font-weight: 800; text-transform: uppercase;
+      padding: 3px 8px; border-radius: var(--r-pill);
+      background: rgba(76,201,240,0.1); color: var(--brand); border: 1px solid rgba(76,201,240,0.25);
+    }
+
     /* PDF preview — two stacked iframes we crossfade between (no white flash) */
-    .vs-preview-stage { position: relative; flex: 1; min-height: 0; background: #0a0e18; }
+    .vs-preview-stage { position: relative; flex: 1; min-height: 0; background: #0a0e18; overflow: hidden; }
     .vs-preview-stage iframe {
       position: absolute; inset: 0; width: 100%; height: 100%;
       border: none; background: #0a0e18;
-      opacity: 0; transition: opacity var(--t-base);
+      opacity: 0; transform-origin: top center;
+      transition: opacity var(--t-base), transform 0.2s ease-out;
     }
     .vs-preview-stage iframe.active { opacity: 1; }
     .vs-preview-placeholder {
@@ -1682,11 +1707,24 @@
     <main class="vs-right" id="vsRight">
       <div class="vs-preview-bar">
         <span class="vs-preview-label"><i class="fas fa-eye me-1"></i>Live Preview</span>
+        <span class="badge-a4-tag desktop-nav"><i class="fas fa-file-pdf me-1"></i>A4 Vector</span>
         <div class="vs-preview-spinner" id="previewSpinner"></div>
         <span class="vs-preview-status" id="previewStatus">Select a template and fill in your details</span>
         <div class="vs-preview-spacer"></div>
+
+        <!-- Zoom Controls -->
+        <div class="preview-ctrl-group desktop-nav">
+          <button type="button" class="btn-preview-ctrl" onclick="changePreviewZoom(-0.1)" title="Zoom Out (Ctrl -)">
+            <i class="fas fa-minus"></i>
+          </button>
+          <span class="preview-zoom-val" id="previewZoomVal" onclick="resetPreviewZoom()" title="Click to reset 100%">100%</span>
+          <button type="button" class="btn-preview-ctrl" onclick="changePreviewZoom(0.1)" title="Zoom In (Ctrl +)">
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+
         <button class="vs-nav-btn-dl" onclick="downloadPdf()" id="btnDlRight"
-                style="font-size: var(--fs-sm); padding:5px 14px;">
+                style="font-size: var(--fs-sm); padding:6px 16px;">
           <i class="fas fa-download me-1"></i>Download PDF
         </button>
       </div>
@@ -2966,6 +3004,28 @@
       dropdown.classList.remove('open');
     }
   });
+
+  // ── Preview Zoom Controls ──
+  let _previewZoom = 1.0;
+  function changePreviewZoom(delta) {
+    _previewZoom = Math.min(Math.max(parseFloat((_previewZoom + delta).toFixed(2)), 0.6), 1.8);
+    const zoomText = Math.round(_previewZoom * 100) + '%';
+    const zoomEl = document.getElementById('previewZoomVal');
+    if (zoomEl) zoomEl.textContent = zoomText;
+    const ifrA = document.getElementById('pdf-preview');
+    const ifrB = document.getElementById('pdf-preview-b');
+    if (ifrA) ifrA.style.transform = `scale(${_previewZoom})`;
+    if (ifrB) ifrB.style.transform = `scale(${_previewZoom})`;
+  }
+  function resetPreviewZoom() {
+    _previewZoom = 1.0;
+    const zoomEl = document.getElementById('previewZoomVal');
+    if (zoomEl) zoomEl.textContent = '100%';
+    const ifrA = document.getElementById('pdf-preview');
+    const ifrB = document.getElementById('pdf-preview-b');
+    if (ifrA) ifrA.style.transform = 'scale(1)';
+    if (ifrB) ifrB.style.transform = 'scale(1)';
+  }
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

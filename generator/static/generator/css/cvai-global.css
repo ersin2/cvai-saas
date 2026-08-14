@@ -1314,3 +1314,42 @@ textarea:focus-visible,
 }
 .kanban-empty i  { font-size: var(--fs-2xl); color: var(--text-3); }
 .kanban-empty p  { font-size: var(--fs-sm); color: var(--text-3); margin: 0; }
+
+/* ── 20. LUXURY SAAS DESIGN UTILITIES ───────────────────────── */
+.glass-panel {
+  background: rgba(16, 22, 40, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-2);
+  transition: border-color var(--t-base), transform var(--t-base), box-shadow var(--t-base);
+}
+.glass-panel:hover {
+  border-color: var(--border-hover);
+}
+
+.glow-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  background: var(--brand-dim);
+  border: 1px solid rgba(76, 201, 240, 0.3);
+  color: var(--brand);
+  box-shadow: 0 0 16px rgba(76, 201, 240, 0.15);
+}
+
+.shimmer-badge {
+  background: linear-gradient(90deg, rgba(255,255,255,0.05), rgba(76,201,240,0.2), rgba(255,255,255,0.05));
+  background-size: 200% 100%;
+  animation: shimmer-swipe 4s infinite linear;
+}
+@keyframes shimmer-swipe {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
