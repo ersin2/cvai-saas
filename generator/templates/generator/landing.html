@@ -22,7 +22,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Global Design System -->
-    <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}?v=7">
+    <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}?v=8">
 
     <script>document.documentElement.classList.add('js');</script>
 
@@ -35,6 +35,7 @@
             --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
             --grad-hero: linear-gradient(135deg, #4cc9f0 0%, #4361ee 40%, #f72585 100%);
             --grad-glow: radial-gradient(circle, rgba(76,201,240,0.22) 0%, rgba(67,97,238,0.09) 45%, transparent 70%);
+            --grad-border: linear-gradient(135deg, rgba(76,201,240,0.4), rgba(247,37,133,0.3), rgba(67,97,238,0.4));
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -57,9 +58,9 @@
         }
 
         .ambient-glow {
-            position: fixed; top: 0; left: 0; width: 700px; height: 700px;
+            position: fixed; top: 0; left: 0; width: 750px; height: 750px;
             border-radius: 50%; background: var(--grad-glow);
-            transform: translate(-50%, -50%); pointer-events: none; z-index: -1; filter: blur(95px);
+            transform: translate(-50%, -50%); pointer-events: none; z-index: -1; filter: blur(100px);
             transition: opacity 0.6s ease; opacity: 0;
         }
 
@@ -70,7 +71,7 @@
         }
 
         .grid-overlay {
-            position: fixed; inset: 0; pointer-events: none; z-index: -2; opacity: 0.4;
+            position: fixed; inset: 0; pointer-events: none; z-index: -2; opacity: 0.45;
             background-size: 64px 64px;
             background-image:
                 linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
@@ -80,10 +81,10 @@
         }
 
         .orb-spotlight {
-            position: absolute; top: -160px; left: 50%; transform: translateX(-50%);
-            width: 1000px; height: 550px; border-radius: 50%;
-            background: radial-gradient(circle, rgba(67,97,238,0.26) 0%, rgba(76,201,240,0.14) 40%, transparent 70%);
-            filter: blur(90px); pointer-events: none; z-index: -1;
+            position: absolute; top: -180px; left: 50%; transform: translateX(-50%);
+            width: 1100px; height: 600px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(67,97,238,0.3) 0%, rgba(76,201,240,0.16) 40%, transparent 70%);
+            filter: blur(100px); pointer-events: none; z-index: -1;
             animation: pulse-orb 9s ease-in-out infinite alternate;
         }
 
@@ -229,7 +230,7 @@
         /* ── Live Interactive AI Simulator in Hero ── */
         .hook-card-wrapper {
             margin: var(--sp-9) auto 0;
-            max-width: 980px;
+            max-width: 1000px;
             background: var(--surface-1);
             border: 1px solid var(--border);
             border-radius: var(--r-xl);
@@ -251,12 +252,12 @@
         .role-pill {
             background: var(--surface-2); border: 1px solid var(--border);
             color: var(--text-2); font-size: var(--fs-xs); font-weight: 700;
-            padding: 5px 14px; border-radius: var(--r-pill); cursor: pointer;
+            padding: 6px 16px; border-radius: var(--r-pill); cursor: pointer;
             transition: all var(--t-fast);
         }
         .role-pill.active {
             background: var(--brand); color: #080c14; border-color: var(--brand);
-            box-shadow: 0 2px 10px rgba(76,201,240,0.35);
+            box-shadow: 0 2px 12px rgba(76,201,240,0.4);
         }
         .hook-body {
             display: grid; grid-template-columns: 1.35fr 1fr;
@@ -266,7 +267,7 @@
             display: flex; flex-direction: column; gap: 14px;
         }
         .hook-textarea {
-            width: 100%; height: 95px; background: rgba(0,0,0,0.3);
+            width: 100%; height: 100px; background: rgba(0,0,0,0.3);
             border: 1px solid var(--border); border-radius: var(--r-md);
             padding: 14px; color: var(--text-1); font-family: var(--font-body);
             font-size: var(--fs-base); line-height: 1.5; resize: none;
@@ -276,7 +277,7 @@
         .hook-btn-run {
             align-self: flex-start;
             background: var(--grad-cta); color: #fff; border: none;
-            padding: 10px 24px; border-radius: var(--r-pill); font-weight: 700;
+            padding: 11px 26px; border-radius: var(--r-pill); font-weight: 700;
             font-size: var(--fs-sm); cursor: pointer; display: flex; align-items: center; gap: 8px;
             box-shadow: 0 4px 18px rgba(67,97,238,0.4);
             transition: all var(--t-fast);
@@ -285,7 +286,7 @@
 
         .hook-output-card {
             background: rgba(0,0,0,0.25); border: 1px solid var(--border);
-            border-radius: var(--r-lg); padding: 20px;
+            border-radius: var(--r-lg); padding: 22px;
             display: flex; flex-direction: column; justify-content: space-between;
             position: relative;
         }
@@ -321,10 +322,6 @@
         .xyz-y { background: rgba(34,197,94,0.15); color: var(--success); border: 1px solid rgba(34,197,94,0.3); }
         .xyz-z { background: rgba(76,201,240,0.15); color: var(--brand); border: 1px solid rgba(76,201,240,0.3); }
 
-        .hook-side-stats {
-            display: flex; flex-direction: column; gap: 14px;
-            justify-content: center;
-        }
         .hook-score-pill-card {
             background: var(--surface-2); border: 1px solid var(--border);
             border-radius: var(--r-lg); padding: 18px;
@@ -348,14 +345,14 @@
         }
         .marquee-track {
             display: flex; justify-content: center; gap: 50px; align-items: center;
-            flex-wrap: wrap; opacity: 0.7;
+            flex-wrap: wrap; opacity: 0.75;
         }
         .brand-logo-text {
             font-family: var(--font-display); font-size: var(--fs-lg); font-weight: 800;
             letter-spacing: 0.05em; color: var(--text-2); display: flex; align-items: center; gap: 8px;
         }
 
-        /* ── 10-Template Carousel Showcase with Filter Tabs ── */
+        /* ── 10-Template Showcase Carousel with Filter Tabs ── */
         .template-filter-tabs {
             display: flex; justify-content: center; gap: 10px; margin-bottom: 30px;
             flex-wrap: wrap;
@@ -423,8 +420,8 @@
         .tpl-modal-backdrop.open { opacity: 1; pointer-events: auto; }
         .tpl-modal-content {
             background: var(--surface-1); border: 1px solid var(--border);
-            border-radius: var(--r-xl); width: 90%; max-width: 820px;
-            max-height: 90vh; overflow-y: auto; padding: 32px;
+            border-radius: var(--r-xl); width: 90%; max-width: 840px;
+            max-height: 90vh; overflow-y: auto; padding: 34px;
             box-shadow: var(--shadow-3); position: relative;
             transform: scale(0.95); transition: transform 0.3s var(--ease-spring);
         }
@@ -491,6 +488,27 @@
             100% { stroke-dashoffset: 6; }
         }
 
+        /* ── Comparison Table (CVAI vs Generic Builders) ── */
+        .compare-table-card {
+            background: var(--surface-1); border: 1px solid var(--border);
+            border-radius: var(--r-xl); padding: 36px; margin-top: var(--sp-8);
+            box-shadow: var(--shadow-3); overflow-x: auto;
+        }
+        .compare-table {
+            width: 100%; border-collapse: collapse; text-align: left;
+        }
+        .compare-table th {
+            padding: 16px; font-size: var(--fs-sm); font-weight: 800;
+            text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-3);
+            border-bottom: 2px solid var(--border);
+        }
+        .compare-table td {
+            padding: 16px; font-size: var(--fs-md); color: var(--text-2);
+            border-bottom: 1px solid var(--border);
+        }
+        .compare-table tr:hover td { background: var(--surface-2); }
+        .col-cvai { color: var(--brand) !important; font-weight: 700; }
+
         /* ── Interactive ROI & Callback Calculator ── */
         .roi-calculator-card {
             background: var(--surface-1); border: 1px solid var(--border);
@@ -498,9 +516,7 @@
             margin: var(--sp-8) auto 0; max-width: 860px;
             box-shadow: var(--shadow-3);
         }
-        .roi-slider-track {
-            margin: 24px 0 30px;
-        }
+        .roi-slider-track { margin: 24px 0 30px; }
         .roi-slider {
             width: 100%; height: 8px; border-radius: 4px;
             background: var(--surface-3); outline: none; -webkit-appearance: none;
@@ -630,7 +646,19 @@
         .testi-name { font-weight: 700; font-size: var(--fs-md); color: var(--text-1); }
         .testi-role { font-size: var(--fs-xs); color: var(--text-3); }
 
-        /* ── FAQ ── */
+        /* ── FAQ with Instant Search ── */
+        .faq-search-box {
+            max-width: 500px; margin: 0 auto 30px; position: relative;
+        }
+        .faq-search-input {
+            width: 100%; padding: 14px 20px 14px 44px;
+            background: var(--surface-2); border: 1px solid var(--border);
+            border-radius: var(--r-pill); color: var(--text-1);
+            font-size: var(--fs-base); outline: none; transition: all var(--t-fast);
+        }
+        .faq-search-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(76,201,240,0.15); }
+        .faq-search-icon { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--text-3); }
+
         .faq-list { max-width: var(--content-narrow); margin: 0 auto; }
         .faq-item {
             background: var(--surface-1); border: 1px solid var(--border);
@@ -657,9 +685,9 @@
 
         /* ── Closing CTA ── */
         .cta-panel {
-            background: radial-gradient(circle at 50% 0%, rgba(67,97,238,0.22) 0%, var(--surface-1) 70%);
+            background: radial-gradient(circle at 50% 0%, rgba(67,97,238,0.24) 0%, var(--surface-1) 70%);
             border: 1px solid var(--border);
-            border-radius: var(--r-xl); padding: 80px 40px;
+            border-radius: var(--r-xl); padding: 85px 40px;
             text-align: center; position: relative; overflow: hidden;
             box-shadow: var(--shadow-3);
         }
@@ -719,12 +747,13 @@
             .bento-grid { grid-template-columns: 1fr; }
             .bento-col-2 { grid-column: span 1; }
             .footer-grid { grid-template-columns: 1fr; }
+            .compare-table-card { padding: 20px; }
         }
     </style>
 </head>
 
 <body>
-    <!-- Constellation particle mesh -->
+    <!-- Constellation particle canvas -->
     <canvas id="constellationCanvas"></canvas>
     <div class="ambient-glow" id="ambientGlow" aria-hidden="true"></div>
     <div class="noise-overlay" aria-hidden="true"></div>
@@ -738,6 +767,7 @@
             <div class="nav-links desktop-nav">
                 <a href="#templates" class="nav-link">10 Templates</a>
                 <a href="#features" class="nav-link">AI Features</a>
+                <a href="#compare" class="nav-link">Comparison</a>
                 <a href="#calculator" class="nav-link">ROI Calculator</a>
                 <a href="#pricing" class="nav-link">Pricing</a>
                 <a href="#faq" class="nav-link">FAQ</a>
@@ -766,6 +796,7 @@
         <div class="drawer-nav-section">
             <a href="#templates" class="nav-link-item drawer-link"><i class="fa-solid fa-file-lines"></i> 10 Templates</a>
             <a href="#features" class="nav-link-item drawer-link"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Features</a>
+            <a href="#compare" class="nav-link-item drawer-link"><i class="fa-solid fa-code-compare"></i> Comparison</a>
             <a href="#calculator" class="nav-link-item drawer-link"><i class="fa-solid fa-calculator"></i> Callback Calculator</a>
             <a href="#pricing" class="nav-link-item drawer-link"><i class="fa-solid fa-tag"></i> Pricing</a>
             <a href="#faq" class="nav-link-item drawer-link"><i class="fa-solid fa-circle-question"></i> FAQ</a>
@@ -1136,6 +1167,61 @@
         </div>
     </section>
 
+    <!-- ══ COMPARISON TABLE: CVAI VS GENERIC RESUME BUILDERS ══ -->
+    <section class="section" id="compare">
+        <div class="container">
+            <div class="section-header reveal-up">
+                <span class="section-tag">Why CVAI Wins</span>
+                <h2 class="landing-section-title">Built Different.</h2>
+                <p class="section-sub">Why traditional graphic canvas tools and generic AI generators fail modern recruiter ATS screening.</p>
+            </div>
+
+            <div class="compare-table-card reveal-up">
+                <table class="compare-table">
+                    <thead>
+                        <tr>
+                            <th>Feature / Capability</th>
+                            <th class="col-cvai">CVAI Architect</th>
+                            <th>Canva / Graphic Tools</th>
+                            <th>Word / Generic Docs</th>
+                            <th>Generic AI Prompts</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>ReportLab Vector PDF</strong></td>
+                            <td class="col-cvai"><i class="fa-solid fa-circle-check" style="color: var(--success);"></i> 100% Vector Stream</td>
+                            <td><i class="fa-solid fa-circle-xmark" style="color: var(--danger);"></i> Rasterized Canvas</td>
+                            <td><i class="fa-solid fa-circle-check" style="color: var(--warning);"></i> Plain text</td>
+                            <td><i class="fa-solid fa-circle-xmark" style="color: var(--danger);"></i> Plain text dump</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Google XYZ Bullet Rewriter</strong></td>
+                            <td class="col-cvai"><i class="fa-solid fa-circle-check" style="color: var(--success);"></i> Automatic Metrics</td>
+                            <td><i class="fa-solid fa-circle-xmark" style="color: var(--text-3);"></i> Manual</td>
+                            <td><i class="fa-solid fa-circle-xmark" style="color: var(--text-3);"></i> Manual</td>
+                            <td><i class="fa-solid fa-circle-check" style="color: var(--warning);"></i> Unstructured</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ATS Single-Stream Parsability</strong></td>
+                            <td class="col-cvai"><i class="fa-solid fa-circle-check" style="color: var(--success);"></i> Guaranteed 98%+</td>
+                            <td><i class="fa-solid fa-circle-xmark" style="color: var(--danger);"></i> Fails Workday/Taleo</td>
+                            <td><i class="fa-solid fa-circle-check" style="color: var(--warning);"></i> Variable</td>
+                            <td><i class="fa-solid fa-circle-xmark" style="color: var(--text-3);"></i> No PDF format</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Application Kanban Pipeline</strong></td>
+                            <td class="col-cvai"><i class="fa-solid fa-circle-check" style="color: var(--success);"></i> Integrated</td>
+                            <td><i class="fa-solid fa-circle-xmark" style="color: var(--text-3);"></i> None</td>
+                            <td><i class="fa-solid fa-circle-xmark" style="color: var(--text-3);"></i> None</td>
+                            <td><i class="fa-solid fa-circle-xmark" style="color: var(--text-3);"></i> None</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
     <!-- ══ INTERACTIVE ROI & CALLBACK CALCULATOR ══ -->
     <section class="section" id="calculator">
         <div class="container">
@@ -1294,7 +1380,7 @@
         </div>
     </section>
 
-    <!-- ══ FAQ ══ -->
+    <!-- ══ FAQ WITH INSTANT SEARCH ══ -->
     <section class="section" id="faq">
         <div class="container">
             <div class="section-header reveal-up">
@@ -1302,7 +1388,13 @@
                 <h2 class="landing-section-title">Everything You Need to Know.</h2>
             </div>
 
-            <div class="faq-list reveal-up">
+            <!-- Instant Search -->
+            <div class="faq-search-box reveal-up">
+                <i class="fa-solid fa-magnifying-glass faq-search-icon"></i>
+                <input type="text" class="faq-search-input" id="faqSearchInput" placeholder="Search questions (e.g. ATS, pricing, export, PDF)..." oninput="filterFaq(this.value)">
+            </div>
+
+            <div class="faq-list reveal-up" id="faqList">
                 <details class="faq-item" open>
                     <summary>How does CVAI pass Applicant Tracking Systems (ATS)?</summary>
                     <div class="faq-answer">CVAI generates true vector PDFs through ReportLab Platypus rather than canvas screenshot conversions. Text is selectable, searchable, and structured with clean single/double column streams that ATS parsers extract without scrambled text.</div>
@@ -1353,6 +1445,7 @@
                     <h4>Product</h4>
                     <a href="#templates">10 Templates</a>
                     <a href="#features">AI Features</a>
+                    <a href="#compare">Comparison</a>
                     <a href="#calculator">ROI Calculator</a>
                     <a href="#pricing">Pricing</a>
                     <a href="#faq">FAQ</a>
@@ -1454,7 +1547,7 @@
                 var ctx = canvas.getContext('2d');
                 var width, height;
                 var particles = [];
-                var numParticles = 40;
+                var numParticles = 45;
 
                 function resizeCanvas() {
                     width = canvas.width = window.innerWidth;
@@ -1612,6 +1705,21 @@
                 proPeriod.textContent = '/ month';
                 elitePeriod.textContent = '/ month';
             }
+        }
+
+        // 11. Instant FAQ Search Filter
+        function filterFaq(query) {
+            var q = (query || '').toLowerCase().trim();
+            var items = document.querySelectorAll('.faq-item');
+            items.forEach(function (item) {
+                var text = item.textContent.toLowerCase();
+                if (!q || text.indexOf(q) !== -1) {
+                    item.style.display = '';
+                    if (q) item.setAttribute('open', '');
+                } else {
+                    item.style.display = 'none';
+                }
+            });
         }
     </script>
 </body>
