@@ -5,1707 +5,1612 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CVAI — The AI Resume Architect | Build ATS-Proof Resumes</title>
-    <meta name="description" content="Build ATS-ready resumes with AI. Ten machine-readable templates, a live PDF preview as you type, bullet rewriting that adds specifics, and a tracker for every application.">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23080c14'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='monospace' font-weight='700' font-size='18' fill='%234cc9f0'>CV</text></svg>">
+    <title>CVAI — Resumes written for both readers</title>
+    <meta name="description" content="A parser reads your resume first, a person reads it second. CVAI writes for both: quantified bullets, ten machine-readable templates, and a real-text PDF export.">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%2314120E'/><text x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='Georgia,serif' font-size='17' fill='%23FAF8F3'>CV</text></svg>">
 
-    <!-- OpenGraph -->
-    <meta property="og:title" content="CVAI — AI Resume Builder & Career SaaS">
-    <meta property="og:description" content="Build ATS-optimized resumes with AI. 10 premium vector templates, live preview, and application tracker.">
+    <meta property="og:title" content="CVAI — Resumes written for both readers">
+    <meta property="og:description" content="A parser reads your resume first, a person reads it second. CVAI writes for both.">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
 
-    <!-- Google Fonts -->
+    {% comment %}
+    This page is deliberately self-contained: it does not load cvai-global.css.
+
+    That file is the *application's* design system and it is dark by design —
+    tokens (--bg, --text-1, --brand) and components (.mobile-drawer,
+    .hamburger-btn, .nav-link-item) all assume a dark surface. This landing page
+    is light, so importing it would mean overriding nearly every token and then
+    re-overriding four components, leaving the page permanently one global tweak
+    away from breaking. Everything here is local and prefixed `lp-`, so no class
+    can collide with the app's stylesheet in either direction.
+
+    Two consequences worth knowing before editing:
+      * changing cvai-global.css cannot affect this page, and vice versa;
+      * icons are an inline SVG sprite rather than Font Awesome, so the page has
+        no render-blocking CDN dependency.
+    {% endcomment %}
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <!-- Global Design System -->
-    <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}?v=8">
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 
     <script>document.documentElement.classList.add('js');</script>
 
     <style>
+        /* ═══════════════════════════════════════════════════════════════════
+           TOKENS — a warm paper palette.
+
+           The concept: a resume has two readers. The page is paper for the
+           human, and inverts to a dark monospace surface wherever it shows what
+           the parser sees. Those are the only two surfaces on the page.
+           ═══════════════════════════════════════════════════════════════════ */
         :root {
-            --chrome-r: #ff5f56;
-            --chrome-y: #ffbd2e;
-            --chrome-g: #27c93f;
-            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-            --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            /* Two adjacent hues, not three across the spectrum.
-               cyan -> indigo -> pink swept most of the colour wheel in one word,
-               which is the single strongest "AI landing page template" tell.
-               Neighbouring hues still read as a gradient up close but hold as one
-               colour at a glance, which is what makes it look considered. */
-            --grad-hero: linear-gradient(105deg, #4cc9f0 0%, #4361ee 100%);
-            --grad-glow: radial-gradient(circle, rgba(76,201,240,0.13) 0%, rgba(67,97,238,0.05) 45%, transparent 70%);
-            --grad-border: linear-gradient(135deg, rgba(76,201,240,0.32), rgba(67,97,238,0.24));
+            /* Paper */
+            --paper:        #FAF8F3;
+            --paper-sunk:   #F2EDE2;
+            --paper-raised: #FFFFFF;
+
+            /* Ink — measured against --paper */
+            --ink:    #14120E;   /* 16.9:1  headings, body */
+            --ink-2:  #4F4A40;   /* 8.0:1   secondary prose */
+            --ink-3:  #6B6456;   /* 5.4:1   captions, labels */
+
+            /* Rules — print hairlines, not borders */
+            --rule:        #E4DDCE;
+            --rule-strong: #CBC2AE;
+
+            /* One accent. Warm, not cyan — cyan/violet is the palette this
+               page exists to get away from. */
+            --accent:       #A83A0C;   /* 6.0:1 on paper — safe for body text */
+            --accent-tint:  #FBEEE6;
+            /* The step numerals. A paler tint reads better, but these are
+               content (step 1, 2, 3), not ornament, so this is held at the
+               3:1 large-text minimum rather than the 1.5:1 a tint would give. */
+            --accent-soft:  #B87B55;   /* 3.3:1 on paper */
+
+            /* The machine surface */
+            --machine:      #16140F;
+            --machine-2:    #221F18;
+            --machine-text: #EFE9DB;
+            --machine-dim:  #9A9384;
+            --machine-key:  #E09A62;
+            --machine-str:  #A9BE9C;
+
+            --ok: #2F6B3C;
+
+            /* Type */
+            --serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+            --sans:  'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --mono:  'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+            --fs-display: clamp(2.9rem, 7.4vw, 5.75rem);
+            --fs-h2:      clamp(2.05rem, 4.4vw, 3.4rem);
+            --fs-h3:      clamp(1.15rem, 1.6vw, 1.35rem);
+            --fs-lead:    clamp(1.05rem, 1.55vw, 1.28rem);
+            --fs-body:    1.0625rem;
+            --fs-sm:      0.9375rem;
+            --fs-xs:      0.8125rem;
+            --fs-micro:   0.6875rem;
+
+            /* Print margins: the page should feel like a typeset spread, so the
+               gutter grows with the viewport rather than sitting at a fixed 24px. */
+            --gut:  clamp(20px, 5.2vw, 72px);
+            --max:  1280px;
+            --band: clamp(72px, 9vw, 132px);
+
+            --r-sm: 4px;
+            --r:    8px;
+            --r-lg: 14px;
+
+            --ease: cubic-bezier(0.22, 1, 0.36, 1);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            /* The sticky masthead would otherwise cover the heading of any
+               section reached through an anchor link. */
+            scroll-padding-top: 96px;
+            -webkit-text-size-adjust: 100%;
+        }
 
         body {
-            background-color: var(--bg);
-            color: var(--text-1);
-            font-family: var(--font-body);
+            background: var(--paper);
+            color: var(--ink);
+            font-family: var(--sans);
+            font-size: var(--fs-body);
+            line-height: 1.6;
+            font-feature-settings: 'kern' 1, 'liga' 1;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
-            overflow-x: hidden;
-            position: relative;
+            /* Deliberately not `overflow-x: hidden`. Hiding overflow hides the
+               bug; anything that sticks out at 375px should be visible in
+               testing so it gets fixed instead of masked. */
         }
 
-        /* ── Canvas Constellation Mesh ── */
-        #constellationCanvas {
-            position: fixed; inset: 0; pointer-events: none; z-index: -1;
-            opacity: 0.75;
+        h1, h2, h3 {
+            font-family: var(--serif);
+            font-weight: 400;
+            line-height: 1.02;
+            letter-spacing: -0.015em;
+            color: var(--ink);
         }
 
-        .ambient-glow {
-            position: fixed; top: 0; left: 0; width: 750px; height: 750px;
-            border-radius: 50%; background: var(--grad-glow);
-            transform: translate(-50%, -50%); pointer-events: none; z-index: -1; filter: blur(100px);
-            transition: opacity 0.6s ease; opacity: 0;
+        a { color: inherit; }
+
+        img, svg { max-width: 100%; }
+
+        ::selection { background: var(--accent); color: var(--paper); }
+
+        /* Visible, high-contrast focus on every interactive element. */
+        :focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 3px;
+            border-radius: var(--r-sm);
         }
 
-        .noise-overlay {
-            position: fixed; inset: 0; pointer-events: none; z-index: 9999;
-            opacity: 0.035; mix-blend-mode: overlay;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        /* Hidden from sight, still read aloud. Clipping rather than parking the
+           element at left:-9999px, so it cannot contribute to page width — this
+           page has no `overflow-x: hidden` to absorb that. */
+        .lp-vh {
+            position: absolute; width: 1px; height: 1px;
+            padding: 0; margin: -1px; overflow: hidden;
+            clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
         }
 
-        .grid-overlay {
-            position: fixed; inset: 0; pointer-events: none; z-index: -2; opacity: 0.45;
-            background-size: 64px 64px;
-            background-image:
-                linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-            mask-image: radial-gradient(ellipse 85% 65% at 50% 12%, black 25%, transparent 100%);
-            -webkit-mask-image: radial-gradient(ellipse 85% 65% at 50% 12%, black 25%, transparent 100%);
+        .lp-skip {
+            position: absolute; left: -9999px; top: 0; z-index: 200;
+            background: var(--ink); color: var(--paper);
+            padding: 12px 20px; font-size: var(--fs-sm); font-weight: 500;
+            text-decoration: none;
+        }
+        .lp-skip:focus { left: 12px; top: 12px; }
+
+        .lp-icon { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+        .lp-wrap { max-width: var(--max); margin: 0 auto; padding-inline: var(--gut); }
+
+        /* ── Shared section furniture ─────────────────────────────────────── */
+        .lp-band { padding-block: var(--band); position: relative; }
+
+        .lp-eyebrow {
+            font-family: var(--mono);
+            font-size: var(--fs-micro);
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--ink-3);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .lp-eyebrow::before {
+            content: ''; width: 22px; height: 1px; background: var(--rule-strong); flex: none;
         }
 
-        .orb-spotlight {
-            position: absolute; top: -180px; left: 50%; transform: translateX(-50%);
-            width: 1100px; height: 600px; border-radius: 50%;
-            background: radial-gradient(circle, rgba(67,97,238,0.3) 0%, rgba(76,201,240,0.16) 40%, transparent 70%);
-            filter: blur(100px); pointer-events: none; z-index: -1;
-            animation: pulse-orb 9s ease-in-out infinite alternate;
-        }
+        .lp-h2 { font-size: var(--fs-h2); margin-block: 18px 14px; max-width: 18ch; }
+        .lp-h2 em { font-style: italic; color: var(--accent); }
 
-        @keyframes pulse-orb {
-            0% { opacity: 0.55; transform: translateX(-50%) scale(0.92); }
-            100% { opacity: 1; transform: translateX(-50%) scale(1.12); }
-        }
+        .lp-lead { font-size: var(--fs-lead); color: var(--ink-2); max-width: 56ch; line-height: 1.55; }
 
-        /* ── Typography & Accents ── */
-        h1, h2, h3, h4 {
-            font-family: var(--font-display);
-            font-weight: 800;
-            color: var(--text-1);
-            letter-spacing: var(--track-tight);
-            line-height: var(--lh-tight);
+        /* ── Buttons ──────────────────────────────────────────────────────── */
+        .lp-btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+            font-family: var(--sans); font-size: var(--fs-sm); font-weight: 500;
+            padding: 13px 22px; border-radius: var(--r);
+            border: 1px solid transparent; cursor: pointer;
+            text-decoration: none; white-space: nowrap;
+            transition: background-color 0.2s var(--ease), color 0.2s var(--ease),
+                        border-color 0.2s var(--ease), transform 0.2s var(--ease);
         }
+        .lp-btn-primary { background: var(--ink); color: var(--paper); }
+        .lp-btn-primary:hover { background: var(--accent); transform: translateY(-1px); }
 
-        .hero-accent {
-            background: var(--grad-hero);
-            -webkit-background-clip: text; background-clip: text;
-            -webkit-text-fill-color: transparent;
-            display: inline-block;
-            filter: drop-shadow(0 0 35px rgba(76,201,240,0.35));
-        }
+        .lp-btn-ghost { background: transparent; color: var(--ink); border-color: var(--rule-strong); }
+        .lp-btn-ghost:hover { border-color: var(--ink); background: var(--paper-raised); }
 
-        .container { max-width: var(--content-max); margin: 0 auto; padding: 0 var(--sp-5); position: relative; z-index: 10; }
-        /* One rhythm for every section, from the global spacing scale rather than a
-           fixed 100px — sections were reading at slightly different weights because
-           their internal padding varied against a constant outer gap. */
-        .section { padding: var(--section-pad) 0; position: relative; scroll-margin-top: 88px; }
+        .lp-btn-lg { padding: 16px 30px; font-size: var(--fs-body); }
+        .lp-btn-full { width: 100%; }
 
-        /* ── Buttons & Magnetic Wrappers ── */
-        .magnetic-wrap { display: inline-block; padding: var(--sp-4); margin: calc(var(--sp-4) * -1); }
-
-        .btn {
-            display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
-            padding: 15px 32px; border-radius: var(--r-md);
-            font-family: var(--font-body); font-weight: 700; font-size: var(--fs-md);
-            text-decoration: none; border: none; cursor: pointer; position: relative;
-            transition: transform var(--t-fast), box-shadow var(--t-fast), background var(--t-fast), border-color var(--t-fast);
-        }
-
-        .btn-cta {
-            background: var(--grad-cta); color: #fff; border-radius: var(--r-pill);
-            box-shadow: 0 8px 32px rgba(67, 97, 238, 0.45), 0 0 0 1px rgba(255,255,255,0.18) inset;
-            overflow: hidden;
-        }
-        .btn-cta::after {
-            content: ''; position: absolute; inset: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
-            transform: translateX(-100%); transition: transform 0.6s ease;
-        }
-        .btn-cta:hover::after { transform: translateX(100%); }
-        .btn-cta:hover { box-shadow: 0 12px 48px rgba(67, 97, 238, 0.65); color: #fff; transform: translateY(-2px); }
-        .btn-cta i { transition: transform var(--t-base); }
-        .btn-cta:hover i { transform: translateX(5px); }
-
-        .btn-glass {
-            background: var(--surface-2); color: var(--text-1);
-            border: 1px solid var(--border); border-radius: var(--r-pill);
-            backdrop-filter: blur(14px);
-        }
-        .btn-glass:hover { background: var(--surface-3); border-color: var(--border-hover); color: var(--text-1); transform: translateY(-1px); }
-
-        /* ── Navbar ── */
-        .nav-wrapper {
-            position: fixed; top: var(--sp-5); left: 50%; transform: translateX(-50%); z-index: 100;
-            width: calc(100% - var(--sp-6)); max-width: 1080px;
-            transition: top var(--t-slide);
-        }
-        .nav-glass {
-            background: rgba(8, 12, 20, 0.82);
-            backdrop-filter: blur(40px) saturate(180%); -webkit-backdrop-filter: blur(40px) saturate(180%);
-            border: 1px solid var(--border); border-radius: var(--r-pill);
-            padding: 11px var(--sp-5); display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4);
-            box-shadow: 0 20px 45px -15px rgba(0,0,0,0.75);
-        }
-        .logo {
-            font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 800;
-            color: var(--text-1); text-decoration: none;
-            display: flex; align-items: center; gap: var(--sp-2); flex-shrink: 0;
-            letter-spacing: -0.5px;
-        }
-        .logo span.logo-hl { color: var(--brand); }
-        .logo-dot {
-            width: 9px; height: 9px; background: var(--brand); border-radius: 50%;
-            box-shadow: 0 0 16px var(--brand); animation: dot-pulse 2.4s ease-in-out infinite;
-        }
-        .nav-links { display: flex; gap: var(--sp-6); align-items: center; }
-        .nav-link {
-            font-size: var(--fs-base); font-weight: 600; color: var(--text-2);
-            text-decoration: none; transition: color var(--t-fast); position: relative;
-        }
-        .nav-link::after {
-            content: ''; position: absolute; bottom: -5px; left: 0; width: 0; height: 2px;
-            background: var(--brand); transition: width var(--t-base);
-        }
-        .nav-link:hover { color: var(--text-1); }
-        .nav-link:hover::after { width: 100%; }
-        .nav-actions { display: flex; gap: var(--sp-3); align-items: center; }
-        .nav-actions .btn { padding: 9px 22px; font-size: var(--fs-base); }
-
-        /* ── Hero Section ── */
-        .hero { padding: 165px 0 60px; text-align: center; position: relative; }
-
-        /* Quiet chip, not a glowing pill. The outer glow made a secondary element
-           compete with the headline directly under it. */
-        .announcement-badge {
-            display: inline-flex; align-items: center; gap: 9px;
-            padding: 6px 16px; border-radius: var(--r-pill);
-            background: var(--surface-2); border: 1px solid var(--border);
-            font-size: var(--fs-xs); font-weight: 600; color: var(--text-2);
-            letter-spacing: 0.01em;
-            text-decoration: none; margin-bottom: var(--sp-6);
-            transition: border-color var(--t-fast), color var(--t-fast), background var(--t-fast);
-        }
-        .announcement-badge:hover {
-            background: var(--surface-3); border-color: var(--border-hover);
-            color: var(--text-1);
-        }
-        .announcement-badge i { font-size: 0.75em; opacity: 0.6; }
-        .badge-spark {
-            width: 7px; height: 7px; border-radius: 50%; background: var(--brand);
-            box-shadow: 0 0 10px var(--brand);
-        }
-
-        .hero-title {
-            font-size: var(--fs-hero);
-            line-height: 1.05;
-            letter-spacing: -0.04em;
-            margin-bottom: var(--sp-5);
-        }
-        .hero-subtitle {
-            font-family: var(--font-body);
-            font-size: var(--fs-lg); font-weight: 400; color: var(--text-2);
-            max-width: 680px; margin: 0 auto var(--sp-7); line-height: var(--lh-loose);
-        }
-        .hero-actions { display: flex; gap: var(--sp-5); justify-content: center; align-items: center; flex-wrap: wrap; }
-        .hero-actions .btn-cta { padding: 18px 44px; font-size: var(--fs-lg); }
-
-        /* Secondary action: readable, clearly clickable, visibly subordinate. */
-        .hero-link {
+        /* A text link that still reads as an action. */
+        .lp-textlink {
             display: inline-flex; align-items: center; gap: 8px;
-            font-size: var(--fs-md); font-weight: 600; color: var(--text-2);
-            text-decoration: none; padding: 8px 4px;
-            transition: color var(--t-fast);
+            font-size: var(--fs-sm); color: var(--ink-2); text-decoration: none;
+            border-bottom: 1px solid var(--rule-strong); padding-bottom: 2px;
+            transition: color 0.2s var(--ease), border-color 0.2s var(--ease);
         }
-        .hero-link:hover { color: var(--text-1); }
-        .hero-link i { font-size: 0.8em; transition: transform var(--t-base); }
-        .hero-link:hover i { transform: translateY(3px); }
+        .lp-textlink:hover { color: var(--accent); border-color: var(--accent); }
 
-        .hero-proof-row {
-            display: flex; justify-content: center; align-items: center; gap: var(--sp-6);
-            margin-top: var(--sp-6); font-size: var(--fs-sm); color: var(--text-3);
-            flex-wrap: wrap;
+        /* ═══ MASTHEAD ═════════════════════════════════════════════════════ */
+        .lp-masthead {
+            position: sticky; top: 0; z-index: 90;
+            background: color-mix(in srgb, var(--paper) 88%, transparent);
+            backdrop-filter: saturate(1.4) blur(12px);
+            -webkit-backdrop-filter: saturate(1.4) blur(12px);
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.3s var(--ease);
         }
-        .hero-proof-item { display: flex; align-items: center; gap: 7px; }
-        .hero-proof-item i { color: var(--success); }
+        .lp-masthead.is-stuck { border-bottom-color: var(--rule); }
 
-        /* ── Live Interactive AI Simulator in Hero ── */
-        .hook-card-wrapper {
-            margin: var(--sp-9) auto 0;
-            max-width: 1000px;
-            background: var(--surface-1);
-            border: 1px solid var(--border);
-            border-radius: var(--r-xl);
-            box-shadow: 0 35px 90px -20px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.08);
+        .lp-masthead-inner {
+            max-width: var(--max); margin: 0 auto; padding: 14px var(--gut);
+            display: flex; align-items: center; gap: 20px;
+        }
+
+        .lp-logo {
+            font-family: var(--serif); font-size: 1.6rem; letter-spacing: -0.02em;
+            text-decoration: none; color: var(--ink); line-height: 1; margin-right: auto;
+        }
+        .lp-logo i { font-style: italic; color: var(--accent); }
+
+        .lp-nav { display: flex; gap: 4px; }
+        .lp-nav a {
+            font-size: var(--fs-sm); color: var(--ink-2); text-decoration: none;
+            padding: 8px 12px; border-radius: var(--r-sm);
+            transition: color 0.18s var(--ease), background-color 0.18s var(--ease);
+        }
+        .lp-nav a:hover { color: var(--ink); background: var(--paper-sunk); }
+
+        .lp-masthead-actions { display: flex; align-items: center; gap: 10px; }
+
+        .lp-burger {
+            display: none; background: none; border: 1px solid var(--rule-strong);
+            border-radius: var(--r); padding: 9px; color: var(--ink); cursor: pointer;
+            font-size: 1.15rem; line-height: 0;
+        }
+
+        /* ── Mobile drawer (local — the app's dark drawer is not reused) ──── */
+        .lp-scrim {
+            position: fixed; inset: 0; z-index: 100;
+            background: rgba(20, 18, 14, 0.4);
+            backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+            opacity: 0; visibility: hidden; transition: opacity 0.28s var(--ease), visibility 0.28s;
+        }
+        .lp-scrim.is-open { opacity: 1; visibility: visible; }
+
+        .lp-drawer {
+            position: fixed; top: 0; right: 0; bottom: 0; z-index: 101;
+            width: min(340px, 88vw); background: var(--paper);
+            border-left: 1px solid var(--rule);
+            transform: translateX(100%); transition: transform 0.34s var(--ease);
+            display: flex; flex-direction: column; padding: 18px;
+            overflow-y: auto;
+        }
+        .lp-drawer.is-open { transform: translateX(0); }
+
+        .lp-drawer-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+        .lp-drawer-close {
+            background: none; border: 1px solid var(--rule-strong); border-radius: var(--r);
+            padding: 9px; color: var(--ink); cursor: pointer; font-size: 1.15rem; line-height: 0;
+        }
+        .lp-drawer-nav { display: flex; flex-direction: column; gap: 2px; margin-bottom: 22px; }
+        .lp-drawer-nav a {
+            display: flex; align-items: center; gap: 12px;
+            padding: 13px 12px; border-radius: var(--r);
+            text-decoration: none; color: var(--ink); font-size: var(--fs-body);
+        }
+        .lp-drawer-nav a:hover { background: var(--paper-sunk); }
+        .lp-drawer-rule { height: 1px; background: var(--rule); margin: 12px 0; }
+        .lp-drawer-foot { margin-top: auto; display: grid; gap: 10px; }
+
+        /* ═══ HERO ═════════════════════════════════════════════════════════ */
+        .lp-hero { padding-block: clamp(56px, 8vw, 104px) clamp(64px, 9vw, 120px); }
+
+        .lp-hero-grid {
+            display: grid; grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
+            gap: clamp(40px, 5.5vw, 76px); align-items: center;
+        }
+
+        .lp-hero h1 {
+            font-size: var(--fs-display);
+            letter-spacing: -0.028em;
+            margin-block: 22px 26px;
+            text-wrap: balance;
+        }
+        .lp-hero h1 em { font-style: italic; color: var(--accent); }
+
+        .lp-hero-lead { font-size: var(--fs-lead); color: var(--ink-2); max-width: 46ch; line-height: 1.58; }
+
+        .lp-hero-cta { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-top: 34px; }
+
+        .lp-hero-notes {
+            display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 30px;
+            font-size: var(--fs-xs); color: var(--ink-3);
+        }
+        .lp-hero-notes span { display: inline-flex; align-items: center; gap: 7px; }
+        .lp-hero-notes .lp-icon { color: var(--accent); width: 0.95em; height: 0.95em; }
+
+        /* ── The two-reader spread ────────────────────────────────────────
+           Both renderings of the same resume, side by side. Hovering or
+           focusing a field on the paper highlights the matching key in the
+           parse, which is the whole argument of the product in one gesture. */
+        .lp-spread { display: grid; gap: 14px; }
+
+        .lp-spread-head {
+            display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+            font-family: var(--mono); font-size: var(--fs-micro);
+            letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3);
+        }
+
+        /* The parse gets the wider column: it is set in monospace at a fixed
+           character width, so it cannot reflow to fit the way the paper can. */
+        .lp-spread-panes { display: grid; grid-template-columns: 0.85fr 1.15fr; gap: 12px; }
+
+        /* Paper pane — a typeset resume fragment */
+        .lp-paper-pane {
+            background: var(--paper-raised);
+            border: 1px solid var(--rule);
+            border-radius: var(--r-lg);
+            padding: 22px 20px;
+            box-shadow: 0 1px 2px rgba(20,18,14,0.04), 0 12px 32px -18px rgba(20,18,14,0.28);
+        }
+        .lp-cv-name { font-family: var(--serif); font-size: 1.5rem; line-height: 1.1; }
+        .lp-cv-title { font-size: var(--fs-xs); color: var(--ink-3); margin-top: 2px; }
+        .lp-cv-rule { height: 1px; background: var(--rule); margin: 14px 0; }
+        .lp-cv-h { font-family: var(--mono); font-size: var(--fs-micro); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 8px; }
+        .lp-cv-role { font-size: var(--fs-sm); font-weight: 600; }
+        .lp-cv-meta { font-size: var(--fs-xs); color: var(--ink-3); margin-bottom: 8px; }
+        .lp-cv-bullet {
+            font-size: var(--fs-xs); color: var(--ink-2); line-height: 1.5;
+            padding-left: 14px; position: relative;
+        }
+        .lp-cv-bullet::before {
+            content: ''; position: absolute; left: 2px; top: 0.62em;
+            width: 4px; height: 1px; background: var(--rule-strong);
+        }
+        .lp-cv-skills { display: flex; flex-wrap: wrap; gap: 5px; }
+        .lp-cv-skill {
+            font-size: var(--fs-micro); border: 1px solid var(--rule);
+            padding: 3px 8px; border-radius: 999px; color: var(--ink-2);
+        }
+
+        /* Machine pane — the same content as the parser receives it */
+        .lp-machine-pane {
+            background: var(--machine);
+            border: 1px solid var(--machine-2);
+            border-radius: var(--r-lg);
+            padding: 20px 18px;
+            font-family: var(--mono); font-size: 0.67rem; line-height: 1.75;
+            color: var(--machine-dim);
+            /* Indentation is the point of this pane — it has to look like
+               structured data, not a wrapped paragraph. `pre` keeps the line
+               breaks and leading spaces authored in the markup; the container
+               scrolls on its own if a viewport is narrower than the longest
+               line, rather than letting the page scroll sideways. */
+            white-space: pre;
+            overflow-x: auto;
+        }
+        .lp-machine-pane .k { color: var(--machine-key); }
+        .lp-machine-pane .s { color: var(--machine-str); }
+        /* Braces and commas carry the structure of the parse, so they are held
+           at the 4.5:1 body-text minimum rather than dimmed to a hint. */
+        .lp-machine-pane .p { color: #8A8373; }
+
+        /* The link between the two panes */
+        [data-field], [data-key] {
+            border-radius: var(--r-sm);
+            transition: background-color 0.22s var(--ease), color 0.22s var(--ease);
+        }
+        [data-field] { cursor: default; }
+        [data-field].is-lit { background: var(--accent-tint); box-shadow: 0 0 0 4px var(--accent-tint); }
+        /* Background only, no ring: these spans wrap across several lines, and a
+           box-shadow would draw a separate outline around each line fragment. */
+        [data-key].is-lit  { background: rgba(224,154,98,0.2); }
+        [data-key].is-lit .s { color: var(--machine-text); }
+
+        /* ═══ REWRITER ═════════════════════════════════════════════════════ */
+        .lp-rewrite-band { background: var(--paper-sunk); border-block: 1px solid var(--rule); }
+
+        .lp-rewrite-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr); gap: 40px; align-items: end; margin-bottom: 40px; }
+
+        .lp-roles { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+        .lp-roles-label { font-family: var(--mono); font-size: var(--fs-micro); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); margin-right: 4px; }
+        .lp-role {
+            font-family: var(--sans); font-size: var(--fs-xs); font-weight: 500;
+            background: transparent; color: var(--ink-2);
+            border: 1px solid var(--rule-strong); border-radius: 999px;
+            padding: 7px 15px; cursor: pointer;
+            transition: all 0.2s var(--ease);
+        }
+        .lp-role:hover { border-color: var(--ink); color: var(--ink); }
+        .lp-role.is-active { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+
+        .lp-rewrite-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+
+        .lp-panel {
+            background: var(--paper-raised); border: 1px solid var(--rule);
+            border-radius: var(--r-lg); overflow: hidden;
+        }
+        .lp-panel-head {
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+            padding: 13px 18px; border-bottom: 1px solid var(--rule);
+            font-family: var(--mono); font-size: var(--fs-micro);
+            letter-spacing: 0.11em; text-transform: uppercase; color: var(--ink-3);
+        }
+        .lp-panel-body { padding: 18px; }
+
+        .lp-textarea {
+            width: 100%; min-height: 116px; resize: vertical;
+            font-family: var(--sans); font-size: var(--fs-sm); line-height: 1.6;
+            color: var(--ink); background: transparent;
+            border: 1px solid var(--rule); border-radius: var(--r); padding: 13px 14px;
+        }
+        .lp-textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+
+        .lp-panel-out { background: var(--ink); border-color: var(--ink); }
+        .lp-panel-out .lp-panel-head { border-bottom-color: rgba(250,248,243,0.14); color: var(--machine-dim); }
+        .lp-out-text {
+            font-family: var(--serif); font-size: 1.32rem; line-height: 1.38;
+            color: var(--machine-text);
+            transition: opacity 0.3s var(--ease);
+        }
+        .lp-out-text mark { background: transparent; color: var(--machine-key); }
+
+        .lp-tags { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 20px; }
+        .lp-tag {
+            font-family: var(--mono); font-size: var(--fs-micro);
+            border: 1px solid rgba(250,248,243,0.2); color: var(--machine-dim);
+            padding: 5px 10px; border-radius: 999px;
+        }
+        .lp-tag b { color: var(--machine-text); font-weight: 400; }
+
+        .lp-out-foot {
+            margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(250,248,243,0.14);
+            font-size: var(--fs-xs); color: var(--machine-dim);
+        }
+
+        /* ═══ HOW IT WORKS ═════════════════════════════════════════════════ */
+        .lp-steps { display: grid; gap: 0; margin-top: 52px; }
+        .lp-step {
+            display: grid; grid-template-columns: 88px minmax(0, 1fr) minmax(0, 0.9fr);
+            gap: clamp(20px, 3.5vw, 52px); align-items: start;
+            padding-block: 34px; border-top: 1px solid var(--rule);
+        }
+        .lp-step:last-child { border-bottom: 1px solid var(--rule); }
+        .lp-step-n {
+            font-family: var(--serif); font-size: 3.1rem; line-height: 0.9;
+            color: var(--accent-soft);
+        }
+        .lp-step h3 { font-size: var(--fs-h3); margin-bottom: 8px; }
+        .lp-step p { font-size: var(--fs-sm); color: var(--ink-2); max-width: 44ch; }
+        .lp-step-note {
+            font-family: var(--mono); font-size: var(--fs-xs); color: var(--ink-3);
+            line-height: 1.65; padding-left: 16px; border-left: 1px solid var(--rule);
+        }
+
+        /* ═══ TEMPLATES ════════════════════════════════════════════════════ */
+        .lp-tpl-head { display: flex; flex-wrap: wrap; gap: 24px; align-items: end; justify-content: space-between; }
+
+        .lp-tpl-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+            gap: clamp(16px, 2vw, 26px); margin-top: 50px;
+        }
+        .lp-tpl { display: flex; flex-direction: column; gap: 12px; }
+
+        /* Each thumbnail is a real A4 proportion, so the grid reads as a stack
+           of pages rather than a set of cards. */
+        .lp-tpl-page {
+            aspect-ratio: 1 / 1.414;
+            background: var(--paper-raised);
+            border: 1px solid var(--rule);
+            border-radius: var(--r);
+            padding: 13px; overflow: hidden;
+            display: flex; flex-direction: column; gap: 5px;
+            box-shadow: 0 1px 2px rgba(20,18,14,0.04);
+            transition: transform 0.28s var(--ease), box-shadow 0.28s var(--ease), border-color 0.28s var(--ease);
+        }
+        .lp-tpl:hover .lp-tpl-page {
+            transform: translateY(-4px);
+            border-color: var(--rule-strong);
+            box-shadow: 0 1px 2px rgba(20,18,14,0.04), 0 18px 34px -20px rgba(20,18,14,0.34);
+        }
+        .lp-tpl-name { font-size: var(--fs-sm); font-weight: 600; }
+        .lp-tpl-desc { font-size: var(--fs-xs); color: var(--ink-3); line-height: 1.45; }
+
+        /* Thumbnail primitives — abstract page furniture, not fake screenshots */
+        .lp-m-bar { height: 6px; border-radius: 1px; background: var(--ink); opacity: 0.82; }
+        .lp-m-line { height: 3px; border-radius: 1px; background: var(--rule-strong); }
+        .lp-m-fill { flex: 1; }
+        .lp-m-row { display: flex; gap: 5px; flex: 1; min-height: 0; }
+        .lp-m-col { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+
+        /* ═══ FEATURES ═════════════════════════════════════════════════════ */
+        .lp-feat-band { background: var(--paper-sunk); border-block: 1px solid var(--rule); }
+
+        .lp-feat-grid {
+            display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1px; margin-top: 50px;
+            background: var(--rule); border: 1px solid var(--rule); border-radius: var(--r-lg);
             overflow: hidden;
-            text-align: left;
-            position: relative;
         }
-        .hook-header {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 16px 24px;
-            background: rgba(0,0,0,0.45);
-            border-bottom: 1px solid var(--border);
-            flex-wrap: wrap; gap: 14px;
+        .lp-feat { background: var(--paper); padding: 30px 26px; }
+        .lp-feat-ico {
+            width: 34px; height: 34px; border-radius: var(--r);
+            display: grid; place-items: center; margin-bottom: 16px;
+            background: var(--accent-tint); color: var(--accent); font-size: 1rem;
         }
-        .role-selector-pills {
-            display: flex; gap: 8px; flex-wrap: wrap;
-        }
-        .role-pill {
-            background: var(--surface-2); border: 1px solid var(--border);
-            color: var(--text-2); font-size: var(--fs-xs); font-weight: 700;
-            padding: 6px 16px; border-radius: var(--r-pill); cursor: pointer;
-            transition: all var(--t-fast);
-        }
-        .role-pill.active {
-            background: var(--brand); color: #080c14; border-color: var(--brand);
-            box-shadow: 0 2px 12px rgba(76,201,240,0.4);
-        }
-        .hook-body {
-            display: grid; grid-template-columns: 1.35fr 1fr;
-            padding: 28px; gap: 26px;
-        }
-        .hook-interactive-input-box {
-            display: flex; flex-direction: column; gap: 14px;
-        }
-        .hook-textarea {
-            width: 100%; height: 100px; background: rgba(0,0,0,0.3);
-            border: 1px solid var(--border); border-radius: var(--r-md);
-            padding: 14px; color: var(--text-1); font-family: var(--font-body);
-            font-size: var(--fs-base); line-height: 1.5; resize: none;
-            outline: none; transition: border-color var(--t-fast);
-        }
-        .hook-textarea:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(76,201,240,0.15); }
-        .hook-btn-run {
-            align-self: flex-start;
-            background: var(--grad-cta); color: #fff; border: none;
-            padding: 11px 26px; border-radius: var(--r-pill); font-weight: 700;
-            font-size: var(--fs-sm); cursor: pointer; display: flex; align-items: center; gap: 8px;
-            box-shadow: 0 4px 18px rgba(67,97,238,0.4);
-            transition: all var(--t-fast);
-        }
-        .hook-btn-run:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(67,97,238,0.6); }
+        .lp-feat h3 { font-size: var(--fs-h3); margin-bottom: 8px; }
+        .lp-feat p { font-size: var(--fs-sm); color: var(--ink-2); }
 
-        .hook-output-card {
-            background: rgba(0,0,0,0.25); border: 1px solid var(--border);
-            border-radius: var(--r-lg); padding: 22px;
-            display: flex; flex-direction: column; justify-content: space-between;
-            position: relative;
+        /* ═══ PRICING ══════════════════════════════════════════════════════ */
+        .lp-price-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 50px; align-items: start; }
+
+        .lp-plan {
+            background: var(--paper-raised); border: 1px solid var(--rule);
+            border-radius: var(--r-lg); padding: 30px 26px;
+            display: flex; flex-direction: column; height: 100%;
         }
-        .laser-scan-line {
-            position: absolute; top: 0; left: 0; right: 0; height: 2px;
-            background: linear-gradient(90deg, transparent, var(--brand), transparent);
-            opacity: 0; pointer-events: none;
+        .lp-plan-featured { border-color: var(--ink); box-shadow: 0 20px 46px -30px rgba(20,18,14,0.4); }
+
+        /* Fixed height so the three prices sit on one baseline whether or not a
+           card carries a flag pill. */
+        .lp-plan-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 26px; }
+        .lp-plan-name { font-family: var(--mono); font-size: var(--fs-micro); letter-spacing: 0.13em; text-transform: uppercase; color: var(--ink-3); }
+        .lp-plan-flag {
+            font-family: var(--mono); font-size: var(--fs-micro); letter-spacing: 0.08em;
+            text-transform: uppercase; background: var(--ink); color: var(--paper);
+            padding: 4px 9px; border-radius: 999px;
         }
-        .laser-scanning .laser-scan-line {
-            opacity: 1; animation: laser-sweep 1.2s infinite ease-in-out;
-        }
-        @keyframes laser-sweep {
-            0% { top: 0; }
-            100% { top: 100%; }
+        .lp-plan-cost { display: flex; align-items: baseline; gap: 3px; margin-block: 16px 4px; }
+        .lp-plan-cost b { font-family: var(--serif); font-size: 3.4rem; font-weight: 400; line-height: 0.9; }
+        .lp-plan-cost span { font-size: var(--fs-sm); color: var(--ink-3); }
+        .lp-plan-for { font-size: var(--fs-sm); color: var(--ink-2); margin-bottom: 22px; min-height: 3em; }
+
+        .lp-plan-list { list-style: none; display: grid; gap: 11px; margin-bottom: 26px; }
+        .lp-plan-list li { display: flex; gap: 10px; font-size: var(--fs-sm); color: var(--ink-2); line-height: 1.45; }
+        .lp-plan-list .lp-icon { color: var(--accent); margin-top: 0.34em; width: 0.9em; height: 0.9em; }
+        .lp-plan-list b { color: var(--ink); font-weight: 600; }
+        .lp-plan-cta { margin-top: auto; }
+
+        .lp-price-note {
+            margin-top: 26px; font-size: var(--fs-xs); color: var(--ink-3); text-align: center;
         }
 
-        .hook-output-text {
-            font-size: var(--fs-md); line-height: 1.6; color: var(--text-1);
-            min-height: 90px;
-        }
-        .hook-output-text mark {
-            background: rgba(76,201,240,0.2); color: var(--brand);
-            padding: 2px 6px; border-radius: 4px; font-weight: 600;
-        }
-        .xyz-breakdown-tags {
-            display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px;
-        }
-        .xyz-tag {
-            font-size: var(--fs-2xs); font-weight: 800; text-transform: uppercase;
-            padding: 4px 10px; border-radius: var(--r-sm);
-        }
-        .xyz-x { background: rgba(67,97,238,0.15); color: #818cf8; border: 1px solid rgba(67,97,238,0.3); }
-        .xyz-y { background: rgba(34,197,94,0.15); color: var(--success); border: 1px solid rgba(34,197,94,0.3); }
-        .xyz-z { background: rgba(76,201,240,0.15); color: var(--brand); border: 1px solid rgba(76,201,240,0.3); }
+        /* ═══ FAQ ══════════════════════════════════════════════════════════ */
+        .lp-faq-grid { display: grid; grid-template-columns: minmax(0, 0.72fr) minmax(0, 1fr); gap: clamp(36px, 5vw, 80px); align-items: start; }
 
-        .hook-score-pill-card {
-            background: var(--surface-2); border: 1px solid var(--border);
-            border-radius: var(--r-lg); padding: 18px;
-            display: flex; align-items: center; justify-content: space-between;
+        .lp-search { position: relative; margin-top: 26px; }
+        .lp-search .lp-icon {
+            position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+            color: var(--ink-3); width: 1.05em; height: 1.05em;
         }
-        .score-big {
-            font-family: var(--font-display); font-size: 2.5rem; font-weight: 800;
-            line-height: 1; color: var(--brand);
-            transition: color 0.4s;
+        .lp-search input {
+            width: 100%; font-family: var(--sans); font-size: var(--fs-sm); color: var(--ink);
+            background: var(--paper-raised); border: 1px solid var(--rule);
+            border-radius: var(--r); padding: 13px 14px 13px 42px;
         }
+        .lp-search input::placeholder { color: var(--ink-3); }
+        .lp-search input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
 
-        /* ── Social Proof Marquee ── */
+        .lp-faq-list { display: grid; }
+        .lp-faq-item { border-top: 1px solid var(--rule); }
+        .lp-faq-item:last-of-type { border-bottom: 1px solid var(--rule); }
+        .lp-faq-item summary {
+            list-style: none; cursor: pointer; padding: 22px 40px 22px 0;
+            font-size: var(--fs-h3); font-family: var(--serif); position: relative;
+            transition: color 0.2s var(--ease);
+        }
+        .lp-faq-item summary::-webkit-details-marker { display: none; }
+        .lp-faq-item summary:hover { color: var(--accent); }
+        .lp-faq-item summary::after {
+            content: ''; position: absolute; right: 8px; top: 50%;
+            width: 9px; height: 9px; margin-top: -6px;
+            border-right: 1.5px solid var(--ink-3); border-bottom: 1.5px solid var(--ink-3);
+            transform: rotate(45deg); transition: transform 0.26s var(--ease);
+        }
+        .lp-faq-item[open] summary::after { transform: rotate(-135deg); margin-top: -2px; }
+        .lp-faq-a { padding-bottom: 24px; font-size: var(--fs-sm); color: var(--ink-2); max-width: 62ch; }
+        .lp-faq-a em { color: var(--ink); }
 
-        /* ── 10-Template Showcase Carousel with Filter Tabs ── */
-        .template-filter-tabs {
-            display: flex; justify-content: center; gap: 10px; margin-bottom: 30px;
-            flex-wrap: wrap;
-        }
-        .tpl-tab-btn {
-            background: var(--surface-2); border: 1px solid var(--border);
-            color: var(--text-2); font-size: var(--fs-xs); font-weight: 700;
-            padding: 8px 18px; border-radius: var(--r-pill); cursor: pointer;
-            transition: all var(--t-fast);
-        }
-        .tpl-tab-btn.active {
-            background: var(--brand); color: #080c14; border-color: var(--brand);
-            box-shadow: 0 2px 14px rgba(76,201,240,0.4);
-        }
+        .lp-faq-empty { padding: 24px 0; font-size: var(--fs-sm); color: var(--ink-3); }
 
-        .template-carousel-wrapper {
-            position: relative; overflow: hidden; padding: 15px 0 35px;
-        }
-        .template-track {
-            display: flex; gap: 26px;
-            animation: scroll-templates 40s linear infinite;
-            width: max-content;
-        }
-        .template-track:hover { animation-play-state: paused; }
-        @keyframes scroll-templates {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
-        .template-card {
-            width: 270px; height: 360px;
-            background: var(--surface-1); border: 1px solid var(--border);
-            border-radius: var(--r-xl); padding: 16px;
-            display: flex; flex-direction: column; justify-content: space-between;
-            box-shadow: var(--shadow-2); flex-shrink: 0;
-            transition: all var(--t-base);
-            position: relative; overflow: hidden; cursor: pointer;
-        }
-        .template-card:hover {
-            transform: translateY(-8px) scale(1.02);
-            border-color: var(--brand);
-            box-shadow: 0 22px 45px rgba(76,201,240,0.2);
-        }
-        .tpl-mini-paper {
-            background: #ffffff; border-radius: 4px; height: 235px; padding: 14px;
-            color: #0f172a; display: flex; flex-direction: column; gap: 8px;
-            overflow: hidden; pointer-events: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        .tpl-dark-side { background: #0f172a; color: #f8fafc; }
-        .tpl-header-mock { height: 16px; background: #334155; border-radius: 2px; width: 60%; }
-        .tpl-line-mock { height: 4px; background: #e2e8f0; border-radius: 2px; width: 100%; }
-        .tpl-badge {
-            font-size: var(--fs-2xs); font-weight: 800; text-transform: uppercase;
-            letter-spacing: 0.1em; color: var(--brand); margin-top: 10px;
-        }
-        .tpl-name { font-size: var(--fs-md); font-weight: 700; color: var(--text-1); }
+        /* ═══ CLOSING ══════════════════════════════════════════════════════ */
+        .lp-close { background: var(--machine); color: var(--machine-text); }
+        .lp-close h2 { color: var(--machine-text); font-size: var(--fs-h2); max-width: 16ch; }
+        .lp-close h2 em { font-style: italic; color: var(--machine-key); }
+        .lp-close-grid { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 40px; align-items: end; }
+        .lp-close p { color: var(--machine-dim); font-size: var(--fs-lead); max-width: 44ch; margin-top: 18px; }
+        .lp-close .lp-btn-primary { background: var(--paper); color: var(--ink); }
+        .lp-close .lp-btn-primary:hover { background: var(--machine-key); color: var(--machine); }
 
-        /* ── Template Inspector Modal ── */
-        .tpl-modal-backdrop {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            z-index: 10000; display: flex; align-items: center; justify-content: center;
-            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        /* ═══ FOOTER ═══════════════════════════════════════════════════════ */
+        .lp-foot { background: var(--machine); color: var(--machine-dim); padding-block: 60px 34px; border-top: 1px solid var(--machine-2); }
+        .lp-foot-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr)); gap: 40px; }
+        .lp-foot-logo { font-family: var(--serif); font-size: 1.7rem; color: var(--machine-text); line-height: 1; }
+        .lp-foot-logo i { font-style: italic; color: var(--machine-key); }
+        .lp-foot-tag { font-size: var(--fs-sm); margin-top: 12px; max-width: 34ch; line-height: 1.55; }
+        .lp-foot-col h4 {
+            font-family: var(--mono); font-size: var(--fs-micro); font-weight: 700;
+            letter-spacing: 0.12em; text-transform: uppercase; color: var(--machine-text);
+            margin-bottom: 14px;
         }
-        .tpl-modal-backdrop.open { opacity: 1; pointer-events: auto; }
-        .tpl-modal-content {
-            background: var(--surface-1); border: 1px solid var(--border);
-            border-radius: var(--r-xl); width: 90%; max-width: 840px;
-            max-height: 90vh; overflow-y: auto; padding: 34px;
-            box-shadow: var(--shadow-3); position: relative;
-            transform: scale(0.95); transition: transform 0.3s var(--ease-spring);
+        .lp-foot-col a {
+            display: block; font-size: var(--fs-sm); text-decoration: none;
+            color: var(--machine-dim); padding-block: 5px;
+            transition: color 0.18s var(--ease);
         }
-        .tpl-modal-backdrop.open .tpl-modal-content { transform: scale(1); }
-        .tpl-modal-close {
-            position: absolute; top: 20px; right: 20px;
-            background: var(--surface-2); border: 1px solid var(--border);
-            color: var(--text-2); width: 36px; height: 36px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; cursor: pointer;
-            transition: all var(--t-fast);
-        }
-        .tpl-modal-close:hover { background: var(--surface-3); color: #fff; }
-
-        /* ── Bento Grid ── */
-        .bento-grid {
-            display: grid; grid-template-columns: repeat(4, 1fr);
-            gap: var(--sp-5); max-width: var(--content-max); margin: 0 auto;
-        }
-        .bento-card {
-            background: var(--surface-1); border: 1px solid var(--border);
-            border-radius: var(--r-xl); padding: var(--sp-6);
-            position: relative; display: flex; flex-direction: column; overflow: hidden;
-            box-shadow: var(--shadow-2); min-height: 290px;
-            transition: all var(--t-base);
-        }
-        .bento-card:hover { border-color: var(--border-hover); transform: translateY(-4px); box-shadow: var(--shadow-3); }
-        .bento-card::before {
-            content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
-            background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(76,201,240,0.08), transparent 40%);
-            opacity: 0; transition: opacity var(--t-slide);
-        }
-        .bento-card:hover::before { opacity: 1; }
-        .bento-icon {
-            width: 52px; height: 52px; border-radius: var(--r-md);
-            display: flex; align-items: center; justify-content: center;
-            font-size: var(--fs-xl); margin-bottom: var(--sp-5);
-            background: rgba(76,201,240,0.08); color: var(--brand); border: 1px solid rgba(76,201,240,0.2);
-            transition: transform var(--t-base);
-        }
-        .bento-card:hover .bento-icon { transform: scale(1.1) rotate(5deg); }
-        .bento-title { font-size: var(--fs-2xl); margin-bottom: var(--sp-3); }
-        .bento-desc {
-            font-family: var(--font-body); font-size: var(--fs-md); font-weight: 400;
-            color: var(--text-2); line-height: var(--lh-loose);
-        }
-        .bento-col-2 { grid-column: span 2; }
-        .bento-row-2 { grid-row: span 2; }
-
-        /* ── Live ATS Meter ── */
-        .live-gauge-wrap {
-            margin-top: 18px; background: rgba(0,0,0,0.3);
-            border-radius: var(--r-lg); padding: 16px; border: 1px solid var(--border);
-            display: flex; align-items: center; gap: 16px;
-        }
-        .circle-gauge-svg { width: 68px; height: 68px; transform: rotate(-90deg); }
-        .circle-bg { fill: none; stroke: var(--surface-3); stroke-width: 6; }
-        .circle-progress {
-            fill: none; stroke: var(--brand); stroke-width: 6; stroke-linecap: round;
-            stroke-dasharray: 160; stroke-dashoffset: 14;
-            animation: gauge-fill 3s ease-out infinite alternate;
-        }
-        @keyframes gauge-fill {
-            0% { stroke-dashoffset: 80; }
-            100% { stroke-dashoffset: 6; }
+        .lp-foot-col a:hover { color: var(--machine-text); }
+        .lp-foot-bottom {
+            margin-top: 48px; padding-top: 22px; border-top: 1px solid var(--machine-2);
+            display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between;
+            font-size: var(--fs-xs);
         }
 
-        /* ── Comparison Table (CVAI vs Generic Builders) ── */
-        .compare-table-card {
-            background: var(--surface-1); border: 1px solid var(--border);
-            border-radius: var(--r-xl); padding: 36px; margin-top: var(--sp-8);
-            box-shadow: var(--shadow-3); overflow-x: auto;
-        }
-        .compare-table {
-            width: 100%; border-collapse: collapse; text-align: left;
-        }
-        .compare-table th {
-            padding: 16px; font-size: var(--fs-sm); font-weight: 800;
-            text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-3);
-            border-bottom: 2px solid var(--border);
-        }
-        .compare-table td {
-            padding: 16px; font-size: var(--fs-md); color: var(--text-2);
-            border-bottom: 1px solid var(--border);
-        }
-        .compare-table tr:hover td { background: var(--surface-2); }
-        .col-cvai { color: var(--brand) !important; font-weight: 700; }
+        /* ═══ REVEALS ══════════════════════════════════════════════════════
+           Gated behind `html.js`: with JavaScript disabled the class is never
+           added, the rule never applies, and every section renders at full
+           opacity instead of an invisible page. */
+        .js .lp-rise { opacity: 0; transform: translateY(18px); transition: opacity 0.7s var(--ease), transform 0.7s var(--ease); }
+        .js .lp-rise.is-in { opacity: 1; transform: none; }
 
-        /* ── Interactive ROI & Callback Calculator ── */
-        .roi-calculator-card {
-            background: var(--surface-1); border: 1px solid var(--border);
-            border-radius: var(--r-xl); padding: 40px;
-            margin: var(--sp-8) auto 0; max-width: 860px;
-            box-shadow: var(--shadow-3);
-        }
-        .roi-slider-track { margin: 24px 0 30px; }
-        .roi-slider {
-            width: 100%; height: 8px; border-radius: 4px;
-            background: var(--surface-3); outline: none; -webkit-appearance: none;
-            cursor: pointer;
-        }
-        .roi-slider::-webkit-slider-thumb {
-            -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%;
-            background: var(--brand); box-shadow: 0 0 15px var(--brand); cursor: pointer;
-        }
-        .roi-results-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
-            background: rgba(0,0,0,0.25); border: 1px solid var(--border);
-            border-radius: var(--r-lg); padding: 22px; text-align: center;
-        }
-        .roi-val {
-            font-family: var(--font-display); font-size: 2.2rem; font-weight: 800;
-            color: var(--brand); line-height: 1.1;
+        /* ═══ RESPONSIVE ═══════════════════════════════════════════════════ */
+        @media (max-width: 1040px) {
+            .lp-hero-grid { grid-template-columns: 1fr; gap: 48px; }
+            .lp-hero-lead { max-width: 60ch; }
+            .lp-feat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .lp-price-grid { grid-template-columns: 1fr; max-width: 480px; }
+            .lp-faq-grid { grid-template-columns: 1fr; }
+            .lp-rewrite-head { grid-template-columns: 1fr; gap: 26px; align-items: start; }
         }
 
-        /* ── Section Titles ── */
-        .section-header { text-align: center; margin-bottom: var(--sp-8); }
-        .section-tag {
-            font-size: var(--fs-2xs); font-weight: 700; color: var(--brand);
-            text-transform: uppercase; letter-spacing: 0.18em;
-            margin-bottom: var(--sp-4); display: inline-block;
-            padding: 5px 16px; background: rgba(76,201,240,0.08);
-            border-radius: var(--r-pill); border: 1px solid rgba(76, 201, 240, 0.25);
-        }
-        .landing-section-title { font-size: var(--fs-3xl); margin-bottom: var(--sp-4); }
-        .section-sub {
-            font-family: var(--font-body); font-size: var(--fs-lg); font-weight: 400;
-            color: var(--text-2); max-width: 640px; margin: 0 auto; line-height: var(--lh-loose);
+        @media (max-width: 860px) {
+            .lp-nav, .lp-masthead-actions { display: none; }
+            .lp-burger { display: block; }
+            .lp-rewrite-grid { grid-template-columns: 1fr; }
+            .lp-step { grid-template-columns: 56px minmax(0, 1fr); }
+            .lp-step-n { font-size: 2.3rem; }
+            .lp-step-note { grid-column: 2; padding-left: 0; border-left: 0; padding-top: 4px; }
+            .lp-close-grid { grid-template-columns: 1fr; align-items: start; }
+            .lp-foot-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
         }
 
-        /* ── Pricing ── */
-        .pricing-switch-wrap {
-            display: flex; align-items: center; justify-content: center; gap: 14px;
-            margin-bottom: var(--sp-7);
-        }
-        .switch-label { font-size: var(--fs-md); font-weight: 600; color: var(--text-2); }
-        .switch-pill {
-            display: inline-flex; align-items: center; width: 54px; height: 28px;
-            background: var(--surface-2); border: 1px solid var(--border);
-            border-radius: var(--r-pill); cursor: pointer; padding: 3px; position: relative;
-            transition: background var(--t-fast);
-        }
-        .switch-dot {
-            width: 20px; height: 20px; border-radius: 50%; background: var(--brand);
-            transition: transform var(--t-fast);
-        }
-        .switch-pill.active .switch-dot { transform: translateX(26px); background: var(--gold); }
-        .save-badge {
-            font-size: var(--fs-2xs); font-weight: 800; background: var(--gold);
-            color: #080c14; padding: 3px 9px; border-radius: var(--r-pill);
+        @media (max-width: 620px) {
+            .lp-spread-panes { grid-template-columns: 1fr; }
+            .lp-feat-grid { grid-template-columns: 1fr; }
+            .lp-tpl-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .lp-hero-cta { gap: 14px; }
+            .lp-hero-cta .lp-btn { width: 100%; }
+            .lp-foot-grid { grid-template-columns: 1fr; }
         }
 
-        .pricing-grid { display: flex; justify-content: center; gap: var(--sp-5); align-items: stretch; flex-wrap: wrap; }
-        .card {
-            background: var(--surface-1); border: 1px solid var(--border);
-            border-radius: var(--r-xl); width: 350px; max-width: 100%; padding: var(--sp-7) var(--sp-6);
-            position: relative; display: flex; flex-direction: column; box-shadow: var(--shadow-2);
-            transition: transform var(--t-base), border-color var(--t-base);
-        }
-        .card:hover { transform: translateY(-6px); }
-        .card-pro {
-            border-color: transparent;
-            box-shadow: var(--shadow-3), 0 0 60px rgba(245, 158, 11, 0.12);
-            isolation: isolate;
-        }
-        .card-pro::before {
-            content: ""; position: absolute; inset: -1px; border-radius: var(--r-xl); z-index: -1;
-            background: conic-gradient(from var(--angle, 0deg), transparent 0%, var(--gold) 18%, transparent 38%);
-            animation: spin-angle 5s linear infinite;
-        }
-        .card-pro::after {
-            content: ""; position: absolute; inset: 0; border-radius: var(--r-xl); z-index: -1;
-            background: var(--surface-1);
-        }
-        @property --angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
-        @keyframes spin-angle { to { --angle: 360deg; } }
-
-        .card-pill {
-            position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
-            padding: 7px 18px; border-radius: var(--r-pill); white-space: nowrap;
-            font-size: var(--fs-2xs); font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
-        }
-        .pill-pro { background: var(--grad-gold); color: #0a0a0a; }
-        .pill-elite { background: var(--brand-3); color: #fff; }
-
-        .card-tier {
-            font-size: var(--fs-xs); font-weight: 800; letter-spacing: 0.16em;
-            text-transform: uppercase; margin-bottom: var(--sp-4); color: var(--text-3);
-        }
-        .card-price-wrap { display: flex; align-items: baseline; gap: 5px; margin-bottom: var(--sp-3); }
-        .card-currency { font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 700; color: var(--text-1); margin-top: 6px; }
-        .card-price { font-family: var(--font-display); font-size: 3.4rem; font-weight: 800; color: var(--text-1); line-height: 1; letter-spacing: -0.04em; }
-        .card-period { color: var(--text-3); font-size: var(--fs-md); }
-
-        .feature-list { list-style: none; flex: 1; margin-bottom: var(--sp-6); }
-        .feature-list li {
-            display: flex; align-items: flex-start; gap: var(--sp-3); margin-bottom: var(--sp-4);
-            font-size: var(--fs-base); color: var(--text-2); line-height: var(--lh-base);
-        }
-        .feature-list li strong { color: var(--text-1); font-weight: 600; }
-        .feature-list i.fa-check { color: var(--success); margin-top: 3px; }
-        .feature-list i.fa-xmark { color: var(--text-3); margin-top: 3px; }
-
-        /* ── Wall of Love ── */
-
-        /* ── FAQ with Instant Search ── */
-        .faq-search-box {
-            max-width: 500px; margin: 0 auto 30px; position: relative;
-        }
-        .faq-search-input {
-            width: 100%; padding: 14px 20px 14px 44px;
-            background: var(--surface-2); border: 1px solid var(--border);
-            border-radius: var(--r-pill); color: var(--text-1);
-            font-size: var(--fs-base); outline: none; transition: all var(--t-fast);
-        }
-        .faq-search-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(76,201,240,0.15); }
-        .faq-search-icon { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--text-3); }
-
-        .faq-list { max-width: var(--content-narrow); margin: 0 auto; }
-        .faq-item {
-            background: var(--surface-1); border: 1px solid var(--border);
-            border-radius: var(--r-lg); margin-bottom: var(--sp-3); overflow: hidden;
-            transition: border-color var(--t-fast);
-        }
-        .faq-item[open] { border-color: var(--border-hover); }
-        .faq-item summary {
-            padding: var(--sp-5); cursor: pointer; list-style: none;
-            display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4);
-            font-family: var(--font-body); font-size: var(--fs-md); font-weight: 600; color: var(--text-1);
-        }
-        .faq-item summary::-webkit-details-marker { display: none; }
-        .faq-item summary::after {
-            content: '\f067'; font-family: 'Font Awesome 6 Free'; font-weight: 900;
-            font-size: var(--fs-sm); color: var(--brand); flex-shrink: 0;
-            transition: transform var(--t-base);
-        }
-        .faq-item[open] summary::after { content: '\f068'; }
-        .faq-answer {
-            padding: 0 var(--sp-5) var(--sp-5);
-            font-size: var(--fs-base); color: var(--text-2); line-height: var(--lh-loose);
-        }
-
-        /* ── Closing CTA ── */
-        .cta-panel {
-            background: radial-gradient(circle at 50% 0%, rgba(67,97,238,0.24) 0%, var(--surface-1) 70%);
-            border: 1px solid var(--border);
-            border-radius: var(--r-xl); padding: 85px 40px;
-            text-align: center; position: relative; overflow: hidden;
-            box-shadow: var(--shadow-3);
-        }
-        .cta-title { font-size: var(--fs-3xl); margin-bottom: var(--sp-4); }
-        .cta-sub {
-            font-family: var(--font-body); font-size: var(--fs-lg); font-weight: 400; color: var(--text-2);
-            max-width: 560px; margin: 0 auto var(--sp-6); line-height: var(--lh-loose);
-        }
-
-        /* ── Footer ── */
-        .site-footer { border-top: 1px solid var(--border); padding: 75px 0 45px; margin-top: var(--sp-8); }
-        .footer-grid {
-            display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
-            gap: var(--sp-6); margin-bottom: var(--sp-7);
-        }
-        .footer-logo { font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 800; color: var(--text-1); margin-bottom: var(--sp-3); }
-        .footer-tagline { font-size: var(--fs-base); color: var(--text-3); line-height: var(--lh-loose); max-width: 320px; }
-        .footer-col h4 {
-            font-family: var(--font-body); font-size: var(--fs-xs); font-weight: 700;
-            text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-3); margin-bottom: var(--sp-4);
-        }
-        .footer-col a {
-            display: block; font-size: var(--fs-base); color: var(--text-2);
-            text-decoration: none; margin-bottom: 11px; transition: color var(--t-fast);
-        }
-        .footer-col a:hover { color: var(--brand); }
-        .footer-bottom {
-            border-top: 1px solid var(--border); padding-top: var(--sp-5);
-            display: flex; justify-content: space-between; gap: var(--sp-4); flex-wrap: wrap;
-            font-size: var(--fs-sm); color: var(--text-3);
-        }
-
-        /* ── Animations ── */
-        .js .reveal-up {
-            opacity: 0; transform: translateY(28px);
-            transition: opacity 0.8s var(--ease-out-expo), transform 0.8s var(--ease-out-expo);
-        }
-        .js .reveal-up.in-view { opacity: 1; transform: translateY(0); }
-
-        @keyframes dot-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.55; transform: scale(0.82); } }
-
-        @media (max-width: 980px) {
-            .bento-grid { grid-template-columns: repeat(2, 1fr); }
-            .bento-col-2 { grid-column: span 2; }
-            .bento-row-2 { grid-row: span 1; }
-            .footer-grid { grid-template-columns: 1fr 1fr; }
-            .hook-body { grid-template-columns: 1fr; }
-            .roi-results-grid { grid-template-columns: 1fr; }
-        }
-        @media (max-width: 768px) {
-            .hero { padding-top: 130px; }
-            .nav-wrapper { top: var(--sp-3); width: calc(100% - var(--sp-4)); }
-            .template-track { animation-duration: 25s; }
-        }
-        @media (max-width: 560px) {
-            .bento-grid { grid-template-columns: 1fr; }
-            .bento-col-2 { grid-column: span 1; }
-            .footer-grid { grid-template-columns: 1fr; }
-            .compare-table-card { padding: 20px; }
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            *, *::before, *::after {
+                animation-duration: 0.001ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.001ms !important;
+            }
+            .js .lp-rise { opacity: 1; transform: none; }
         }
     </style>
 </head>
 
 <body>
-    <!-- Constellation particle canvas -->
-    <canvas id="constellationCanvas"></canvas>
-    <div class="ambient-glow" id="ambientGlow" aria-hidden="true"></div>
-    <div class="noise-overlay" aria-hidden="true"></div>
-    <div class="grid-overlay" aria-hidden="true"></div>
+    <a class="lp-skip" href="#main">Skip to content</a>
 
-    <!-- ══ NAVBAR ══ -->
-    <nav class="nav-wrapper" id="navbar">
-        <div class="nav-glass">
-            <a href="/" class="logo"><span class="logo-dot" aria-hidden="true"></span> CV<span class="logo-hl">AI</span></a>
+    {% comment %}Icon sprite — replaces the Font Awesome CDN request.{% endcomment %}
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+        <defs>
+            <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+            <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></symbol>
+            <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></symbol>
+            <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></symbol>
+            <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+            <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+            <symbol id="i-pen" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z"/></symbol>
+            <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></symbol>
+            <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5"/></symbol>
+            <symbol id="i-board" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15 4v16"/></symbol>
+            <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></symbol>
+            <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 01-8 8H7l-4 3V12a8 8 0 018-8h2a8 8 0 018 8z"/></symbol>
+        </defs>
+    </svg>
 
-            <!-- Four items, not six. Comparison and the calculator are still on the
-                 page; they were section links masquerading as navigation, which made
-                 the bar read as a sitemap. -->
-            <div class="nav-links desktop-nav">
-                <a href="#templates" class="nav-link">Templates</a>
-                <a href="#features" class="nav-link">Features</a>
-                <a href="#pricing" class="nav-link">Pricing</a>
-                <a href="#faq" class="nav-link">FAQ</a>
+    <!-- ══ MASTHEAD ══ -->
+    <header class="lp-masthead" id="masthead">
+        <div class="lp-masthead-inner">
+            <a href="/" class="lp-logo">CV<i>AI</i></a>
+
+            <nav class="lp-nav" aria-label="Sections">
+                <a href="#how">How it works</a>
+                <a href="#templates">Templates</a>
+                <a href="#pricing">Pricing</a>
+                <a href="#faq">FAQ</a>
+            </nav>
+
+            <div class="lp-masthead-actions">
+                <a href="{% url 'login' %}" class="lp-btn lp-btn-ghost">Sign in</a>
+                <a href="{% url 'register' %}" class="lp-btn lp-btn-primary">Start free</a>
             </div>
 
-            <div class="nav-actions">
-                <a href="{% url 'login' %}" class="btn btn-glass">Sign in</a>
-                <div class="magnetic-wrap"><a href="{% url 'register' %}" class="btn btn-cta magnetic">Start Free</a></div>
-            </div>
-
-            <button class="hamburger-btn" id="hamburgerBtn" aria-label="Open menu" aria-expanded="false" aria-controls="mobileDrawer">
-                <i class="fa-solid fa-bars" aria-hidden="true"></i>
+            <button class="lp-burger" id="burger" aria-label="Open menu" aria-expanded="false" aria-controls="drawer">
+                <svg class="lp-icon"><use href="#i-menu"/></svg>
             </button>
-        </div>
-    </nav>
-
-    <!-- ══ MOBILE DRAWER ══ -->
-    <div class="mobile-backdrop" id="mobileBackdrop"></div>
-    <aside class="mobile-drawer" id="mobileDrawer" aria-label="Menu">
-        <div class="drawer-header">
-            <span class="logo"><span class="logo-dot" aria-hidden="true"></span> CV<span class="logo-hl">AI</span></span>
-            <button class="drawer-close-btn" id="drawerCloseBtn" aria-label="Close menu">
-                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-            </button>
-        </div>
-        <div class="drawer-nav-section">
-            <a href="#templates" class="nav-link-item drawer-link"><i class="fa-solid fa-file-lines"></i> Templates</a>
-            <a href="#features" class="nav-link-item drawer-link"><i class="fa-solid fa-wand-magic-sparkles"></i> Features</a>
-            <a href="#pricing" class="nav-link-item drawer-link"><i class="fa-solid fa-tag"></i> Pricing</a>
-            <a href="#faq" class="nav-link-item drawer-link"><i class="fa-solid fa-circle-question"></i> FAQ</a>
-            <div class="drawer-divider"></div>
-            <a href="{% url 'login' %}" class="nav-link-item drawer-link"><i class="fa-solid fa-right-to-bracket"></i> Sign in</a>
-        </div>
-        <div style="padding: 0 var(--sp-3);">
-            <a href="{% url 'register' %}" class="btn btn-cta drawer-link" style="width: 100%;">Start Free</a>
-        </div>
-    </aside>
-
-    <!-- ══ HERO SECTION ══ -->
-    <header class="hero">
-        <div class="orb-spotlight"></div>
-        <div class="container">
-            <div class="reveal-up">
-                <a href="#templates" class="announcement-badge">
-                    <span class="badge-spark"></span>
-                    <span>10 ATS-safe templates</span>
-                    <i class="fa-solid fa-arrow-right-long"></i>
-                </a>
-
-                <h1 class="hero-title">
-                    Resumes that get<br>
-                    <span class="hero-accent">past the filter.</span>
-                </h1>
-
-                <p class="hero-subtitle">
-                    Paste your experience and the job you're targeting. CVAI rewrites vague
-                    bullets into specific, quantified achievements — then exports a clean PDF
-                    that reads well to the screening software and the person after it.
-                </p>
-
-                <div class="hero-actions">
-                    <div class="magnetic-wrap">
-                        <a href="{% url 'register' %}" class="btn btn-cta magnetic">
-                            Launch Resume Studio <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
-                        </a>
-                    </div>
-                    <!-- Secondary action is a quiet text link, not a second button: the
-                         rewriter it points at is the next thing on the page, so giving it
-                         button weight competed with the primary CTA for no gain. -->
-                    <a href="#interactive-simulator" class="hero-link">
-                        Try it below <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
-                    </a>
-                </div>
-
-                <div class="hero-proof-row">
-                    <div class="hero-proof-item"><i class="fa-solid fa-circle-check"></i> 3 free resumes</div>
-                    <div class="hero-proof-item"><i class="fa-solid fa-circle-check"></i> No credit card</div>
-                    <div class="hero-proof-item"><i class="fa-solid fa-circle-check"></i> Vector PDF export</div>
-                </div>
-            </div>
-
-            <!-- ══ LIVE INTERACTIVE AI REWRITER SANDBOX ══ -->
-            <div class="hook-card-wrapper reveal-up" id="interactive-simulator" style="transition-delay: 0.12s;">
-                <div class="hook-header">
-                    <div class="role-selector-pills">
-                        <span style="font-size: var(--fs-xs); color: var(--text-3); font-weight: 700; align-self: center; margin-right: 4px;">Role Presets:</span>
-                        <button class="role-pill active" onclick="loadRolePreset('swe')">Full-Stack SWE</button>
-                        <button class="role-pill" onclick="loadRolePreset('pm')">Product Lead</button>
-                        <button class="role-pill" onclick="loadRolePreset('ai')">AI / ML Engineer</button>
-                    </div>
-                    {% comment %}
-Was "GOOGLE XYZ ENGINE", which read as a Google endorsement.
-                         The XYZ formula is a well-known bullet-writing pattern; naming
-                         it without the company name keeps the reference, drops the
-                         implied affiliation.
-{% endcomment %}
-                    <div style="font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--text-3); font-weight: 700; letter-spacing: 0.06em;">
-                        LIVE SAMPLE · XYZ FORMULA
-                    </div>
-                </div>
-                <div class="hook-body">
-                    <div class="hook-interactive-input-box">
-                        <div>
-                            <div style="font-size: var(--fs-2xs); font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-3); margin-bottom: 8px;">
-                                ✍️ Edit or Enter Your Raw Bullet Point:
-                            </div>
-                            <textarea class="hook-textarea" id="simInputText">Worked on frontend features with the team and fixed bugs in our React codebase to help make things faster for users.</textarea>
-                        </div>
-                        <button class="hook-btn-run" id="btnSimulateRewrite" onclick="runSimulatedRewrite()">
-                            <i class="fa-solid fa-bolt"></i> ⚡ Transform with AI
-                        </button>
-                    </div>
-
-                    <div class="hook-output-card" id="simOutputBox">
-                        <div class="laser-scan-line"></div>
-                        <div>
-                            <div style="font-size: var(--fs-2xs); font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--brand); margin-bottom: 10px;">
-                                ✨ CVAI REWRITTEN ACHIEVEMENT:
-                            </div>
-                            <div class="hook-output-text" id="simOutputText">
-                                Spearheaded the migration to a <mark>React & TypeScript</mark> micro-frontend architecture across 14 engineers, <mark>slashing page latency by 41%</mark> and boosting session retention by 18%.
-                            </div>
-                            <div class="xyz-breakdown-tags">
-                                <span class="xyz-tag xyz-x">[X] React Architecture</span>
-                                <span class="xyz-tag xyz-y">[Y] -41% Latency</span>
-                                <span class="xyz-tag xyz-z">[Z] 14 Engineers</span>
-                            </div>
-                        </div>
-
-                        <div class="hook-score-pill-card" style="margin-top: 18px;">
-                            <div>
-                                <!-- placeholder: illustrative score for the sample bullet above, not a product guarantee -->
-                                <div style="font-size: var(--fs-2xs); color: var(--text-3); font-weight: 700;">SAMPLE ATS MATCH</div>
-                                <div style="color: var(--success); font-size: var(--fs-xs); font-weight: 800;" id="simMatchStatus">✓ Ready to Apply</div>
-                            </div>
-                            <div class="score-big" id="simScoreValue">98%</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </header>
 
-    {% comment %}
-A "Trusted by Google / Meta / Amazon…" logo strip used to sit here. It was
-         removed: it claimed named companies as customers with nothing behind it,
-         which is the fastest thing on a landing page for a reader to disbelieve.
-         If real logos are ever permitted, this is the slot for them.
-{% endcomment %}
-
-    <!-- ══ 10-TEMPLATE SHOWCASE CAROUSEL ══ -->
-    <section class="section" id="templates">
-        <div class="container">
-            <div class="section-header reveal-up">
-                <span class="section-tag">Templates</span>
-                <h2 class="landing-section-title">Ten layouts, all machine-readable.</h2>
-                <p class="section-sub">Every template keeps a single text column underneath the design, so the parser reads it in the right order — and a person still wants to read it.</p>
-            </div>
-
-            <!-- Filter tabs -->
-            <div class="template-filter-tabs reveal-up">
-                <button class="tpl-tab-btn active" onclick="filterTemplates('all', this)">All (10)</button>
-                <button class="tpl-tab-btn" onclick="filterTemplates('engineering', this)">💻 Engineering</button>
-                <button class="tpl-tab-btn" onclick="filterTemplates('executive', this)">👔 Executive</button>
-                <button class="tpl-tab-btn" onclick="filterTemplates('ats', this)">📄 High-Density ATS</button>
-            </div>
+    <div class="lp-scrim" id="scrim" hidden></div>
+    <aside class="lp-drawer" id="drawer" aria-label="Menu" aria-hidden="true">
+        <div class="lp-drawer-top">
+            <span class="lp-logo">CV<i>AI</i></span>
+            <button class="lp-drawer-close" id="drawerClose" aria-label="Close menu">
+                <svg class="lp-icon"><use href="#i-close"/></svg>
+            </button>
         </div>
-
-        <div class="template-carousel-wrapper reveal-up">
-            <div class="template-track" id="tplTrack">
-                <!-- 1. Minimal Centered -->
-                <div class="template-card" data-category="executive" onclick="openTemplateModal('Minimal Centered', 'Executive single-column layout with perfect balance and authoritative typography.', 'minimal_centered')">
-                    <div class="tpl-mini-paper">
-                        <div class="tpl-header-mock" style="width: 75%; margin: 0 auto;"></div>
-                        <div class="tpl-line-mock" style="width: 40%; margin: 0 auto 6px;"></div>
-                        <div class="tpl-line-mock"></div>
-                        <div class="tpl-line-mock" style="width: 85%;"></div>
-                    </div>
-                    <div>
-                        <div class="tpl-badge">Executive</div>
-                        <div class="tpl-name">Minimal Centered</div>
-                    </div>
-                </div>
-
-                <!-- 2. Dark Sidebar -->
-                <div class="template-card" data-category="engineering" onclick="openTemplateModal('Dark Sidebar', 'Modern split-column format featuring a high-contrast dark left rail for contact and skill chips.', 'dark_sidebar')">
-                    <div class="tpl-mini-paper" style="display: grid; grid-template-columns: 1fr 2fr; gap: 8px; padding: 0;">
-                        <div style="background: #0f172a; padding: 10px; height: 100%;">
-                            <div style="width: 24px; height: 24px; border-radius: 50%; background: #4cc9f0; margin-bottom: 8px;"></div>
-                            <div class="tpl-line-mock" style="background: #334155; margin-bottom: 4px;"></div>
-                        </div>
-                        <div style="padding: 10px;">
-                            <div class="tpl-header-mock" style="margin-bottom: 8px;"></div>
-                            <div class="tpl-line-mock"></div>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="tpl-badge">Modern</div>
-                        <div class="tpl-name">Dark Sidebar</div>
-                    </div>
-                </div>
-
-                <!-- 3. Hacker Terminal -->
-                <div class="template-card" data-category="engineering" onclick="openTemplateModal('Hacker Terminal', 'Monospace green-terminal aesthetic designed specifically for DevOps, SRE, and Backend Engineers.', 'hacker_terminal')">
-                    <div class="tpl-mini-paper tpl-dark-side" style="font-family: monospace; font-size: 8px; border: 1px solid #22c55e;">
-                        <div style="color: #22c55e; font-weight: bold;">$ whoami</div>
-                        <div style="color: #cbd5e1;">> Senior SRE</div>
-                        <div class="tpl-line-mock" style="background: #22c55e; width: 60%;"></div>
-                    </div>
-                    <div>
-                        <div class="tpl-badge">Developer</div>
-                        <div class="tpl-name">Hacker Terminal</div>
-                    </div>
-                </div>
-
-                <!-- 4. Academic Classic -->
-                <div class="template-card" data-category="executive" onclick="openTemplateModal('Academic Classic', 'Formal serif layout suitable for researchers, PhD candidates, and legal/finance professionals.', 'academic_classic')">
-                    <div class="tpl-mini-paper">
-                        <div style="font-family: serif; font-size: 11px; font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 2px;">CURRICULUM VITAE</div>
-                        <div class="tpl-line-mock" style="background: #94a3b8; width: 90%;"></div>
-                    </div>
-                    <div>
-                        <div class="tpl-badge">Formal</div>
-                        <div class="tpl-name">Academic Classic</div>
-                    </div>
-                </div>
-
-                <!-- 5. Tech Modern -->
-                <div class="template-card" data-category="engineering" onclick="openTemplateModal('Tech Modern', 'High-density engineering format with skill rating indicators and project blocks.', 'tech_modern')">
-                    <div class="tpl-mini-paper">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div class="tpl-header-mock" style="width: 50%;"></div>
-                            <div style="width: 14px; height: 14px; border-radius: 2px; background: #4361ee;"></div>
-                        </div>
-                        <div class="tpl-line-mock" style="margin-top: 8px;"></div>
-                    </div>
-                    <div>
-                        <div class="tpl-badge">Engineering</div>
-                        <div class="tpl-name">Tech Modern</div>
-                    </div>
-                </div>
-
-                <!-- 6. Compact ATS -->
-                <div class="template-card" data-category="ats" onclick="openTemplateModal('Compact ATS', 'Zero-whitespace layout maximized for parsing score on Taleo, Workday, and Greenhouse.', 'compact_ats')">
-                    <div class="tpl-mini-paper">
-                        <div class="tpl-header-mock" style="width: 100%; height: 10px;"></div>
-                        <div class="tpl-line-mock" style="margin-top: 4px;"></div>
-                    </div>
-                    <div>
-                        <div class="tpl-badge">High Density</div>
-                        <div class="tpl-name">Compact ATS</div>
-                    </div>
-                </div>
-
-                <!-- 7. Nordic Clean -->
-                <div class="template-card" data-category="executive" onclick="openTemplateModal('Nordic Clean', 'Scandinavian minimalist layout with generous whitespace and elegant font weights.', 'nordic_clean')">
-                    <div class="tpl-mini-paper">
-                        <div class="tpl-header-mock" style="width: 45%;"></div>
-                        <div class="tpl-line-mock" style="width: 70%; margin-top: 8px;"></div>
-                    </div>
-                    <div>
-                        <div class="tpl-badge">Minimal</div>
-                        <div class="tpl-name">Nordic Clean</div>
-                    </div>
-                </div>
-
-                <!-- 8. Corporate Pro -->
-                <div class="template-card" data-category="executive" onclick="openTemplateModal('Corporate Pro', 'Traditional corporate layout favored by management consultants and Fortune 500 recruiters.', 'corporate_pro')">
-                    <div class="tpl-mini-paper">
-                        <div style="background: #1e293b; height: 14px; border-radius: 2px; margin-bottom: 6px;"></div>
-                        <div class="tpl-line-mock"></div>
-                    </div>
-                    <div>
-                        <div class="tpl-badge">Consulting</div>
-                        <div class="tpl-name">Corporate Pro</div>
-                    </div>
-                </div>
-
-                <!-- Duplicates for smooth marquee wrap -->
-                <div class="template-card" data-category="executive" onclick="openTemplateModal('Minimal Centered', 'Executive single-column layout with perfect balance and authoritative typography.', 'minimal_centered')">
-                    <div class="tpl-mini-paper">
-                        <div class="tpl-header-mock" style="width: 75%; margin: 0 auto;"></div>
-                        <div class="tpl-line-mock"></div>
-                    </div>
-                    <div>
-                        <div class="tpl-badge">Executive</div>
-                        <div class="tpl-name">Minimal Centered</div>
-                    </div>
-                </div>
-            </div>
+        <nav class="lp-drawer-nav" aria-label="Sections">
+            <a href="#how" data-drawer-link>How it works</a>
+            <a href="#templates" data-drawer-link>Templates</a>
+            <a href="#pricing" data-drawer-link>Pricing</a>
+            <a href="#faq" data-drawer-link>FAQ</a>
+        </nav>
+        <div class="lp-drawer-foot">
+            <div class="lp-drawer-rule"></div>
+            <a href="{% url 'login' %}" class="lp-btn lp-btn-ghost lp-btn-full" data-drawer-link>Sign in</a>
+            <a href="{% url 'register' %}" class="lp-btn lp-btn-primary lp-btn-full" data-drawer-link>Start free</a>
         </div>
-    </section>
+    </aside>
 
-    <!-- ══ TEMPLATE INSPECTOR MODAL ══ -->
-    <div class="tpl-modal-backdrop" id="tplModal">
-        <div class="tpl-modal-content">
-            <button class="tpl-modal-close" onclick="closeTemplateModal()"><i class="fa-solid fa-xmark"></i></button>
-            <div style="display: flex; gap: 30px; flex-wrap: wrap;">
-                <div style="flex: 1; min-width: 260px;">
-                    <span class="tpl-badge" id="modalTplBadge">ENGINEERING</span>
-                    <h2 style="font-size: var(--fs-2xl); margin: 8px 0 14px;" id="modalTplTitle">Template Name</h2>
-                    <p style="color: var(--text-2); line-height: 1.6; margin-bottom: 24px;" id="modalTplDesc">Template description goes here.</p>
-                    
-                    <div style="margin-bottom: 24px;">
-                        <span style="font-size: var(--fs-xs); font-weight: 700; color: var(--text-3); text-transform: uppercase;">Color Scheme Accent:</span>
-                        <div style="display: flex; gap: 10px; margin-top: 10px;">
-                            <div style="width: 28px; height: 28px; border-radius: 50%; background: #4cc9f0; border: 2px solid #fff; cursor: pointer;"></div>
-                            <div style="width: 28px; height: 28px; border-radius: 50%; background: #22c55e; cursor: pointer;"></div>
-                            <div style="width: 28px; height: 28px; border-radius: 50%; background: #f59e0b; cursor: pointer;"></div>
-                            <div style="width: 28px; height: 28px; border-radius: 50%; background: #7209b7; cursor: pointer;"></div>
-                        </div>
+    <main id="main">
+
+        <!-- ══ HERO ══ -->
+        <section class="lp-hero">
+            <div class="lp-wrap lp-hero-grid">
+                <div>
+                    <p class="lp-eyebrow">AI resume builder</p>
+
+                    <h1>Every resume has<br>two readers.<br><em>Write for both.</em></h1>
+
+                    <p class="lp-hero-lead">
+                        Screening software reads your resume first — it wants clean structure.
+                        A person reads it second — they want specifics. CVAI writes for both,
+                        then exports a PDF that holds up to each.
+                    </p>
+
+                    <div class="lp-hero-cta">
+                        <a href="{% url 'register' %}" class="lp-btn lp-btn-primary lp-btn-lg">
+                            Start free <svg class="lp-icon"><use href="#i-arrow"/></svg>
+                        </a>
+                        <a href="#rewriter" class="lp-textlink">
+                            Try the rewriter <svg class="lp-icon"><use href="#i-down"/></svg>
+                        </a>
                     </div>
 
-                    <a href="{% url 'register' %}" class="btn btn-cta" style="width: 100%;">
-                        Use This Template in Studio <i class="fa-solid fa-arrow-right"></i>
-                    </a>
+                    <div class="lp-hero-notes">
+                        <span><svg class="lp-icon"><use href="#i-check"/></svg> 3 free resumes</span>
+                        <span><svg class="lp-icon"><use href="#i-check"/></svg> No card required</span>
+                        <span><svg class="lp-icon"><use href="#i-check"/></svg> Real-text PDF export</span>
+                    </div>
                 </div>
-                <div style="flex: 1.2; min-width: 280px; background: #fff; border-radius: var(--r-md); padding: 24px; color: #0f172a; box-shadow: var(--shadow-3);">
-                    <div style="font-family: var(--font-display); font-size: 16px; font-weight: 800; letter-spacing: 1px;" id="modalPreviewName">ALEXEI KOROLEV</div>
-                    <div style="font-size: 8px; color: #64748b; margin-bottom: 12px;">SENIOR STAFF ENGINEER · SAN FRANCISCO, CA</div>
-                    <div style="height: 2px; background: #0f172a; width: 100%; margin-bottom: 12px;"></div>
-                    <div style="font-size: 9px; font-weight: 800; text-transform: uppercase;">EXPERIENCE</div>
-                    <div style="font-size: 8px; margin-top: 4px; line-height: 1.5; color: #334155;">
-                        • Architected distributed streaming pipeline processing 1.4B events/day with 99.99% availability.<br>
-                        • Reduced cloud infrastructure spend by $340k/year through Kubernetes autoscaling optimizations.
+
+                {% comment %}
+                The two-reader spread. Both panes hold the same sample resume:
+                the left as a person reads it, the right as the parser receives
+                it. The keys in the right pane are the real top-level fields
+                CVAI extracts (see RESUME_JSON_SCHEMA in generator/views.py) —
+                if that schema is renamed, this should be updated with it.
+
+                Hovering or focusing a field on the left lights the matching key
+                on the right. That is enhancement only; with JavaScript off both
+                panes still render in full and simply do not link.
+                {% endcomment %}
+                <div class="lp-spread">
+                    <div class="lp-spread-head">
+                        <span>The person reads</span>
+                        <span>The parser reads</span>
+                    </div>
+
+                    <div class="lp-spread-panes" id="spread">
+                        <div class="lp-paper-pane">
+                            <div class="lp-cv-name" data-field="full_name" tabindex="0">Alex Rivera</div>
+                            <div class="lp-cv-title" data-field="title" tabindex="0">Senior Backend Engineer</div>
+
+                            <div class="lp-cv-rule"></div>
+
+                            <div class="lp-cv-h">Experience</div>
+                            <div class="lp-cv-role" data-field="experience" tabindex="0">Backend Engineer</div>
+                            <div class="lp-cv-meta">Northwind Labs · 2022 — Present</div>
+                            <div class="lp-cv-bullet" data-field="bullets" tabindex="0">
+                                Cut checkout API p95 latency from 840ms to 210ms by replacing
+                                per-request joins with a materialised view.
+                            </div>
+
+                            <div class="lp-cv-rule"></div>
+
+                            <div class="lp-cv-h">Skills</div>
+                            <div class="lp-cv-skills" data-field="skills" tabindex="0">
+                                <span class="lp-cv-skill">Python</span>
+                                <span class="lp-cv-skill">PostgreSQL</span>
+                                <span class="lp-cv-skill">Django</span>
+                                <span class="lp-cv-skill">Redis</span>
+                            </div>
+                        </div>
+
+                        {% comment %}
+                        Written flush against the left margin on purpose: the
+                        pane is `white-space: pre`, so any indentation added
+                        here to make the template look tidy would show up as
+                        indentation on the page.
+                        {% endcomment %}
+<div class="lp-machine-pane" aria-label="The same resume as structured data"><span class="p">{</span>
+<span data-key="full_name">  <span class="k">"full_name"</span><span class="p">:</span> <span class="s">"Alex Rivera"</span><span class="p">,</span></span>
+<span data-key="title">  <span class="k">"title"</span><span class="p">:</span> <span class="s">"Senior Backend Engineer"</span><span class="p">,</span></span>
+<span data-key="experience">  <span class="k">"experience"</span><span class="p">: [{</span>
+    <span class="k">"role"</span><span class="p">:</span> <span class="s">"Backend Engineer"</span><span class="p">,</span>
+    <span class="k">"company"</span><span class="p">:</span> <span class="s">"Northwind Labs"</span><span class="p">,</span>
+    <span class="k">"start"</span><span class="p">:</span> <span class="s">"2022"</span><span class="p">,</span></span>
+<span data-key="bullets">    <span class="k">"bullets"</span><span class="p">: [</span>
+      <span class="s">"Cut checkout API p95 latency</span>
+<span class="s">       from 840ms to 210ms…"</span>
+    <span class="p">]</span></span>
+  <span class="p">}],</span>
+<span data-key="skills">  <span class="k">"skills"</span><span class="p">: [</span><span class="s">"Python"</span><span class="p">,</span> <span class="s">"PostgreSQL"</span><span class="p">,</span>
+             <span class="s">"Django"</span><span class="p">,</span> <span class="s">"Redis"</span><span class="p">]</span></span>
+<span class="p">}</span></div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
+        </section>
 
-    <!-- ══ BENTO FEATURES ══ -->
-    <section class="section" id="features">
-        <div class="container">
-            <div class="section-header reveal-up">
-                <span class="section-tag">Features</span>
-                <h2 class="landing-section-title">Everything the application needs.</h2>
-                <p class="section-sub">Write it, check it against the posting, export it, and keep track of where you sent it — without leaving the app.</p>
-            </div>
+        <!-- ══ REWRITER ══ -->
+        <section class="lp-band lp-rewrite-band" id="rewriter">
+            <div class="lp-wrap">
+                <div class="lp-rewrite-head lp-rise">
+                    <div>
+                        <p class="lp-eyebrow">The rewriter</p>
+                        <h2 class="lp-h2">A duty is not <em>an achievement.</em></h2>
+                        <p class="lp-lead">
+                            Most bullets describe what you were responsible for. Hiring reads
+                            better when they describe what changed. Pick a role and watch a
+                            flat line get restructured.
+                        </p>
+                    </div>
 
-            <div class="bento-grid" id="bentoGrid">
-                <!-- Bento 1: Studio -->
-                <div class="bento-card bento-col-2 bento-row-2 reveal-up">
-                    <div class="bento-icon"><i class="fa-solid fa-pen-nib"></i></div>
-                    <h3 class="bento-title">Real-Time Visual Studio</h3>
-                    <p class="bento-desc">Edit on the left, watch the page redraw on the right. The preview is the same renderer that produces your download, so what you approve on screen is exactly what you send.</p>
-                    <div style="margin-top: 22px; background: rgba(0,0,0,0.35); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 18px;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                            <span style="font-size: var(--fs-xs); font-weight: 700; color: var(--brand);">Live Vector Stream</span>
-                            <span style="font-size: var(--fs-xs); color: var(--text-3);">· Debounced 300ms</span>
-                        </div>
-                        <div style="height: 6px; border-radius: 3px; background: var(--surface-3); overflow: hidden;">
-                            <div style="height: 100%; width: 100%; background: var(--grad-cta); animation: pulse 2s infinite;"></div>
-                        </div>
+                    <div class="lp-roles" role="group" aria-label="Example roles">
+                        <span class="lp-roles-label">Example</span>
+                        <button type="button" class="lp-role is-active" data-role="swe">Software engineer</button>
+                        <button type="button" class="lp-role" data-role="pm">Product manager</button>
+                        <button type="button" class="lp-role" data-role="ds">Data scientist</button>
                     </div>
                 </div>
 
-                <!-- Bento 2: ATS Scanner -->
-                <div class="bento-card reveal-up" style="transition-delay: 0.08s;">
-                    <div class="bento-icon"><i class="fa-solid fa-bullseye"></i></div>
-                    <h3 class="bento-title">ATS Match Engine</h3>
-                    <p class="bento-desc">Scans resumes against job requirements for recruiter keyword gaps.</p>
-                    <div class="live-gauge-wrap">
-                        <svg class="circle-gauge-svg" viewBox="0 0 68 68">
-                            <circle class="circle-bg" cx="34" cy="34" r="27"></circle>
-                            <circle class="circle-progress" cx="34" cy="34" r="27"></circle>
-                        </svg>
+                <div class="lp-rewrite-grid lp-rise">
+                    <div class="lp-panel">
+                        <div class="lp-panel-head">
+                            <span>Before — as most people write it</span>
+                        </div>
+                        <div class="lp-panel-body">
+                            <label class="lp-cv-h" for="rwInput" style="display:block;margin-bottom:8px;">Your bullet</label>
+                            <textarea class="lp-textarea" id="rwInput">Worked on frontend features with the team and fixed bugs in our React codebase to help make things faster for users.</textarea>
+                            <button type="button" class="lp-btn lp-btn-primary lp-btn-full" id="rwRun" style="margin-top:14px;">
+                                Rewrite it <svg class="lp-icon"><use href="#i-arrow"/></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="lp-panel lp-panel-out">
+                        <div class="lp-panel-head">
+                            <span>After — structured for both readers</span>
+                        </div>
+                        <div class="lp-panel-body">
+                            <p class="lp-out-text" id="rwOutput">
+                                Migrated a 14-engineer React codebase to a typed component
+                                library, <mark>cutting median page load from 3.1s to 1.8s</mark>
+                                across the checkout funnel.
+                            </p>
+
+                            <div class="lp-tags" id="rwTags">
+                                <span class="lp-tag">X <b>Typed component library</b></span>
+                                <span class="lp-tag">Y <b>3.1s → 1.8s load</b></span>
+                                <span class="lp-tag">Z <b>14 engineers</b></span>
+                            </div>
+
+                            {% comment %}
+                            These panes are worked examples, not live model output —
+                            the page makes no network call. The note below says so
+                            rather than implying the reader just watched the product run.
+
+                            The examples also demonstrate the constraint the real
+                            rewriter runs under: it may not invent numbers. Each
+                            "after" only quantifies what its "before" already stated,
+                            which is why the data-scientist example stays unnumbered.
+                            {% endcomment %}
+                            <p class="lp-out-foot" id="rwNote">
+                                Worked example. The rewriter restructures what you wrote —
+                                it never invents a number that was not in your input.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══ HOW IT WORKS ══ -->
+        <section class="lp-band" id="how">
+            <div class="lp-wrap">
+                <div class="lp-rise">
+                    <p class="lp-eyebrow">How it works</p>
+                    <h2 class="lp-h2">Three steps, <em>one afternoon.</em></h2>
+                </div>
+
+                <div class="lp-steps">
+                    <div class="lp-step lp-rise">
+                        <div class="lp-step-n">01</div>
                         <div>
-                            <div style="font-size: var(--fs-lg); font-weight: 800; color: var(--brand);">98.4%</div>
-                            <div style="font-size: var(--fs-2xs); color: var(--text-3);">Average Match</div>
+                            <h3>Bring what you have</h3>
+                            <p>
+                                Upload an existing resume PDF or paste plain text. CVAI reads it
+                                into structured fields — contact details, roles, dates, bullets,
+                                education, skills — that you can edit directly.
+                            </p>
                         </div>
+                        <p class="lp-step-note">
+                            Two-column and sidebar layouts are reconstructed in reading order,
+                            not left-to-right across the page.
+                        </p>
+                    </div>
+
+                    <div class="lp-step lp-rise">
+                        <div class="lp-step-n">02</div>
+                        <div>
+                            <h3>Aim it at one job</h3>
+                            <p>
+                                Paste the posting you are actually applying to. CVAI compares it
+                                against your resume, shows which requirements go unanswered, and
+                                rewrites the bullets that matter for that role.
+                            </p>
+                        </div>
+                        <p class="lp-step-note">
+                            One tailored resume per posting beats one general resume sent
+                            everywhere — which is the whole reason the generation count matters.
+                        </p>
+                    </div>
+
+                    <div class="lp-step lp-rise">
+                        <div class="lp-step-n">03</div>
+                        <div>
+                            <h3>Export and keep track</h3>
+                            <p>
+                                Pick a template, watch the page redraw as you type, and download
+                                a PDF built from real text. Then log where you sent it and what
+                                came back.
+                            </p>
+                        </div>
+                        <p class="lp-step-note">
+                            The preview uses the same renderer as the download, so the file you
+                            send is the page you approved.
+                        </p>
                     </div>
                 </div>
+            </div>
+        </section>
 
-                <!-- Bento 3: Section Rewriter -->
-                <div class="bento-card reveal-up" style="transition-delay: 0.16s;">
-                    <div class="bento-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
-                    <h3 class="bento-title">Google XYZ Formula</h3>
-                    <p class="bento-desc">One-click transforms casual statements into quantified achievements.</p>
-                    <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 6px;">
-                        <span style="font-size: var(--fs-2xs); background: rgba(34,197,94,0.12); color: var(--success); padding: 4px 9px; border-radius: 4px; font-weight: 700;">Accomplished [X]</span>
-                        <span style="font-size: var(--fs-2xs); background: rgba(76,201,240,0.12); color: var(--brand); padding: 4px 9px; border-radius: 4px; font-weight: 700;">Measured by [Y]</span>
+        <!-- ══ TEMPLATES ══ -->
+        <section class="lp-band" id="templates" style="padding-top:0;">
+            <div class="lp-wrap">
+                <div class="lp-tpl-head lp-rise">
+                    <div>
+                        <p class="lp-eyebrow">Templates</p>
+                        <h2 class="lp-h2">Ten layouts, <em>all readable.</em></h2>
                     </div>
-                </div>
-
-                <!-- Bento 4: Kanban Tracker -->
-                <div class="bento-card bento-col-2 reveal-up" style="transition-delay: 0.24s;">
-                    <div class="bento-icon"><i class="fa-solid fa-list-check"></i></div>
-                    <h3 class="bento-title">Application Kanban Tracker</h3>
-                    <p class="bento-desc">Organize your job search lifecycle from Saved to Offer. Store tailored resume revisions, recruiter notes, and interview prep in one place.</p>
-                    <div style="display: flex; gap: 8px; margin-top: 16px; overflow-x: auto; padding-bottom: 4px;">
-                        <span style="font-size: var(--fs-2xs); background: var(--surface-2); border: 1px solid var(--border); padding: 5px 12px; border-radius: var(--r-pill);">Saved (12)</span>
-                        <span style="font-size: var(--fs-2xs); background: rgba(67,97,238,0.18); border: 1px solid rgba(67,97,238,0.35); color: #818cf8; padding: 5px 12px; border-radius: var(--r-pill);">Applied (8)</span>
-                        <span style="font-size: var(--fs-2xs); background: rgba(34,197,94,0.18); border: 1px solid rgba(34,197,94,0.35); color: var(--success); padding: 5px 12px; border-radius: var(--r-pill);">Interview (3)</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ══ COMPARISON TABLE: CVAI VS GENERIC RESUME BUILDERS ══ -->
-    <section class="section" id="compare">
-        <div class="container">
-            <div class="section-header reveal-up">
-                <span class="section-tag">Comparison</span>
-                <h2 class="landing-section-title">How CVAI compares.</h2>
-                <p class="section-sub">Design tools make good-looking files that parsers read out of order. General-purpose chatbots write good sentences with no idea what a resume has to survive.</p>
-            </div>
-
-            <div class="compare-table-card reveal-up">
-                <table class="compare-table">
-                    <thead>
-                        <tr>
-                            <th>Feature / Capability</th>
-                            <th class="col-cvai">CVAI Architect</th>
-                            <th>Canva / Graphic Tools</th>
-                            <th>Word / Generic Docs</th>
-                            <th>Generic AI Prompts</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>Real vector PDF</strong></td>
-                            <td class="col-cvai"><i class="fa-solid fa-circle-check" style="color: var(--success);"></i> 100% Vector Stream</td>
-                            <td><i class="fa-solid fa-circle-xmark" style="color: var(--danger);"></i> Rasterized Canvas</td>
-                            <td><i class="fa-solid fa-circle-check" style="color: var(--warning);"></i> Plain text</td>
-                            <td><i class="fa-solid fa-circle-xmark" style="color: var(--danger);"></i> Plain text dump</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Google XYZ Bullet Rewriter</strong></td>
-                            <td class="col-cvai"><i class="fa-solid fa-circle-check" style="color: var(--success);"></i> Automatic Metrics</td>
-                            <td><i class="fa-solid fa-circle-xmark" style="color: var(--text-3);"></i> Manual</td>
-                            <td><i class="fa-solid fa-circle-xmark" style="color: var(--text-3);"></i> Manual</td>
-                            <td><i class="fa-solid fa-circle-check" style="color: var(--warning);"></i> Unstructured</td>
-                        </tr>
-                        <tr>
-                            <td><strong>ATS Single-Stream Parsability</strong></td>
-                            <td class="col-cvai"><i class="fa-solid fa-circle-check" style="color: var(--success);"></i> Guaranteed 98%+</td>
-                            <td><i class="fa-solid fa-circle-xmark" style="color: var(--danger);"></i> Fails Workday/Taleo</td>
-                            <td><i class="fa-solid fa-circle-check" style="color: var(--warning);"></i> Variable</td>
-                            <td><i class="fa-solid fa-circle-xmark" style="color: var(--text-3);"></i> No PDF format</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Application Kanban Pipeline</strong></td>
-                            <td class="col-cvai"><i class="fa-solid fa-circle-check" style="color: var(--success);"></i> Integrated</td>
-                            <td><i class="fa-solid fa-circle-xmark" style="color: var(--text-3);"></i> None</td>
-                            <td><i class="fa-solid fa-circle-xmark" style="color: var(--text-3);"></i> None</td>
-                            <td><i class="fa-solid fa-circle-xmark" style="color: var(--text-3);"></i> None</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </section>
-
-    <!-- ══ INTERACTIVE ROI & CALLBACK CALCULATOR ══ -->
-    <section class="section" id="calculator">
-        <div class="container">
-            <div class="section-header reveal-up">
-                <span class="section-tag">Time saved</span>
-                <h2 class="landing-section-title">What tailoring every application costs you.</h2>
-                {% comment %}
-The previous subhead claimed "an average 3.4x jump in recruiter
-                     responses". There is no such measurement — it was invented, and a
-                     specific falsifiable number is the worst kind of claim to invent.
-                     This estimates the reader's own time from their own inputs, which
-                     is something we can actually stand behind.
-{% endcomment %}
-                <p class="section-sub">Rewriting a resume for each posting by hand takes most people 30–40 minutes. Put your own numbers in and see what that adds up to.</p>
-            </div>
-
-            <div class="roi-calculator-card reveal-up">
-                <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                    <span style="font-weight: 700; font-size: var(--fs-md); color: var(--text-1);">Applications sent per month</span>
-                    <span style="font-family: var(--font-display); font-size: 1.8rem; font-weight: 800; color: var(--brand);" id="appCountDisplay">25</span>
-                </div>
-                <div class="roi-slider-track">
-                    <input type="range" min="5" max="100" value="25" class="roi-slider" id="appSlider" oninput="updateRoiCalc(this.value)">
+                    <p class="lp-lead" style="font-size:var(--fs-sm);max-width:40ch;">
+                        Every one keeps a single text column underneath the design, so the
+                        parser reads it in the order you wrote it — and a person still
+                        wants to read it.
+                    </p>
                 </div>
 
                 {% comment %}
-This used to report callback rates ("Avg. 10%" vs "Avg. 38%") and a
-                     "3.4x interview multiplier". Those were invented — we have no such
-                     data, and presenting made-up conversion rates as a calculator is
-                     the most misleading shape a claim can take. It now computes time,
-                     which is arithmetic on an assumption we state openly below.
-{% endcomment %}
-                <div class="roi-results-grid">
-                    <div>
-                        <div style="font-size: var(--fs-xs); color: var(--text-3); font-weight: 700; margin-bottom: 6px;">BY HAND</div>
-                        <div class="roi-val" style="color: var(--text-3);" id="roiManual">15h</div>
-                        <div style="font-size: var(--fs-2xs); color: var(--text-3);">per month, tailoring each one</div>
+                These ten match TEMPLATES in generator/pdf_engine.py by name and
+                description. The previous version of this page listed four
+                templates that did not exist in the product ("Tech Modern",
+                "Compact ATS", "Nordic Clean", "Corporate Pro") and omitted six
+                real ones. If a template is added or renamed there, mirror it here.
+
+                The thumbnails are abstract page furniture — bars and rules
+                standing in for headings and text — not screenshots. They show
+                the layout's shape without implying a rendering fidelity the
+                thumbnail cannot deliver at this size.
+                {% endcomment %}
+                <div class="lp-tpl-grid lp-rise">
+                    <div class="lp-tpl">
+                        <div class="lp-tpl-page">
+                            <div class="lp-m-bar" style="width:62%;margin:0 auto;"></div>
+                            <div class="lp-m-line" style="width:38%;margin:0 auto 6px;"></div>
+                            <div class="lp-m-line"></div><div class="lp-m-line" style="width:88%;"></div>
+                            <div class="lp-m-line" style="width:94%;"></div><div class="lp-m-line" style="width:70%;"></div>
+                            <div class="lp-m-fill"></div>
+                        </div>
+                        <div><div class="lp-tpl-name">Minimal Centered</div><div class="lp-tpl-desc">Single-column centred serif — timeless and ATS-friendly</div></div>
                     </div>
-                    <div>
-                        <div style="font-size: var(--fs-xs); color: var(--brand); font-weight: 700; margin-bottom: 6px;">WITH CVAI</div>
-                        <div class="roi-val" id="roiWithCvai">2h</div>
-                        <div style="font-size: var(--fs-2xs); color: var(--text-3);">per month, reviewing and editing</div>
+
+                    <div class="lp-tpl">
+                        <div class="lp-tpl-page" style="padding:0;">
+                            <div class="lp-m-row" style="gap:0;">
+                                <div style="width:32%;background:var(--machine);padding:10px;display:flex;flex-direction:column;gap:5px;">
+                                    <div style="width:20px;height:20px;border-radius:50%;background:#4A453C;"></div>
+                                    <div class="lp-m-line" style="background:#3A362E;"></div>
+                                    <div class="lp-m-line" style="background:#3A362E;width:70%;"></div>
+                                </div>
+                                <div style="flex:1;padding:11px;display:flex;flex-direction:column;gap:5px;">
+                                    <div class="lp-m-bar" style="width:70%;"></div>
+                                    <div class="lp-m-line"></div><div class="lp-m-line" style="width:82%;"></div>
+                                    <div class="lp-m-line" style="width:90%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div><div class="lp-tpl-name">Dark Sidebar</div><div class="lp-tpl-desc">25% dark photo and skills sidebar — bold and professional</div></div>
                     </div>
-                    <div>
-                        <div style="font-size: var(--fs-xs); color: var(--success); font-weight: 700; margin-bottom: 6px;">TIME BACK</div>
-                        <div class="roi-val" style="color: var(--success);" id="roiSaved">13h</div>
-                        <div style="font-size: var(--fs-2xs); color: var(--text-3);">to spend on interview prep</div>
+
+                    <div class="lp-tpl">
+                        <div class="lp-tpl-page" style="padding:0;">
+                            <div class="lp-m-row" style="gap:0;">
+                                <div style="flex:1;padding:11px;display:flex;flex-direction:column;gap:5px;">
+                                    <div class="lp-m-bar" style="width:66%;"></div>
+                                    <div class="lp-m-line"></div><div class="lp-m-line" style="width:86%;"></div>
+                                    <div class="lp-m-line" style="width:92%;"></div>
+                                </div>
+                                <div style="width:30%;background:var(--paper-sunk);padding:10px;display:flex;flex-direction:column;gap:5px;">
+                                    <div class="lp-m-line" style="width:60%;"></div>
+                                    <div class="lp-m-line"></div><div class="lp-m-line" style="width:75%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div><div class="lp-tpl-name">Light Right Panel</div><div class="lp-tpl-desc">70% main area plus a 30% soft-colour right panel</div></div>
+                    </div>
+
+                    <div class="lp-tpl">
+                        <div class="lp-tpl-page" style="padding:0;">
+                            <div style="height:26%;background:var(--accent);opacity:0.85;"></div>
+                            <div class="lp-m-row" style="padding:10px;">
+                                <div class="lp-m-col" style="flex:1;">
+                                    <div class="lp-m-line"></div><div class="lp-m-line" style="width:84%;"></div>
+                                    <div class="lp-m-line" style="width:92%;"></div>
+                                </div>
+                                <div class="lp-m-col" style="flex:1;">
+                                    <div class="lp-m-line"></div><div class="lp-m-line" style="width:76%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div><div class="lp-tpl-name">Bold Split Header</div><div class="lp-tpl-desc">Full-width colour header band over a two-column body</div></div>
+                    </div>
+
+                    <div class="lp-tpl">
+                        <div class="lp-tpl-page">
+                            <div class="lp-m-bar" style="width:58%;"></div>
+                            <div style="display:flex;gap:9px;flex:1;min-height:0;padding-top:6px;">
+                                <div style="width:1px;background:var(--rule-strong);position:relative;">
+                                    <span style="position:absolute;left:-2px;top:6px;width:5px;height:5px;border-radius:50%;background:var(--accent);"></span>
+                                    <span style="position:absolute;left:-2px;top:38%;width:5px;height:5px;border-radius:50%;background:var(--accent);"></span>
+                                    <span style="position:absolute;left:-2px;top:70%;width:5px;height:5px;border-radius:50%;background:var(--rule-strong);"></span>
+                                </div>
+                                <div class="lp-m-col" style="flex:1;">
+                                    <div class="lp-m-line" style="width:70%;"></div><div class="lp-m-line"></div>
+                                    <div class="lp-m-line" style="width:88%;margin-top:8px;"></div><div class="lp-m-line" style="width:64%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div><div class="lp-tpl-name">Timeline Modern</div><div class="lp-tpl-desc">Vertical timeline running down the left side</div></div>
+                    </div>
+
+                    <div class="lp-tpl">
+                        <div class="lp-tpl-page">
+                            <div class="lp-m-bar" style="width:72%;"></div>
+                            <div class="lp-m-row" style="padding-top:6px;">
+                                <div class="lp-m-col" style="flex:1;">
+                                    <div class="lp-m-line" style="width:50%;"></div><div class="lp-m-line"></div>
+                                    <div class="lp-m-line" style="width:86%;"></div><div class="lp-m-line" style="width:92%;"></div>
+                                </div>
+                                <div class="lp-m-col" style="flex:1;">
+                                    <div class="lp-m-line" style="width:50%;"></div><div class="lp-m-line"></div>
+                                    <div class="lp-m-line" style="width:78%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div><div class="lp-tpl-name">50/50 Grid</div><div class="lp-tpl-desc">Equal two-column split — balanced and clean</div></div>
+                    </div>
+
+                    <div class="lp-tpl">
+                        <div class="lp-tpl-page" style="background:var(--machine);border-color:var(--machine-2);gap:4px;">
+                            <div style="font-family:var(--mono);font-size:8px;color:var(--machine-str);">$ whoami</div>
+                            <div style="font-family:var(--mono);font-size:8px;color:var(--machine-dim);">&gt; senior sre</div>
+                            <div class="lp-m-line" style="background:var(--machine-str);width:56%;margin-top:5px;"></div>
+                            <div class="lp-m-line" style="background:#3A362E;"></div>
+                            <div class="lp-m-line" style="background:#3A362E;width:80%;"></div>
+                            <div class="lp-m-fill"></div>
+                        </div>
+                        <div><div class="lp-tpl-name">Hacker Terminal</div><div class="lp-tpl-desc">Black background, green monospace — developer aesthetic</div></div>
+                    </div>
+
+                    <div class="lp-tpl">
+                        <div class="lp-tpl-page">
+                            <div style="font-family:var(--serif);font-size:9px;text-align:center;border-bottom:1px solid var(--ink);padding-bottom:3px;">Curriculum Vitae</div>
+                            <div class="lp-m-line" style="margin-top:5px;"></div><div class="lp-m-line"></div>
+                            <div class="lp-m-line" style="width:94%;"></div><div class="lp-m-line"></div>
+                            <div class="lp-m-line" style="width:88%;"></div><div class="lp-m-line"></div>
+                            <div class="lp-m-line" style="width:72%;"></div>
+                            <div class="lp-m-fill"></div>
+                        </div>
+                        <div><div class="lp-tpl-name">Academic Classic</div><div class="lp-tpl-desc">Ultra-dense, strict rules, ATS-optimised</div></div>
+                    </div>
+
+                    <div class="lp-tpl">
+                        <div class="lp-tpl-page" style="padding:0;">
+                            <div style="height:30%;background:var(--paper-sunk);border-bottom:1px solid var(--rule);padding:10px;display:flex;flex-direction:column;gap:5px;">
+                                <div class="lp-m-bar" style="width:56%;"></div>
+                                <div class="lp-m-line" style="width:40%;"></div>
+                            </div>
+                            <div style="padding:10px;display:flex;flex-direction:column;gap:5px;">
+                                <div class="lp-m-line"></div><div class="lp-m-line" style="width:90%;"></div>
+                                <div class="lp-m-line" style="width:82%;"></div>
+                            </div>
+                        </div>
+                        <div><div class="lp-tpl-name">Top/Bottom Split</div><div class="lp-tpl-desc">30% coloured top header over a 70% white content area</div></div>
+                    </div>
+
+                    <div class="lp-tpl">
+                        <div class="lp-tpl-page">
+                            <div class="lp-m-bar" style="width:48%;"></div>
+                            <div class="lp-m-row" style="padding-top:6px;">
+                                <div class="lp-m-col" style="flex:1.4;">
+                                    <div class="lp-m-line"></div><div class="lp-m-line" style="width:84%;"></div>
+                                    <div class="lp-m-line" style="width:92%;"></div>
+                                </div>
+                                <div class="lp-m-col" style="flex:1;">
+                                    <div style="height:14px;border-radius:2px;background:var(--accent);opacity:0.75;"></div>
+                                    <div class="lp-m-line" style="width:70%;"></div>
+                                    <div style="height:10px;border-radius:2px;background:var(--paper-sunk);"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div><div class="lp-tpl-name">Creative Masonry</div><div class="lp-tpl-desc">Asymmetric layout with scattered skills and bold accents</div></div>
                     </div>
                 </div>
-                <p style="margin-top: var(--sp-5); font-size: var(--fs-xs); color: var(--text-3); text-align: center; line-height: var(--lh-base);">
-                    Assumes 35 minutes to tailor a resume by hand and about 5 minutes to
-                    review and edit a generated one. Your own pace will differ — adjust
-                    the slider to match how you actually apply.
+            </div>
+        </section>
+
+        <!-- ══ FEATURES ══ -->
+        <section class="lp-band lp-feat-band" id="features">
+            <div class="lp-wrap">
+                <div class="lp-rise">
+                    <p class="lp-eyebrow">In the app</p>
+                    <h2 class="lp-h2">Everything the application <em>actually needs.</em></h2>
+                </div>
+
+                <div class="lp-feat-grid lp-rise">
+                    <div class="lp-feat">
+                        <div class="lp-feat-ico"><svg class="lp-icon"><use href="#i-pen"/></svg></div>
+                        <h3>Live preview</h3>
+                        <p>Edit on the left, watch the page redraw on the right. The preview and the download come from the same renderer.</p>
+                    </div>
+                    <div class="lp-feat">
+                        <div class="lp-feat-ico"><svg class="lp-icon"><use href="#i-target"/></svg></div>
+                        <h3>Keyword gaps</h3>
+                        <p>Compare a resume against a specific posting and see which stated requirements it does not yet answer.</p>
+                    </div>
+                    <div class="lp-feat">
+                        <div class="lp-feat-ico"><svg class="lp-icon"><use href="#i-file"/></svg></div>
+                        <h3>Real-text PDF</h3>
+                        <p>The export is selectable, searchable text rather than a picture of a resume — which is what a parser needs.</p>
+                    </div>
+                    <div class="lp-feat">
+                        <div class="lp-feat-ico"><svg class="lp-icon"><use href="#i-board"/></svg></div>
+                        <h3>Application tracker</h3>
+                        <p>Log each application from saved through to offer, with the exact resume version you sent attached to it.</p>
+                    </div>
+                    <div class="lp-feat">
+                        <div class="lp-feat-ico"><svg class="lp-icon"><use href="#i-chat"/></svg></div>
+                        <h3>Interview prep</h3>
+                        <p>Generate likely questions from the posting and your own history, so you rehearse the ones you will be asked.</p>
+                    </div>
+                    <div class="lp-feat">
+                        <div class="lp-feat-ico"><svg class="lp-icon"><use href="#i-mail"/></svg></div>
+                        <h3>Follow-up drafts</h3>
+                        <p>Write the thank-you or check-in email against the role and conversation, instead of starting from a blank box.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══ PRICING ══ -->
+        <section class="lp-band" id="pricing">
+            <div class="lp-wrap">
+                <div class="lp-rise">
+                    <p class="lp-eyebrow">Pricing</p>
+                    <h2 class="lp-h2">Priced per resume, <em>not per promise.</em></h2>
+                    <p class="lp-lead">
+                        One generation is one AI resume, cover letter, or rewrite. Cancel from
+                        your profile at any time.
+                    </p>
+                </div>
+
+                {% comment %}
+                The monthly/annual toggle that used to sit here advertised $4 and
+                $8 "billed yearly, save 20%". No annual price exists in Stripe —
+                users/views.py maps only STRIPE_PRICE_ID_PRO and
+                STRIPE_PRICE_ID_ELITE, both monthly — so anyone who chose annual
+                and checked out was charged the monthly price they had just been
+                shown a discount against. The toggle is removed rather than
+                restyled. Restore it only alongside real annual price IDs.
+
+                Every number below is checked against Profile in users/models.py:
+                PLAN_LIMITS, PDF_TEMPLATE_LIMITS, and JOB_TRACKER_LIMITS.
+                {% endcomment %}
+                <div class="lp-price-grid lp-rise">
+                    <div class="lp-plan">
+                        <div class="lp-plan-top"><span class="lp-plan-name">Free</span></div>
+                        <div class="lp-plan-cost"><b>$0</b></div>
+                        <p class="lp-plan-for">Enough to build one real resume and see the export before you decide.</p>
+                        <ul class="lp-plan-list">
+                            <li><svg class="lp-icon"><use href="#i-check"/></svg><span><b>3 generations</b>, one time</span></li>
+                            <li><svg class="lp-icon"><use href="#i-check"/></svg><span>2 templates</span></li>
+                            <li><svg class="lp-icon"><use href="#i-check"/></svg><span>Real-text PDF export</span></li>
+                            <li><svg class="lp-icon"><use href="#i-check"/></svg><span>Track up to 10 applications</span></li>
+                        </ul>
+                        <a href="{% url 'register' %}" class="lp-btn lp-btn-ghost lp-btn-full lp-plan-cta">Start free</a>
+                    </div>
+
+                    <div class="lp-plan lp-plan-featured">
+                        <div class="lp-plan-top">
+                            <span class="lp-plan-name">Pro</span>
+                            <span class="lp-plan-flag">For an active search</span>
+                        </div>
+                        <div class="lp-plan-cost"><b>$5</b><span>/ month</span></div>
+                        <p class="lp-plan-for">For tailoring a separate resume to every posting you apply to.</p>
+                        <ul class="lp-plan-list">
+                            <li><svg class="lp-icon"><use href="#i-check"/></svg><span><b>50 generations</b> a month</span></li>
+                            <li><svg class="lp-icon"><use href="#i-check"/></svg><span><b>All 10 templates</b></span></li>
+                            <li><svg class="lp-icon"><use href="#i-check"/></svg><span>Keyword gap analysis</span></li>
+                            <li><svg class="lp-icon"><use href="#i-check"/></svg><span>Cover letters</span></li>
+                            <li><svg class="lp-icon"><use href="#i-check"/></svg><span>Track up to 50 applications</span></li>
+                        </ul>
+                        <a href="{% url 'register' %}" class="lp-btn lp-btn-primary lp-btn-full lp-plan-cta">Choose Pro</a>
+                    </div>
+
+                    <div class="lp-plan">
+                        <div class="lp-plan-top"><span class="lp-plan-name">Elite</span></div>
+                        <div class="lp-plan-cost"><b>$10</b><span>/ month</span></div>
+                        <p class="lp-plan-for">For senior searches with interview loops and recruiter threads to manage.</p>
+                        <ul class="lp-plan-list">
+                            <li><svg class="lp-icon"><use href="#i-check"/></svg><span><b>300 generations</b> a month</span></li>
+                            <li><svg class="lp-icon"><use href="#i-check"/></svg><span>Everything in Pro</span></li>
+                            <li><svg class="lp-icon"><use href="#i-check"/></svg><span>Interview question prep</span></li>
+                            <li><svg class="lp-icon"><use href="#i-check"/></svg><span>Follow-up email drafts</span></li>
+                            <li><svg class="lp-icon"><use href="#i-check"/></svg><span>Unlimited tracked applications</span></li>
+                        </ul>
+                        <a href="{% url 'register' %}" class="lp-btn lp-btn-ghost lp-btn-full lp-plan-cta">Choose Elite</a>
+                    </div>
+                </div>
+
+                <p class="lp-price-note lp-rise">
+                    Free generations do not reset. Pro and Elite reset on the first of each month.
                 </p>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- ══ WALL OF LOVE TESTIMONIALS ══ -->
-    {% comment %}
-A testimonials section sat here with three invented people (Alexei K.,
-         Marcus R., Sarah L.), five-star ratings and specific outcomes such as
-         "callbacks from 4 Tier-1 companies within 2 weeks". None of it was real.
-         Fabricated reviews attributed to named individuals are the kind of claim
-         a reader can act on, so it was removed rather than restyled.
-         Restore this slot when there are real, permitted quotes to put in it.
-{% endcomment %}
+        <!-- ══ FAQ ══ -->
+        <section class="lp-band" id="faq" style="padding-top:0;">
+            <div class="lp-wrap lp-faq-grid">
+                <div class="lp-rise">
+                    <p class="lp-eyebrow">FAQ</p>
+                    <h2 class="lp-h2">Before <em>you start.</em></h2>
 
-    <!-- ══ PRICING ══ -->
-    <section class="section" id="pricing">
-        <div class="container">
-            <div class="section-header reveal-up">
-                <span class="section-tag">Pricing</span>
-                <h2 class="landing-section-title">Simple plans, no surprises.</h2>
-                <p class="section-sub">Upgrade when you are ready to accelerate your search. Cancel anytime in one click.</p>
-            </div>
-
-            <div class="pricing-switch-wrap reveal-up">
-                <span class="switch-label">Monthly</span>
-                <div class="switch-pill" id="pricingSwitch" onclick="toggleBillingPeriod()">
-                    <div class="switch-dot"></div>
-                </div>
-                <span class="switch-label">Annual <span class="save-badge">Save 20%</span></span>
-            </div>
-
-            <div class="pricing-grid">
-                <!-- Free -->
-                <div class="card card-free reveal-up">
-                    <div class="card-tier">Free Tier</div>
-                    <div class="card-price-wrap">
-                        <span class="card-currency">$</span><span class="card-price">0</span><span class="card-period">/ forever</span>
+                    <div class="lp-search">
+                        <svg class="lp-icon"><use href="#i-search"/></svg>
+                        <label for="faqSearch" class="lp-vh">Search questions</label>
+                        <input type="search" id="faqSearch" placeholder="Search — ATS, PDF, billing…" autocomplete="off">
                     </div>
-                    <p class="card-desc">Perfect to test the studio and export your first resume.</p>
-                    <ul class="feature-list">
-                        <li><i class="fa-solid fa-check"></i> <strong>3 AI Resume Generations</strong></li>
-                        <li><i class="fa-solid fa-check"></i> 2 Standard PDF Templates</li>
-                        <li class="missing"><i class="fa-solid fa-xmark"></i> ATS Keyword Gap Analysis</li>
-                        <li class="missing"><i class="fa-solid fa-xmark"></i> AI Interview Preparation</li>
-                    </ul>
-                    <a href="{% url 'register' %}" class="btn btn-glass btn-card">Get Started</a>
                 </div>
 
-                <!-- Pro -->
-                <div class="card card-pro reveal-up" style="transition-delay: 0.1s;">
-                    <div class="card-pill pill-pro">Most Popular</div>
-                    <div class="card-tier">Pro Plan</div>
-                    <div class="card-price-wrap">
-                        <span class="card-currency">$</span><span class="card-price" id="proPrice">5</span><span class="card-period" id="proPeriod">/ month</span>
-                    </div>
-                    <p class="card-desc">For active job hunters applying to multiple companies.</p>
-                    <ul class="feature-list">
-                        <li><i class="fa-solid fa-check"></i> <strong>50 Generations / month</strong></li>
-                        <li><i class="fa-solid fa-check"></i> <strong>All 10 Vector Templates</strong></li>
-                        <li><i class="fa-solid fa-check"></i> <strong>Full ATS Compatibility Audit</strong></li>
-                        <li><i class="fa-solid fa-check"></i> AI Cover Letter Generator</li>
-                    </ul>
-                    <a href="{% url 'register' %}" class="btn btn-cta btn-card">Upgrade to Pro</a>
-                </div>
+                <div class="lp-faq-list lp-rise" id="faqList">
+                    <details class="lp-faq-item" open>
+                        <summary>How does this get past an ATS?</summary>
+                        <div class="lp-faq-a">
+                            The PDF is built from real text rather than an image of a resume, so
+                            it can be selected and searched. Every template keeps a single text
+                            column underneath the visual layout, which means the screening
+                            software reads your sections in the order you wrote them instead of
+                            interleaving two columns into one scrambled block.
+                        </div>
+                    </details>
 
-                <!-- Elite -->
-                <div class="card card-elite reveal-up" style="transition-delay: 0.2s;">
-                    <div class="card-pill pill-elite">Maximum Edge</div>
-                    <div class="card-tier">Elite Plan</div>
-                    <div class="card-price-wrap">
-                        <span class="card-currency">$</span><span class="card-price" id="elitePrice">10</span><span class="card-period" id="elitePeriod">/ month</span>
-                    </div>
-                    <p class="card-desc">Complete automation suite for senior & executive roles.</p>
-                    <ul class="feature-list">
-                        <li><i class="fa-solid fa-check"></i> <strong>300 AI generations / month</strong></li>
-                        <li><i class="fa-solid fa-check"></i> <strong>AI Interview Q&A Coach</strong></li>
-                        <li><i class="fa-solid fa-check"></i> Automated Recruiter Follow-up Emails</li>
-                        <li><i class="fa-solid fa-check"></i> Priority Async Queue</li>
-                    </ul>
-                    <a href="{% url 'register' %}" class="btn btn-glass btn-card" style="background: rgba(114,9,183,0.3); border-color: rgba(114,9,183,0.6);">Go Elite</a>
-                </div>
-            </div>
-        </div>
-    </section>
+                    <details class="lp-faq-item">
+                        <summary>Can I upload the resume I already have?</summary>
+                        <div class="lp-faq-a">
+                            Yes. Upload a PDF or paste plain text and CVAI reads it into editable
+                            fields — contact details, roles, dates, bullets, education and
+                            skills. Two-column and sidebar resumes are reconstructed in reading
+                            order rather than straight across the page.
+                        </div>
+                    </details>
 
-    <!-- ══ FAQ WITH INSTANT SEARCH ══ -->
-    <section class="section" id="faq">
-        <div class="container">
-            <div class="section-header reveal-up">
-                <span class="section-tag">FAQ</span>
-                <h2 class="landing-section-title">Before you start.</h2>
-            </div>
+                    <details class="lp-faq-item">
+                        <summary>Will it make up numbers about my career?</summary>
+                        <div class="lp-faq-a">
+                            No. The rewriter is instructed to restructure only what you gave it.
+                            If your bullet contains no metric, the rewrite will sharpen the verb
+                            and the specifics you did provide and leave the number out — it will
+                            not fill the gap with a plausible-looking percentage. Everything on
+                            your resume has to be something you can defend in the interview.
+                        </div>
+                    </details>
 
-            <!-- Instant Search -->
-            <div class="faq-search-box reveal-up">
-                <i class="fa-solid fa-magnifying-glass faq-search-icon"></i>
-                <input type="text" class="faq-search-input" id="faqSearchInput" placeholder="Search questions (e.g. ATS, pricing, export, PDF)..." oninput="filterFaq(this.value)">
-            </div>
+                    <details class="lp-faq-item">
+                        <summary>What counts as one generation?</summary>
+                        <div class="lp-faq-a">
+                            One AI request: generating a resume, writing a cover letter, running
+                            a keyword gap check, or rewriting a section. Editing your text,
+                            switching templates, previewing and downloading the PDF are all free
+                            and unlimited on every plan.
+                        </div>
+                    </details>
 
-            <div class="faq-list reveal-up" id="faqList">
-                <details class="faq-item" open>
-                    <summary>How does CVAI pass Applicant Tracking Systems (ATS)?</summary>
-                    <div class="faq-answer">CVAI builds the PDF as real text rather than exporting a picture of your resume. You can select and search the text, and the screening software reads it in the order you wrote it instead of scrambling columns together.</div>
-                </details>
+                    <details class="lp-faq-item">
+                        <summary>What is the XYZ formula?</summary>
+                        <div class="lp-faq-a">
+                            A widely used pattern for writing resume bullets:
+                            <em>accomplished [X], as measured by [Y], by doing [Z]</em>. It forces
+                            each line to name a result and its evidence rather than a
+                            responsibility. CVAI's rewriter follows it — within the limits of
+                            what your own input actually says.
+                        </div>
+                    </details>
 
-                <details class="faq-item">
-                    <summary>Can I upload my existing resume PDF?</summary>
-                    <div class="faq-answer">Yes! Simply upload your PDF in the Studio or paste text. Our Claude-powered AI pipeline extracts your contact information, experience, education, and skills into editable form fields in under 3 seconds.</div>
-                </details>
+                    <details class="lp-faq-item">
+                        <summary>Can I cancel?</summary>
+                        <div class="lp-faq-a">
+                            Yes, from the Stripe billing portal linked in your profile, with no
+                            cancellation fee. You keep access until the end of the period you
+                            have already paid for.
+                        </div>
+                    </details>
 
-                <details class="faq-item">
-                    <summary>What is Google's XYZ formula?</summary>
-                    <div class="faq-answer">Google's XYZ formula states: <em>"Accomplished [X], as measured by [Y], by doing [Z]"</em>. CVAI's section rewriter automatically identifies your duties and structures them into quantified achievement bullets favored by top-tier hiring managers.</div>
-                </details>
-
-                <details class="faq-item">
-                    <summary>Can I cancel my subscription anytime?</summary>
-                    <div class="faq-answer">Yes. You can cancel or manage your billing directly from the Stripe Customer Portal inside your profile with zero cancellation fees.</div>
-                </details>
-            </div>
-        </div>
-    </section>
-
-    <!-- ══ CLOSING CTA ══ -->
-    <section class="section" style="padding-top: 0;">
-        <div class="container">
-            <div class="cta-panel reveal-up">
-                <h2 class="cta-title">Ready to Land Your Next Role?</h2>
-                <p class="cta-sub">Join thousands of software engineers, product managers, and designers who build their resumes with CVAI.</p>
-                <div class="magnetic-wrap">
-                    <a href="{% url 'register' %}" class="btn btn-cta magnetic" style="padding: 18px 46px; font-size: var(--fs-lg);">
-                        Build Your Resume Free <i class="fa-solid fa-arrow-right"></i>
-                    </a>
+                    <p class="lp-faq-empty" id="faqEmpty" hidden>No question matches that. Try “PDF”, “ATS”, or “cancel”.</p>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
+
+        <!-- ══ CLOSING ══ -->
+        <section class="lp-band lp-close">
+            <div class="lp-wrap lp-close-grid">
+                <div>
+                    <h2>Your next resume has <em>one job.</em></h2>
+                    <p>Get through the filter, then give the person on the other side a reason to keep reading.</p>
+                </div>
+                <a href="{% url 'register' %}" class="lp-btn lp-btn-primary lp-btn-lg">
+                    Start free <svg class="lp-icon"><use href="#i-arrow"/></svg>
+                </a>
+            </div>
+        </section>
+    </main>
 
     <!-- ══ FOOTER ══ -->
-    <footer class="site-footer">
-        <div class="container">
-            <div class="footer-grid">
+    <footer class="lp-foot">
+        <div class="lp-wrap">
+            <div class="lp-foot-grid">
                 <div>
-                    <div class="footer-logo">CV<span style="color: var(--brand);">AI</span></div>
-                    <p class="footer-tagline">The AI resume architect. Build, score, and track every application from one unified platform.</p>
+                    <div class="lp-foot-logo">CV<i>AI</i></div>
+                    <p class="lp-foot-tag">Resumes written for the software that screens them and the person who reads them next.</p>
                 </div>
-                <div class="footer-col">
+                <div class="lp-foot-col">
                     <h4>Product</h4>
-                    <a href="#templates">10 Templates</a>
-                    <a href="#features">AI Features</a>
-                    <a href="#compare">Comparison</a>
-                    <a href="#calculator">ROI Calculator</a>
+                    <a href="#how">How it works</a>
+                    <a href="#templates">Templates</a>
+                    <a href="#features">Features</a>
                     <a href="#pricing">Pricing</a>
-                    <a href="#faq">FAQ</a>
                 </div>
-                <div class="footer-col">
+                <div class="lp-foot-col">
                     <h4>Account</h4>
                     <a href="{% url 'login' %}">Sign in</a>
-                    <a href="{% url 'register' %}">Create Account</a>
+                    <a href="{% url 'register' %}">Create account</a>
+                    <a href="#faq">FAQ</a>
                 </div>
-                <div class="footer-col">
+                <div class="lp-foot-col">
                     <h4>Legal</h4>
-                    <a href="{% url 'terms' %}">Terms of Service</a>
-                    <a href="{% url 'privacy' %}">Privacy Policy</a>
+                    <a href="{% url 'terms' %}">Terms of service</a>
+                    <a href="{% url 'privacy' %}">Privacy policy</a>
                 </div>
             </div>
-            <div class="footer-bottom">
-                <span>&copy; 2026 CVAI. All rights reserved.</span>
-                <span>Built for modern hiring pipelines.</span>
+            <div class="lp-foot-bottom">
+                <span>&copy; 2026 CVAI</span>
+                <span>Built for how hiring actually reads.</span>
             </div>
         </div>
     </footer>
 
-    <!-- ══ JAVASCRIPT & MICRO-INTERACTIONS ══ -->
     <script>
-        (function () {
-            'use strict';
+    (function () {
+        'use strict';
 
-            var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-            // 1. Scroll reveals
-            var revealTargets = document.querySelectorAll('.reveal-up');
-            if ('IntersectionObserver' in window && !reduceMotion) {
-                var revealObserver = new IntersectionObserver(function (entries, obs) {
-                    entries.forEach(function (entry) {
-                        if (entry.isIntersecting) {
-                            entry.target.classList.add('in-view');
-                            obs.unobserve(entry.target);
-                        }
-                    });
-                }, { threshold: 0.12 });
-                revealTargets.forEach(function (el) { revealObserver.observe(el); });
-            } else {
-                revealTargets.forEach(function (el) { el.classList.add('in-view'); });
-            }
-
-            // 2. Navbar on scroll
-            var navbar = document.getElementById('navbar');
-            window.addEventListener('scroll', function () {
-                if (navbar) {
-                    navbar.style.top = window.scrollY > 20 ? '12px' : '';
-                }
-            }, { passive: true });
-
-            // 3. Mobile drawer
-            var drawer = document.getElementById('mobileDrawer');
-            var backdrop = document.getElementById('mobileBackdrop');
-            var hamburger = document.getElementById('hamburgerBtn');
-            var closeBtn = document.getElementById('drawerCloseBtn');
-
-            function openDrawer() {
-                drawer.classList.add('open');
-                backdrop.classList.add('open');
-                document.body.style.overflow = 'hidden';
-            }
-            function closeDrawer() {
-                drawer.classList.remove('open');
-                backdrop.classList.remove('open');
-                document.body.style.overflow = '';
-            }
-
-            if (hamburger) hamburger.addEventListener('click', openDrawer);
-            if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
-            if (backdrop) backdrop.addEventListener('click', closeDrawer);
-            document.querySelectorAll('.drawer-link').forEach(function (l) { l.addEventListener('click', closeDrawer); });
-
-            // 4. Mouse glow
-            if (!reduceMotion && window.matchMedia('(hover: hover)').matches) {
-                var glow = document.getElementById('ambientGlow');
-                if (glow) {
-                    document.addEventListener('mousemove', function (e) {
-                        glow.style.opacity = '1';
-                        glow.style.transform = 'translate(calc(' + e.clientX + 'px - 50%), calc(' + e.clientY + 'px - 50%))';
-                    });
-                    document.addEventListener('mouseleave', function () { glow.style.opacity = '0'; });
-                }
-
-                document.querySelectorAll('.bento-card').forEach(function (card) {
-                    card.addEventListener('mousemove', function (e) {
-                        var rect = card.getBoundingClientRect();
-                        card.style.setProperty('--mouse-x', (e.clientX - rect.left) + 'px');
-                        card.style.setProperty('--mouse-y', (e.clientY - rect.top) + 'px');
-                    });
+        /* ── Scroll reveals ────────────────────────────────────────────────
+           If IntersectionObserver is missing or motion is reduced, everything
+           is revealed immediately rather than left hidden. */
+        var rises = document.querySelectorAll('.lp-rise');
+        if ('IntersectionObserver' in window && !reduceMotion) {
+            var io = new IntersectionObserver(function (entries, obs) {
+                entries.forEach(function (e) {
+                    if (e.isIntersecting) { e.target.classList.add('is-in'); obs.unobserve(e.target); }
                 });
+            }, { threshold: 0.1, rootMargin: '0px 0px -8% 0px' });
+            rises.forEach(function (el) { io.observe(el); });
+        } else {
+            rises.forEach(function (el) { el.classList.add('is-in'); });
+        }
+
+        /* ── Masthead hairline appears once the page has moved ─────────── */
+        var masthead = document.getElementById('masthead');
+        var onScroll = function () {
+            masthead.classList.toggle('is-stuck', window.scrollY > 8);
+        };
+        window.addEventListener('scroll', onScroll, { passive: true });
+        onScroll();
+
+        /* ── Mobile drawer ─────────────────────────────────────────────── */
+        var drawer = document.getElementById('drawer');
+        var scrim = document.getElementById('scrim');
+        var burger = document.getElementById('burger');
+        var drawerClose = document.getElementById('drawerClose');
+        var lastFocus = null;
+
+        function openDrawer() {
+            lastFocus = document.activeElement;
+            scrim.hidden = false;
+            // Next frame, so the transition has a start value to animate from.
+            requestAnimationFrame(function () {
+                drawer.classList.add('is-open');
+                scrim.classList.add('is-open');
+            });
+            drawer.setAttribute('aria-hidden', 'false');
+            burger.setAttribute('aria-expanded', 'true');
+            document.body.style.overflow = 'hidden';
+            drawerClose.focus();
+        }
+
+        function closeDrawer() {
+            drawer.classList.remove('is-open');
+            scrim.classList.remove('is-open');
+            drawer.setAttribute('aria-hidden', 'true');
+            burger.setAttribute('aria-expanded', 'false');
+            document.body.style.overflow = '';
+            window.setTimeout(function () { scrim.hidden = true; }, 300);
+            if (lastFocus) { lastFocus.focus(); }
+        }
+
+        burger.addEventListener('click', openDrawer);
+        drawerClose.addEventListener('click', closeDrawer);
+        scrim.addEventListener('click', closeDrawer);
+        document.querySelectorAll('[data-drawer-link]').forEach(function (a) {
+            a.addEventListener('click', closeDrawer);
+        });
+
+        // Escape closes it, and Tab is kept inside it while it is open.
+        document.addEventListener('keydown', function (e) {
+            if (!drawer.classList.contains('is-open')) { return; }
+            if (e.key === 'Escape') { closeDrawer(); return; }
+            if (e.key !== 'Tab') { return; }
+
+            var focusable = drawer.querySelectorAll('a[href], button:not([disabled])');
+            if (!focusable.length) { return; }
+            var first = focusable[0];
+            var last = focusable[focusable.length - 1];
+
+            if (e.shiftKey && document.activeElement === first) {
+                e.preventDefault(); last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault(); first.focus();
+            }
+        });
+
+        /* ── The two-reader link ───────────────────────────────────────────
+           Hovering or focusing a field on the paper lights the matching key in
+           the parse. Purely additive: without this the two panes still render. */
+        var spread = document.getElementById('spread');
+        if (spread) {
+            var fields = spread.querySelectorAll('[data-field]');
+            var keys = spread.querySelectorAll('[data-key]');
+
+            function lightUp(name) {
+                fields.forEach(function (f) { f.classList.toggle('is-lit', f.dataset.field === name); });
+                keys.forEach(function (k) { k.classList.toggle('is-lit', k.dataset.key === name); });
+            }
+            function clearAll() {
+                fields.forEach(function (f) { f.classList.remove('is-lit'); });
+                keys.forEach(function (k) { k.classList.remove('is-lit'); });
             }
 
-            // 5. Constellation particle canvas
-            var canvas = document.getElementById('constellationCanvas');
-            if (canvas && !reduceMotion) {
-                var ctx = canvas.getContext('2d');
-                var width, height;
-                var particles = [];
-                var numParticles = 45;
+            fields.forEach(function (f) {
+                f.addEventListener('mouseenter', function () { lightUp(f.dataset.field); });
+                f.addEventListener('focus', function () { lightUp(f.dataset.field); });
+                f.addEventListener('mouseleave', clearAll);
+                f.addEventListener('blur', clearAll);
+            });
+        }
 
-                function resizeCanvas() {
-                    width = canvas.width = window.innerWidth;
-                    height = canvas.height = window.innerHeight;
-                }
-                window.addEventListener('resize', resizeCanvas);
-                resizeCanvas();
-
-                for (var i = 0; i < numParticles; i++) {
-                    particles.push({
-                        x: Math.random() * width,
-                        y: Math.random() * height,
-                        vx: (Math.random() - 0.5) * 0.4,
-                        vy: (Math.random() - 0.5) * 0.4,
-                        r: Math.random() * 1.8 + 1
-                    });
-                }
-
-                function drawConstellation() {
-                    ctx.clearRect(0, 0, width, height);
-                    ctx.fillStyle = 'rgba(76, 201, 240, 0.4)';
-                    ctx.strokeStyle = 'rgba(76, 201, 240, 0.08)';
-
-                    for (var i = 0; i < numParticles; i++) {
-                        var p = particles[i];
-                        p.x += p.vx;
-                        p.y += p.vy;
-
-                        if (p.x < 0 || p.x > width) p.vx *= -1;
-                        if (p.y < 0 || p.y > height) p.vy *= -1;
-
-                        ctx.beginPath();
-                        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-                        ctx.fill();
-
-                        for (var j = i + 1; j < numParticles; j++) {
-                            var p2 = particles[j];
-                            var dist = Math.hypot(p.x - p2.x, p.y - p2.y);
-                            if (dist < 130) {
-                                ctx.lineWidth = 1 - (dist / 130);
-                                ctx.beginPath();
-                                ctx.moveTo(p.x, p.y);
-                                ctx.lineTo(p2.x, p2.y);
-                                ctx.stroke();
-                            }
-                        }
-                    }
-                    requestAnimationFrame(drawConstellation);
-                }
-                drawConstellation();
-            }
-        })();
-
-        // 6. Live Interactive Simulator Logic
-        var _rolePresets = {
+        /* ── Rewriter examples ─────────────────────────────────────────────
+           Worked examples, not model calls. Note the data-scientist case: its
+           input states no number, so its rewrite states no number either —
+           the same rule the real rewriter runs under. */
+        var EXAMPLES = {
             swe: {
-                raw: "Worked on frontend features with the team and fixed bugs in our React codebase to help make things faster for users.",
-                rewritten: "Spearheaded the migration to a <mark>React & TypeScript</mark> micro-frontend architecture across 14 engineers, <mark>slashing page latency by 41%</mark> and boosting session retention by 18%.",
-                x: "[X] React Architecture", y: "[Y] -41% Latency", z: "[Z] 14 Engineers", score: "98%"
+                before: 'Worked on frontend features with the team and fixed bugs in our React codebase to help make things faster for users.',
+                after: 'Migrated a 14-engineer React codebase to a typed component library, <mark>cutting median page load from 3.1s to 1.8s</mark> across the checkout funnel.',
+                tags: [['X', 'Typed component library'], ['Y', '3.1s → 1.8s load'], ['Z', '14 engineers']],
+                note: 'Worked example. The rewriter restructures what you wrote — it never invents a number that was not in your input.'
             },
             pm: {
-                raw: "Helped launch the new checkout redesign with design and engineering teams to increase payments.",
-                rewritten: "Directed end-to-end product rollout for the <mark>1-Click Stripe Checkout</mark> flow across 3 squads, <mark>lifting conversion rate by 24.6%</mark> and generating $1.8M in annualized GMV.",
-                x: "[X] 1-Click Checkout", y: "[Y] +24.6% Conversion", z: "[Z] $1.8M Annualized", score: "96%"
+                before: 'Helped launch the new checkout redesign, working with design and engineering to increase payments. Conversion went from 2.1% to 2.6%.',
+                after: 'Led the checkout redesign across design and engineering, <mark>lifting conversion from 2.1% to 2.6%</mark> on the primary payment flow.',
+                tags: [['X', 'Checkout redesign'], ['Y', '2.1% → 2.6% conversion'], ['Z', 'Design + engineering']],
+                note: 'The 2.1% and 2.6% came from the input. The rewrite reorganises them — it does not round them up.'
             },
-            ai: {
-                raw: "Trained some LLM models for customer support chatbot to answer questions automatically.",
-                rewritten: "Engineered a high-throughput <mark>RAG pipeline using Claude 3.5 & PostgreSQL pgvector</mark>, <mark>resolving 78% of tier-1 support tickets</mark> autonomously with sub-450ms TTFT.",
-                x: "[X] RAG & pgvector", y: "[Y] 78% Ticket Resolution", z: "[Z] <450ms TTFT", score: "99%"
+            ds: {
+                before: 'Built models to predict which customers would cancel and shared the results with the support team.',
+                after: 'Built a churn prediction model and put its output in front of the support team, <mark>turning a monthly report into a weekly outreach list</mark>.',
+                tags: [['X', 'Churn prediction model'], ['Y', 'Monthly → weekly cadence'], ['Z', 'Support team adoption']],
+                note: 'This input contains no metric, so the rewrite adds none. It sharpens the outcome instead of inventing a percentage.'
             }
         };
 
-        function loadRolePreset(role) {
-            document.querySelectorAll('.role-pill').forEach(function (btn) { btn.classList.remove('active'); });
-            event.target.classList.add('active');
-            var data = _rolePresets[role];
-            document.getElementById('simInputText').value = data.raw;
-            runSimulatedRewrite(role);
+        var rwInput = document.getElementById('rwInput');
+        var rwOutput = document.getElementById('rwOutput');
+        var rwTags = document.getElementById('rwTags');
+        var rwNote = document.getElementById('rwNote');
+        var rwRun = document.getElementById('rwRun');
+        var activeRole = 'swe';
+
+        function render(key) {
+            var ex = EXAMPLES[key] || EXAMPLES.swe;
+            rwOutput.innerHTML = ex.after;
+            rwNote.textContent = ex.note;
+            rwTags.innerHTML = ex.tags.map(function (t) {
+                return '<span class="lp-tag">' + t[0] + ' <b>' + t[1] + '</b></span>';
+            }).join('');
         }
 
-        function runSimulatedRewrite(roleKey) {
-            var activeRole = roleKey || 'swe';
-            var data = _rolePresets[activeRole] || _rolePresets.swe;
-            var box = document.getElementById('simOutputBox');
-            var textEl = document.getElementById('simOutputText');
-            var scoreEl = document.getElementById('simScoreValue');
-
-            box.classList.add('laser-scanning');
-            textEl.style.opacity = '0.3';
-
-            setTimeout(function () {
-                box.classList.remove('laser-scanning');
-                textEl.style.opacity = '1';
-                textEl.innerHTML = data.rewritten;
-                scoreEl.textContent = data.score;
-            }, 600);
+        function run(key) {
+            if (reduceMotion) { render(key); return; }
+            rwOutput.style.opacity = '0.25';
+            window.setTimeout(function () {
+                render(key);
+                rwOutput.style.opacity = '1';
+            }, 260);
         }
 
-        // 7. Interactive Template Modal
-        function openTemplateModal(title, desc, slug) {
-            document.getElementById('modalTplTitle').textContent = title;
-            document.getElementById('modalTplDesc').textContent = desc;
-            document.getElementById('tplModal').classList.add('open');
-        }
-        function closeTemplateModal() {
-            document.getElementById('tplModal').classList.remove('open');
-        }
+        document.querySelectorAll('.lp-role').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('.lp-role').forEach(function (b) { b.classList.remove('is-active'); });
+                btn.classList.add('is-active');
+                activeRole = btn.dataset.role;
+                rwInput.value = EXAMPLES[activeRole].before;
+                run(activeRole);
+            });
+        });
 
-        // 8. Template Filter
-        function filterTemplates(cat, btn) {
-            document.querySelectorAll('.tpl-tab-btn').forEach(function (b) { b.classList.remove('active'); });
-            btn.classList.add('active');
-            var cards = document.querySelectorAll('.template-card');
-            cards.forEach(function (c) {
-                if (cat === 'all' || c.dataset.category === cat) {
-                    c.style.display = 'flex';
-                } else {
-                    c.style.display = 'none';
+        rwRun.addEventListener('click', function () { run(activeRole); });
+
+        /* ── FAQ filter ────────────────────────────────────────────────── */
+        var faqSearch = document.getElementById('faqSearch');
+        var faqEmpty = document.getElementById('faqEmpty');
+        var faqItems = document.querySelectorAll('.lp-faq-item');
+
+        faqSearch.addEventListener('input', function () {
+            var q = faqSearch.value.toLowerCase().trim();
+            var shown = 0;
+
+            faqItems.forEach(function (item) {
+                var hit = !q || item.textContent.toLowerCase().indexOf(q) !== -1;
+                item.hidden = !hit;
+                if (hit) {
+                    shown += 1;
+                    if (q) { item.setAttribute('open', ''); }
                 }
             });
-        }
 
-        // 9. Time-saved calculator
-        {% comment %}
-Reports time, not outcome rates. An earlier version multiplied the
-           slider by conversion percentages we had no data for. These two
-           constants are assumptions and are stated on the page under the
-           result. Django comment: kept for maintainers, not shipped to the
-           browser like the // comments around it.
-{% endcomment %}
-        var ROI_MINUTES_BY_HAND = 35;
-        var ROI_MINUTES_WITH_CVAI = 5;
-
-        function updateRoiCalc(val) {
-            var n = parseInt(val, 10);
-            if (!isFinite(n)) { return; }
-            document.getElementById('appCountDisplay').textContent = n;
-
-            var manual = (n * ROI_MINUTES_BY_HAND) / 60;
-            var assisted = (n * ROI_MINUTES_WITH_CVAI) / 60;
-
-            // Sub-hour totals read as "0h" when rounded; show minutes instead.
-            var fmt = function (hours) {
-                if (hours < 1) { return Math.round(hours * 60) + 'm'; }
-                return (hours < 10 ? hours.toFixed(1).replace(/\.0$/, '') : Math.round(hours)) + 'h';
-            };
-
-            document.getElementById('roiManual').textContent = fmt(manual);
-            document.getElementById('roiWithCvai').textContent = fmt(assisted);
-            document.getElementById('roiSaved').textContent = fmt(manual - assisted);
-        }
-
-        // 10. Billing Toggle
-        var _isAnnual = false;
-        function toggleBillingPeriod() {
-            _isAnnual = !_isAnnual;
-            var switchPill = document.getElementById('pricingSwitch');
-            var proPrice = document.getElementById('proPrice');
-            var elitePrice = document.getElementById('elitePrice');
-            var proPeriod = document.getElementById('proPeriod');
-            var elitePeriod = document.getElementById('elitePeriod');
-
-            if (_isAnnual) {
-                switchPill.classList.add('active');
-                proPrice.textContent = '4';
-                elitePrice.textContent = '8';
-                proPeriod.textContent = '/ month (billed yearly)';
-                elitePeriod.textContent = '/ month (billed yearly)';
-            } else {
-                switchPill.classList.remove('active');
-                proPrice.textContent = '5';
-                elitePrice.textContent = '10';
-                proPeriod.textContent = '/ month';
-                elitePeriod.textContent = '/ month';
-            }
-        }
-
-        // 11. Instant FAQ Search Filter
-        function filterFaq(query) {
-            var q = (query || '').toLowerCase().trim();
-            var items = document.querySelectorAll('.faq-item');
-            items.forEach(function (item) {
-                var text = item.textContent.toLowerCase();
-                if (!q || text.indexOf(q) !== -1) {
-                    item.style.display = '';
-                    if (q) item.setAttribute('open', '');
-                } else {
-                    item.style.display = 'none';
-                }
-            });
-        }
+            faqEmpty.hidden = shown !== 0;
+        });
+    })();
     </script>
 </body>
+
 </html>
