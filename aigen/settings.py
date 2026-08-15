@@ -170,6 +170,28 @@ STRIPE_PRICE_ID = STRIPE_PRICE_ID_PRO
 AI_SERVICE_URL = os.environ.get('AI_SERVICE_URL', 'http://127.0.0.1:8001')
 AI_SERVICE_TOKEN = os.environ.get('AI_SERVICE_TOKEN', '')
 
+# This must be the worker's PRIVATE address (e.g. http://ai-worker:10000), not
+# its public *.onrender.com URL.
+#
+# Pointing it at the public URL sends every request out of the datacenter and
+# back in through the platform edge, which rate-limits it: the worker logs show
+# no /generate requests at all, and Django gets a plain-text "429 Too Many
+# Requests" that never came from FastAPI. It also exposes the worker to the
+# internet, leaving AI_SERVICE_TOKEN as the only thing between a stranger and
+# your API credits.
+#
+# The symptom looks exactly like a provider rate limit, so it is worth one log
+# line at startup rather than another debugging session.
+if AI_SERVICE_URL and '.onrender.com' in AI_SERVICE_URL:
+    import warnings
+    warnings.warn(
+        f"AI_SERVICE_URL points at a public URL ({AI_SERVICE_URL}). Requests "
+        "will leave and re-enter the platform edge and are likely to be "
+        "rate-limited with a 429 that never reaches the worker. Use the "
+        "service's private address instead (e.g. http://ai-worker:10000).",
+        RuntimeWarning,
+    )
+
 
 # ── Cache (Redis in production, LocMem fallback for local dev) ──────────────
 # REDIS_URL is injected automatically by Render via fromService → connectionString.

@@ -669,6 +669,22 @@ async def _call_ai_service(
         # request was bad — retrying will fail identically until it is set.
         # Saying "please try again" sent users in a loop and hid a config error
         # behind what looked like a transient fault.
+        # A 429 cannot originate in the worker: both provider paths convert rate
+        # limits into a 200 with an `error` field. So a 429 here came from
+        # something in front of it — in practice the platform edge, because
+        # AI_SERVICE_URL was pointed at the worker's public URL instead of its
+        # private address, sending each call out of the datacenter and back.
+        # "Please try again" is actively misleading for that: it never recovers.
+        if exc.response.status_code == 429:
+            logger.error(
+                "429 from the AI service at %s — this is not a provider rate "
+                "limit; the worker converts those to a 200. Check that "
+                "AI_SERVICE_URL is the private address, not a public URL.",
+                ai_url,
+            )
+            return None, ("The AI service is unreachable due to a server "
+                          "configuration problem. This is not something you can "
+                          "fix by retrying — please contact support.")
         if exc.response.status_code == 503 and 'not configured' in body.lower():
             logger.error("AI provider key missing on the worker: %s", body[:200])
             return None, ("The AI service is not fully configured yet. This is a "
@@ -1554,7 +1570,13 @@ Be specific to the role and company. No generic questions."""
 
     user_prompt = f"Resume:\n{resume}\n\nJob Description:\n{job_desc}\n\nCompany: {company}"
 
-    result, error = await _call_ai_service(system_prompt, user_prompt)
+    result, error = await _call_ai_service(
+        system_prompt, user_prompt,
+        # Moved off llama-3.1-8b with the letter and the rewriter: this is
+        # analysis a user reads and acts on, not a throughput task. It also
+        # drops the last dependency on a second provider.
+        provider="anthropic", model=AI_MODEL_PROSE,
+    )
 
     if result:
         await AIResult.objects.acreate(
@@ -1616,7 +1638,13 @@ Do NOT be generic — reference the specific role and company."""
 
     user_prompt = f"Company: {company}\nJob Title: {job_title}\nAdditional Context: {context}"
 
-    result, error = await _call_ai_service(system_prompt, user_prompt)
+    result, error = await _call_ai_service(
+        system_prompt, user_prompt,
+        # Moved off llama-3.1-8b with the letter and the rewriter: this is
+        # analysis a user reads and acts on, not a throughput task. It also
+        # drops the last dependency on a second provider.
+        provider="anthropic", model=AI_MODEL_PROSE,
+    )
 
     if result:
         await AIResult.objects.acreate(
@@ -1682,7 +1710,13 @@ Be brutally honest. Give specific keyword suggestions. Start with the score on t
 
     user_prompt = f"Resume:\n{resume}\n\nJob Description:\n{job_desc}"
 
-    result, error = await _call_ai_service(system_prompt, user_prompt)
+    result, error = await _call_ai_service(
+        system_prompt, user_prompt,
+        # Moved off llama-3.1-8b with the letter and the rewriter: this is
+        # analysis a user reads and acts on, not a throughput task. It also
+        # drops the last dependency on a second provider.
+        provider="anthropic", model=AI_MODEL_PROSE,
+    )
 
     score = None
     if result:
