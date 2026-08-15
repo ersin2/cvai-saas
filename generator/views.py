@@ -1,6 +1,7 @@
 import httpx
 import json
 import logging
+import re
 from urllib.parse import urljoin
 
 from asgiref.sync import sync_to_async          # wrap sync ORM/render calls for use in async views
@@ -12,7 +13,7 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages
 from users.models import Profile
 from .models import Generation, JobApplication, AIResult
-from .pdf_engine import build_pdf, TEMPLATES
+from .pdf_engine import build_pdf, build_cover_letter_pdf, TEMPLATES
 
 # ── Extracted modules ────────────────────────────────────────────────────────
 # views.py was 1,793 lines because it also held the request guards, the resume
@@ -717,6 +718,43 @@ def generate_pdf(request):
 # =====================================================
 # === NEW FEATURES ===
 # =====================================================
+
+
+# === COVER LETTER PDF ===
+@login_required
+@require_POST
+def download_cover_letter(request):
+    """
+    Render the generated cover letter as a PDF.
+
+    Separate from download_pdf: that one dispatches to the resume layout
+    builders, none of which lay out a business letter. Only the letter prose is
+    sent here — the ATS and red-flag sections of the generated result are
+    analysis for the candidate, not part of what gets sent to an employer.
+
+    Rate-limited on the PDF bucket rather than the generation bucket: nothing
+    is generated, an already-saved letter is just typeset.
+    """
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    throttled = _check_rate_limit(
+        request.user, profile.plan,
+        limit=PREVIEW_RATE_LIMIT, key_prefix='rlprev',
+    )
+    if throttled:
+        return throttled
+
+    if not (request.POST.get('body') or '').strip():
+        return JsonResponse({'error': 'There is no letter to export yet.'}, status=400)
+
+    buffer = build_cover_letter_pdf(request)
+    company = (request.POST.get('company_name') or 'cover-letter').strip()
+    slug = re.sub(r'[^A-Za-z0-9]+', '_', company).strip('_') or 'cover_letter'
+    return FileResponse(
+        buffer,
+        content_type='application/pdf',
+        as_attachment=True,
+        filename=f'CVAI_Cover_Letter_{slug}.pdf',
+    )
 
 
 # === JOB URL SCRAPER ===

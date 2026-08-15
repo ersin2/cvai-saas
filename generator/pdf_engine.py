@@ -19,9 +19,11 @@ email, phone, location, linkedin. POST overrides (primary_color, bg_color,
 accent_color, font_family) are honoured everywhere.
 """
 
+import datetime
 import io
 import os
 import logging
+import re
 import tempfile
 
 from reportlab.lib.pagesizes import A4
@@ -1846,5 +1848,95 @@ def build_pdf(template_slug: str, request) -> io.BytesIO:
             _build_minimal_centered(request, buf, TEMPLATES[0])
         except Exception:
             pass
+    buf.seek(0)
+    return buf
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# COVER LETTER
+#
+# Separate from the resume builders on purpose. A cover letter is a business
+# letter — sender block, date, recipient, salutation, prose, sign-off — not a
+# resume with different content, so none of the ten layout builders fit it and
+# reusing one would have produced a letter shaped like a CV.
+# ─────────────────────────────────────────────────────────────────────────────
+
+def build_cover_letter_pdf(request) -> io.BytesIO:
+    """Render a cover letter to PDF from the posted fields.
+
+    Reads: full_name, email, phone, location, company_name, job_title, body.
+    `body` is the letter prose; any [SECTION: …] tags are stripped by the
+    caller, since only the letter itself belongs in the file.
+    """
+    buf = io.BytesIO()
+
+    name    = (request.POST.get('full_name') or '').strip()
+    email   = (request.POST.get('email') or '').strip()
+    phone   = (request.POST.get('phone') or '').strip()
+    location = (request.POST.get('location') or '').strip()
+    company = (request.POST.get('company_name') or '').strip()
+    role    = (request.POST.get('job_title') or '').strip()
+    body    = (request.POST.get('body') or '').strip()
+
+    fn, fb, fi = _font_variants('Helvetica')
+    M = 24 * mm
+
+    doc = BaseDocTemplate(buf, pagesize=A4,
+                          leftMargin=M, rightMargin=M, topMargin=M, bottomMargin=M,
+                          title=f"Cover letter — {name or 'Candidate'}",
+                          author=name or 'Candidate')
+    frame = Frame(M, M, W_A4 - 2 * M, H_A4 - 2 * M, id='letter',
+                  leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0)
+    doc.addPageTemplates([PageTemplate(id='L', frames=[frame])])
+
+    C_INK = colors.HexColor('#1a1a2e')
+    C_DIM = colors.HexColor('#6b7280')
+
+    s_name = ParagraphStyle('N', fontName=fb, fontSize=16, textColor=C_INK,
+                            leading=19, spaceAfter=2)
+    s_meta = ParagraphStyle('M', fontName=fn, fontSize=9, textColor=C_DIM,
+                            leading=13, spaceAfter=2)
+    s_to   = ParagraphStyle('T', fontName=fn, fontSize=10, textColor=C_INK,
+                            leading=14, spaceAfter=2)
+    # 1.5 leading and a blank line between paragraphs: this is read on screen by
+    # a person, not parsed, so it is set for reading rather than for density.
+    s_body = ParagraphStyle('B', fontName=fn, fontSize=10.5, textColor=C_INK,
+                            leading=15.75, spaceAfter=10)
+
+    story = []
+
+    if name:
+        story.append(Paragraph(_esc(name), s_name))
+    contact = ' · '.join(_esc(v) for v in (email, phone, location) if v)
+    if contact:
+        story.append(Paragraph(contact, s_meta))
+
+    story.append(Spacer(1, 14))
+    story.append(HRFlowable(width='100%', thickness=0.6,
+                            color=colors.HexColor('#d8dee9'), spaceAfter=14))
+
+    story.append(Paragraph(datetime.date.today().strftime('%d %B %Y'), s_meta))
+    story.append(Spacer(1, 10))
+
+    if company or role:
+        if company:
+            story.append(Paragraph(f'<b>{_esc(company)}</b>', s_to))
+        if role:
+            story.append(Paragraph(_esc(role), s_to))
+        story.append(Spacer(1, 14))
+
+    for para in re.split(r'\n\s*\n', body):
+        para = para.strip()
+        if not para:
+            continue
+        # Single newlines inside a paragraph are soft wraps in the model's
+        # output, not deliberate breaks — joining them avoids a letter that
+        # looks like it was pasted out of a terminal.
+        story.append(Paragraph(_esc(' '.join(para.split('\n'))), s_body))
+
+    if not body:
+        story.append(Paragraph('This letter is empty.', s_body))
+
+    doc.build(story)
     buf.seek(0)
     return buf

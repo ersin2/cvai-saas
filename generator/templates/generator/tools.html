@@ -322,6 +322,9 @@
                                     <button class="btn-ghost" onclick="copyCoverAll()" style="font-size: var(--fs-sm); padding:8px 16px;">
                                         <i class="fas fa-file-lines"></i>Copy all
                                     </button>
+                                    <button class="btn-ghost" onclick="exportCoverPdf(this)" style="font-size: var(--fs-sm); padding:8px 16px;">
+                                        <i class="fas fa-file-pdf"></i>Export PDF
+                                    </button>
                                 </div>
                                 <div id="coverSectionContent"></div>
                             </div>
@@ -692,6 +695,56 @@
             }).filter(Boolean).join('\n\n');
             if (!text) return;
             _copyText(text, 'Full cover letter copied.');
+        }
+
+        /* Export the letter itself as a PDF.
+           Only MAIN_LETTER is sent: the ATS score and red-flag sections are
+           analysis for the candidate, not part of what an employer receives. */
+        async function exportCoverPdf(btn) {
+            const main = _coverSections.find(s => s.key === 'MAIN_LETTER') || _coverSections[0];
+            if (!main) { showToast('Generate a letter first.', 'danger'); return; }
+
+            const scratch = document.createElement('div');
+            scratch.innerHTML = main.html;
+            const body = (scratch.innerText || '').trim();
+            if (!body) { showToast('There is no letter to export yet.', 'danger'); return; }
+
+            const form = document.querySelector('#panel-cover form');
+            const read = n => { const el = form && form.querySelector(`[name="${n}"]`); return el ? el.value : ''; };
+
+            const original = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Building…';
+            try {
+                const fd = new URLSearchParams({
+                    body: body,
+                    full_name: read('full_name') || '{{ user.get_full_name|default:user.username|escapejs }}',
+                    email: '{{ user.email|escapejs }}',
+                    company_name: read('company_name'),
+                    job_title: read('job_title'),
+                });
+                const res = await fetch("{% url 'download_cover_letter' %}", {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded',
+                              'X-CSRFToken': '{{ csrf_token }}'},
+                    body: fd.toString(), credentials: 'same-origin',
+                });
+                if (!res.ok) { showToast(await describeHttpFailure(res), 'danger'); return; }
+
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'CVAI_Cover_Letter.pdf';
+                a.click();
+                URL.revokeObjectURL(url);
+                showToast('Cover letter PDF downloaded.', 'success');
+            } catch (e) {
+                showToast('Export failed — please try again.', 'danger');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = original;
+            }
         }
 
         function _copyText(text, okMessage) {

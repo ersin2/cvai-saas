@@ -27,7 +27,12 @@ Three specific regressions are pinned:
 
 import io
 
-from django.test import TestCase, RequestFactory
+from django.contrib.auth.models import User
+from django.core.cache import cache
+from django.test import TestCase, RequestFactory, Client, override_settings
+from django.urls import reverse
+
+from users.models import Profile
 
 from generator.pdf_engine import build_pdf, TEMPLATES, _parse_skill_groups
 
@@ -251,3 +256,131 @@ class EverySectionReachesThePdfTest(TestCase):
                 # Case-insensitive: hacker_terminal and academic_classic
                 # upper-case the name by design.
                 self.assertIn("alex rivera", _extract(pdf).lower())
+
+
+class CoverLetterPdfTest(TestCase):
+    """
+    A cover letter is a business letter, not a resume with different words.
+
+    Exporting one through build_pdf would have laid it out with resume section
+    headings and a skills rail, so it gets its own builder — and that builder
+    needs its own test, because "returns bytes starting with %PDF" is satisfied
+    by a letter that lost its body.
+    """
+
+    BODY = (
+        "Two years on Northwind's payment infrastructure make this a natural\n"
+        "next step, and the posting asks for exactly that ownership.\n"
+        "\n"
+        "On the checkout API I cut p95 latency from 840ms to 210ms.\n"
+        "\n"
+        "I would welcome the chance to talk it through."
+    )
+
+    FIELDS = {
+        "full_name": "Alex Rivera",
+        "email": "alex@example.com",
+        "phone": "+1 555 0100",
+        "location": "Berlin, DE",
+        "company_name": "Northwind Labs",
+        "job_title": "Senior Backend Engineer",
+    }
+
+    def _render(self, **overrides):
+        from generator.pdf_engine import build_cover_letter_pdf
+        data = {**self.FIELDS, "body": self.BODY, **overrides}
+        request = RequestFactory().post("/download-cover-letter/", data)
+        return build_cover_letter_pdf(request).getvalue()
+
+    def test_the_letter_reaches_the_pdf(self):
+        text = _extract(self._render())
+        for label, probe in [
+            ("sender", "Alex Rivera"),
+            ("contact", "alex@example.com"),
+            ("recipient", "Northwind Labs"),
+            ("role", "Senior Backend Engineer"),
+            ("body", "840ms to 210ms"),
+            ("closing", "talk it through"),
+        ]:
+            with self.subTest(part=label):
+                self.assertIn(probe, text, f"the {label} is missing from the exported letter")
+
+    def test_soft_wraps_are_joined_but_paragraphs_are_kept(self):
+        """
+        The model wraps its prose at some column. Treating those as real breaks
+        produced a letter that read like terminal output; treating blank lines
+        as nothing would have run it into one block.
+        """
+        text = _extract(self._render())
+        self.assertIn("natural next step", text)          # soft wrap joined
+        self.assertNotIn("natural\nnext step", text)
+        self.assertIn("On the checkout API", text)        # paragraph kept apart
+
+    def test_markup_in_the_letter_is_escaped_not_executed(self):
+        text = _extract(self._render(body="Regards, <b>Alex</b> & Co <script>x</script>"))
+        self.assertIn("<b>Alex</b>", text)
+        self.assertIn("& Co", text)
+
+    def test_a_letter_with_no_optional_fields_still_renders(self):
+        pdf = self._render(company_name="", job_title="", phone="", location="")
+        self.assertTrue(pdf.startswith(b"%PDF"))
+        self.assertIn("840ms", _extract(pdf))
+
+
+@override_settings(
+    STORAGES={
+        "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    }
+)
+class CoverLetterDownloadViewTest(TestCase):
+    """
+    Exercise the endpoint, not just the builder.
+
+    CoverLetterPdfTest calls build_cover_letter_pdf directly and passed while
+    the view returned a 500 on every request: the view used re.sub and views.py
+    did not import re. A builder test cannot see that — only a request can.
+    """
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user("letter_probe", password="pw-12345")
+        Profile.objects.get_or_create(user=self.user)
+        self.client = Client()
+        self.client.force_login(self.user)
+
+    def tearDown(self):
+        cache.clear()
+
+    def test_posting_a_letter_returns_a_pdf_attachment(self):
+        resp = self.client.post(reverse("download_cover_letter"), {
+            "full_name": "Alex Rivera",
+            "email": "alex@example.com",
+            "company_name": "Northwind Labs",
+            "job_title": "Senior Backend Engineer",
+            "body": "On the checkout API I cut p95 latency from 840ms to 210ms.",
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp["Content-Type"], "application/pdf")
+        self.assertIn("attachment", resp.get("Content-Disposition", ""))
+
+        pdf = b"".join(resp.streaming_content)
+        self.assertTrue(pdf.startswith(b"%PDF"))
+        self.assertIn("840ms", _extract(pdf))
+
+    def test_an_empty_letter_is_refused_rather_than_exported_blank(self):
+        resp = self.client.post(reverse("download_cover_letter"), {"body": "   "})
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn("no letter", resp.json()["error"].lower())
+
+    def test_the_filename_is_built_from_the_company(self):
+        resp = self.client.post(reverse("download_cover_letter"), {
+            "company_name": "Northwind Labs / EU",
+            "body": "Body text.",
+        })
+        self.assertIn("Northwind_Labs_EU", resp["Content-Disposition"])
+
+    def test_signed_out_users_are_redirected(self):
+        self.client.logout()
+        resp = self.client.post(reverse("download_cover_letter"), {"body": "x"})
+        self.assertEqual(resp.status_code, 302)

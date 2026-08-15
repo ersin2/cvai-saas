@@ -8,6 +8,7 @@ urlpatterns = [
     path('generate-resume/', views.generate_resume, name='generate_resume'),
     path('rewrite-section/', views.rewrite_section, name='rewrite_section'),
     path('download-pdf/', views.generate_pdf, name='download_pdf'),
+    path('download-cover-letter/', views.download_cover_letter, name='download_cover_letter'),
     path('history/', views.history, name='history'),
     path('history/<int:pk>/delete/', views.delete_generation, name='delete_generation'),
 
