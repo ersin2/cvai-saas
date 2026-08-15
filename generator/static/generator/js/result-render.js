@@ -292,15 +292,190 @@
     return changed;
   }
 
+  /* ── Shared helpers for the structural enhancers ──────────────────────── */
+
+  var HEADINGS = 'H3,H4,H5,H6';
+
+  /* Split a container's children into [{heading, nodes}] groups, starting a new
+     group at every heading whose text matches `test`. Nodes before the first
+     match are returned as a leading group with heading null. */
+  function groupByHeading(container, test) {
+    var groups = [];
+    var current = { heading: null, nodes: [] };
+    Array.prototype.slice.call(container.children).forEach(function (node) {
+      if (node.matches(HEADINGS) && test(node.textContent.trim())) {
+        if (current.heading || current.nodes.length) { groups.push(current); }
+        current = { heading: node, nodes: [] };
+      } else {
+        current.nodes.push(node);
+      }
+    });
+    if (current.heading || current.nodes.length) { groups.push(current); }
+    return groups;
+  }
+
+  function copyButton(label) {
+    return '<button type="button" class="res-copy" data-res-copy>' +
+             '<i class="fas fa-copy" aria-hidden="true"></i>' + escapeHtml(label) +
+           '</button>';
+  }
+
   /**
-   * Render `text` into `el`. Pass {ats: true, score: n} to also run the ATS
-   * enhancer.
+   * Interview prep → one collapsible card per question.
+   *
+   * The prompt emits "### Q1: …" followed by "**Why they ask:**",
+   * "**Strong answer:**" and "**Tip:**". Rendered flat, ten questions are an
+   * unbroken wall of text with no way to work through them one at a time.
+   */
+  function enhanceInterview(container) {
+    if (!container) { return false; }
+    var groups = groupByHeading(container, function (text) {
+      return /^Q\s*\d+\b/i.test(text);
+    }).filter(function (g) { return g.heading; });
+
+    if (groups.length < 2) { return false; }   // not the expected shape
+
+    var wrap = document.createElement('div');
+    wrap.className = 'res-qa';
+
+    groups.forEach(function (group, index) {
+      var details = document.createElement('details');
+      details.className = 'res-qa-item';
+      if (index === 0) { details.open = true; }
+
+      var summary = document.createElement('summary');
+      summary.className = 'res-qa-q';
+      summary.textContent = group.heading.textContent.trim();
+      details.appendChild(summary);
+
+      var bodyEl = document.createElement('div');
+      bodyEl.className = 'res-qa-a';
+      group.nodes.forEach(function (n) { bodyEl.appendChild(n); });
+      details.appendChild(bodyEl);
+
+      wrap.appendChild(details);
+      group.heading.remove();
+    });
+
+    container.appendChild(wrap);
+    return true;
+  }
+
+  /**
+   * Follow-up emails → subject and body in separate copyable boxes.
+   *
+   * The prompt emits a sequence ("## 1. 3-Day Follow-Up") with "**Subject:**"
+   * and "**Body:**" inside each. Flat, the subject line is indistinguishable
+   * from the body, and copying meant selecting by hand.
+   */
+  function enhanceFollowup(container) {
+    if (!container) { return false; }
+
+    var groups = groupByHeading(container, function (text) {
+      return /follow[-\s]?up|day|email/i.test(text);
+    }).filter(function (g) { return g.heading; });
+
+    // A single email with no section headings still has a subject worth lifting.
+    if (!groups.length) { groups = [{ heading: null, nodes: Array.prototype.slice.call(container.children) }]; }
+
+    var changed = false;
+    var wrap = document.createElement('div');
+    wrap.className = 'res-mail-set';
+
+    groups.forEach(function (group) {
+      var subjectNode = null;
+      group.nodes.forEach(function (n) {
+        if (!subjectNode && /^\s*subject\s*:/i.test(n.textContent || '')) { subjectNode = n; }
+      });
+      if (!subjectNode) { return; }
+
+      changed = true;
+      var card = document.createElement('div');
+      card.className = 'res-mail';
+
+      if (group.heading) {
+        var title = document.createElement('div');
+        title.className = 'res-mail-title';
+        title.textContent = group.heading.textContent.trim();
+        card.appendChild(title);
+        group.heading.remove();
+      }
+
+      var subjectText = (subjectNode.textContent || '').replace(/^\s*subject\s*:\s*/i, '').trim();
+      var subjectBox = document.createElement('div');
+      subjectBox.className = 'res-mail-field';
+      subjectBox.innerHTML =
+        '<div class="res-mail-label">Subject' + copyButton('Copy') + '</div>' +
+        '<div class="res-mail-value res-mail-subject">' + escapeHtml(subjectText) + '</div>';
+      card.appendChild(subjectBox);
+      subjectNode.remove();
+
+      var bodyBox = document.createElement('div');
+      bodyBox.className = 'res-mail-field';
+      bodyBox.innerHTML = '<div class="res-mail-label">Body' + copyButton('Copy') + '</div>';
+      var bodyValue = document.createElement('div');
+      bodyValue.className = 'res-mail-value';
+      group.nodes.forEach(function (n) {
+        if (n === subjectNode) { return; }
+        // Drop a bare "Body:" label — the box is already labelled.
+        if (/^\s*body\s*:?\s*$/i.test(n.textContent || '')) { n.remove(); return; }
+        bodyValue.appendChild(n);
+      });
+      bodyBox.appendChild(bodyValue);
+      card.appendChild(bodyBox);
+
+      wrap.appendChild(card);
+    });
+
+    if (changed) { container.appendChild(wrap); }
+    return changed;
+  }
+
+  /* One delegated handler for every copy button this file emits. */
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest && e.target.closest('[data-res-copy]');
+    if (!btn) { return; }
+    e.preventDefault();
+    var field = btn.closest('.res-mail-field');
+    var value = field && field.querySelector('.res-mail-value');
+    var text = value ? (value.innerText || '').trim() : '';
+    if (!text) { return; }
+
+    var done = function (ok) {
+      var original = btn.innerHTML;
+      btn.innerHTML = ok
+        ? '<i class="fas fa-check" aria-hidden="true"></i>Copied'
+        : '<i class="fas fa-triangle-exclamation" aria-hidden="true"></i>Failed';
+      btn.classList.toggle('is-copied', ok);
+      window.setTimeout(function () {
+        btn.innerHTML = original;
+        btn.classList.remove('is-copied');
+      }, 1600);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
+    } else {
+      done(false);
+    }
+  });
+
+  /**
+   * Render `text` into `el`.
+   *
+   * `kind` picks the structural enhancer: 'ats', 'interview' or 'followup'.
+   * Every enhancer returns without changing anything when the output does not
+   * have the shape it expects, so an unexpected wording degrades to plain
+   * rendered markdown rather than an empty panel.
    */
   function render(el, text, options) {
     if (!el) { return; }
     var opts = options || {};
     el.innerHTML = renderMarkdown(text);
-    if (opts.ats) { enhanceAts(el, opts.score); }
+
+    var kind = opts.kind || (opts.ats ? 'ats' : '');
+    if (kind === 'ats') { enhanceAts(el, opts.score); }
+    else if (kind === 'interview') { enhanceInterview(el); }
+    else if (kind === 'followup') { enhanceFollowup(el); }
     return el;
   }
 
@@ -308,6 +483,8 @@
     escapeHtml: escapeHtml,
     renderMarkdown: renderMarkdown,
     enhanceAts: enhanceAts,
+    enhanceInterview: enhanceInterview,
+    enhanceFollowup: enhanceFollowup,
     render: render
   };
 }(window));

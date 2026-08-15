@@ -310,9 +310,17 @@
                         <div id="coverResult" style="display:none; margin-top:28px;">
                             <div class="tool-tabs" id="coverSectionTabs" style="margin-bottom:16px;"></div>
                             <div class="result-box" style="margin-top:0;">
-                                <div class="d-flex justify-content-end mb-3">
+                                {% comment %}
+                                Copy was section-only, so getting the whole
+                                letter meant clicking through every tab and
+                                pasting each part in order.
+                                {% endcomment %}
+                                <div class="d-flex justify-content-end gap-2 mb-3">
                                     <button class="btn-ghost" onclick="copyCoverSection()" style="font-size: var(--fs-sm); padding:8px 16px;">
-                                        <i class="fas fa-copy"></i>Copy
+                                        <i class="fas fa-copy"></i>Copy section
+                                    </button>
+                                    <button class="btn-ghost" onclick="copyCoverAll()" style="font-size: var(--fs-sm); padding:8px 16px;">
+                                        <i class="fas fa-file-lines"></i>Copy all
                                     </button>
                                 </div>
                                 <div id="coverSectionContent"></div>
@@ -671,8 +679,24 @@
             const el = document.getElementById('coverSectionContent');
             const text = el ? el.innerText.trim() : '';
             if (!text) return;
+            _copyText(text, 'Section copied to clipboard.');
+        }
+
+        /* Every section in tab order, so the letter can be pasted in one go. */
+        function copyCoverAll() {
+            if (!_coverSections.length) return;
+            const scratch = document.createElement('div');
+            const text = _coverSections.map(s => {
+                scratch.innerHTML = s.html;
+                return (scratch.innerText || '').trim();
+            }).filter(Boolean).join('\n\n');
+            if (!text) return;
+            _copyText(text, 'Full cover letter copied.');
+        }
+
+        function _copyText(text, okMessage) {
             navigator.clipboard.writeText(text)
-                .then(() => showToast('Copied to clipboard!', 'success'))
+                .then(() => showToast(okMessage, 'success'))
                 .catch(() => showToast('Copy failed — please select the text manually.', 'danger'));
         }
 
@@ -711,7 +735,7 @@
             if (contentDiv) {
                 const raw = contentDiv.getAttribute('data-raw-result') || '';
                 CVAIResult.render(contentDiv, raw, {
-                    ats: contentDiv.dataset.kind === 'ats',
+                    kind: contentDiv.dataset.kind,
                 });
             }
 
@@ -737,6 +761,10 @@
 
                 if (kind === 'ats') {
                     CVAIResult.enhanceAts(el, el.dataset.score || null);
+                } else if (kind === 'interview') {
+                    CVAIResult.enhanceInterview(el);
+                } else if (kind === 'followup') {
+                    CVAIResult.enhanceFollowup(el);
                 }
             });
         });

@@ -1632,3 +1632,96 @@ textarea:focus-visible,
 @media (prefers-reduced-motion: reduce) {
   .res-score-fill { transition: none; }
 }
+
+/* ── Interview prep: one collapsible card per question ────────────────────
+   Ten questions rendered flat were an unbroken wall with no way to work
+   through them one at a time. */
+.res-qa { display: grid; gap: 10px; }
+.res-qa-item {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.res-qa-item[open] { border-color: rgba(76, 201, 240, 0.3); }
+.res-qa-q {
+  list-style: none;
+  cursor: pointer;
+  padding: 14px 42px 14px 16px;
+  position: relative;
+  color: var(--text-1);
+  font-weight: 700;
+  font-size: var(--fs-base);
+  line-height: 1.45;
+}
+.res-qa-q::-webkit-details-marker { display: none; }
+.res-qa-q:hover { color: var(--brand); }
+.res-qa-q::after {
+  content: '';
+  position: absolute; right: 18px; top: 50%;
+  width: 8px; height: 8px; margin-top: -6px;
+  border-right: 2px solid var(--text-3);
+  border-bottom: 2px solid var(--text-3);
+  transform: rotate(45deg);
+  transition: transform var(--t-fast);
+}
+.res-qa-item[open] .res-qa-q::after { transform: rotate(-135deg); margin-top: -2px; }
+.res-qa-a { padding: 0 16px 14px; border-top: 1px solid var(--border); padding-top: 12px; }
+.res-qa-a > *:last-child { margin-bottom: 0; }
+
+/* ── Follow-up emails: subject and body as separate copyable boxes ──────── */
+.res-mail-set { display: grid; gap: 16px; }
+.res-mail {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 14px;
+}
+.res-mail-title {
+  color: var(--text-1);
+  font-weight: 700;
+  font-size: var(--fs-md);
+  margin-bottom: 12px;
+}
+.res-mail-field + .res-mail-field { margin-top: 12px; }
+.res-mail-label {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: var(--fs-2xs);
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 6px;
+}
+.res-mail-value {
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 11px 13px;
+  color: var(--text-2);
+  font-size: var(--fs-base);
+  line-height: 1.6;
+}
+.res-mail-value > *:last-child { margin-bottom: 0; }
+.res-mail-subject {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--text-1);
+}
+
+.res-copy {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(76, 201, 240, 0.08);
+  border: 1px solid rgba(76, 201, 240, 0.22);
+  border-radius: var(--r-sm);
+  color: var(--brand);
+  font-family: inherit;
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 3px 9px;
+  cursor: pointer;
+  transition: background var(--t-fast);
+}
+.res-copy:hover { background: rgba(76, 201, 240, 0.2); }
+.res-copy.is-copied { color: var(--success); border-color: rgba(34, 197, 94, 0.3); background: rgba(34, 197, 94, 0.1); }
