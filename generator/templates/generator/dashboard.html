@@ -1081,15 +1081,31 @@
           // Skills Block
           if (data.skills && data.skills.length > 0) {
             rHtml += `<h3 style="font-size: var(--fs-md); font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; margin-top: 24px;">Skills</h3>`;
-            rHtml += `<div style="display: flex; flex-wrap: wrap; gap: 8px;">`;
-            data.skills.forEach(skill => {
-              let name = typeof skill === 'string' ? skill : (skill.name || '');
-              let level = typeof skill === 'string' ? '' : (skill.level ? `<span style="opacity:0.6; margin-left: 6px; font-size: var(--fs-xs);">${skill.level}%</span>` : '');
-              rHtml += `<div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--r-pill); padding: 4px 12px; font-size: var(--fs-sm); font-weight: 600; color: #e2e8f0; display: flex; align-items: center;">
-                  ${escHtml(name)}${level}
-              </div>`;
+            /* Skills are stored as [{category, items}]. They used to be
+               [{name}], and resumes saved under the old shape are still in
+               this list — reading only `name` renders every badge on a new
+               resume empty, and reading only `items` blanks every old one.
+               Both are handled, same as the History preview. */
+            data.skills.forEach(group => {
+              let names = [];
+              if (typeof group === 'string')            { names = [group]; }
+              else if (group && Array.isArray(group.items)) { names = group.items; }
+              else if (group && group.name)             { names = [group.name]; }
+              names = names.map(n => String(n).trim()).filter(Boolean);
+              if (!names.length) { return; }
+
+              const label = (group && group.category) ? String(group.category).trim() : '';
+              if (label) {
+                rHtml += `<div style="width:100%; font-size: var(--fs-xs); color: var(--text-3); text-transform: uppercase; letter-spacing: .06em; margin: 8px 0 2px;">${escHtml(label)}</div>`;
+              }
+              rHtml += `<div style="display: flex; flex-wrap: wrap; gap: 8px; width:100%;">`;
+              names.forEach(name => {
+                rHtml += `<div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--r-pill); padding: 4px 12px; font-size: var(--fs-sm); font-weight: 600; color: #e2e8f0; display: flex; align-items: center;">
+                    ${escHtml(name)}
+                </div>`;
+              });
+              rHtml += `</div>`;
             });
-            rHtml += `</div>`;
           }
           
           rHtml += '</div>';
