@@ -52,9 +52,17 @@ _RESUME_LAPARAMS = LAParams(
     word_margin=0.1,
 )
 
-# Total characters of resume context handed to the model. The previous 10k cap
-# silently amputated 3-page CVs; Llama 3.1 has ample context for this.
-RESUME_TEXT_BUDGET = 24000
+# Total characters of resume context handed to the model.
+#
+# History: 10k silently amputated 3-page CVs, then 24k. Now 60k (~15k tokens),
+# which clears a 20-page academic CV. The cap is not there to save tokens — the
+# model's context is far larger — it is a ceiling on what one upload can cost,
+# since the 5 MB PDF limit still admits several hundred thousand characters.
+#
+# It stays a boundary-aware, explicitly-marked cut (see _truncate_on_boundary)
+# rather than a bare slice, because a resume that quietly loses its last two
+# jobs is worse than one that says it was cut.
+RESUME_TEXT_BUDGET = 60000
 
 
 def _truncate_on_boundary(text, limit, label='resume'):
@@ -115,14 +123,25 @@ _RESUME_STR_FIELDS = (
 _RESUME_LIST_FIELDS = ('experience', 'projects', 'skills', 'education', 'languages')
 
 # Shape of each repeating section, keyed by its list field above.
+#
+# `skills` is a list of groups rather than a flat list of names. Real resumes
+# head their skills with categories — "AI & LLM", "Backend", "DevOps" — and a
+# flat [{name}] threw those headings away, so ten categorised skills came back
+# as one undifferentiated run of words.
+#
+# Modelled as an array of {category, items} rather than the more obvious
+# {"Backend": [...]} mapping because structured outputs require
+# additionalProperties:false, which cannot express arbitrary object keys.
 _RESUME_ITEM_SHAPES = {
     'experience': ('title', 'company', 'location', 'dates'),
     'projects':   ('title', 'tech_stack'),
-    'skills':     ('name',),
+    'skills':     ('category',),
     'education':  ('degree', 'school', 'dates'),
 }
 # Sections whose items carry a free-form bullet list on top of their string keys.
 _RESUME_BULLET_SECTIONS = ('experience', 'projects')
+# Sections whose items carry a plain list of strings, and the key it lives under.
+_RESUME_STRLIST_SECTIONS = {'skills': 'items'}
 
 
 # What each field MEANS. The schema previously carried shape only — every field
@@ -154,8 +173,13 @@ _FIELD_DESCRIPTIONS = {
                    "Take it from the line belonging to this entry; do not borrow a date "
                    "from a neighbouring entry or from the education section.",
     'tech_stack':  "Technologies used on this project, comma-separated. Empty string if absent.",
-    'name':        "A single skill exactly as named in the source. Do not invent a "
-                   "proficiency level, and do not split or merge skills.",
+    'category':    "The heading this group of skills sits under in the source, e.g. "
+                   "'AI & LLM', 'Backend', 'DevOps & Tools', 'Languages'. Use the "
+                   "source's own wording. If the source lists skills with no headings "
+                   "at all, return a single group with category set to \"\".",
+    'items':       "Every skill in this group, exactly as named in the source, one array "
+                   "entry each. Do not invent a proficiency level, do not split or merge "
+                   "skills, and do not drop any.",
     'degree':      "Degree or qualification, e.g. 'B.Sc. Computer Science'.",
     'school':      "Institution name only.",
     'bullets':     "Every bullet point for this entry, one array item each, preserving the "
@@ -166,7 +190,8 @@ _FIELD_DESCRIPTIONS = {
     # Section-level (arrays)
     'experience':  "Every role in the source, most recent first. One entry per role.",
     'projects':    "Personal or professional projects. Empty array if the source has none.",
-    'skills':      "Every skill named in the source, one entry each.",
+    'skills':      "The source's skills, grouped under its own category headings. "
+                   "One entry per heading. Never drop a skill to keep the list short.",
     'education':   "Every qualification in the source.",
 }
 
@@ -177,12 +202,20 @@ def _described(field, node):
     return {**node, 'description': desc} if desc else node
 
 
-def _str_obj(*keys, bullets=False):
-    """One object in a repeating section: all-string keys, optional bullets."""
+def _str_obj(*keys, bullets=False, str_list=None):
+    """
+    One object in a repeating section: all-string keys, plus at most one
+    array-of-strings key — `bullets` for experience and projects, or a named
+    one (`items`) for skill groups.
+    """
     props = {k: _described(k, {'type': 'string'}) for k in keys}
     if bullets:
         props['bullets'] = _described(
             'bullets', {'type': 'array', 'items': {'type': 'string'}}
+        )
+    if str_list:
+        props[str_list] = _described(
+            str_list, {'type': 'array', 'items': {'type': 'string'}}
         )
     return {
         'type': 'object',
@@ -212,7 +245,11 @@ def _build_resume_schema():
     for name, keys in _RESUME_ITEM_SHAPES.items():
         props[name] = _described(name, {
             'type': 'array',
-            'items': _str_obj(*keys, bullets=name in _RESUME_BULLET_SECTIONS),
+            'items': _str_obj(
+                *keys,
+                bullets=name in _RESUME_BULLET_SECTIONS,
+                str_list=_RESUME_STRLIST_SECTIONS.get(name),
+            ),
         })
     props['languages'] = _described(
         'languages', {'type': 'array', 'items': {'type': 'string'}}
@@ -314,6 +351,42 @@ def _validate_resume_json(parsed):
             problems.append(f'education[{i}] must be an object.')
         elif not str(edu.get('degree', '')).strip() and not str(edu.get('school', '')).strip():
             problems.append(f'education[{i}] has neither a degree nor a school.')
+
+    # Skill groups. A group carrying a category but no items is the shape a
+    # model produces when it starts listing headings and stops before filling
+    # them in — the section then renders as a row of empty labels.
+    #
+    # The pre-grouping flat shape ([{'name': ...}]) is accepted and converted
+    # rather than rejected: resumes generated before this change are replayed
+    # through here from History, and failing them would lose the user's data.
+    normalised_skills = []
+    legacy_names = []
+    for i, group in enumerate(out['skills']):
+        if not isinstance(group, dict):
+            problems.append(f'skills[{i}] must be an object.')
+            continue
+        if 'items' not in group and 'name' in group:
+            name = str(group.get('name', '')).strip()
+            if name:
+                legacy_names.append(name)
+            continue
+        items = group.get('items', [])
+        if not isinstance(items, list):
+            problems.append(f'skills[{i}].items must be an array.')
+            items = []
+        items = [str(s).strip() for s in items if str(s).strip()]
+        if not items:
+            problems.append(
+                f'skills[{i}] ("{group.get("category", "")}") lists no skills.'
+            )
+            continue
+        normalised_skills.append({
+            'category': str(group.get('category', '')).strip(),
+            'items': items,
+        })
+    if legacy_names:
+        normalised_skills.append({'category': '', 'items': legacy_names})
+    out['skills'] = normalised_skills
 
     # Completeness: a resume with a name but no content whatsoever means the
     # model gave up partway. This is the signal the old code never had.

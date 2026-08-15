@@ -337,6 +337,8 @@ NEVER INVENT: Use only facts explicitly in the source. Never invent, guess or ha
 
 PRESERVE VOICE: Parse and structure only. No corporate fluff, no rewriting the candidate's descriptions in invented language, no achievements they did not claim. Light grammar/formatting cleanup of existing bullets is allowed.
 
+EXTRACT EVERYTHING: This is a transcription task, not a summary. Every role, every project, every bullet point and every skill in the source MUST appear in the output. Never merge two bullets into one, never drop the weakest item to keep a list tidy, never stop early because a section is long. If the source lists nine bullets under a job, the output has nine.
+
 Schema (all keys required, nesting exactly as shown):
 {{
   "full_name": "string", "target_role": "string",
@@ -345,14 +347,16 @@ Schema (all keys required, nesting exactly as shown):
   "summary": "2-3 sentences, strictly from provided data",
   "experience": [{{"title": "string", "company": "string", "location": "string", "dates": "string", "bullets": ["string"]}}],
   "projects": [{{"title": "string", "tech_stack": "string", "bullets": ["string"]}}],
-  "skills": [{{"name": "string"}}],
+  "skills": [{{"category": "string", "items": ["string"]}}],
   "education": [{{"degree": "string", "school": "string", "dates": "string"}}],
   "languages": ["string"]
 }}
 
 RULES:
 - Extract skills exactly as named; do not fabricate skill names or levels
+- Group skills under the source's OWN headings, e.g. {{"category": "AI & LLM", "items": ["Claude", "RAG"]}}. Source has no headings -> ONE group with "category": ""
 - Preserve job titles, company names and date ranges exactly as given
+- Projects are a first-class section: extract every one, with its tech stack and all of its bullets
 - No projects in the input -> "projects": []
 - No GitHub URL found -> "github": ""
 - Output ONLY the JSON object — no markdown, code fences, commentary or surrounding text."""

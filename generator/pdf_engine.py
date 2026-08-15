@@ -281,25 +281,120 @@ def _process_photo(photo_file):
         return None
 
 
-def _parse_skills(skills_str: str):
-    """Parse 'Python-80,Django-70' → [(name, level_float), ...]
+def _parse_skill_groups(skills_str: str):
+    """Parse the skills field into [(category | None, [(name, level), ...]), ...].
 
-    Split the level off the RIGHT so skill names may contain hyphens
-    (e.g. 'Objective-C-80' → ('Objective-C', 80)). The frontend always appends
-    '-<level>', so the last hyphen-group is the level.
+    Wire format is one group per line, category first::
+
+        AI & LLM: Claude, RAG, LangChain
+        Backend: Python, Django, PostgreSQL
+
+    A line with no colon is an uncategorised group, which is exactly what the
+    old single-line format ('Python-80,Django-70') looks like — so resumes saved
+    before skills were grouped still parse, as one unnamed group.
+
+    A level may still be suffixed to a skill ('Python-80') for templates that
+    draw proficiency bars. It is optional: when absent the level is None, and
+    callers must not substitute a number the candidate never gave.
     """
-    result = []
-    for item in (skills_str or "").split(','):
-        parts = item.strip().rsplit('-', 1)
-        name = parts[0].strip()
-        if not name:
+    groups = []
+    for line in (skills_str or "").splitlines():
+        line = line.strip()
+        if not line:
             continue
-        try:
-            lvl = float(parts[1])
-        except (IndexError, ValueError):
-            lvl = 50.0
-        result.append((name, lvl))
-    return result
+
+        category, _, remainder = line.partition(':')
+        if not remainder.strip():
+            # No colon on this line — the whole line is the skill list.
+            category, remainder = '', line
+
+        entries = []
+        for item in remainder.split(','):
+            item = item.strip()
+            if not item:
+                continue
+            # Split the level off the RIGHT so names may contain hyphens
+            # ('Objective-C-80' → 'Objective-C', 80).
+            name, sep, tail = item.rpartition('-')
+            if sep and name.strip():
+                try:
+                    entries.append((name.strip(), float(tail)))
+                    continue
+                except ValueError:
+                    pass
+            entries.append((item, None))
+
+        if entries:
+            groups.append((category.strip() or None, entries))
+    return groups
+
+
+def _esc(text) -> str:
+    """Escape text for a ReportLab Paragraph, which parses its input as XML.
+
+    Not cosmetic. Measured on the raw string:
+
+        'C++ <templates> and Go'  ->  'C++ and Go'    (tag silently swallowed)
+        'R&D'                     ->  'R&D;'          (stray semicolon)
+
+    So a skill named C++/<T> disappears from the PDF without an error, and any
+    category with an ampersand — 'AI & LLM', 'DevOps & Tools', the exact
+    headings real resumes use — renders corrupted.
+    """
+    return (
+        str(text)
+        .replace('&', '&amp;')
+        .replace('<', '&lt;')
+        .replace('>', '&gt;')
+    )
+
+
+def _render_skill_groups(story, groups, body_style):
+    """Append one paragraph per skill group: '<b>Category:</b> a, b, c'.
+
+    Groups with no category (everything saved before skills were grouped)
+    render as a plain run of skills, exactly as they did before.
+    """
+    for category, entries in groups:
+        names = ',  '.join(_esc(name) for name, _lvl in entries)
+        if category:
+            story.append(Paragraph(f'<b>{_esc(category)}:</b> {names}', body_style))
+        else:
+            story.append(Paragraph(names, body_style))
+
+
+def _esc(text) -> str:
+    """Escape text for a ReportLab Paragraph, which parses its input as XML.
+
+    Not cosmetic. Measured on the raw string:
+
+        'C++ <templates> and Go'  ->  'C++ and Go'    (tag silently swallowed)
+        'R&D'                     ->  'R&D;'          (stray semicolon)
+
+    So a skill named C++/<T> disappears from the PDF without an error, and any
+    category with an ampersand — 'AI & LLM', 'DevOps & Tools', the exact
+    headings real resumes use — renders corrupted.
+    """
+    return (
+        str(text)
+        .replace('&', '&amp;')
+        .replace('<', '&lt;')
+        .replace('>', '&gt;')
+    )
+
+
+def _render_skill_groups(story, groups, body_style):
+    """Append one paragraph per skill group: '<b>Category:</b> a, b, c'.
+
+    Groups with no category (everything saved before skills were grouped)
+    render as a plain run of skills, exactly as they did before.
+    """
+    for category, entries in groups:
+        names = ',  '.join(_esc(name) for name, _lvl in entries)
+        if category:
+            story.append(Paragraph(f'<b>{_esc(category)}:</b> {names}', body_style))
+        else:
+            story.append(Paragraph(names, body_style))
 
 
 def _safe_hex(color_str: str) -> colors.Color:
@@ -369,25 +464,41 @@ def _render_text_block(story, text, s_title, s_meta, s_bullet, s_body):
         if not t:
             continue
         if t.startswith('-') or t.startswith('*'):
-            current_block.append(Paragraph(t[1:].strip(), s_bullet, bulletText='•'))
+            # U+00B7 MIDDLE DOT, not U+2022 BULLET.
+            #
+            # The round bullet is not in the standard-14 fonts' encoding, so
+            # every bulleted line extracted as "(cid:127) Cut latency by 40%".
+            # On a product whose whole claim is that screening software can read
+            # the export, putting literal "(cid:127)" in front of every single
+            # achievement is the worst place to lose that argument.
+            #
+            # Measured alternatives: ZapfDingbats and Symbol both extract as a
+            # literal "n", which is worse. The middle dot renders as a small
+            # centred dot and extracts as itself.
+            current_block.append(Paragraph(_esc(t[1:].strip()), s_bullet, bulletText='·'))
         elif len(t) < 100 and ('|' in t or any(ch.isdigit() for ch in t)):
-            current_block.append(Paragraph(f'<font color="#888888">{t}</font>', s_meta))
+            current_block.append(Paragraph(f'<font color="#888888">{_esc(t)}</font>', s_meta))
         elif len(t) < 100:
             # A short non-meta line signals a new job title — flush previous block
             _flush(current_block)
-            current_block = [Paragraph(f'<b>{t}</b>', s_title)]
+            current_block = [Paragraph(f'<b>{_esc(t)}</b>', s_title)]
         else:
-            current_block.append(Paragraph(t, s_body))
+            current_block.append(Paragraph(_esc(t), s_body))
 
     _flush(current_block)  # flush any remaining block
 
 
 def _render_edu_certs_lang(story, req, s_h2, s_body, s_sub=None,
-                            hr_color=None, w="100%"):
+                            hr_color=None, w="100%", languages=True):
     """
     Append Education, Certifications, Languages, and Portfolio blocks.
     Each block is wrapped in KeepTogether to prevent orphaned section headers
     across page breaks.
+
+    `languages=False` for two-column templates that already print languages in
+    their sidebar. left_sidebar_dark did both and printed the section twice —
+    once in the rail and once again in the main column, under two separate
+    LANGUAGES headings.
     """
     s_sub = s_sub or s_body
 
@@ -412,16 +523,16 @@ def _render_edu_certs_lang(story, req, s_h2, s_body, s_sub=None,
         for line in certs.replace(',', '\n').split('\n'):
             line = line.strip()
             if line:
-                blk.append(Paragraph(f"• {line}", s_body))
+                blk.append(Paragraph(f"· {_esc(line)}", s_body))
         story.append(KeepTogether(blk))
 
     lang = req.POST.get('languages', '').strip()
-    if lang:
+    if lang and languages:
         blk = [Paragraph("LANGUAGES", s_h2)]
         if hr_color:
             blk.append(HRFlowable(width=w, thickness=0.5,
                                   color=hr_color, spaceAfter=5))
-        blk.append(Paragraph(lang, s_body))
+        blk.append(Paragraph(_esc(lang), s_body))
         story.append(KeepTogether(blk))
 
     port = req.POST.get('portfolio_url', '').strip()
@@ -543,13 +654,12 @@ def _build_minimal_centered(req, buf, cfg: dict):
                                  hAlign='CENTER', spaceAfter=6))
         _render_text_block(story, proj, s_title, s_meta, s_bullet, s_body)
 
-    skills = _parse_skills(req.POST.get('skills_list', ''))
-    if skills:
+    skill_groups = _parse_skill_groups(req.POST.get('skills_list', ''))
+    if skill_groups:
         story.append(Paragraph("SKILLS", s_h2))
         story.append(HRFlowable(width="40%", thickness=0.5, color=C_ACC,
                                  hAlign='CENTER', spaceAfter=6))
-        skill_txt = ",  ".join(n for n, _ in skills)
-        story.append(Paragraph(skill_txt, s_body))
+        _render_skill_groups(story, skill_groups, s_body)
 
     _render_edu_certs_lang(story, req, s_h2, s_body, hr_color=C_ACC, w="40%")
     try:
@@ -645,11 +755,10 @@ def _build_left_sidebar_dark(req, buf, cfg: dict):
             story.append(Paragraph(lbl, s_sb_dim))
             story.append(Paragraph(val, s_sb_t))
 
-    skills = _parse_skills(req.POST.get('skills_list', ''))
-    if skills:
+    skill_groups = _parse_skill_groups(req.POST.get('skills_list', ''))
+    if skill_groups:
         story.append(Paragraph("SKILLS", s_sb_h))
-        skill_txt = ",  ".join(n for n, _ in skills)
-        story.append(Paragraph(skill_txt, s_sb_t))
+        _render_skill_groups(story, skill_groups, s_sb_t)
 
     lang = req.POST.get('languages', '').strip()
     if lang:
@@ -679,8 +788,10 @@ def _build_left_sidebar_dark(req, buf, cfg: dict):
                                  color=_safe_hex(_pc), spaceAfter=6))
         _render_text_block(story, proj, s_title, s_meta, s_bullet, s_body)
 
+    # languages=False: the dark rail above already printed them. Passing the
+    # default rendered the section a second time in the main column.
     _render_edu_certs_lang(story, req, s_h2, s_body, s_sub=s_meta,
-                           hr_color=_safe_hex(_pc))
+                           hr_color=_safe_hex(_pc), languages=False)
     try:
         doc.build(story)
     finally:
@@ -793,11 +904,10 @@ def _build_right_sidebar_light(req, buf, cfg: dict):
             story.append(Paragraph(f'<b><font color="{_pc}">{lbl}</font></b>', s_sb_h))
             story.append(Paragraph(val, s_sb_t))
 
-    skills = _parse_skills(req.POST.get('skills_list', ''))
-    if skills:
+    skill_groups = _parse_skill_groups(req.POST.get('skills_list', ''))
+    if skill_groups:
         story.append(Paragraph("SKILLS", s_sb_h))
-        skill_txt = ",  ".join(n for n, _ in skills)
-        story.append(Paragraph(skill_txt, s_sb_t))
+        _render_skill_groups(story, skill_groups, s_sb_t)
 
     _render_edu_certs_lang(story, req, s_sb_h, s_sb_t)
     try:
@@ -917,11 +1027,10 @@ def _build_split_header(req, buf, cfg: dict):
     story.append(FrameBreak())
 
     # ── RIGHT BODY ───────────────────────────────────────────────────────────
-    skills = _parse_skills(req.POST.get('skills_list', ''))
-    if skills:
+    skill_groups = _parse_skill_groups(req.POST.get('skills_list', ''))
+    if skill_groups:
         story.append(Paragraph("SKILLS", s_sb_h))
-        skill_txt = ",  ".join(n for n, _ in skills)
-        story.append(Paragraph(skill_txt, s_sb_t))
+        _render_skill_groups(story, skill_groups, s_sb_t)
 
     _render_edu_certs_lang(story, req, s_sb_h, s_sb_t)
     try:
@@ -1037,12 +1146,11 @@ def _build_timeline_modern(req, buf, cfg: dict):
         story.append(HRFlowable(width="100%", thickness=0.5, color=C_ACC, spaceAfter=5))
         _render_text_block(story, proj, s_title, s_meta, s_bullet, s_body)
 
-    skills = _parse_skills(req.POST.get('skills_list', ''))
-    if skills:
+    skill_groups = _parse_skill_groups(req.POST.get('skills_list', ''))
+    if skill_groups:
         story.append(Paragraph("SKILLS", s_h2))
         story.append(HRFlowable(width="100%", thickness=0.5, color=C_ACC, spaceAfter=5))
-        skill_txt = ",  ".join(n for n, _ in skills)
-        story.append(Paragraph(skill_txt, s_body))
+        _render_skill_groups(story, skill_groups, s_body)
 
     _render_edu_certs_lang(story, req, s_h2, s_body, hr_color=C_ACC)
     try:
@@ -1153,12 +1261,11 @@ def _build_two_column_equal(req, buf, cfg: dict):
     story.append(FrameBreak())
 
     # ── RIGHT COLUMN ─────────────────────────────────────────────────────────
-    skills = _parse_skills(req.POST.get('skills_list', ''))
-    if skills:
+    skill_groups = _parse_skill_groups(req.POST.get('skills_list', ''))
+    if skill_groups:
         story.append(Paragraph("SKILLS", s_h2))
         story.append(HRFlowable(width="100%", thickness=0.5, color=C_RULE, spaceAfter=5))
-        skill_txt = ",  ".join(n for n, _ in skills)
-        story.append(Paragraph(skill_txt, s_body))
+        _render_skill_groups(story, skill_groups, s_body)
 
     _render_edu_certs_lang(story, req, s_h2, s_body, hr_color=C_RULE)
     try:
@@ -1232,7 +1339,10 @@ def _build_hacker_terminal(req, buf, cfg: dict):
     if contacts:
         story.append(Paragraph(f"$ contact  {contacts}", s_dim))
 
-    story.append(Paragraph("─" * 72, s_dim))
+    # A real rule, not a row of box-drawing characters. U+2500 is absent from
+    # Courier's WinAnsi encoding, so "─" * 72 rendered — and extracted — as
+    # seventy-two literal letter n's across the page.
+    story.append(HRFlowable(width="100%", thickness=0.6, color=C_DIM, spaceAfter=6))
 
     if req.POST.get('about_me'):
         story.append(Paragraph("$ cat about.txt", s_h2))
@@ -1248,22 +1358,37 @@ def _build_hacker_terminal(req, buf, cfg: dict):
         story.append(Paragraph("$ ls ~/projects/", s_h2))
         _render_text_block(story, proj, s_title, s_meta, s_bullet, s_body)
 
-    skills = _parse_skills(req.POST.get('skills_list', ''))
-    if skills:
+    skill_groups = _parse_skill_groups(req.POST.get('skills_list', ''))
+    if skill_groups:
         story.append(Paragraph("$ pip list --installed", s_h2))
-        skill_txt = ",  ".join(n for n, _ in skills)
-        story.append(Paragraph(skill_txt, s_body))
+        _render_skill_groups(story, skill_groups, s_body)
 
     edu = req.POST.get('education', '').strip()
     if edu:
         story.append(Paragraph("$ cat education.txt", s_h2))
         for line in edu.split('\n'):
             if line.strip():
-                story.append(Paragraph(line.strip(), s_body))
+                story.append(Paragraph(_esc(line.strip()), s_body))
+
+    # Certifications and languages were the only two sections this template
+    # never read. A user who filled them in got a PDF with them silently
+    # absent — no warning, and nothing on screen to suggest the template was
+    # the reason. Every other template renders both.
+    certs = req.POST.get('certifications', '').strip()
+    if certs:
+        story.append(Paragraph("$ cat certifications.txt", s_h2))
+        for line in certs.replace(',', '\n').split('\n'):
+            if line.strip():
+                story.append(Paragraph(_esc(line.strip()), s_body))
+
+    lang = req.POST.get('languages', '').strip()
+    if lang:
+        story.append(Paragraph("$ locale -a", s_h2))
+        story.append(Paragraph(_esc(lang), s_body))
 
     port = req.POST.get('portfolio_url', '').strip()
     if port:
-        story.append(Paragraph(f"$ open {port}", s_dim))
+        story.append(Paragraph(f"$ open {_esc(port)}", s_dim))
 
     try:
         doc.build(story)
@@ -1352,12 +1477,11 @@ def _build_academic_classic(req, buf, cfg: dict):
         story.append(HR())
         _render_text_block(story, proj, s_title, s_meta, s_bullet, s_body)
 
-    skills = _parse_skills(req.POST.get('skills_list', ''))
-    if skills:
-        story.append(Paragraph("SKILLS & COMPETENCIES", s_h2))
+    skill_groups = _parse_skill_groups(req.POST.get('skills_list', ''))
+    if skill_groups:
+        story.append(Paragraph("SKILLS &amp; COMPETENCIES", s_h2))
         story.append(HR())
-        skill_txt = ", ".join(n for n, _ in skills)
-        story.append(Paragraph(skill_txt, s_body))
+        _render_skill_groups(story, skill_groups, s_body)
 
     edu = req.POST.get('education', '').strip()
     if edu:
@@ -1369,11 +1493,11 @@ def _build_academic_classic(req, buf, cfg: dict):
 
     certs = req.POST.get('certifications', '').strip()
     if certs:
-        story.append(Paragraph("CERTIFICATIONS & AWARDS", s_h2))
+        story.append(Paragraph("CERTIFICATIONS &amp; AWARDS", s_h2))
         story.append(HR())
         for line in certs.replace(',', '\n').split('\n'):
             if line.strip():
-                story.append(Paragraph(f"• {line.strip()}", s_body))
+                story.append(Paragraph(f"· {_esc(line.strip())}", s_body))
 
     lang = req.POST.get('languages', '').strip()
     if lang:
@@ -1407,7 +1531,12 @@ def _build_top_bottom_split(req, buf, cfg: dict):
     C_PALE = _safe_hex(_acc)
     fn, fb, fi = _font_variants(_font)
 
-    TOP_H = int(H_A4 * 0.30)
+    # The coloured band was 30% of the page while its contents — name, role and
+    # one contact line — need barely a third of that. The other 70% had to carry
+    # the whole resume, and a complete one spilled onto page 2 while the header
+    # sat two-thirds empty. 23% still reads as a bold top band and gives the
+    # body back roughly six lines.
+    TOP_H = int(H_A4 * 0.23)
     M     = int(16 * mm)
 
     doc = BaseDocTemplate(buf, pagesize=A4,
@@ -1445,10 +1574,10 @@ def _build_top_bottom_split(req, buf, cfg: dict):
     s_info   = ParagraphStyle('I',  fontName=fn, fontSize=8.5,
                                textColor=colors.HexColor('#a0c4d8'), leading=13)
     s_h2     = ParagraphStyle('H2', fontName=fb, fontSize=12, textColor=C_ACC,
-                               spaceBefore=16, spaceAfter=5,
+                               spaceBefore=10, spaceAfter=4,
                                textTransform='uppercase', letterSpacing=1.2)
     s_body   = ParagraphStyle('B',  fontName=fn, fontSize=9.5, textColor=C_TEXT,
-                               leading=14, spaceAfter=5)
+                               leading=13, spaceAfter=4)
     s_bullet = ParagraphStyle('Bul', parent=s_body, leftIndent=14, bulletIndent=4,
                                spaceBefore=1, spaceAfter=3)
     s_title  = ParagraphStyle('T',  fontName=fb, fontSize=10.5, textColor=C_TEXT,
@@ -1493,12 +1622,11 @@ def _build_top_bottom_split(req, buf, cfg: dict):
         story.append(HRFlowable(width="100%", thickness=0.5, color=C_PALE, spaceAfter=5))
         _render_text_block(story, proj, s_title, s_meta, s_bullet, s_body)
 
-    skills = _parse_skills(req.POST.get('skills_list', ''))
-    if skills:
+    skill_groups = _parse_skill_groups(req.POST.get('skills_list', ''))
+    if skill_groups:
         story.append(Paragraph("SKILLS", s_h2))
         story.append(HRFlowable(width="100%", thickness=0.5, color=C_PALE, spaceAfter=5))
-        skill_txt = ",  ".join(n for n, _ in skills)
-        story.append(Paragraph(skill_txt, s_body))
+        _render_skill_groups(story, skill_groups, s_body)
 
     _render_edu_certs_lang(story, req, s_h2, s_body, hr_color=C_PALE)
     try:
@@ -1622,11 +1750,10 @@ def _build_creative_masonry(req, buf, cfg: dict):
             story.append(Paragraph(lbl.upper(), s_sb_h))
             story.append(Paragraph(val, s_sb_t))
 
-    skills = _parse_skills(req.POST.get('skills_list', ''))
-    if skills:
+    skill_groups = _parse_skill_groups(req.POST.get('skills_list', ''))
+    if skill_groups:
         story.append(Paragraph("SKILLS", s_sb_h))
-        skill_txt = ",  ".join(n for n, _ in skills)
-        story.append(Paragraph(skill_txt, s_sb_t))
+        _render_skill_groups(story, skill_groups, s_sb_t)
 
     _render_edu_certs_lang(story, req, s_sb_h, s_sb_t)
     try:

@@ -961,7 +961,13 @@ class ResumeJsonSchemaTest(TestCase):
             set(props["experience"]["items"]["properties"]),
             {"title", "company", "location", "dates", "bullets"},
         )
-        self.assertEqual(set(props["skills"]["items"]["properties"]), {"name"})
+        # Skills are grouped under the source's own headings ("AI & LLM",
+        # "Backend"), not a flat list of names — a flat list threw the
+        # categories away.
+        self.assertEqual(
+            set(props["skills"]["items"]["properties"]), {"category", "items"}
+        )
+        self.assertEqual(props["skills"]["items"]["properties"]["items"]["type"], "array")
         self.assertEqual(props["languages"]["items"]["type"], "string")
 
     def test_a_conforming_object_passes_the_validator(self):
@@ -971,7 +977,7 @@ class ResumeJsonSchemaTest(TestCase):
         obj.update({
             "experience": [{"title": "Engineer", "company": "Acme",
                             "location": "NYC", "dates": "2020-", "bullets": ["did a thing"]}],
-            "projects": [], "skills": [{"name": "Python"}],
+            "projects": [], "skills": [{"category": "Backend", "items": ["Python"]}],
             "education": [{"degree": "BSc", "school": "MIT", "dates": "2015-2019"}],
             "languages": ["English"],
         })

@@ -1290,6 +1290,18 @@
                          name="linkedin" placeholder="linkedin.com/in/john"
                          oninput="scheduleLivePreview()">
                 </div>
+                {% comment %}
+                GitHub had no input. All ten templates already render
+                POST['github'] in the contact line and the extractor already
+                returns it, so the only missing piece was somewhere to put it —
+                the same gap that hid projects.
+                {% endcomment %}
+                <div>
+                  <label class="vs-label" for="f_github">GitHub</label>
+                  <input class="vs-input" type="text" id="f_github"
+                         name="github" placeholder="github.com/john"
+                         oninput="scheduleLivePreview()">
+                </div>
               </div>
 
               <div class="mb-form">
@@ -2359,14 +2371,63 @@
   }
 
   /**
-   * Convert the skills array [{name, level}, ...] into the
-   * "Python-85,Django-70" format expected by the pdf_engine.
+   * Convert the projects array into the same plain-text shape the engine
+   * already parses for experience:
+   *   Project Name | Tech Stack
+   *   - Bullet 1
+   *   - Bullet 2
+   *
+   * This function did not exist. `projects` has always been in the extraction
+   * schema, `#f_projects_text` has always been in the form, and every one of the
+   * ten templates already renders `projects_text` — but nothing ever wrote the
+   * model's answer into the field, so Auto-Fill produced a resume with its
+   * entire projects section missing and the page looked two-thirds empty.
    */
-  function _skillsToText(skillsArray) {
-    if (!Array.isArray(skillsArray) || skillsArray.length === 0) return '';
-    return skillsArray
-      .map(s => `${String(s.name).replace(/,/g, ' ').trim()}-${Math.round(s.level ?? 50)}`)
-      .join(',');
+  function _projectsToText(projArray) {
+    if (!Array.isArray(projArray) || projArray.length === 0) return '';
+    return projArray.map(proj => {
+      const lines = [];
+      const head = [proj.title, proj.tech_stack].filter(Boolean).join(' | ');
+      if (head) lines.push(head);
+      if (Array.isArray(proj.bullets)) {
+        proj.bullets.forEach(b => lines.push(`- ${b}`));
+      }
+      return lines.join('\n');
+    }).filter(Boolean).join('\n\n');
+  }
+
+  /**
+   * Convert the grouped skills array into the engine's wire format:
+   *   AI & LLM: Claude, RAG
+   *   Backend: Python, Django
+   *
+   * One group per line. A group with no category name emits its skills alone,
+   * which is what the single-line legacy format already looked like.
+   *
+   * No level is emitted. The schema has never carried one, so the old
+   * `s.level ?? 50` stamped every single skill at exactly 50% — a number the
+   * candidate never claimed, rendered as a confident-looking proficiency bar.
+   * Inventing it breaks the same rule the prompts are held to.
+   */
+  function _skillsToText(skillGroups) {
+    if (!Array.isArray(skillGroups) || skillGroups.length === 0) return '';
+    const clean = s => String(s).replace(/[,:\n]/g, ' ').trim();
+
+    // Tolerate the old flat [{name}, {name}] shape: it is one uncategorised
+    // group, so it collapses to a single comma-joined line exactly as before —
+    // not one line per skill, which would render as several empty categories.
+    const isGrouped = skillGroups.some(g => g && Array.isArray(g.items));
+    if (!isGrouped) {
+      const names = skillGroups.map(s => clean(s && s.name)).filter(Boolean);
+      return names.join(', ');
+    }
+
+    return skillGroups.map(group => {
+      const items = ((group && group.items) || []).map(clean).filter(Boolean);
+      if (items.length === 0) return '';
+      const category = clean(group.category);
+      return category ? `${category}: ${items.join(', ')}` : items.join(', ');
+    }).filter(Boolean).join('\n');
   }
 
   /**
@@ -2474,6 +2535,7 @@
       _setField('#f_phone',         r.phone);
       _setField('#f_location',      r.location);
       _setField('#f_linkedin',      r.linkedin);
+      _setField('#f_github',        r.github);
 
       // Professional summary
       _setField('#f_about_me',      r.summary);
@@ -2482,7 +2544,14 @@
       const expText = _experienceToText(r.experience);
       if (expText) _setField('#f_experience_text', expText);
 
-      // Skills → "Name-Level," format
+      // Projects → same block format as experience.
+      // This line is the fix for "the PDF is missing my projects": the model
+      // has always returned them and the engine has always rendered the field,
+      // but nothing joined the two.
+      const projText = _projectsToText(r.projects);
+      if (projText) _setField('#f_projects_text', projText);
+
+      // Skills → "Category: a, b" per line
       const skillsText = _skillsToText(r.skills);
       if (skillsText) _setField('#f_skills_list', skillsText);
 
@@ -2496,7 +2565,9 @@
       }
 
       // ── Open key accordion sections that were closed ─────────
-      ['sec-personal', 'sec-exp', 'sec-skills', 'sec-edu'].forEach(id => {
+      // sec-projects included: auto-filling a section the user cannot see is
+      // the same as not filling it.
+      ['sec-personal', 'sec-exp', 'sec-projects', 'sec-skills', 'sec-edu'].forEach(id => {
         const body   = document.getElementById(id);
         const toggle = document.querySelector(`[data-target="${id}"]`);
         if (body && !body.classList.contains('open')) {
