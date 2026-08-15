@@ -212,17 +212,24 @@
                                         <div style="font-size: var(--fs-sm); color: var(--text-3); text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Generations</div>
                                     </div>
                                 </div>
+                                {% comment %}
+                                  Paid plans used to show an infinity symbol and
+                                  "Unlimited generations". They are metered now, so this
+                                  shows the real remaining allowance — a subscriber who
+                                  hits their cap should have been able to see it coming
+                                  rather than meeting it as an error mid-application.
+                                {% endcomment %}
                                 <div style="font-size: 3rem; font-weight: 800; font-family: var(--font-mono); color: var(--brand); line-height: 1; letter-spacing: -0.02em;">
-                                    {% if user.profile.is_premium %}∞{% else %}{{ user.profile.generations_count }}{% endif %}
+                                    {{ user.profile.generations_remaining }}
                                 </div>
-                                {% if not user.profile.is_premium %}
-                                <div style="color: var(--text-3); font-size: var(--fs-sm); margin-top: 6px;">of {{ user.profile.get_limit }} total</div>
-                                <div class="gen-progress-wrap">
-                                    <div class="gen-progress-bar" style="width: {% widthratio user.profile.generations_count user.profile.get_limit 100 %}%;"></div>
-                                </div>
+                                {% if user.profile.is_premium %}
+                                <div style="color: var(--text-3); font-size: var(--fs-sm); margin-top: 6px;">of {{ user.profile.get_limit }} left this month</div>
                                 {% else %}
-                                <div style="color: var(--text-3); font-size: var(--fs-sm); margin-top: 6px;">Unlimited generations</div>
+                                <div style="color: var(--text-3); font-size: var(--fs-sm); margin-top: 6px;">of {{ user.profile.get_limit }} total</div>
                                 {% endif %}
+                                <div class="gen-progress-wrap">
+                                    <div class="gen-progress-bar" style="width: {% widthratio user.profile.generations_remaining user.profile.get_limit 100 %}%;"></div>
+                                </div>
                             </div>
 
                             <!-- Account Status -->
