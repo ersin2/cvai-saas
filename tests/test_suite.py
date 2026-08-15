@@ -127,11 +127,18 @@ class ProfileModelTest(TestCase):
         profile.refresh_from_db()
         self.assertEqual(profile.generations_count, 2)
 
-    def test_use_generation_noop_for_pro(self):
+    def test_paid_plan_consumes_the_monthly_counter_not_the_trial_counter(self):
+        """
+        Paid plans meter against monthly_usage; the free-trial countdown is left
+        alone. This test used to be named ..._noop_for_pro and asserted only
+        that generations_count was untouched — which stayed true after metering
+        landed, so it kept passing while no longer testing what it claimed.
+        """
         user, profile = _make_user(plan="pro", generations=9999)
         profile.use_generation()
         profile.refresh_from_db()
-        self.assertEqual(profile.generations_count, 9999)  # unchanged
+        self.assertEqual(profile.generations_count, 9999, "trial counter untouched")
+        self.assertEqual(profile.monthly_usage, 1, "monthly allowance consumed")
 
     def test_pdf_template_limit_free(self):
         user, profile = _make_user(plan="free")
@@ -1328,3 +1335,87 @@ class AnthropicEffortFallbackTest(TestCase):
                          "retry must drop effort")
         # The schema is the point of the call — it must survive the retry.
         self.assertIn("format", calls[1]["output_config"])
+
+
+# ===========================================================================
+# 15. PAID-PLAN METERING
+# ===========================================================================
+
+class PaidPlanMeteringTest(TestCase):
+    """
+    use_generation() was a no-op for pro/elite, so the advertised monthly
+    allowance ("50 generations / month") was never enforced. Harmless while
+    generation ran on a free provider; with a metered API behind it, one
+    subscriber could consume far more in tokens than the plan collects.
+    """
+
+    def test_pro_is_capped_at_the_advertised_fifty(self):
+        _user, profile = _make_user(username="prometer", plan="pro")
+        for i in range(Profile.PLAN_LIMITS["pro"]):
+            self.assertTrue(profile.use_generation(), f"generation {i + 1} should succeed")
+        self.assertFalse(profile.use_generation(), "51st generation must be refused")
+        self.assertFalse(profile.has_generations_left())
+        self.assertEqual(profile.generations_remaining(), 0)
+
+    def test_elite_has_a_fair_use_ceiling(self):
+        _user, profile = _make_user(username="elitemeter", plan="elite")
+        profile.monthly_usage = Profile.PLAN_LIMITS["elite"]
+        profile.usage_period_start = Profile._current_period()
+        profile.save()
+        self.assertFalse(profile.use_generation())
+
+    def test_free_plan_still_counts_down_lifetime(self):
+        """The free trial is unchanged — 3 total, not 3 per month."""
+        _user, profile = _make_user(username="freemeter", plan="free", generations=3)
+        for _ in range(3):
+            self.assertTrue(profile.use_generation())
+        self.assertFalse(profile.use_generation())
+        profile.refresh_from_db()
+        self.assertEqual(profile.generations_count, 0)
+        self.assertEqual(profile.monthly_usage, 0, "free plan must not touch the monthly counter")
+
+    def test_allowance_resets_when_the_month_turns_over(self):
+        import datetime
+        _user, profile = _make_user(username="rollover", plan="pro")
+        for _ in range(10):
+            profile.use_generation()
+        self.assertEqual(profile.monthly_usage, 10)
+
+        # Backdate the period to last month, as the clock rolling over would.
+        period = Profile._current_period()
+        last_month = (period - datetime.timedelta(days=1)).replace(day=1)
+        Profile.objects.filter(pk=profile.pk).update(usage_period_start=last_month)
+        profile.refresh_from_db()
+
+        self.assertEqual(profile.generations_remaining(), Profile.PLAN_LIMITS["pro"])
+        profile.refresh_from_db()
+        self.assertEqual(profile.monthly_usage, 0)
+        self.assertEqual(profile.usage_period_start, period)
+
+    def test_concurrent_consumption_cannot_exceed_the_limit(self):
+        """
+        Two requests reading the same stale count must not both be granted.
+        The guarded UPDATE is what prevents it; a read-modify-write would not.
+        """
+        _user, profile = _make_user(username="racer", plan="pro")
+        limit = Profile.PLAN_LIMITS["pro"]
+        for _ in range(limit - 1):
+            profile.use_generation()
+
+        stale_a = Profile.objects.get(pk=profile.pk)
+        stale_b = Profile.objects.get(pk=profile.pk)
+        results = [stale_a.use_generation(), stale_b.use_generation()]
+
+        self.assertEqual(results.count(True), 1, "exactly one of the two may win")
+        profile.refresh_from_db()
+        self.assertEqual(profile.monthly_usage, limit, "must not overshoot the cap")
+
+    def test_quota_message_names_the_users_actual_plan(self):
+        _user, pro = _make_user(username="msgpro", plan="pro")
+        msg = pro.quota_message()
+        self.assertIn("50", msg)
+        self.assertNotIn("free", msg.lower(),
+                         "a paying subscriber must not be told they used free credits")
+
+        _user2, free = _make_user(username="msgfree", plan="free")
+        self.assertIn("free", free.quota_message().lower())

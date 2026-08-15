@@ -763,7 +763,7 @@ async def generate_letter(request):
                     or request.user.username)
 
     if not profile.has_generations_left():
-        error_message = "You've used all free generations! Upgrade to Pro for more."
+        error_message = profile.quota_message()
     else:
         # ── CRITICAL LANGUAGE LOCK ──────────────────────────────────────────
         # Every sentence of the output MUST be in the requested language.
@@ -946,7 +946,7 @@ async def generate_resume(request):
         )
 
     if not profile.has_generations_left():
-        error_message = "You've used all free generations! Upgrade to Pro for more."
+        error_message = profile.quota_message()
     else:
         # ── STRUCTURED JSON RESUME PROMPT ──────────────────────────────────
         # Kept deliberately terse: system + user must fit Groq's 6000 TPM limit
@@ -1136,7 +1136,7 @@ async def rewrite_section(request):
     has_left = await sync_to_async(profile.has_generations_left)()
     if not has_left:
         return JsonResponse(
-            {'error': "You've used all free generations! Upgrade to Pro for unlimited rewrites."},
+            {'error': profile.quota_message()},
             status=402,
         )
 
@@ -1530,7 +1530,7 @@ async def interview_prep(request):
         return await arender(request, 'generator/tools.html', {
             'results': recent_results,
             'active_tool': 'interview',
-            'tool_error': "You've used all free generations! Upgrade to Pro for unlimited AI tools.",
+            'tool_error': profile.quota_message(),
         })
 
     resume  = request.POST.get('resume', '')[:10000]
@@ -1593,7 +1593,7 @@ async def followup_email(request):
         return await arender(request, 'generator/tools.html', {
             'results': recent_results,
             'active_tool': 'followup',
-            'tool_error': "You've used all free generations! Upgrade to Pro for unlimited AI tools.",
+            'tool_error': profile.quota_message(),
         })
 
     company   = request.POST.get('company_name', '')[:200]
@@ -1655,7 +1655,7 @@ async def ats_score(request):
         return await arender(request, 'generator/tools.html', {
             'results': recent_results,
             'active_tool': 'ats',
-            'tool_error': "You've used all free generations! Upgrade to Pro for unlimited AI tools.",
+            'tool_error': profile.quota_message(),
         })
 
     resume   = request.POST.get('resume', '')[:10000]
