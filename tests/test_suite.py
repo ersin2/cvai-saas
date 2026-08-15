@@ -34,13 +34,14 @@ from django.urls import reverse
 
 from generator.models import Generation, JobApplication, AIResult
 from generator.pdf_engine import build_pdf, TEMPLATES
-from generator.views import (
-    _check_rate_limit,
-    RATE_LIMITS,
-    _validate_resume_json,
-    _repair_truncated_json,
+# These moved out of generator/views.py when it was split; importing them from
+# the modules that own them keeps the tests honest about where the code lives.
+from generator.guards import _check_rate_limit, RATE_LIMITS
+from generator.resume_schema import (
     _parse_and_validate_resume,
+    _repair_truncated_json,
     _truncate_on_boundary,
+    _validate_resume_json,
 )
 from users.models import Profile
 
@@ -932,11 +933,11 @@ class ResumeJsonSchemaTest(TestCase):
     """
 
     def setUp(self):
-        from generator.views import RESUME_JSON_SCHEMA
+        from generator.resume_schema import RESUME_JSON_SCHEMA
         self.schema = RESUME_JSON_SCHEMA
 
     def test_schema_keys_match_validator_fields(self):
-        from generator.views import _RESUME_STR_FIELDS, _RESUME_LIST_FIELDS
+        from generator.resume_schema import _RESUME_STR_FIELDS, _RESUME_LIST_FIELDS
         self.assertEqual(
             set(self.schema["properties"]),
             set(_RESUME_STR_FIELDS) | set(_RESUME_LIST_FIELDS),
@@ -996,13 +997,13 @@ class PhotoUploadValidationTest(TestCase):
         return SimpleUploadedFile(name, content)
 
     def test_no_photo_is_valid(self):
-        from generator.views import _validate_photo_upload
+        from generator.guards import _validate_photo_upload
         ok, err = _validate_photo_upload(None)
         self.assertTrue(ok)
         self.assertIsNone(err)
 
     def test_accepts_real_image_formats(self):
-        from generator.views import _validate_photo_upload
+        from generator.guards import _validate_photo_upload
         cases = {
             "png":  _PNG_1PX,
             "jpeg": b'\xff\xd8\xff\xe0' + b'\x00' * 32,
@@ -1015,13 +1016,13 @@ class PhotoUploadValidationTest(TestCase):
                 self.assertTrue(ok, err)
 
     def test_rejects_non_image(self):
-        from generator.views import _validate_photo_upload
+        from generator.guards import _validate_photo_upload
         ok, err = _validate_photo_upload(self._upload(b'%PDF-1.4 not an image'))
         self.assertFalse(ok)
         self.assertIn("format", err.lower())
 
     def test_rejects_oversized_photo_with_specific_message(self):
-        from generator.views import _validate_photo_upload, PHOTO_MAX_BYTES
+        from generator.guards import _validate_photo_upload, PHOTO_MAX_BYTES
         big = self._upload(_PNG_1PX + b'\x00' * (PHOTO_MAX_BYTES + 1))
         ok, err = _validate_photo_upload(big)
         self.assertFalse(ok)
@@ -1029,7 +1030,7 @@ class PhotoUploadValidationTest(TestCase):
         self.assertIn("too large", err.lower())
 
     def test_leaves_pointer_at_zero_for_caller(self):
-        from generator.views import _validate_photo_upload
+        from generator.guards import _validate_photo_upload
         f = self._upload(_PNG_1PX)
         _validate_photo_upload(f)
         self.assertEqual(f.tell(), 0)
@@ -1122,12 +1123,12 @@ class AITransportHasNoWorkerHopTest(TestCase):
     def test_no_http_request_is_made_to_reach_the_provider(self):
         import asyncio
         from unittest.mock import AsyncMock, patch
-        from generator.views import _call_ai_service
+        from generator.ai import _call_ai_service
 
         async def fake_direct(system, user, **kw):
             return "generated"
 
-        with patch("generator.views.call_anthropic", fake_direct):
+        with patch("generator.ai.call_anthropic", fake_direct):
             with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as posted:
                 result, err = asyncio.run(_call_ai_service("sys", "user"))
 
@@ -1143,7 +1144,7 @@ class AITransportHasNoWorkerHopTest(TestCase):
         last outage stayed invisible.
         """
         import asyncio
-        from generator.views import _call_ai_service
+        from generator.ai import _call_ai_service
 
         result, err = asyncio.run(_call_ai_service("sys", "user"))
         self.assertIsNone(result)
@@ -1210,7 +1211,7 @@ class ResumeExtractionTest(TestCase):
     """
 
     def setUp(self):
-        from generator.views import _extract_resume_text
+        from generator.resume_schema import _extract_resume_text
         text, err = _extract_resume_text(_Upload(_two_column_resume_pdf()))
         self.assertIsNone(err)
         self.lines = [l.strip() for l in text.split('\n') if l.strip()]
@@ -1257,7 +1258,7 @@ class ResumeSchemaDescriptionsTest(TestCase):
     """
 
     def test_every_field_has_a_description(self):
-        from generator.views import RESUME_JSON_SCHEMA
+        from generator.resume_schema import RESUME_JSON_SCHEMA
         missing = []
 
         def walk(node, path="root"):
@@ -1273,7 +1274,7 @@ class ResumeSchemaDescriptionsTest(TestCase):
         self.assertEqual(missing, [], f"schema fields with no description: {missing}")
 
     def test_title_and_company_are_described_as_distinct(self):
-        from generator.views import RESUME_JSON_SCHEMA
+        from generator.resume_schema import RESUME_JSON_SCHEMA
         props = RESUME_JSON_SCHEMA["properties"]["experience"]["items"]["properties"]
         self.assertIn("only", props["title"]["description"].lower())
         self.assertIn("only", props["company"]["description"].lower())
@@ -1461,7 +1462,7 @@ class AITransportSelectionTest(TestCase):
 
     def _call(self, **kw):
         import asyncio
-        from generator.views import _call_ai_service
+        from generator.ai import _call_ai_service
         return asyncio.run(_call_ai_service("sys", "usr", max_tokens=512, **kw))
 
     @override_settings(ANTHROPIC_API_KEY="sk-test", ANTHROPIC_MODEL="claude-sonnet-5")
@@ -1473,7 +1474,7 @@ class AITransportSelectionTest(TestCase):
             seen.update(kw)
             return "direct-result"
 
-        with patch("generator.views.call_anthropic", fake_direct):
+        with patch("generator.ai.call_anthropic", fake_direct):
             result, err = self._call()
 
         self.assertEqual(result, "direct-result")
@@ -1490,7 +1491,7 @@ class AITransportSelectionTest(TestCase):
             seen.update(kw)
             return "ok"
 
-        with patch("generator.views.call_anthropic", fake_direct):
+        with patch("generator.ai.call_anthropic", fake_direct):
             self._call(model="claude-opus-5")
 
         self.assertEqual(seen["model"], "claude-opus-5")
@@ -1503,7 +1504,7 @@ class AITransportSelectionTest(TestCase):
         async def fake_direct(system, user, **kw):
             raise AIClientError("The AI declined this request.")
 
-        with patch("generator.views.call_anthropic", fake_direct):
+        with patch("generator.ai.call_anthropic", fake_direct):
             result, err = self._call()
 
         self.assertIsNone(result)
@@ -1523,7 +1524,7 @@ class AITransportSelectionTest(TestCase):
             seen.update(kw)
             return "ok"
 
-        with patch("generator.views.call_anthropic", fake_direct):
+        with patch("generator.ai.call_anthropic", fake_direct):
             self._call(temperature=0.9)
 
         self.assertNotIn("temperature", seen)
