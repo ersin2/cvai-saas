@@ -45,38 +45,102 @@
            font-family: var(--font-body); }
 
     /* ── Navbar ─────────────────────────────────────────────── */
+    /* The studio panel below is pinned to the bottom of this bar, so the height
+       is load-bearing in two places. One variable rather than two 52s that can
+       drift apart. */
+    :root { --vs-nav-h: 58px; }
+
     .vs-nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
-      height: 52px;
-      background: rgba(7,10,20,0.92);
+      height: var(--vs-nav-h);
+      background: rgba(7,10,20,0.9);
       border-bottom: 1px solid var(--panel-border);
       backdrop-filter: blur(20px) saturate(180%);
-      display: flex; align-items: center; padding: 0 20px; gap: 16px;
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      display: flex; align-items: center; padding: 0 24px; gap: 14px;
     }
     .vs-nav-logo { font-size: var(--fs-lg); font-weight: 800; color: #fff;
                    text-decoration: none; letter-spacing: -0.5px; }
     .vs-nav-logo span { color: var(--accent); }
     .vs-nav-spacer { flex: 1; }
+
+    /* Deliberately untouched: the profile link uses this class, and it is to
+       stay exactly as it was. The section links moved to .vs-tab instead of
+       being restyled here, which would have dragged the profile with them. */
     .vs-nav-link { font-size: var(--fs-sm); color: var(--text-3);
                    text-decoration: none; transition: color .2s; }
     .vs-nav-link:hover { color: var(--text-1); }
+
+    /* ── Section tabs ────────────────────────────────────────────────────
+       These were bare .vs-nav-link: 0.8rem in --text-3 (#7c8a9e) with no
+       padding at all, so five links ran together as one strip of small grey
+       text. Now a segmented control — bigger, brighter, with real hit areas. */
+    .vs-nav-group {
+      display: flex; align-items: center; gap: 2px;
+      background: rgba(255,255,255,0.035);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 3px;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.35);
+    }
+    .vs-tab {
+      font-size: var(--fs-base);
+      font-weight: 500;
+      color: #cbd5e1;
+      text-decoration: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      white-space: nowrap;
+      transition: color var(--t-fast), background var(--t-fast), border-color var(--t-fast);
+    }
+    .vs-tab:hover { color: #fff; background: rgba(255,255,255,0.07); }
+    .vs-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .vs-tab.is-active {
+      background: rgba(255,255,255,0.09);
+      border-color: rgba(255,255,255,0.12);
+      color: #fff;
+      font-weight: 600;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+
+    /* The segmented group is wider than the bare links it replaced, and it
+       pushed Download PDF and Clear past the right edge between 900px and
+       1100px — a dead zone, because the bar only becomes scrollable at 900px
+       and below, and body carries overflow-x: hidden so nothing looked wrong.
+       Dropping the group here keeps both actions on screen; every page in it
+       is reachable from the app navbar on every other screen. */
+    @media (max-width: 1100px) {
+      .vs-nav-group { display: none; }
+    }
     .vs-nav-badge {
       font-size: var(--fs-xs); font-weight: 700; padding: 3px 10px;
       border-radius: var(--r-pill); border: 1px solid rgba(76,201,240,0.25);
       color: var(--accent); background: rgba(76,201,240,0.07);
     }
     .vs-nav-btn-dl {
-      font-size: var(--fs-sm); font-weight: 700; padding: 6px 18px;
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: var(--fs-base); font-weight: 600; padding: 8px 16px;
       background: var(--grad-cta);
-      border: none; border-radius: var(--r-pill); color: #fff; cursor: pointer;
-      transition: opacity var(--t-fast), transform var(--t-fast); white-space: nowrap;
+      /* Square-ish rather than a full pill: it now sits beside the tab group,
+         and two different radii next to each other read as two unrelated
+         controls. */
+      border: none; border-radius: 10px; color: #fff; cursor: pointer;
+      box-shadow: 0 4px 14px rgba(67,97,238,0.28);
+      transition: filter var(--t-fast), transform var(--t-fast), box-shadow var(--t-fast);
+      white-space: nowrap;
     }
-    .vs-nav-btn-dl:hover:not(:disabled) { opacity: .88; transform: translateY(-1px); }
-    .vs-nav-btn-dl:disabled { opacity: .55; cursor: not-allowed; }
+    .vs-nav-btn-dl:hover:not(:disabled) {
+      filter: brightness(1.12);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(67,97,238,0.4);
+    }
+    .vs-nav-btn-dl:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+    .vs-nav-btn-dl:disabled { opacity: .55; cursor: not-allowed; box-shadow: none; }
 
     /* ── Studio Root — two-column split below nav ──────────── */
     .vs-studio {
-      position: fixed; inset: 52px 0 0 0;
+      position: fixed; inset: var(--vs-nav-h) 0 0 0;
       display: flex; overflow: hidden;
     }
 
@@ -816,21 +880,25 @@
     }
 
     /* ── Reset / Clear button ────────────────────────────────── */
+    /* Quiet until you reach for it. This was a permanently red-outlined button
+       sitting next to the primary action, so a destructive secondary competed
+       with Download PDF for attention on every screen. */
     .btn-reset-form {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 8px 16px;
-      border: 1px solid rgba(248,113,113,.3);
-      border-radius: var(--r-sm);
-      background: rgba(248,113,113,.08);
-      color: #f87171;
-      font-size: var(--fs-sm); font-weight: 700; cursor: pointer;
-      transition: background .2s, border-color .2s, transform .15s;
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 8px 14px;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--text-3);
+      font-size: var(--fs-base); font-weight: 500; cursor: pointer;
+      transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
     }
     .btn-reset-form:hover {
-      background: rgba(248,113,113,.18);
-      border-color: rgba(248,113,113,.6);
-      transform: translateY(-1px);
+      background: rgba(244,63,94,.10);
+      border-color: rgba(244,63,94,.28);
+      color: #fb7185;
     }
+    .btn-reset-form:focus-visible { outline: 2px solid #fb7185; outline-offset: 2px; }
 
     /* ── Theme Customization panel ───────────────────────────── */
     .theme-grid {
@@ -1049,10 +1117,23 @@
       {% endif %}
     </div>
     <div class="vs-nav-spacer"></div>
-    <a href="{% url 'dashboard' %}" class="vs-nav-link">Dashboard</a>
-    <a href="{% url 'tools' %}"     class="vs-nav-link">AI Tools</a>
-    <a href="{% url 'history' %}"   class="vs-nav-link">History</a>
-    <a href="{% url 'pricing' %}"   class="vs-nav-link">Pricing</a>
+
+    {% comment %}
+    Studio is in the group and marked active on purpose. A segmented control
+    needs a selected segment, and none of the four section links is ever the
+    current page while you are looking at this bar — the current page is the
+    Studio, which was not in the list. Without it the control renders with
+    nothing selected, which reads as broken rather than as minimal.
+    {% endcomment %}
+    <div class="vs-nav-group">
+      <a href="{% url 'home' %}"      class="vs-tab is-active" aria-current="page">Studio</a>
+      <a href="{% url 'dashboard' %}" class="vs-tab">Dashboard</a>
+      <a href="{% url 'tools' %}"     class="vs-tab">AI Tools</a>
+      <a href="{% url 'history' %}"   class="vs-tab">History</a>
+      <a href="{% url 'pricing' %}"   class="vs-tab">Pricing</a>
+    </div>
+
+    {% comment %}Profile link left exactly as it was, per the brief.{% endcomment %}
     <a href="{% url 'profile' %}"   class="vs-nav-link">{{ user.username }}</a>
     {% else %}
     <div class="vs-nav-spacer"></div>
