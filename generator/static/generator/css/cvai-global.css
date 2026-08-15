@@ -1725,3 +1725,52 @@ textarea:focus-visible,
 }
 .res-copy:hover { background: rgba(76, 201, 240, 0.2); }
 .res-copy.is-copied { color: var(--success); border-color: rgba(34, 197, 94, 0.3); background: rgba(34, 197, 94, 0.1); }
+
+/* ── Stored resume preview (CVAIResult.renderResume) ─────────────────────
+   Shared by the History card and the Dashboard modal, which previously each
+   built this markup themselves. */
+.res-cv { color: var(--text-2); }
+.res-cv-name { font-size: var(--fs-2xl); font-weight: 800; color: #fff; margin: 0 0 2px; }
+.res-cv-role { font-size: var(--fs-md); color: var(--brand); font-weight: 600; margin-bottom: 12px; }
+.res-cv-contact {
+  display: flex; flex-wrap: wrap; gap: 6px 16px;
+  font-size: var(--fs-sm); color: var(--text-2);
+  padding-bottom: 14px; margin-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+.res-cv-h {
+  font-size: var(--fs-sm); font-weight: 800; color: #fff;
+  text-transform: uppercase; letter-spacing: 0.09em;
+  margin: 20px 0 9px;
+}
+.res-cv-p { font-size: var(--fs-base); color: #cbd5e1; line-height: 1.6; margin: 0 0 4px; }
+.res-cv-entry {
+  background: rgba(76, 201, 240, 0.05);
+  border: 1px solid rgba(76, 201, 240, 0.1);
+  border-radius: var(--r-sm);
+  padding: 13px 14px;
+  margin-bottom: 10px;
+}
+.res-cv-entry-head {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  color: var(--text-1);
+}
+.res-cv-dates { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--text-3); white-space: nowrap; }
+.res-cv-sub { font-size: var(--fs-sm); color: var(--text-2); margin-top: 2px; }
+.res-cv-bullets { margin: 8px 0 0; padding-left: 18px; font-size: var(--fs-base); color: #cbd5e1; line-height: 1.5; }
+.res-cv-bullets li { margin-bottom: 4px; }
+.res-cv-skill-cat {
+  font-size: var(--fs-xs); color: var(--text-3);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  margin: 9px 0 4px;
+}
+.res-cv-skill-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.res-cv-skill {
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: 3px 11px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: #e2e8f0;
+}

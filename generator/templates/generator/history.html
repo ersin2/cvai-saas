@@ -375,11 +375,7 @@
       const raw  = el.dataset.raw || '';
       const card = el.closest('.hist-card') || el.parentElement.parentElement;
 
-      let html = null;
-      if (raw.trim().startsWith('{') && raw.trim().endsWith('}')) {
-        try { html = resumeToHtml(JSON.parse(raw)); } catch (_) { html = null; }
-      }
-      el.innerHTML = html !== null ? html : CVAIResult.renderMarkdown(raw);
+      el.innerHTML = CVAIResult.renderStored(raw);
 
       const preview = card && card.querySelector('[data-preview]');
       if (preview) {
@@ -391,82 +387,5 @@
     });
   });
 
-  /* A stored Studio resume, shown as a readable summary rather than JSON. */
-  function resumeToHtml(data) {
-    const esc = CVAIResult.escapeHtml;
-    let html = '';
-
-    if (data.full_name) {
-      html += `<strong style="font-size: var(--fs-lg);color:var(--text-1);">${esc(data.full_name)}</strong><br>`;
-    }
-    if (data.target_role) {
-      html += `<span style="color:var(--brand);font-weight:600;font-size: var(--fs-md);">${esc(data.target_role)}</span><br>`;
-    }
-    if (data.summary) {
-      html += `<div style="margin-top:10px;color:#cbd5e1;">${esc(data.summary)}</div>`;
-    }
-
-    if (Array.isArray(data.experience) && data.experience.length) {
-      html += `<div style="margin-top:14px;font-weight:700;color:var(--text-1);">Experience</div><ul style="padding-left:18px;margin:6px 0 0;">`;
-      data.experience.forEach(exp => {
-        html += `<li style="margin-bottom:5px;"><strong>${esc(exp.title || 'Role')}</strong>`;
-        if (exp.company) { html += ` at <span style="color:var(--brand);">${esc(exp.company)}</span>`; }
-        html += `</li>`;
-      });
-      html += `</ul>`;
-    }
-
-    if (Array.isArray(data.projects) && data.projects.length) {
-      html += `<div style="margin-top:14px;font-weight:700;color:var(--text-1);">Projects</div><ul style="padding-left:18px;margin:6px 0 0;">`;
-      data.projects.forEach(proj => {
-        html += `<li style="margin-bottom:5px;"><strong>${esc(proj.title || 'Project')}</strong>`;
-        if (proj.tech_stack) { html += ` <span style="color:var(--text-3);">${esc(proj.tech_stack)}</span>`; }
-        html += `</li>`;
-      });
-      html += `</ul>`;
-    }
-
-    /* Skills are stored as [{category, items}]. They used to be [{name}], and
-       resumes saved under the old shape are still in this list — reading only
-       `name` rendered every badge on a new resume empty, and reading only
-       `items` would blank every old one. Both are handled. */
-    const groups = Array.isArray(data.skills) ? data.skills : [];
-    if (groups.length) {
-      html += `<div style="margin-top:14px;font-weight:700;color:var(--text-1);">Skills</div>`;
-      groups.forEach(group => {
-        let names = [];
-        if (group && Array.isArray(group.items)) {
-          names = group.items;
-        } else if (group && group.name) {
-          names = [group.name];
-        } else if (typeof group === 'string') {
-          names = [group];
-        }
-        names = names.map(n => String(n).trim()).filter(Boolean);
-        if (!names.length) { return; }
-
-        const label = group && group.category ? String(group.category).trim() : '';
-        html += `<div style="margin-top:8px;">`;
-        if (label) {
-          html += `<div style="font-size:var(--fs-xs);color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">${esc(label)}</div>`;
-        }
-        html += `<div style="display:flex;flex-wrap:wrap;gap:5px;">`;
-        names.forEach(n => {
-          html += `<span class="hist-badge hist-badge-type-draft" style="border-radius:5px;">${esc(n)}</span>`;
-        });
-        html += `</div></div>`;
-      });
-    }
-
-    if (Array.isArray(data.education) && data.education.length) {
-      html += `<div style="margin-top:14px;font-weight:700;color:var(--text-1);">Education</div><ul style="padding-left:18px;margin:6px 0 0;">`;
-      data.education.forEach(e => {
-        html += `<li style="margin-bottom:4px;">${esc([e.degree, e.school, e.dates].filter(Boolean).join(' — '))}</li>`;
-      });
-      html += `</ul>`;
-    }
-
-    return html || null;
-  }
 </script>
 {% endblock content %}

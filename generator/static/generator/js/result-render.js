@@ -431,6 +431,114 @@
     return changed;
   }
 
+  /**
+   * A stored Studio resume (saved as a JSON string) shown as a readable
+   * document rather than as JSON.
+   *
+   * Lives here because History and the Dashboard both needed it and each had
+   * written its own. That is not hypothetical duplication: skills changed
+   * shape from [{name}] to [{category, items}], the History copy was updated,
+   * the Dashboard copy was not, and every skill badge in the Dashboard modal
+   * silently rendered as an empty pill until someone opened one and looked.
+   *
+   * Both shapes are still accepted — resumes saved before that change are
+   * still in these lists.
+   */
+  function renderResume(data) {
+    if (!data || typeof data !== 'object') { return null; }
+    var e = escapeHtml;
+    var html = '<div class="res-cv">';
+
+    if (data.full_name)   { html += '<h2 class="res-cv-name">' + e(data.full_name) + '</h2>'; }
+    if (data.target_role) { html += '<div class="res-cv-role">' + e(data.target_role) + '</div>'; }
+
+    var contact = ['email', 'phone', 'location', 'linkedin', 'github']
+      .map(function (k) { return data[k]; })
+      .filter(Boolean)
+      .map(function (v) { return '<span>' + e(v) + '</span>'; });
+    if (contact.length) { html += '<div class="res-cv-contact">' + contact.join('') + '</div>'; }
+
+    if (data.summary) {
+      html += '<h3 class="res-cv-h">Summary</h3><p class="res-cv-p">' + e(data.summary) + '</p>';
+    }
+
+    function entries(list, title, primary, secondary, meta) {
+      if (!Array.isArray(list) || !list.length) { return ''; }
+      var out = '<h3 class="res-cv-h">' + e(title) + '</h3>';
+      list.forEach(function (item) {
+        if (!item) { return; }
+        out += '<div class="res-cv-entry">';
+        out += '<div class="res-cv-entry-head"><strong>' + e(item[primary] || '') + '</strong>';
+        if (meta && item[meta]) { out += '<span class="res-cv-dates">' + e(item[meta]) + '</span>'; }
+        out += '</div>';
+        if (secondary && item[secondary]) {
+          out += '<div class="res-cv-sub">' + e(item[secondary]) + '</div>';
+        }
+        if (Array.isArray(item.bullets) && item.bullets.length) {
+          out += '<ul class="res-cv-bullets">' +
+                 item.bullets.map(function (b) { return '<li>' + e(b) + '</li>'; }).join('') +
+                 '</ul>';
+        }
+        out += '</div>';
+      });
+      return out;
+    }
+
+    html += entries(data.experience, 'Experience', 'title', 'company', 'dates');
+    html += entries(data.projects, 'Projects', 'title', 'tech_stack', null);
+
+    var groups = Array.isArray(data.skills) ? data.skills : [];
+    if (groups.length) {
+      var skillsHtml = '';
+      groups.forEach(function (group) {
+        var names = [];
+        if (typeof group === 'string')                 { names = [group]; }
+        else if (group && Array.isArray(group.items))  { names = group.items; }
+        else if (group && group.name)                  { names = [group.name]; }
+        names = names.map(function (n) { return String(n).trim(); }).filter(Boolean);
+        if (!names.length) { return; }
+
+        var label = (group && group.category) ? String(group.category).trim() : '';
+        if (label) { skillsHtml += '<div class="res-cv-skill-cat">' + e(label) + '</div>'; }
+        skillsHtml += '<div class="res-cv-skill-row">' +
+          names.map(function (n) { return '<span class="res-cv-skill">' + e(n) + '</span>'; }).join('') +
+          '</div>';
+      });
+      if (skillsHtml) { html += '<h3 class="res-cv-h">Skills</h3>' + skillsHtml; }
+    }
+
+    if (Array.isArray(data.education) && data.education.length) {
+      html += '<h3 class="res-cv-h">Education</h3>';
+      data.education.forEach(function (ed) {
+        if (!ed) { return; }
+        var line = [ed.degree, ed.school, ed.dates].filter(Boolean).join(' — ');
+        if (line) { html += '<div class="res-cv-sub">' + e(line) + '</div>'; }
+      });
+    }
+
+    if (Array.isArray(data.languages) && data.languages.length) {
+      html += '<h3 class="res-cv-h">Languages</h3><div class="res-cv-sub">' +
+              e(data.languages.join(', ')) + '</div>';
+    }
+
+    return html + '</div>';
+  }
+
+  /**
+   * Render whatever a Generation row stored: a Studio resume comes back as a
+   * JSON string, everything else is markdown.
+   */
+  function renderStored(text, options) {
+    var raw = (text || '').trim();
+    if (raw.charAt(0) === '{' && raw.charAt(raw.length - 1) === '}') {
+      try {
+        var asResume = renderResume(JSON.parse(raw));
+        if (asResume) { return asResume; }
+      } catch (_) { /* not a resume — fall through to markdown */ }
+    }
+    return renderMarkdown(raw, options);
+  }
+
   /* One delegated handler for every copy button this file emits. */
   document.addEventListener('click', function (e) {
     var btn = e.target.closest && e.target.closest('[data-res-copy]');
@@ -482,6 +590,8 @@
   global.CVAIResult = {
     escapeHtml: escapeHtml,
     renderMarkdown: renderMarkdown,
+    renderResume: renderResume,
+    renderStored: renderStored,
     enhanceAts: enhanceAts,
     enhanceInterview: enhanceInterview,
     enhanceFollowup: enhanceFollowup,

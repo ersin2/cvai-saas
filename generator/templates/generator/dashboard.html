@@ -5,6 +5,7 @@
 {% block meta_desc %}Track your AI resume generation stats, application funnel, and career progress in one dashboard.{% endblock %}
 
 {% block extra_head %}
+  <script src="{% static 'generator/js/result-render.js' %}" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
@@ -206,7 +207,8 @@
       font-size: var(--fs-base);
       color: #94a3b8;
       line-height: 1.75;
-      white-space: pre-wrap;
+      /* No pre-wrap: this holds rendered HTML now, and pre-wrap turned the
+         newlines between block tags into blank lines. */
       word-break: break-word;
       font-family: var(--font-body);
     }
@@ -1011,155 +1013,28 @@
       /* Main content */
       let contentHtml = '';
       if (content) {
-        let isJson = false;
-        let trimmedContent = content.trim();
-        let parsedJson = null;
+        // One renderer for both shapes.
+        //
+        // This block used to hold a resume-JSON formatter and a markdown
+        // formatter of its own — a third markdown implementation in the app,
+        // and the reason a skills shape change fixed elsewhere left every
+        // badge here blank. Both now come from CVAIResult, so there is one
+        // place to fix.
+        const rendered = CVAIResult.renderStored(content);
+        const isResume = rendered.indexOf('res-cv') !== -1;
 
-        // Auto-Detect JSON
-        if (trimmedContent.startsWith('{') && trimmedContent.endsWith('}')) {
-          try {
-            parsedJson = JSON.parse(trimmedContent);
-            isJson = true;
-          } catch (e) {
-            // Not valid JSON, fall back to plain text
-          }
-        }
-
-        if (isJson && parsedJson) {
-          // Dynamic JSON Formatter for Resumes
-          let data = parsedJson;
-          let rHtml = '<div class="resume-preview-card" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--r-md); padding: 24px; color: #f1f5f9;">';
-          
-          // Header
-          rHtml += `<h2 style="font-size: var(--fs-2xl); font-weight: 800; color: #fff; margin-bottom: 4px;">${escHtml(data.full_name || 'Candidate Name')}</h2>`;
-          if (data.target_role) {
-            rHtml += `<div style="font-size: var(--fs-md); color: var(--brand); font-weight: 600; margin-bottom: 12px;">${escHtml(data.target_role)}</div>`;
-          }
-          
-          // Contact info
-          let contactItems = [];
-          if (data.email) contactItems.push(`<i class="fas fa-envelope" style="color:var(--text-3); margin-right:4px;"></i>${escHtml(data.email)}`);
-          if (data.phone) contactItems.push(`<i class="fas fa-phone" style="color:var(--text-3); margin-right:4px;"></i>${escHtml(data.phone)}`);
-          if (data.location) contactItems.push(`<i class="fas fa-map-marker-alt" style="color:var(--text-3); margin-right:4px;"></i>${escHtml(data.location)}`);
-          if (data.linkedin) contactItems.push(`<i class="fab fa-linkedin" style="color:var(--text-3); margin-right:4px;"></i>${escHtml(data.linkedin)}`);
-          
-          if (contactItems.length > 0) {
-            rHtml += `<div style="display:flex; flex-wrap:wrap; gap:16px; font-size: var(--fs-sm); color:#94a3b8; margin-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 16px;">
-                ${contactItems.map(item => `<div>${item}</div>`).join('')}
+        if (isResume) {
+          contentHtml = `<div class="resume-preview-card" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--r-md); padding: 24px;">${rendered}</div>`;
+        } else if (key === 'letter') {
+          contentHtml = `
+            <div class="letter-preview-card">
+              <div class="lpc-header">
+                <span class="lpc-title"><i class="fas fa-file-alt me-1"></i>Generated Content</span>
+              </div>
+              <div class="modal-result-text res-body" style="margin:0;">${rendered}</div>
             </div>`;
-          }
-          
-          // Summary Block
-          if (data.summary) {
-            rHtml += `<h3 style="font-size: var(--fs-md); font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Professional Summary</h3>`;
-            rHtml += `<p style="font-size: var(--fs-base); color: #cbd5e1; line-height: 1.6; margin-bottom: 24px; white-space: pre-wrap;">${escHtml(data.summary)}</p>`;
-          }
-          
-          // Experience Block
-          if (data.experience && data.experience.length > 0) {
-            rHtml += `<h3 style="font-size: var(--fs-md); font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Experience</h3>`;
-            data.experience.forEach(exp => {
-              rHtml += `<div style="background: rgba(76,201,240,0.05); border: 1px solid rgba(76,201,240,0.1); border-radius: var(--r-sm); padding: 16px; margin-bottom: 12px;">`;
-              rHtml += `<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">`;
-              rHtml += `<div>
-                  <strong style="font-size: var(--fs-md); color: #fff; display: block;">${escHtml(exp.title || '')}</strong>
-                  <span style="font-size: var(--fs-base); color: var(--brand); font-weight: 600;">${escHtml(exp.company || '')}</span>
-              </div>`;
-              rHtml += `<div style="font-size: var(--fs-sm); color: #94a3b8; font-family: 'JetBrains Mono', monospace;">${escHtml(exp.dates || '')}</div>`;
-              rHtml += `</div>`;
-              if (exp.bullets && exp.bullets.length > 0) {
-                rHtml += `<ul style="margin: 0; padding-left: 20px; font-size: var(--fs-base); color: #cbd5e1; line-height: 1.5;">`;
-                exp.bullets.forEach(bullet => {
-                  rHtml += `<li style="margin-bottom: 4px;">${escHtml(bullet)}</li>`;
-                });
-                rHtml += `</ul>`;
-              }
-              rHtml += `</div>`;
-            });
-          }
-          
-          // Skills Block
-          if (data.skills && data.skills.length > 0) {
-            rHtml += `<h3 style="font-size: var(--fs-md); font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; margin-top: 24px;">Skills</h3>`;
-            /* Skills are stored as [{category, items}]. They used to be
-               [{name}], and resumes saved under the old shape are still in
-               this list — reading only `name` renders every badge on a new
-               resume empty, and reading only `items` blanks every old one.
-               Both are handled, same as the History preview. */
-            data.skills.forEach(group => {
-              let names = [];
-              if (typeof group === 'string')            { names = [group]; }
-              else if (group && Array.isArray(group.items)) { names = group.items; }
-              else if (group && group.name)             { names = [group.name]; }
-              names = names.map(n => String(n).trim()).filter(Boolean);
-              if (!names.length) { return; }
-
-              const label = (group && group.category) ? String(group.category).trim() : '';
-              if (label) {
-                rHtml += `<div style="width:100%; font-size: var(--fs-xs); color: var(--text-3); text-transform: uppercase; letter-spacing: .06em; margin: 8px 0 2px;">${escHtml(label)}</div>`;
-              }
-              rHtml += `<div style="display: flex; flex-wrap: wrap; gap: 8px; width:100%;">`;
-              names.forEach(name => {
-                rHtml += `<div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--r-pill); padding: 4px 12px; font-size: var(--fs-sm); font-weight: 600; color: #e2e8f0; display: flex; align-items: center;">
-                    ${escHtml(name)}
-                </div>`;
-              });
-              rHtml += `</div>`;
-            });
-          }
-          
-          rHtml += '</div>';
-          contentHtml = rHtml;
         } else {
-          // Auto-Detect Plain Text / Markdown
-          let html = escHtml(trimmedContent);
-          
-          // Convert basic markdown syntax
-          html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-          
-          let lines = html.split('\n');
-          let inList = false;
-          let formattedLines = [];
-          
-          for (let i = 0; i < lines.length; i++) {
-              let line = lines[i];
-              if (line.trim().startsWith('- ')) {
-                  if (!inList) {
-                      formattedLines.push('<ul class="ats-list" style="padding-left: 20px; margin-top: 10px; margin-bottom: 10px; list-style-type: disc;">');
-                      inList = true;
-                  }
-                  formattedLines.push(`  <li style="margin-bottom: 6px;">${line.trim().substring(2)}</li>`);
-              } else {
-                  if (inList) {
-                      formattedLines.push('</ul>');
-                      inList = false;
-                  }
-                  formattedLines.push(line);
-              }
-          }
-          if (inList) {
-              formattedLines.push('</ul>');
-          }
-          
-          html = formattedLines.join('\n');
-          
-          // Clean up newlines around block tags to avoid pre-wrap rendering extra spacing
-          html = html.replace(/\n(<ul)/g, '$1')
-                     .replace(/(<\/ul>)\n/g, '$1')
-                     .replace(/\n(<li)/g, '$1')
-                     .replace(/(<\/li>)\n/g, '$1');
-
-          if (key === 'letter') {
-            contentHtml = `
-              <div class="letter-preview-card">
-                <div class="lpc-header">
-                  <span class="lpc-title"><i class="fas fa-file-alt me-1"></i>Generated Content</span>
-                </div>
-                <div class="modal-result-text" style="margin:0;">${html}</div>
-              </div>`;
-          } else {
-            contentHtml = `<div class="modal-result-text">${html}</div>`;
-          }
+          contentHtml = `<div class="modal-result-text res-body">${rendered}</div>`;
         }
       } else if (key !== 'app') {
         contentHtml = `<div class="modal-result-text" style="color:var(--text-3);font-style:italic;text-align:center;padding:20px 0;">
