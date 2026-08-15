@@ -525,6 +525,81 @@
   }
 
   /**
+   * Map an extracted resume onto the flat field names the PDF engine reads.
+   *
+   * The engine takes POST fields (experience_text, skills_list, …), not the
+   * schema JSON, so anything wanting a PDF out of a stored resume has to do
+   * this conversion. The Studio's Auto-Fill already did it inline; putting it
+   * here means History can export without a second copy of the mapping drifting
+   * away from the first.
+   */
+  /**
+   * Skill groups → the engine's wire format: one group per line,
+   * "Category: a, b, c".
+   *
+   * Extracted because it existed twice and the copies disagreed. The Studio's
+   * version collapsed a legacy flat [{name}] list to one comma-joined line;
+   * the version written later for History emitted one line per skill, so the
+   * same resume exported with every skill as its own empty-headed category.
+   * One function, one answer.
+   */
+  function skillsToWire(groups) {
+    if (!Array.isArray(groups) || !groups.length) { return ''; }
+    var clean = function (v) { return String(v).replace(/[,:\n]/g, ' ').trim(); };
+
+    // A flat list is one uncategorised group, not one group per skill.
+    var grouped = groups.some(function (g) { return g && Array.isArray(g.items); });
+    if (!grouped) {
+      return groups.map(function (g) {
+        return clean(typeof g === 'string' ? g : (g && g.name) || '');
+      }).filter(Boolean).join(', ');
+    }
+
+    return groups.map(function (group) {
+      var items = ((group && group.items) || []).map(clean).filter(Boolean);
+      if (!items.length) { return ''; }
+      var category = clean((group && group.category) || '');
+      return category ? category + ': ' + items.join(', ') : items.join(', ');
+    }).filter(Boolean).join('\n');
+  }
+
+  function resumeToFields(data) {
+    if (!data || typeof data !== 'object') { return null; }
+
+    function block(list, headParts, bulletKey) {
+      if (!Array.isArray(list)) { return ''; }
+      return list.map(function (item) {
+        if (!item) { return ''; }
+        var lines = [];
+        var head = headParts.map(function (k) { return item[k]; }).filter(Boolean).join(' | ');
+        if (head) { lines.push(head); }
+        if (Array.isArray(item[bulletKey])) {
+          item[bulletKey].forEach(function (b) { lines.push('- ' + b); });
+        }
+        return lines.join('\n');
+      }).filter(Boolean).join('\n\n');
+    }
+
+    return {
+      full_name:   data.full_name || '',
+      target_role: data.target_role || '',
+      email:       data.email || '',
+      phone:       data.phone || '',
+      location:    data.location || '',
+      linkedin:    data.linkedin || '',
+      github:      data.github || '',
+      about_me:    data.summary || '',
+      experience_text: block(data.experience, ['title', 'company', 'dates'], 'bullets'),
+      projects_text:   block(data.projects, ['title', 'tech_stack'], 'bullets'),
+      skills_list: skillsToWire(data.skills),
+      education:   (Array.isArray(data.education) ? data.education : []).map(function (e) {
+        return e ? [e.degree, e.school, e.dates].filter(Boolean).join(' | ') : '';
+      }).filter(Boolean).join('\n'),
+      languages:   Array.isArray(data.languages) ? data.languages.join(', ') : '',
+    };
+  }
+
+  /**
    * Render whatever a Generation row stored: a Studio resume comes back as a
    * JSON string, everything else is markdown.
    */
@@ -592,6 +667,8 @@
     renderMarkdown: renderMarkdown,
     renderResume: renderResume,
     renderStored: renderStored,
+    resumeToFields: resumeToFields,
+    skillsToWire: skillsToWire,
     enhanceAts: enhanceAts,
     enhanceInterview: enhanceInterview,
     enhanceFollowup: enhanceFollowup,

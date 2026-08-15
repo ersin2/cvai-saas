@@ -19,6 +19,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   <!-- Global Design System -->
   <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}?v=4">
+  {% comment %}
+  Auto-Fill and the History prefill both map extracted resumes onto the form,
+  and the skills half of that mapping lives in CVAIResult so it cannot drift
+  from the copy History exports with.
+  {% endcomment %}
+  <script src="{% static 'generator/js/result-render.js' %}"></script>
   <!-- Legacy studio_styles.html include removed in Phase 4: its selectors
        (.studio-root, .tpl-executive .cv-*) match nothing in this template. -->
 
@@ -1105,6 +1111,7 @@
   <!-- ══════════════════════════════════════════════════════
        TOP NAV
        ══════════════════════════════════════════════════════ -->
+  {% if prefill_resume %}{{ prefill_resume|json_script:"prefillResume" }}{% endif %}
   <nav class="vs-nav" id="mainNav">
     <a href="{% url 'home' %}" class="vs-nav-logo">CV<span>AI</span></a>
 
@@ -2491,24 +2498,9 @@
    * Inventing it breaks the same rule the prompts are held to.
    */
   function _skillsToText(skillGroups) {
-    if (!Array.isArray(skillGroups) || skillGroups.length === 0) return '';
-    const clean = s => String(s).replace(/[,:\n]/g, ' ').trim();
-
-    // Tolerate the old flat [{name}, {name}] shape: it is one uncategorised
-    // group, so it collapses to a single comma-joined line exactly as before —
-    // not one line per skill, which would render as several empty categories.
-    const isGrouped = skillGroups.some(g => g && Array.isArray(g.items));
-    if (!isGrouped) {
-      const names = skillGroups.map(s => clean(s && s.name)).filter(Boolean);
-      return names.join(', ');
-    }
-
-    return skillGroups.map(group => {
-      const items = ((group && group.items) || []).map(clean).filter(Boolean);
-      if (items.length === 0) return '';
-      const category = clean(group.category);
-      return category ? `${category}: ${items.join(', ')}` : items.join(', ');
-    }).filter(Boolean).join('\n');
+    // Delegates to the shared mapper. This used to hold its own copy of the
+    // logic, and a second copy written later for History disagreed with it.
+    return CVAIResult.skillsToWire(skillGroups);
   }
 
   /**
@@ -2694,6 +2686,49 @@
       previewStatus.textContent = prevStatusText;
     }
   }
+
+  /* ── Open in Studio ────────────────────────────────────────────────────
+     History links here with ?load=<id>; the view puts the stored resume JSON
+     in a script tag. The same converters Auto-Fill uses are reused, so a
+     reopened resume lands in the form exactly as a freshly generated one
+     does — no second mapping to drift out of step. */
+  (function () {
+    const node = document.getElementById('prefillResume');
+    if (!node) { return; }
+    let r;
+    try { r = JSON.parse(node.textContent || '{}'); } catch (_) { return; }
+    if (!r || !Object.keys(r).length) { return; }
+
+    _setField('#f_full_name',   r.full_name);
+    _setField('#f_target_role', r.target_role);
+    _setField('#f_email',       r.email);
+    _setField('#f_phone',       r.phone);
+    _setField('#f_location',    r.location);
+    _setField('#f_linkedin',    r.linkedin);
+    _setField('#f_github',      r.github);
+    _setField('#f_about_me',    r.summary);
+
+    const exp  = _experienceToText(r.experience);  if (exp)  _setField('#f_experience_text', exp);
+    const proj = _projectsToText(r.projects);      if (proj) _setField('#f_projects_text', proj);
+    const sk   = _skillsToText(r.skills);          if (sk)   _setField('#f_skills_list', sk);
+    const edu  = _educationToText(r.education);    if (edu)  _setField('#f_education', edu);
+    if (Array.isArray(r.languages) && r.languages.length) {
+      _setField('#f_languages', r.languages.join(', '));
+    }
+
+    ['sec-personal', 'sec-exp', 'sec-projects', 'sec-skills', 'sec-edu'].forEach(id => {
+      const body = document.getElementById(id);
+      const toggle = document.querySelector(`[data-target="${id}"]`);
+      if (body && !body.classList.contains('open')) {
+        body.classList.add('open');
+        toggle && toggle.classList.add('open');
+      }
+    });
+
+    document.getElementById('resume-form').dispatchEvent(new Event('change', { bubbles: true }));
+    setTimeout(() => scheduleLivePreview(200), 250);
+    showToast('Resume loaded from History.', 'success');
+  }());
 
   /* Allow pressing Ctrl+Enter inside the textarea to trigger AI fill */
   document.getElementById('raw-resume-text').addEventListener('keydown', e => {

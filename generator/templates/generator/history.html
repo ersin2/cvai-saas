@@ -103,6 +103,25 @@
   }
   .hist-card.expanded .hist-body { max-height: 800px; }
 
+  .hist-act-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 11px;
+    border-radius: var(--r-sm);
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text-2);
+    font-family: inherit; font-size: var(--fs-xs); font-weight: 600;
+    text-decoration: none; cursor: pointer; white-space: nowrap;
+    transition: color var(--t-fast), background var(--t-fast), border-color var(--t-fast);
+  }
+  .hist-act-btn:hover {
+    color: var(--text-1);
+    background: var(--brand-dim);
+    border-color: rgba(76,201,240,.35);
+  }
+  .hist-act-btn:disabled { opacity: .6; cursor: not-allowed; }
+  @media (max-width: 640px) { .hist-act-btn span { display: none; } }
+
   .hist-full-content {
     color: #cbd5e1;
     font-size: var(--fs-base); line-height: 1.75;
@@ -192,6 +211,22 @@
           </div>
           <div class="hist-card-right">
             <span class="hist-date">{{ gen.created_at|date:"M d, Y" }}</span>
+            {% comment %}
+            Open in Studio and Download PDF are offered only for saved resumes.
+            A cover letter has no Studio form to load into and no resume PDF to
+            build, so showing them there would be two buttons that cannot work.
+            {% endcomment %}
+            {% if gen.kind == 'resume' %}
+            <a class="hist-act-btn" title="Open in Studio"
+               href="{% url 'home' %}?load={{ gen.id }}"
+               onclick="event.stopPropagation();">
+              <i class="fas fa-pen-ruler"></i><span>Open in Studio</span>
+            </a>
+            <button class="hist-act-btn" title="Download PDF"
+                    onclick="event.stopPropagation(); downloadHistoryPdf(this, {{ gen.id }})">
+              <i class="fas fa-file-arrow-down"></i><span>PDF</span>
+            </button>
+            {% endif %}
             <button class="hist-del-btn" title="Delete"
                     onclick="event.stopPropagation(); deleteGeneration({{ gen.id }})">
               <i class="fas fa-trash-alt"></i>
@@ -363,6 +398,41 @@
             <i class="fas fa-magic me-2"></i>Start Generating
           </a>
         </div>`;
+    }
+  }
+
+  /* Build a PDF from a saved resume without opening the Studio first.
+     The stored value is schema JSON and the engine wants flat POST fields, so
+     the conversion comes from CVAIResult rather than being written again here. */
+  async function downloadHistoryPdf(btn, id) {
+    const el = document.getElementById('histFull-' + id);
+    const raw = el ? (el.dataset.raw || '') : '';
+    let fields = null;
+    try { fields = CVAIResult.resumeToFields(JSON.parse(raw)); } catch (_) { fields = null; }
+    if (!fields) { showToast('This entry has no resume data to export.', 'danger'); return; }
+
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Building</span>';
+    try {
+      const body = new URLSearchParams({ ...fields, template_name: 'minimal_centered' });
+      const res = await fetch("{% url 'download_pdf' %}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded',
+                   'X-CSRFToken': '{{ csrf_token }}' },
+        body: body.toString(), credentials: 'same-origin',
+      });
+      if (!res.ok) { showToast('Could not build that PDF (' + res.status + ').', 'danger'); return; }
+      const url = URL.createObjectURL(await res.blob());
+      const a = document.createElement('a');
+      a.href = url; a.download = 'CVAI_Resume.pdf'; a.click();
+      URL.revokeObjectURL(url);
+      showToast('PDF downloaded.', 'success');
+    } catch (_) {
+      showToast('Export failed — please try again.', 'danger');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = original;
     }
   }
 

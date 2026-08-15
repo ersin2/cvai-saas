@@ -87,6 +87,27 @@ def home(request):
         {**tpl, 'locked': idx >= allowed_limit}
         for idx, tpl in enumerate(TEMPLATES)
     ]
+
+    # ?load=<id> — "Open in Studio" from History.
+    #
+    # Scoped to request.user, so a guessed id returns nothing rather than
+    # somebody else's resume. Anything unparseable is ignored: arriving at an
+    # empty Studio is a far better outcome than a 500 on a bookmarked link.
+    load_id = request.GET.get('load')
+    if load_id and request.user.is_authenticated:
+        gen = Generation.objects.filter(pk=load_id, user=request.user).first()
+        if gen and _classify_generation(gen) == 'resume':
+            try:
+                parsed = json.loads(gen.result)
+            except (TypeError, ValueError):
+                logger.warning("Studio load: generation %s is not usable JSON", load_id)
+            else:
+                # The parsed object, not the raw string: json_script encodes
+                # whatever it is given, and handing it the string would emit a
+                # JSON string literal that the page then has to parse twice.
+                if isinstance(parsed, dict):
+                    context['prefill_resume'] = parsed
+
     return render(request, 'generator/home.html', context)
 
 
