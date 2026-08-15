@@ -843,10 +843,12 @@
                         <button class="role-pill" onclick="loadRolePreset('pm')">Product Lead</button>
                         <button class="role-pill" onclick="loadRolePreset('ai')">AI / ML Engineer</button>
                     </div>
-                    <!-- Was "GOOGLE XYZ ENGINE", which read as a Google endorsement.
+                    {% comment %}
+Was "GOOGLE XYZ ENGINE", which read as a Google endorsement.
                          The XYZ formula is a well-known bullet-writing pattern; naming
                          it without the company name keeps the reference, drops the
-                         implied affiliation. -->
+                         implied affiliation.
+{% endcomment %}
                     <div style="font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--text-3); font-weight: 700; letter-spacing: 0.06em;">
                         LIVE SAMPLE · XYZ FORMULA
                     </div>
@@ -894,10 +896,12 @@
         </div>
     </header>
 
-    <!-- A "Trusted by Google / Meta / Amazon…" logo strip used to sit here. It was
+    {% comment %}
+A "Trusted by Google / Meta / Amazon…" logo strip used to sit here. It was
          removed: it claimed named companies as customers with nothing behind it,
          which is the fastest thing on a landing page for a reader to disbelieve.
-         If real logos are ever permitted, this is the slot for them. -->
+         If real logos are ever permitted, this is the slot for them.
+{% endcomment %}
 
     <!-- ══ 10-TEMPLATE SHOWCASE CAROUSEL ══ -->
     <section class="section" id="templates">
@@ -1210,11 +1214,13 @@
             <div class="section-header reveal-up">
                 <span class="section-tag">Time saved</span>
                 <h2 class="landing-section-title">What tailoring every application costs you.</h2>
-                <!-- The previous subhead claimed "an average 3.4x jump in recruiter
+                {% comment %}
+The previous subhead claimed "an average 3.4x jump in recruiter
                      responses". There is no such measurement — it was invented, and a
                      specific falsifiable number is the worst kind of claim to invent.
                      This estimates the reader's own time from their own inputs, which
-                     is something we can actually stand behind. -->
+                     is something we can actually stand behind.
+{% endcomment %}
                 <p class="section-sub">Rewriting a resume for each posting by hand takes most people 30–40 minutes. Put your own numbers in and see what that adds up to.</p>
             </div>
 
@@ -1227,11 +1233,13 @@
                     <input type="range" min="5" max="100" value="25" class="roi-slider" id="appSlider" oninput="updateRoiCalc(this.value)">
                 </div>
 
-                <!-- This used to report callback rates ("Avg. 10%" vs "Avg. 38%") and a
+                {% comment %}
+This used to report callback rates ("Avg. 10%" vs "Avg. 38%") and a
                      "3.4x interview multiplier". Those were invented — we have no such
                      data, and presenting made-up conversion rates as a calculator is
                      the most misleading shape a claim can take. It now computes time,
-                     which is arithmetic on an assumption we state openly below. -->
+                     which is arithmetic on an assumption we state openly below.
+{% endcomment %}
                 <div class="roi-results-grid">
                     <div>
                         <div style="font-size: var(--fs-xs); color: var(--text-3); font-weight: 700; margin-bottom: 6px;">BY HAND</div>
@@ -1259,12 +1267,14 @@
     </section>
 
     <!-- ══ WALL OF LOVE TESTIMONIALS ══ -->
-    <!-- A testimonials section sat here with three invented people (Alexei K.,
+    {% comment %}
+A testimonials section sat here with three invented people (Alexei K.,
          Marcus R., Sarah L.), five-star ratings and specific outcomes such as
          "callbacks from 4 Tier-1 companies within 2 weeks". None of it was real.
          Fabricated reviews attributed to named individuals are the kind of claim
          a reader can act on, so it was removed rather than restyled.
-         Restore this slot when there are real, permitted quotes to put in it. -->
+         Restore this slot when there are real, permitted quotes to put in it.
+{% endcomment %}
 
     <!-- ══ PRICING ══ -->
     <section class="section" id="pricing">
@@ -1627,11 +1637,14 @@
             });
         }
 
-        // 9. ROI Callback Calculator
-        // Time, not callback rates. The previous version multiplied the slider by
-        // invented conversion percentages (8-12% vs 32-44%) to produce a "3.4x
-        // interview multiplier" — numbers we had no basis for. These two constants
-        // are assumptions, stated on the page directly under the result.
+        // 9. Time-saved calculator
+        {% comment %}
+Reports time, not outcome rates. An earlier version multiplied the
+           slider by conversion percentages we had no data for. These two
+           constants are assumptions and are stated on the page under the
+           result. Django comment: kept for maintainers, not shipped to the
+           browser like the // comments around it.
+{% endcomment %}
         var ROI_MINUTES_BY_HAND = 35;
         var ROI_MINUTES_WITH_CVAI = 5;
 
