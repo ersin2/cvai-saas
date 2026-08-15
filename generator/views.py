@@ -103,7 +103,14 @@ async def generate_letter(request):
     # Safe async profile fetch — auto-creates if the post_save signal missed
     profile, _ = await Profile.objects.aget_or_create(user=request.user)
 
-    # ── Rate-limit check ──
+    # Quota before throttle — see the note in ats_score. The quota check further
+    # down still stands as a guard against a concurrent request spending the
+    # last generation between here and there; this one exists so the *message*
+    # is right, because the throttle would otherwise answer first and tell a
+    # user who is out of generations to wait a minute.
+    if not await sync_to_async(profile.has_generations_left)():
+        return JsonResponse({'result': None, 'error': profile.quota_message()})
+
     throttled = await sync_to_async(_check_rate_limit)(request.user, profile.plan)
     if throttled:
         return throttled
@@ -258,7 +265,18 @@ async def generate_resume(request):
     result = None
     profile, _ = await Profile.objects.aget_or_create(user=request.user)
 
-    # ── Rate-limit check ──
+    # Quota before throttle — see the note in ats_score. The quota check further
+    # down still stands as a guard against a concurrent request spending the
+    # last generation between here and there; this one exists so the *message*
+    # is right, because the throttle would otherwise answer first and tell a
+    # user who is out of generations to wait a minute.
+    if not await sync_to_async(profile.has_generations_left)():
+        return JsonResponse({
+            'resume': None,
+            'error': profile.quota_message(),
+            'warning': None,
+        })
+
     throttled = await sync_to_async(_check_rate_limit)(request.user, profile.plan)
     if throttled:
         return throttled
@@ -464,18 +482,24 @@ async def rewrite_section(request):
     """
     profile, _ = await Profile.objects.aget_or_create(user=request.user)
 
-    # ── Rate-limit ────────────────────────────────────────────────────────────
-    throttled = await sync_to_async(_check_rate_limit)(request.user, profile.plan)
-    if throttled:
-        return throttled
-
-    # ── Generation quota guard ────────────────────────────────────────────────
+    # Quota before throttle, deliberately.
+    #
+    # Both gates can reject the same click, and they give opposite advice. Being
+    # out of generations is permanent until you upgrade; being rate-limited
+    # clears in a minute. Checked the other way round, a user who had spent
+    # their last generation and clicked again was told "Too many requests,
+    # please wait a minute" — advice that never comes true, because after the
+    # minute they are still out of generations.
     has_left = await sync_to_async(profile.has_generations_left)()
     if not has_left:
         return JsonResponse(
             {'error': profile.quota_message()},
             status=402,
         )
+
+    throttled = await sync_to_async(_check_rate_limit)(request.user, profile.plan)
+    if throttled:
+        return throttled
 
     # ── Input validation ──────────────────────────────────────────────────────
     raw_text     = (request.POST.get('text') or '').strip()[:5000]
@@ -866,10 +890,14 @@ def tools(request):
 async def interview_prep(request):
     """Async interview question generation."""
     profile, _ = await Profile.objects.aget_or_create(user=request.user)
-    # ── Rate-limit check ──
-    throttled = await sync_to_async(_check_rate_limit)(request.user, profile.plan)
-    if throttled:
-        return throttled
+    # Quota before throttle, deliberately.
+    #
+    # Both gates can reject the same click, and they give opposite advice. Being
+    # out of generations is permanent until you upgrade; being rate-limited
+    # clears in a minute. Checked the other way round, a user who had spent
+    # their last generation and clicked again was told "Too many requests,
+    # please wait a minute" — advice that never comes true, because after the
+    # minute they are still out of generations.
     if not profile.has_generations_left():
         recent_results = await sync_to_async(list)(
             AIResult.objects.filter(user=request.user)[:10]
@@ -879,6 +907,10 @@ async def interview_prep(request):
             'active_tool': 'interview',
             'tool_error': profile.quota_message(),
         })
+
+    throttled = await sync_to_async(_check_rate_limit)(request.user, profile.plan)
+    if throttled:
+        return throttled
 
     resume  = request.POST.get('resume', '')[:10000]
     job_desc = request.POST.get('job_description', '')[:10000]
@@ -934,10 +966,14 @@ Be specific to the role and company. No generic questions."""
 async def followup_email(request):
     """Async follow-up email generation."""
     profile, _ = await Profile.objects.aget_or_create(user=request.user)
-    # ── Rate-limit check ──
-    throttled = await sync_to_async(_check_rate_limit)(request.user, profile.plan)
-    if throttled:
-        return throttled
+    # Quota before throttle, deliberately.
+    #
+    # Both gates can reject the same click, and they give opposite advice. Being
+    # out of generations is permanent until you upgrade; being rate-limited
+    # clears in a minute. Checked the other way round, a user who had spent
+    # their last generation and clicked again was told "Too many requests,
+    # please wait a minute" — advice that never comes true, because after the
+    # minute they are still out of generations.
     if not profile.has_generations_left():
         recent_results = await sync_to_async(list)(
             AIResult.objects.filter(user=request.user)[:10]
@@ -947,6 +983,10 @@ async def followup_email(request):
             'active_tool': 'followup',
             'tool_error': profile.quota_message(),
         })
+
+    throttled = await sync_to_async(_check_rate_limit)(request.user, profile.plan)
+    if throttled:
+        return throttled
 
     company   = request.POST.get('company_name', '')[:200]
     job_title = request.POST.get('job_title', '')[:200]
@@ -1001,10 +1041,14 @@ Do NOT be generic — reference the specific role and company."""
 async def ats_score(request):
     """Async ATS score generation."""
     profile, _ = await Profile.objects.aget_or_create(user=request.user)
-    # ── Rate-limit check ──
-    throttled = await sync_to_async(_check_rate_limit)(request.user, profile.plan)
-    if throttled:
-        return throttled
+    # Quota before throttle, deliberately.
+    #
+    # Both gates can reject the same click, and they give opposite advice. Being
+    # out of generations is permanent until you upgrade; being rate-limited
+    # clears in a minute. Checked the other way round, a user who had spent
+    # their last generation and clicked again was told "Too many requests,
+    # please wait a minute" — advice that never comes true, because after the
+    # minute they are still out of generations.
     if not profile.has_generations_left():
         recent_results = await sync_to_async(list)(
             AIResult.objects.filter(user=request.user)[:10]
@@ -1014,6 +1058,10 @@ async def ats_score(request):
             'active_tool': 'ats',
             'tool_error': profile.quota_message(),
         })
+
+    throttled = await sync_to_async(_check_rate_limit)(request.user, profile.plan)
+    if throttled:
+        return throttled
 
     resume   = request.POST.get('resume', '')[:10000]
     job_desc = request.POST.get('job_description', '')[:10000]

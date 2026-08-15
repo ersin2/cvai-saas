@@ -1793,6 +1793,42 @@
   const CSRF_TOKEN     = "{{ csrf_token }}";
 
   /* ────────────────────────────────────────────────────────
+     HTTP ERROR MESSAGES
+  ────────────────────────────────────────────────────────
+     Every endpoint here answers a failure with JSON {"error": "..."}, and the
+     server has already phrased it for a person — the rate limiter says "wait a
+     minute", the quota check says which plan you need, the upload validators
+     say what was wrong with the file.
+
+     Auto-Fill used to throw `Server error ${res.status}` on any non-2xx, which
+     discarded all of that. A user who clicked Auto-Fill four times inside a
+     minute hit the 3-per-minute limiter and was told "AI error: Server error
+     429" — which reads as the site being broken rather than as "you went too
+     fast", and sends them to support instead of waiting sixty seconds.
+
+     Read the body first. Fall back to the status only when there is no usable
+     message in it.
+  ──────────────────────────────────────────────────────── */
+  async function describeHttpFailure(res) {
+    let payload = {};
+    try {
+      if ((res.headers.get('content-type') || '').includes('application/json')) {
+        payload = await res.json();
+      }
+    } catch (_) {
+      /* Empty or malformed body — the status is all we have. */
+    }
+    if (payload && payload.error) return payload.error;
+
+    if (res.status === 401) return 'Your session expired. Please sign in again.';
+    if (res.status === 402) return "You've used all your generations — upgrade to keep going.";
+    if (res.status === 429) return 'Too many requests in a row. Wait about a minute, then try again.';
+    if (res.status === 413) return 'That file is too large. Try a smaller one.';
+    if (res.status >= 500)  return 'The server hit a problem. Please try again in a moment.';
+    return `Request failed (${res.status}). Please try again.`;
+  }
+
+  /* ────────────────────────────────────────────────────────
      ACCORDION TOGGLES
   ──────────────────────────────────────────────────────── */
   document.querySelectorAll('.vs-section-toggle').forEach(btn => {
@@ -2141,7 +2177,12 @@
         method: 'POST', body: fd,
         headers: { 'X-CSRFToken': CSRF_TOKEN },
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        // "Download failed — please try again" was shown for a 429 and for an
+        // exhausted quota alike, neither of which retrying fixes.
+        showToast(await describeHttpFailure(res), 'danger');
+        return;
+      }
 
       const blob = await res.blob();
       const url  = URL.createObjectURL(blob);
@@ -2354,9 +2395,11 @@
       return;
     }
 
-    // Guard: PDF must be under 10 MB
-    if (pdfFile && pdfFile.size > 10 * 1024 * 1024) {
-      showToast('PDF is too large (max 10 MB). Please compress or paste text instead.', 'danger');
+    // Must match PDF_MAX_BYTES in generator/guards.py. This said 10 MB while the
+    // server refused anything over 5, so a 6-9 MB file uploaded in full, waited,
+    // and was then rejected — the check exists to avoid exactly that round trip.
+    if (pdfFile && pdfFile.size > 5 * 1024 * 1024) {
+      showToast('PDF is too large (max 5 MB). Please compress it or paste the text instead.', 'danger');
       return;
     }
 
@@ -2393,7 +2436,10 @@
       });
 
       if (!res.ok) {
-        throw new Error(`Server error ${res.status}`);
+        // Not thrown: the catch below prefixes "AI error:", which is wrong for
+        // a rate limit or an expired session. Show the server's own wording.
+        showToast(await describeHttpFailure(res), 'danger');
+        return;
       }
 
       const data = await res.json();
@@ -2584,6 +2630,7 @@
         const msg = data.error
           || (res.status === 402 ? "You've run out of generations. Upgrade to Pro!"
             : res.status === 429 ? 'Too many requests — please wait a moment.'
+            : res.status === 401 ? 'Your session expired. Please sign in again.'
             : `Server error ${res.status}.`);
         showToast(msg, 'danger');
         return;

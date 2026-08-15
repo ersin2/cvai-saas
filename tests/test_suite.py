@@ -1624,3 +1624,81 @@ class ResumePdfReadingOrderTest(TestCase):
                             f"after its own content at line {c_idx}. A parser "
                             f"cannot tell where that section starts.",
                         )
+
+
+class QuotaIsDiagnosedBeforeThrottleTest(TestCase):
+    """
+    A user who is out of generations must be told they are out of generations,
+    even when they are also over the per-minute rate limit.
+
+    Both gates can reject the same click and they give opposite advice: the
+    quota is permanent until you upgrade, the throttle clears in sixty seconds.
+    Throttle-first meant someone who spent their last free generation and
+    clicked again got "Too many requests. Please wait a minute and try again."
+    That advice never comes true — after the minute they are still out — and it
+    sends them to support instead of to the pricing page.
+
+    Free accounts are the ones that hit this, because their quota (3 total) and
+    their rate limit (3/min) are the same number, so exhausting one tends to
+    exhaust the other in the same sitting.
+    """
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user('quota_probe', password='pw-12345')
+        self.profile, _ = Profile.objects.get_or_create(user=self.user)
+        self.profile.plan = 'free'
+        self.profile.generations_count = 0        # nothing left
+        self.profile.save()
+        self.client = Client()
+        self.client.force_login(self.user)
+
+    def tearDown(self):
+        cache.clear()
+
+    def _burn_the_rate_limit(self):
+        """Push the per-minute counter past the free-plan ceiling."""
+        for _ in range(RATE_LIMITS['free'] + 2):
+            _check_rate_limit(self.user, 'free')
+
+    def test_out_of_generations_beats_rate_limited_on_the_json_endpoints(self):
+        for url, payload in [
+            (reverse('rewrite_section'), {'text': 'Did some backend work.',
+                                          'section_type': 'summary'}),
+            (reverse('generate_resume'), {'resume': 'Alex Rivera, engineer.'}),
+            (reverse('generate_letter'), {'resume': 'Alex Rivera, engineer.',
+                                          'job_description': 'Backend role.'}),
+        ]:
+            with self.subTest(url=url):
+                cache.clear()
+                self._burn_the_rate_limit()
+                resp = self.client.post(url, payload)
+
+                # Never the throttle's answer — that is the wrong diagnosis.
+                self.assertNotEqual(
+                    resp.status_code, 429,
+                    f"{url} answered a spent-quota user with a rate-limit 429; "
+                    "waiting a minute will not give them another generation.",
+                )
+                body = resp.json()
+                self.assertTrue(
+                    body.get('error'),
+                    f"{url} returned no error for a user with no generations",
+                )
+                self.assertNotIn('wait a minute', body['error'].lower())
+
+    def test_out_of_generations_beats_rate_limited_on_the_tools_pages(self):
+        for name, payload in [
+            ('ats_score',      {'resume': 'Alex Rivera', 'job_description': 'Backend'}),
+            ('interview_prep', {'resume': 'Alex Rivera', 'job_description': 'Backend'}),
+            ('followup_email', {'company_name': 'Northwind', 'job_title': 'Engineer'}),
+        ]:
+            with self.subTest(view=name):
+                cache.clear()
+                self._burn_the_rate_limit()
+                resp = self.client.post(reverse(name), payload)
+
+                self.assertNotEqual(resp.status_code, 429, f"{name} answered with a 429")
+                self.assertEqual(resp.status_code, 200)
+                # These render tools.html with the quota message in tool_error.
+                self.assertContains(resp, 'Upgrade', status_code=200)

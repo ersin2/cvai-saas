@@ -500,6 +500,28 @@
     </div>
 
     <script>
+    /* Turn a failed request into something a person can act on.
+
+       These endpoints answer failures with JSON {"error": "..."} that the
+       server has already worded — the rate limiter, the quota check, the
+       auth guard. "Server error (429)" threw that away and read as a crash
+       when it meant "you clicked too fast". Read the body first. */
+    async function describeHttpFailure(resp) {
+        let payload = {};
+        try {
+            if ((resp.headers.get('content-type') || '').includes('application/json')) {
+                payload = await resp.json();
+            }
+        } catch (e) { /* no usable body — fall back to the status */ }
+        if (payload && payload.error) return payload.error;
+
+        if (resp.status === 401) return 'Your session expired. Please sign in again.';
+        if (resp.status === 402) return "You've used all your generations — upgrade to keep going.";
+        if (resp.status === 429) return 'Too many requests in a row. Wait about a minute, then try again.';
+        if (resp.status >= 500)  return 'The server hit a problem. Please try again in a moment.';
+        return 'Request failed (' + resp.status + '). Please try again.';
+    }
+
         function showTool(name, el) {
             document.querySelectorAll('.tool-panel').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.tool-tab').forEach(t => t.classList.remove('active'));
@@ -574,14 +596,9 @@
                 const resp = await fetch(COVER_URL, { method: 'POST', body: fd });
                 document.getElementById('loadingSpinner').classList.remove('show');
 
-                if (resp.status === 429) {
-                    let msg = 'Too many requests. Please wait a minute.';
-                    try { const d = await resp.json(); msg = d.error || msg; } catch (e) {}
-                    showToast(msg, 'warning');
-                    return;
-                }
                 if (!resp.ok) {
-                    showToast('Server error (' + resp.status + '). Please try again.', 'danger');
+                    showToast(await describeHttpFailure(resp),
+                              resp.status === 429 ? 'warning' : 'danger');
                     return;
                 }
                 const data = await resp.json();
@@ -658,19 +675,12 @@
 
             try {
                 const resp = await fetch(TOOL_URLS[toolName], { method: 'POST', body: formData });
-                if (resp.status === 429) {
-                    let msg = 'Too many requests. Please wait a minute.';
-                    try { const d = await resp.json(); msg = d.error || msg; } catch(e) {}
-                    showToast(msg, 'warning');
-                    btn.disabled = false; btn.innerHTML = origHTML;
-                    document.getElementById('loadingSpinner').classList.remove('show');
-                    return;
-                }
                 if (resp.ok || resp.redirected) {
                     const html = await resp.text();
                     document.open(); document.write(html); document.close();
                 } else {
-                    showToast('Server error (' + resp.status + '). Please try again.', 'danger');
+                    showToast(await describeHttpFailure(resp),
+                              resp.status === 429 ? 'warning' : 'danger');
                     btn.disabled = false; btn.innerHTML = origHTML;
                     document.getElementById('loadingSpinner').classList.remove('show');
                 }
