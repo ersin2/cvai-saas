@@ -474,8 +474,24 @@ def _build_minimal_centered(req, buf, cfg: dict):
                                spaceAfter=6, alignment=1)
     s_info   = ParagraphStyle('I',  fontName=fn, fontSize=9,  textColor=colors.HexColor('#555555'),
                                leading=13, spaceAfter=8, alignment=1)
+    # Section headings are left-aligned even though the header block above is
+    # centred, and that is deliberate.
+    #
+    # When these were centred (alignment=1) their glyphs occupied roughly
+    # x=258-337 while every body paragraph started at x=62. Extractors that
+    # reconstruct reading order from layout — pdfminer's default boxes_flow
+    # among them — read that shared horizontal band as a column of its own and
+    # grouped all four headings together, emitting SUMMARY/EXPERIENCE/SKILLS/
+    # EDUCATION after the body text instead of each above its own section. A
+    # parser using the headings to work out where experience begins would get
+    # nothing useful. This was the only one of the ten templates affected, and
+    # it is TEMPLATES[0]: the default fallback and one of the two templates
+    # free accounts can use.
+    #
+    # The template's centred identity comes from the name/role/contact block,
+    # which is untouched. Covered by ResumePdfReadingOrderTest.
     s_h2     = ParagraphStyle('H2', fontName=fb, fontSize=12,  textColor=C_HEAD,
-                               spaceBefore=16, spaceAfter=4, alignment=1,
+                               spaceBefore=16, spaceAfter=4, alignment=0,
                                textTransform='uppercase', letterSpacing=2)
     s_body   = ParagraphStyle('B',  fontName=fn, fontSize=9.5, textColor=C_TEXT,
                                leading=14, spaceAfter=5)

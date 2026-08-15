@@ -1490,3 +1490,99 @@ class AITransportSelectionTest(TestCase):
             with patch("generator.views._get_ai_client", side_effect=RuntimeError("worker")):
                 self._call()
         direct.assert_not_called()
+
+
+class ResumePdfReadingOrderTest(TestCase):
+    """
+    Every template must place each section heading immediately before the
+    section it labels, under both of the strategies a PDF text extractor can
+    use to reconstruct reading order.
+
+    This exists because `minimal_centered` failed it. Its section headings were
+    centred while the body was left-aligned, so their glyphs sat in a
+    horizontal band of their own; pdfminer's default `boxes_flow` heuristic
+    read that band as a separate column and emitted SUMMARY, EXPERIENCE,
+    SKILLS and EDUCATION together after the body text. An ATS relying on
+    headings to find where experience begins would have been handed the
+    headings detached from every section they name.
+
+    The bug was invisible to the existing PDF tests, which assert that a file
+    renders and starts with %PDF — a scrambled resume passes both. It was also
+    invisible on screen: the page looks correct, only the extracted text is
+    wrong. So the assertion here is on extracted order, not on bytes.
+
+    Both LAParams settings are checked on purpose. Real parsers differ, and a
+    template that only survives one of them is a template that survives some
+    employers' software and not others'.
+    """
+
+    # Each heading and a distinctive string from the section it introduces.
+    SECTIONS = [
+        ("SUMMARY", "payments infrastructure"),
+        ("EXPERIENCE", "Northwind Labs"),
+        ("SKILLS", "PostgreSQL"),
+        ("EDUCATION", "TU Berlin"),
+    ]
+
+    FORM = {
+        "full_name": "Alex Rivera",
+        "email": "alex@example.com",
+        "phone": "+1 555 0100",
+        "location": "Berlin, DE",
+        "target_role": "Senior Backend Engineer",
+        "about_me": "Backend engineer focused on payments infrastructure.",
+        "experience_text": (
+            "Backend Engineer | Northwind Labs | 2022-Present\n"
+            "Cut checkout API p95 latency from 840ms to 210ms."
+        ),
+        "education": "BSc Computer Science | TU Berlin | 2018",
+        "skills_list": "Python, Django, PostgreSQL, Redis, AWS",
+    }
+
+    def _lines(self, pdf_bytes, laparams):
+        from pdfminer.high_level import extract_text
+        text = extract_text(io.BytesIO(pdf_bytes), laparams=laparams)
+        return [ln.strip() for ln in text.splitlines() if ln.strip()]
+
+    def test_headings_precede_their_sections_in_every_template(self):
+        from pdfminer.layout import LAParams
+        from django.test import RequestFactory
+        from generator.pdf_engine import build_pdf, TEMPLATES
+
+        rf = RequestFactory()
+        strategies = [
+            ("reading-flow", LAParams()),
+            ("position-sort", LAParams(boxes_flow=None)),
+        ]
+
+        for tpl in TEMPLATES:
+            slug = tpl["slug"]
+            request = rf.post("/download-pdf/", {**self.FORM, "template_name": slug})
+            buf = build_pdf(slug, request)
+            pdf_bytes = buf.getvalue() if hasattr(buf, "getvalue") else buf.read()
+
+            for strategy_name, laparams in strategies:
+                lines = self._lines(pdf_bytes, laparams)
+
+                for heading, content in self.SECTIONS:
+                    h_idx = next(
+                        (i for i, ln in enumerate(lines) if heading in ln.upper()), None
+                    )
+                    c_idx = next(
+                        (i for i, ln in enumerate(lines) if content in ln), None
+                    )
+                    # A template that renders a section differently (or omits a
+                    # heading entirely) is out of scope here — this test is
+                    # about ordering, not about which sections exist.
+                    if h_idx is None or c_idx is None:
+                        continue
+
+                    with self.subTest(template=slug, strategy=strategy_name,
+                                      section=heading):
+                        self.assertLess(
+                            h_idx, c_idx,
+                            f"{slug}: under {strategy_name} extraction the "
+                            f"'{heading}' heading came out at line {h_idx}, "
+                            f"after its own content at line {c_idx}. A parser "
+                            f"cannot tell where that section starts.",
+                        )
