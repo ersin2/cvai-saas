@@ -5,6 +5,7 @@
 {% block meta_desc %}Access AI-powered cover letters, interview prep, follow-up email generator, and ATS score checker to maximize your job search success.{% endblock %}
 
 {% block extra_head %}
+    <script src="{% static 'generator/js/result-render.js' %}" defer></script>
 
     <style>
         /* ── TOOL TABS ── */
@@ -85,7 +86,9 @@
             border-radius: var(--r-lg);
             padding: 28px;
             margin-top: 28px;
-            white-space: pre-wrap;
+            /* No white-space: pre-wrap — this holds rendered HTML now, and
+               pre-wrap turned the newlines between block tags into blank
+               lines. */
             line-height: 1.8;
             font-size: var(--fs-md);
             color: #cbd5e1;
@@ -170,7 +173,7 @@
         }
         .tool-result-card.trc-open .trc-body { max-height: 320px; }
         .trc-full {
-            white-space: pre-wrap; font-size: var(--fs-sm);
+            font-size: var(--fs-sm);
             color: var(--text-2); line-height: 1.6;
             max-height: 200px; overflow-y: auto;
             padding: 10px 12px 6px;
@@ -442,7 +445,9 @@
                             <i class="fas fa-copy"></i>Copy to Clipboard
                         </button>
                     </div>
-                    <div id="toolResultContent" data-raw-result="{{ tool_result|escape }}"></div>
+                    <div id="toolResultContent" class="res-body"
+                         data-raw-result="{{ tool_result|escape }}"
+                         data-kind="{{ active_tool|default:'' }}"></div>
                 </div>
                 {% endif %}
 
@@ -470,13 +475,23 @@
                             <span class="trc-date">{{ r.created_at|date:"M d" }}</span>
                         </div>
                         <div class="trc-summary">{{ r.input_summary|truncatechars:45 }}</div>
-                        <div class="trc-preview">{{ r.result|truncatechars:120 }}</div>
+                        {% comment %}
+                        Both of these used to print {{ r.result }} straight out,
+                        which is why an ATS report showed as literal pipes and
+                        asterisks. The raw markdown now rides in on a data
+                        attribute and is rendered by CVAIResult on load — the
+                        preview as plain text, the body as formatted HTML.
+                        {% endcomment %}
+                        <div class="trc-preview" data-preview></div>
                         <button class="trc-toggle" onclick="toggleToolResult(this)">
                             <span>View full</span>
                             <i class="fas fa-chevron-down trc-chevron"></i>
                         </button>
                         <div class="trc-body">
-                            <div class="trc-full">{{ r.result }}</div>
+                            <div class="trc-full res-body"
+                                 data-raw="{{ r.result }}"
+                                 data-kind="{{ r.result_type }}"
+                                 data-score="{{ r.score|default_if_none:'' }}"></div>
                             <div class="trc-copy-row">
                                 <button class="trc-copy-btn" onclick="copyTrcItem(this)">
                                     <i class="fas fa-copy"></i> Copy
@@ -629,11 +644,11 @@
             let m;
             while ((m = re.exec(raw)) !== null) {
                 const key = m[1].toUpperCase();
-                _coverSections.push({ key, label: LABELS[key] || key, html: formatMarkdown(m[2].trim()) });
+                _coverSections.push({ key, label: LABELS[key] || key, html: CVAIResult.renderMarkdown(m[2].trim()) });
             }
             // Fallback: model didn't emit tags → show everything in one pane.
             if (_coverSections.length === 0) {
-                _coverSections.push({ key: 'RAW', label: 'Cover Letter', html: formatMarkdown(raw) });
+                _coverSections.push({ key: 'RAW', label: 'Cover Letter', html: CVAIResult.renderMarkdown(raw) });
             }
 
             document.getElementById('coverSectionTabs').innerHTML = _coverSections.map((s, i) =>
@@ -695,40 +710,36 @@
             const contentDiv = document.getElementById('toolResultContent');
             if (contentDiv) {
                 const raw = contentDiv.getAttribute('data-raw-result') || '';
-                contentDiv.innerHTML = formatMarkdown(raw);
+                CVAIResult.render(contentDiv, raw, {
+                    ats: contentDiv.dataset.kind === 'ats',
+                });
             }
-            
-            // Format sidebar history items
-            document.querySelectorAll('.hist-detail').forEach(el => {
-                const raw = el.innerText;
-                el.innerHTML = formatMarkdown(raw);
+
+            // Recent Results: format the body, and derive the collapsed preview
+            // from the rendered text so it reads as prose rather than markup.
+            document.querySelectorAll('.trc-full').forEach(el => {
+                const raw  = el.dataset.raw || '';
+                const kind = el.dataset.kind || '';
+
+                el.innerHTML = CVAIResult.renderMarkdown(raw);
+
+                // Preview is taken here, before enhanceAts injects the score
+                // ring — otherwise the widget's own labels ("ATS match 47/100",
+                // "How much of this posting…") become the preview text.
+                const card    = el.closest('.tool-result-card');
+                const preview = card && card.querySelector('[data-preview]');
+                if (preview) {
+                    const plain = (el.textContent || '').replace(/\s+/g, ' ').trim();
+                    preview.textContent = plain.length > 120
+                        ? plain.slice(0, 120).trimEnd() + '…'
+                        : plain;
+                }
+
+                if (kind === 'ats') {
+                    CVAIResult.enhanceAts(el, el.dataset.score || null);
+                }
             });
         });
-
-        function formatMarkdown(text) {
-            if (!text) return '';
-            let html = text;
-            
-            // Headers
-            html = html.replace(/^### (.*$)/gim, '<h5>$1</h5>');
-            html = html.replace(/^## (.*$)/gim, '<h4>$1</h4>');
-            html = html.replace(/^# (.*$)/gim, '<h3>$1</h3>');
-            
-            // Bold
-            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            
-            // Bullets
-            html = html.replace(/^\s*-\s+(.*$)/gim, '<li>$1</li>');
-            html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>'); // basic wrap
-            
-            // Paragraphs (double newline)
-            html = html.split(/\n\s*\n/).map(p => {
-                if (p.trim().startsWith('<h') || p.trim().startsWith('<ul') || p.trim().startsWith('<li')) return p;
-                return '<p>' + p.replace(/\n/g, '<br>') + '</p>';
-            }).join('\n');
-            
-            return html;
-        }
 
     </script>
 {% endblock content %}

@@ -1632,6 +1632,15 @@ class ResumePdfReadingOrderTest(TestCase):
                         )
 
 
+@override_settings(
+    # These cases render tools.html, which loads a static JS bundle. Without
+    # this the hashed-manifest storage raises for any file added since the last
+    # collectstatic, which is a build step CI does not run.
+    STORAGES={
+        "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    }
+)
 class QuotaIsDiagnosedBeforeThrottleTest(TestCase):
     """
     A user who is out of generations must be told they are out of generations,

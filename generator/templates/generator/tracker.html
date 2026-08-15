@@ -6,7 +6,13 @@
 
 {% block extra_head %}
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    {% comment %}
+  Pinned. This was sortablejs@latest, which means whatever that project
+  publishes next ships straight into production, unreviewed, on the page
+  that moves users' application data between columns.
+  {% endcomment %}
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"
+          integrity="sha384-BSxuMLxX+FCbTdYec3TbXlnMGEEM2QXTFdtDaveen71o+jswm2J36+xFqp8k4VHM" crossorigin="anonymous"></script>
 
     <style>
         /* ── TRACKER STAT CARDS ── */

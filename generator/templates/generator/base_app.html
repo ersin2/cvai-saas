@@ -75,9 +75,43 @@
       </a>
       {% endif %}
 
-      <a href="{% url 'profile' %}" class="user-badge">
-        <i class="fas fa-user"></i>{{ user.username }}
-      </a>
+      {% comment %}
+      Was a Font Awesome person glyph next to the raw username, which looked
+      like one more nav link rather than the signed-in account. Now an initial
+      disc, the name, the plan, and a menu.
+
+      Billing goes to the Stripe portal for paying accounts and to pricing for
+      free ones — there is no settings route in this app, so the menu offers
+      what actually exists rather than a dead link.
+      {% endcomment %}
+      <div class="acct" id="acctChip" data-open="false">
+        <button type="button" class="acct-trigger" id="acctTrigger"
+                aria-haspopup="menu" aria-expanded="false" aria-controls="acctMenu">
+          <span class="acct-avatar" aria-hidden="true">{{ user.username|first }}</span>
+          <span class="acct-name">{{ user.username }}</span>
+          {% if user.profile.plan == 'pro' %}
+            <span class="acct-plan acct-plan-pro">Pro</span>
+          {% elif user.profile.plan == 'elite' %}
+            <span class="acct-plan acct-plan-elite">Elite</span>
+          {% endif %}
+          <i class="fas fa-chevron-down acct-caret" aria-hidden="true"></i>
+        </button>
+
+        <div class="acct-menu" id="acctMenu" role="menu" aria-labelledby="acctTrigger">
+          <div class="acct-menu-head">
+            <strong>{{ user.username }}</strong>
+            <span>{{ user.email|default:"No email on file" }}</span>
+          </div>
+          <a href="{% url 'profile' %}" role="menuitem"><i class="fas fa-user"></i>Profile</a>
+          {% if user.profile.plan == 'free' %}
+            <a href="{% url 'pricing' %}" role="menuitem"><i class="fas fa-credit-card"></i>Plans &amp; billing</a>
+          {% else %}
+            <a href="{% url 'stripe_customer_portal' %}" role="menuitem"><i class="fas fa-credit-card"></i>Billing</a>
+          {% endif %}
+          <div class="acct-menu-sep"></div>
+          <a href="{% url 'logout' %}" class="acct-danger" role="menuitem"><i class="fas fa-sign-out-alt"></i>Log out</a>
+        </div>
+      </div>
     </div>
 
     <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleMobileNav()" aria-label="Open menu">
@@ -175,6 +209,49 @@
       document.getElementById('mobileBackdrop').classList.remove('open');
     }
   });
+
+  /* ── Account menu ──────────────────────────────────────────────────────
+     Closes on Escape, on outside click, and on losing focus to something
+     outside it — so it cannot be left hanging open behind the next click. */
+  (function () {
+    var chip = document.getElementById('acctChip');
+    if (!chip) { return; }
+    var trigger = document.getElementById('acctTrigger');
+    var menu = document.getElementById('acctMenu');
+
+    function setOpen(open) {
+      chip.dataset.open = open ? 'true' : 'false';
+      trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    trigger.addEventListener('click', function (e) {
+      e.stopPropagation();
+      setOpen(chip.dataset.open !== 'true');
+    });
+
+    document.addEventListener('click', function (e) {
+      if (!chip.contains(e.target)) { setOpen(false); }
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape' || chip.dataset.open !== 'true') { return; }
+      setOpen(false);
+      trigger.focus();
+    });
+
+    // Arrow-down from the trigger lands on the first menu item.
+    trigger.addEventListener('keydown', function (e) {
+      if (e.key !== 'ArrowDown') { return; }
+      e.preventDefault();
+      setOpen(true);
+      var first = menu.querySelector('a');
+      if (first) { first.focus(); }
+    });
+
+    chip.addEventListener('focusout', function (e) {
+      if (!chip.contains(e.relatedTarget)) { setOpen(false); }
+    });
+  }());
 
   /* ── Global toast system ── */
   function showToast(message, type) {

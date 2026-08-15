@@ -488,6 +488,45 @@ def _render_text_block(story, text, s_title, s_meta, s_bullet, s_body):
     _flush(current_block)  # flush any remaining block
 
 
+def _education_markup(line):
+    """One education entry as Paragraph markup: degree bold, rest beneath it.
+
+    Entries arrive as "Degree | Institution | Dates". Rendered as a single run,
+    an 88-character entry like
+
+        BSc (Hons) Computer Science | Asia Pacific University (APU) — 2023 – Expected: Nov 2028
+
+    cannot fit one line in a sidebar column, and ReportLab broke it wherever it
+    happened to run out of room: mid-institution in creative_masonry, and in
+    split_header immediately before the dates, orphaning "— 2023 – Expected:
+    Nov 2028" onto a line of its own.
+
+    Splitting on the separator gives the wrap a sensible place to happen, and
+    <nobr> around a trailing date range stops that range being split again.
+    """
+    parts = [p.strip() for p in line.split('|') if p.strip()]
+    if not parts:
+        return None
+    if len(parts) == 1:
+        return f'<b>{_esc(parts[0])}</b>'
+
+    degree = _esc(parts[0])
+    rest = parts[1:]
+
+    # A trailing segment carrying digits is a date range — keep it whole.
+    #
+    # Non-breaking spaces rather than <nobr>: the tag is ignored by the
+    # Paragraph parser in the narrow sidebar columns (right_sidebar_light and
+    # creative_masonry both still broke "2023 – Expected: Nov 2028" in half with
+    # it applied), whereas U+00A0 is honoured everywhere because the line
+    # breaker never treats it as a break opportunity.
+    tail = rest[-1]
+    if any(ch.isdigit() for ch in tail):
+        tail = tail.replace(' ', ' ')
+    detail = ' — '.join([_esc(p) for p in rest[:-1]] + [_esc(tail)])
+    return f'<b>{degree}</b><br/>{detail}'
+
+
 def _render_edu_certs_lang(story, req, s_h2, s_body, s_sub=None,
                             hr_color=None, w="100%", languages=True):
     """
@@ -509,9 +548,9 @@ def _render_edu_certs_lang(story, req, s_h2, s_body, s_sub=None,
             blk.append(HRFlowable(width=w, thickness=0.5,
                                   color=hr_color, spaceAfter=5))
         for line in edu.split('\n'):
-            line = line.strip()
-            if line:
-                blk.append(Paragraph(line, s_sub))
+            markup = _education_markup(line.strip())
+            if markup:
+                blk.append(Paragraph(markup, s_sub))
         story.append(KeepTogether(blk))
 
     certs = req.POST.get('certifications', '').strip()
@@ -1367,8 +1406,9 @@ def _build_hacker_terminal(req, buf, cfg: dict):
     if edu:
         story.append(Paragraph("$ cat education.txt", s_h2))
         for line in edu.split('\n'):
-            if line.strip():
-                story.append(Paragraph(_esc(line.strip()), s_body))
+            markup = _education_markup(line.strip())
+            if markup:
+                story.append(Paragraph(markup, s_body))
 
     # Certifications and languages were the only two sections this template
     # never read. A user who filled them in got a PDF with them silently
@@ -1488,8 +1528,9 @@ def _build_academic_classic(req, buf, cfg: dict):
         story.append(Paragraph("EDUCATION", s_h2))
         story.append(HR())
         for line in edu.split('\n'):
-            if line.strip():
-                story.append(Paragraph(line.strip(), s_body))
+            markup = _education_markup(line.strip())
+            if markup:
+                story.append(Paragraph(markup, s_body))
 
     certs = req.POST.get('certifications', '').strip()
     if certs:
