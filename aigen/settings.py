@@ -165,37 +165,26 @@ STRIPE_PRICE_ID_ELITE = os.environ.get('STRIPE_PRICE_ID_ELITE', '')
 # Legacy alias — kept for any code still referencing STRIPE_PRICE_ID
 STRIPE_PRICE_ID = STRIPE_PRICE_ID_PRO
 
-# AI Microservice — internal FastAPI worker URL
-# Local: http://127.0.0.1:8001  |  Docker: http://ai_worker:8001  |  Render: set via env var
-AI_SERVICE_URL = os.environ.get('AI_SERVICE_URL', 'http://127.0.0.1:8001')
-AI_SERVICE_TOKEN = os.environ.get('AI_SERVICE_TOKEN', '')
-
-# When set, Django calls Anthropic directly and skips the worker hop entirely.
-# Required on hosting without private networking between services — see the
-# comment in generator.views._call_ai_service. Leave unset to keep using the
-# worker (local development, or if the worker is reachable).
+# ── AI provider ──────────────────────────────────────────────────────────────
+# Django calls Anthropic directly. Without this key no endpoint can generate
+# anything, so it is worth failing loudly at startup rather than letting every
+# request return a vague error.
+#
+# There used to be a FastAPI worker between Django and the provider, reached
+# over AI_SERVICE_URL with a shared AI_SERVICE_TOKEN. It has been deleted; both
+# of those settings are gone. The hop could not work on hosting without private
+# networking between services — the internal address did not resolve, and the
+# public URL sent each call out through the platform edge, which rate-limited
+# it with a 429 the worker never saw.
 ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
 ANTHROPIC_MODEL = os.environ.get('ANTHROPIC_MODEL', 'claude-sonnet-5')
 
-# This must be the worker's PRIVATE address (e.g. http://ai-worker:10000), not
-# its public *.onrender.com URL.
-#
-# Pointing it at the public URL sends every request out of the datacenter and
-# back in through the platform edge, which rate-limits it: the worker logs show
-# no /generate requests at all, and Django gets a plain-text "429 Too Many
-# Requests" that never came from FastAPI. It also exposes the worker to the
-# internet, leaving AI_SERVICE_TOKEN as the only thing between a stranger and
-# your API credits.
-#
-# The symptom looks exactly like a provider rate limit, so it is worth one log
-# line at startup rather than another debugging session.
-if AI_SERVICE_URL and '.onrender.com' in AI_SERVICE_URL:
+if not ANTHROPIC_API_KEY:
     import warnings
     warnings.warn(
-        f"AI_SERVICE_URL points at a public URL ({AI_SERVICE_URL}). Requests "
-        "will leave and re-enter the platform edge and are likely to be "
-        "rate-limited with a 429 that never reaches the worker. Use the "
-        "service's private address instead (e.g. http://ai-worker:10000).",
+        "ANTHROPIC_API_KEY is not set. Every AI endpoint — resume generation, "
+        "cover letters, the rewriter, ATS scoring, interview prep and "
+        "follow-up drafts — will return a configuration error until it is.",
         RuntimeWarning,
     )
 

@@ -1104,27 +1104,51 @@ class CompositeDatabaseIndexesTest(TestCase):
         self.assertIn("ai_user_type_idx", ai_indexes)
 
 
-class AIServiceInternalTokenTest(TestCase):
-    @override_settings(AI_SERVICE_TOKEN="secret-test-token")
-    def test_call_ai_service_sends_token_header(self):
+class AITransportHasNoWorkerHopTest(TestCase):
+    """
+    There is exactly one way out to a provider.
+
+    A FastAPI worker used to sit between Django and Anthropic, reached over
+    HTTP with a shared X-Internal-Token. It has been removed: the hop could not
+    work on hosting without private networking, and keeping it as a "fallback"
+    meant the same call logic existed twice, so a fix to one copy silently
+    missed the other.
+
+    This asserts the hop cannot come back by accident — no HTTP request is made
+    on the way to the provider.
+    """
+
+    @override_settings(ANTHROPIC_API_KEY="sk-test")
+    def test_no_http_request_is_made_to_reach_the_provider(self):
         import asyncio
         from unittest.mock import AsyncMock, patch
         from generator.views import _call_ai_service
 
-        mock_resp = MagicMock()
-        mock_resp.raise_for_status = MagicMock()
-        mock_resp.json.return_value = {"result": "AI generated text", "error": None}
+        async def fake_direct(system, user, **kw):
+            return "generated"
 
-        with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
-            mock_post.return_value = mock_resp
-            result, err = asyncio.run(_call_ai_service("sys", "user"))
-            self.assertEqual(result, "AI generated text")
-            self.assertIsNone(err)
-            # Verify X-Internal-Token header was forwarded
-            call_kwargs = mock_post.call_args[1]
-            self.assertEqual(call_kwargs.get("headers", {}).get("X-Internal-Token"), "secret-test-token")
+        with patch("generator.views.call_anthropic", fake_direct):
+            with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as posted:
+                result, err = asyncio.run(_call_ai_service("sys", "user"))
 
+        self.assertEqual(result, "generated")
+        self.assertIsNone(err)
+        posted.assert_not_called()
 
+    @override_settings(ANTHROPIC_API_KEY="")
+    def test_missing_key_is_reported_as_configuration_not_as_retryable(self):
+        """
+        A missing key never recovers. Telling the user to try again sent them
+        into a loop against a server that could not answer, which is how the
+        last outage stayed invisible.
+        """
+        import asyncio
+        from generator.views import _call_ai_service
+
+        result, err = asyncio.run(_call_ai_service("sys", "user"))
+        self.assertIsNone(result)
+        self.assertIn("not configured", err)
+        self.assertNotIn("try again", err.lower())
 
 
 # ===========================================================================
@@ -1264,15 +1288,14 @@ class AnthropicEffortFallbackTest(TestCase):
     `effort` is model-gated: the Opus/Sonnet reasoning models accept it, Haiku
     4.5 rejects the whole request with a 400. ANTHROPIC_MODEL is an env var, so
     pointing it at a cheaper model would otherwise 400 every resume parse in
-    production. The worker retries once without `effort` instead.
-    """
+    production. The client retries once without `effort` instead.
 
-    def _worker(self):
-        import sys, importlib
-        if 'ai_service' not in sys.path:
-            sys.path.insert(0, 'ai_service')
-        import main as worker
-        return importlib.reload(worker)
+    This used to exercise the FastAPI worker's copy of the call logic. The same
+    logic also lived in generator/ai_client.py, which is the copy Django
+    actually used — so the retry that production depended on was never the one
+    under test. That is the concrete cost of having had two clients. The worker
+    is gone and this now points at the only remaining implementation.
+    """
 
     def _fake_anthropic(self, reject_effort):
         import types
@@ -1310,13 +1333,12 @@ class AnthropicEffortFallbackTest(TestCase):
     def _run(self, reject_effort):
         import sys, asyncio
         from unittest.mock import patch
-        worker = self._worker()
-        worker.ANTHROPIC_API_KEY = "sk-test"
+        from generator.ai_client import call_anthropic
         mod, calls = self._fake_anthropic(reject_effort)
         with patch.dict(sys.modules, {"anthropic": mod}):
-            out = asyncio.run(worker._call_anthropic(
-                "sys", "usr", max_tokens=1024,
-                json_schema={"type": "object"}, effort="low",
+            out = asyncio.run(call_anthropic(
+                "sys", "usr", api_key="sk-test", model="claude-haiku-4-5",
+                max_tokens=1024, json_schema={"type": "object"}, effort="low",
             ))
         return out, calls
 
@@ -1427,24 +1449,23 @@ class PaidPlanMeteringTest(TestCase):
 
 class AITransportSelectionTest(TestCase):
     """
-    Django calls Anthropic directly when it can see a key, and only falls back
-    to the FastAPI worker otherwise.
+    Every endpoint reaches Anthropic through one function, with the key and
+    model taken from settings.
 
-    The hop is not viable on hosting without private networking between
-    services: the worker's internal address does not resolve, and its public
-    URL routes each call out and back through the platform edge, which
-    rate-limits it with a 429 the worker never sees.
+    This used to assert a choice between two transports — direct, or a hop
+    through a FastAPI worker. The worker is gone, so the tests that asserted
+    the worker was still used for Groq and for the no-key case have been
+    removed rather than rewritten: they described behaviour that no longer
+    exists, and a test kept alive past its subject is worse than no test.
     """
 
-    def _call(self, provider="anthropic"):
+    def _call(self, **kw):
         import asyncio
         from generator.views import _call_ai_service
-        return asyncio.run(_call_ai_service(
-            "sys", "usr", provider=provider, max_tokens=512,
-        ))
+        return asyncio.run(_call_ai_service("sys", "usr", max_tokens=512, **kw))
 
     @override_settings(ANTHROPIC_API_KEY="sk-test", ANTHROPIC_MODEL="claude-sonnet-5")
-    def test_uses_the_direct_path_when_a_key_is_present(self):
+    def test_passes_the_configured_key_and_model_through(self):
         from unittest.mock import patch
         seen = {}
 
@@ -1453,16 +1474,29 @@ class AITransportSelectionTest(TestCase):
             return "direct-result"
 
         with patch("generator.views.call_anthropic", fake_direct):
-            with patch("generator.views._get_ai_client") as http:
-                result, err = self._call()
+            result, err = self._call()
+
         self.assertEqual(result, "direct-result")
         self.assertIsNone(err)
-        http.assert_not_called()   # the worker must not be contacted
         self.assertEqual(seen["api_key"], "sk-test")
         self.assertEqual(seen["model"], "claude-sonnet-5")
 
+    @override_settings(ANTHROPIC_API_KEY="sk-test", ANTHROPIC_MODEL="claude-sonnet-5")
+    def test_an_explicit_model_overrides_the_configured_default(self):
+        from unittest.mock import patch
+        seen = {}
+
+        async def fake_direct(system, user, **kw):
+            seen.update(kw)
+            return "ok"
+
+        with patch("generator.views.call_anthropic", fake_direct):
+            self._call(model="claude-opus-5")
+
+        self.assertEqual(seen["model"], "claude-opus-5")
+
     @override_settings(ANTHROPIC_API_KEY="sk-test")
-    def test_direct_path_errors_surface_as_user_messages(self):
+    def test_client_errors_surface_as_user_messages(self):
         from unittest.mock import patch
         from generator.ai_client import AIClientError
 
@@ -1471,25 +1505,28 @@ class AITransportSelectionTest(TestCase):
 
         with patch("generator.views.call_anthropic", fake_direct):
             result, err = self._call()
+
         self.assertIsNone(result)
         self.assertEqual(err, "The AI declined this request.")
 
     @override_settings(ANTHROPIC_API_KEY="sk-test")
-    def test_groq_still_goes_through_the_worker(self):
-        """Only the Anthropic path is short-circuited."""
+    def test_temperature_is_never_forwarded(self):
+        """
+        The current Claude models reject sampling parameters with a 400. Six
+        call sites still pass a temperature, so the transport has to swallow it
+        rather than trust callers to stop.
+        """
         from unittest.mock import patch
-        with patch("generator.views.call_anthropic") as direct:
-            with patch("generator.views._get_ai_client", side_effect=RuntimeError("worker")):
-                self._call(provider="groq")
-        direct.assert_not_called()
+        seen = {}
 
-    @override_settings(ANTHROPIC_API_KEY="")
-    def test_falls_back_to_the_worker_without_a_key(self):
-        from unittest.mock import patch
-        with patch("generator.views.call_anthropic") as direct:
-            with patch("generator.views._get_ai_client", side_effect=RuntimeError("worker")):
-                self._call()
-        direct.assert_not_called()
+        async def fake_direct(system, user, **kw):
+            seen.update(kw)
+            return "ok"
+
+        with patch("generator.views.call_anthropic", fake_direct):
+            self._call(temperature=0.9)
+
+        self.assertNotIn("temperature", seen)
 
 
 class ResumePdfReadingOrderTest(TestCase):

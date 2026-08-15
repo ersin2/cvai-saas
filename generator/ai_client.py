@@ -17,15 +17,16 @@ Neither is fixable with an environment variable. Since every endpoint now uses
 Anthropic, the worker had become a network detour between Django and an API
 Django can call itself — so it calls it directly.
 
-The worker is still there and still works; `_call_ai_service` prefers this path
-only when ANTHROPIC_API_KEY is readable from Django's own environment, and
-falls back to the HTTP hop otherwise. That keeps local development and the
-Groq path working unchanged.
+The worker has since been deleted. It was kept for a while as a "fallback",
+which meant this call logic existed twice, in two services, with one test
+covering only the copy production did not use — the `effort` retry that every
+resume parse depends on was never the one under test. Two implementations of
+one thing is not redundancy when only one of them runs.
 
-The call logic mirrors ai_service.main._call_anthropic, including the parts
-that are easy to get wrong: thinking blocks arriving before the text block,
-refusals returning HTTP 200 with no content, and `effort` being rejected
-outright by models that do not support it.
+This is the only client. It handles the parts that are easy to get wrong:
+thinking blocks arriving before the text block, refusals returning HTTP 200
+with no content, and `effort` being rejected outright by models that do not
+support it. Covered by AnthropicEffortFallbackTest.
 """
 
 import logging
@@ -54,8 +55,9 @@ async def call_anthropic(
     Raises AIClientError with a user-safe message on any failure.
 
     Deliberately does not accept `temperature`: the current Claude models
-    removed the sampling parameters and reject the request with a 400, so the
-    value the Groq path uses must not reach here.
+    removed the sampling parameters and reject the request with a 400. Several
+    call sites still pass one, so the transport in views.py swallows it and it
+    must not be reintroduced here.
     """
     try:
         import anthropic

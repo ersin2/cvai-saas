@@ -8,7 +8,7 @@ import socket
 import ipaddress
 
 from asgiref.sync import sync_to_async          # wrap sync ORM/render calls for use in async views
-from django.conf import settings                # reads AI_SERVICE_URL
+from django.conf import settings
 from django.core.cache import cache             # lightweight rate-limiting store
 from django.db.models import Count, Q           # aggregate dashboard stats in one query
 from django.shortcuts import render, redirect, get_object_or_404
@@ -581,151 +581,77 @@ def _validate_resume_json(parsed):
 
 
 # ---------------------------------------------------------------------------
-# ASYNC AI MICROSERVICE CLIENT
-# Django forwards prompts to the FastAPI ai_worker service.
-# Uses a lazily-managed httpx.AsyncClient with connection pooling across requests.
+# AI TRANSPORT
+# Django calls Anthropic directly. There is no worker service and no HTTP hop;
+# see the docstring below for why the hop was removed.
 # ---------------------------------------------------------------------------
-_ai_client: httpx.AsyncClient | None = None
-
-def _get_ai_client() -> httpx.AsyncClient:
-    global _ai_client
-    if _ai_client is None or _ai_client.is_closed:
-        _ai_client = httpx.AsyncClient(timeout=90.0)
-    return _ai_client
-
 async def _call_ai_service(
     system_prompt: str,
     user_prompt: str,
     temperature: float = 0.7,
     json_mode: bool = False,
     max_tokens: int = 4096,
-    provider: str = "groq",
     json_schema: dict | None = None,
     effort: str | None = None,
     model: str | None = None,
 ):
     """
-    Async POST to the FastAPI /generate endpoint.
-    Returns (result_text | None, error_message | None).
+    Call Anthropic and return (result_text | None, error_message | None).
 
-    json_mode  — ask the provider for constrained JSON decoding (resume parser).
-    max_tokens — structured resumes need more headroom than prose responses.
+    max_tokens  — structured resumes need more headroom than prose responses.
+    json_schema — constrains the response to the schema.
+    effort      — reasoning depth; thinking shares the max_tokens budget with
+                  the response, so extraction sends 'low'.
 
-    provider    — 'groq' (default, prose endpoints) or 'anthropic'. Groq counts
-                  max_tokens against a 6000 tokens/minute budget, so the resume
-                  parser's 8192-token reservation can never fit there however
-                  short the prompt is; that path uses Anthropic instead.
-    json_schema — Anthropic only. Constrains the response to the schema.
-    effort      — Anthropic only. Reasoning depth; thinking shares max_tokens
-                  with the response, so extraction sends 'low'.
+    `temperature` and `json_mode` are accepted and ignored. They are left in the
+    signature because call sites still pass them, and because the current Claude
+    models reject sampling parameters with a 400 — so the value must not reach
+    the API even if a caller supplies one.
 
-    `temperature` is sent but the worker drops it on the Anthropic path — the
-    current Claude models reject sampling parameters with a 400.
+    HISTORY — why there is only one path here now
+    --------------------------------------------
+    This used to POST to a FastAPI worker, which owned the provider keys and
+    could route to Groq or Anthropic. That worker has been deleted.
+
+    The hop could not work on the current hosting. The plan has no private
+    networking between services, so the worker's internal address did not
+    resolve; pointing at its public URL instead sent every call out of the
+    datacenter and back in through the platform edge, which rate-limited it
+    with a 429 the worker never saw. That took generation down in production.
+
+    The interim fix added a direct Anthropic call here and kept the HTTP hop as
+    a fallback. That left the same call logic — thinking blocks, refusals, the
+    `effort` retry — written twice, in two languages of failure, where fixing
+    one would silently miss the other. Since every endpoint routes to Anthropic
+    and the fallback could not work in production anyway, the fallback was not
+    a safety net; it was a second copy pretending to be one.
     """
-    ai_url = getattr(settings, "AI_SERVICE_URL", "http://127.0.0.1:8001").rstrip("/")
-    # ── Direct path ──────────────────────────────────────────────────────────
-    # When Django can see an Anthropic key it calls the API itself instead of
-    # hopping through the FastAPI worker.
-    #
-    # The hop is not viable on the current hosting: the plan has no private
-    # networking, so the worker's internal address does not resolve, and its
-    # public URL routes each call out of the datacenter and back through the
-    # platform edge, which rate-limits it with a 429 the worker never sees.
-    # Since every endpoint now uses Anthropic, the worker was a detour between
-    # Django and an API Django can call directly.
-    #
-    # The worker still works and is still used when no key is present here, so
-    # local development and the Groq path are unchanged.
     anthropic_key = getattr(settings, "ANTHROPIC_API_KEY", "")
-    if provider == "anthropic" and anthropic_key:
-        try:
-            text = await call_anthropic(
-                system_prompt, user_prompt,
-                api_key=anthropic_key,
-                model=model or getattr(settings, "ANTHROPIC_MODEL", "claude-sonnet-5"),
-                max_tokens=max_tokens,
-                json_schema=json_schema,
-                effort=effort,
-            )
-            return text, None
-        except AIClientError as exc:
-            return None, str(exc)
-        except Exception as exc:
-            logger.exception("Direct Anthropic call failed: %s", exc)
-            return None, "Something went wrong with AI generation."
+    if not anthropic_key:
+        # A configuration problem, not a transient one. Saying "try again"
+        # here sent users into a retry loop against a server that could never
+        # answer, which is how the last outage stayed invisible for so long.
+        logger.error("ANTHROPIC_API_KEY is not set — no AI generation is possible.")
+        return None, ("The AI service is not configured on this server. This is "
+                      "not something retrying will fix — please contact support.")
 
-    headers = {}
-    token = getattr(settings, "AI_SERVICE_TOKEN", "")
-    if token:
-        headers["X-Internal-Token"] = token
-
-    payload = {
-        "system_prompt": system_prompt,
-        "user_prompt": user_prompt,
-        "provider": provider,
-        "temperature": temperature,
-        "json_mode": json_mode,
-        "max_tokens": max_tokens,
-    }
-    if json_schema is not None:
-        payload["json_schema"] = json_schema
-    if effort is not None:
-        payload["effort"] = effort
-    if model is not None:
-        payload["model"] = model
     try:
-        client = _get_ai_client()
-        resp = await client.post(f"{ai_url}/generate", json=payload, headers=headers)
-        resp.raise_for_status()
-        data = resp.json()
-        if data.get("error"):
-            return None, data["error"]
-        return data.get("result"), None
-
-    except httpx.ConnectError:
-        logger.error("Cannot reach AI service at %s — is ai_worker running?", ai_url)
-        return None, ("AI service is not running. Start it with run_all.bat "
-                      "(uvicorn ai_service.main:app --port 8001) and try again.")
-    except httpx.TimeoutException:
-        return None, "AI took too long to respond. Please try again."
-    except httpx.HTTPStatusError as exc:
-        body = exc.response.text[:200]
-        logger.error("AI service HTTP error %s: %s", exc.response.status_code, body)
-        # A 404, or an HTML body, means something other than the AI worker is
-        # answering on AI_SERVICE_URL — most often a second Django dev server
-        # started on port 8001, which occupies the port the worker needs.
-        if exc.response.status_code == 404 or body.lstrip()[:9].lower() in ('<!doctype', '<html'):
-            return None, (f"{ai_url} is not the AI service — another app is running on "
-                          "that port. Stop it and start the AI worker (run_all.bat).")
-        # A 503 from the worker means a provider key is missing, not that the
-        # request was bad — retrying will fail identically until it is set.
-        # Saying "please try again" sent users in a loop and hid a config error
-        # behind what looked like a transient fault.
-        # A 429 cannot originate in the worker: both provider paths convert rate
-        # limits into a 200 with an `error` field. So a 429 here came from
-        # something in front of it — in practice the platform edge, because
-        # AI_SERVICE_URL was pointed at the worker's public URL instead of its
-        # private address, sending each call out of the datacenter and back.
-        # "Please try again" is actively misleading for that: it never recovers.
-        if exc.response.status_code == 429:
-            logger.error(
-                "429 from the AI service at %s — this is not a provider rate "
-                "limit; the worker converts those to a 200. Check that "
-                "AI_SERVICE_URL is the private address, not a public URL.",
-                ai_url,
-            )
-            return None, ("The AI service is unreachable due to a server "
-                          "configuration problem. This is not something you can "
-                          "fix by retrying — please contact support.")
-        if exc.response.status_code == 503 and 'not configured' in body.lower():
-            logger.error("AI provider key missing on the worker: %s", body[:200])
-            return None, ("The AI service is not fully configured yet. This is a "
-                          "server-side setup issue, not a problem with your input — "
-                          "please contact support.")
-        return None, f"AI service error ({exc.response.status_code}). Please try again."
+        text = await call_anthropic(
+            system_prompt, user_prompt,
+            api_key=anthropic_key,
+            model=model or getattr(settings, "ANTHROPIC_MODEL", "claude-sonnet-5"),
+            max_tokens=max_tokens,
+            json_schema=json_schema,
+            effort=effort,
+        )
+        return text, None
+    except AIClientError as exc:
+        # Already phrased for a user by ai_client.
+        return None, str(exc)
     except Exception as exc:
-        logger.exception("AI service unexpected error: %s", exc)
+        logger.exception("Anthropic call failed: %s", exc)
         return None, "Something went wrong with AI generation."
+
 
 
 
@@ -901,7 +827,7 @@ Generate the elite career response now.
         # five tagged sections plus thinking.
         result, error_message = await _call_ai_service(
             system_prompt, user_prompt,
-            provider="anthropic", model=AI_MODEL_PROSE, max_tokens=8192,
+            model=AI_MODEL_PROSE, max_tokens=8192,
         )
 
         if result:
@@ -997,10 +923,10 @@ async def generate_resume(request):
         error_message = profile.quota_message()
     else:
         # ── STRUCTURED JSON RESUME PROMPT ──────────────────────────────────
-        # Kept deliberately terse: system + user must fit Groq's 6000 TPM limit
-        # for llama-3.1-8b-instant, which a 2900-char system prompt exceeded
-        # (HTTP 413). Every rule below is load-bearing — shorten further only by
-        # removing words, never rules, and re-check the token budget first.
+        # Kept deliberately terse. This was compressed to fit a 6000 tokens/min
+        # budget on a provider that has since been dropped, so the hard limit is
+        # gone — but every rule below is load-bearing and the brevity costs
+        # nothing. Shorten only by removing words, never rules.
         system_prompt = f"""You are an expert resume parsing engine. Convert unstructured candidate text into one clean, structured JSON object.
 
 LANGUAGE: Detect the input's language. ALL content values MUST be in it. User selected {language} — fallback only.
@@ -1038,10 +964,10 @@ Output Language: {language}
 
 Generate the structured JSON resume now."""
 
-        # Routed to Anthropic, not Groq. Groq counts the max_tokens reservation
-        # against a 6000 tokens/minute budget, so this call's 8192-token
-        # reservation is 137% of the entire budget on its own — it 413'd and
-        # then 429'd in production regardless of how short the prompt was.
+        # This call reserves 8192 tokens. That reservation is why the previous
+        # provider could never serve it: it counted the reservation against a
+        # 6000 tokens/minute budget, so the call was 137% of the whole budget on
+        # its own and failed regardless of how short the prompt was.
         #
         # Extraction is a fidelity task, not a creative one: the schema is
         # enforced by the provider rather than requested in prose, and effort
@@ -1050,7 +976,7 @@ Generate the structured JSON resume now."""
         raw_result, error_message = await _call_ai_service(
             system_prompt, user_prompt,
             temperature=0.1, json_mode=True, max_tokens=8192,
-            provider="anthropic", json_schema=RESUME_JSON_SCHEMA, effort="low",
+            json_schema=RESUME_JSON_SCHEMA, effort="low",
         )
 
         problems = ['No response from the AI service.'] if not raw_result else None
@@ -1077,7 +1003,7 @@ Generate the structured JSON resume now."""
                 retry_raw, retry_error = await _call_ai_service(
                     system_prompt, repair_prompt,
                     temperature=0.0, json_mode=True, max_tokens=8192,
-                    provider="anthropic", json_schema=RESUME_JSON_SCHEMA, effort="low",
+                    json_schema=RESUME_JSON_SCHEMA, effort="low",
                 )
                 if retry_raw:
                     retry_result, retry_problems = _parse_and_validate_resume(retry_raw)
@@ -1258,7 +1184,7 @@ async def rewrite_section(request):
         # writing-judgement task, not a throughput task.
         # temperature is ignored on the Anthropic path (see _call_ai_service).
         temperature=0.55,
-        provider="anthropic", model=AI_MODEL_PROSE,
+        model=AI_MODEL_PROSE,
     )
 
     if error or not rewritten:
@@ -1614,10 +1540,9 @@ Be specific to the role and company. No generic questions."""
 
     result, error = await _call_ai_service(
         system_prompt, user_prompt,
-        # Moved off llama-3.1-8b with the letter and the rewriter: this is
-        # analysis a user reads and acts on, not a throughput task. It also
-        # drops the last dependency on a second provider.
-        provider="anthropic", model=AI_MODEL_PROSE,
+        # Analysis a user reads and acts on, not a throughput task — worth a
+        # stronger model than the cheap one this used to run on.
+        model=AI_MODEL_PROSE,
     )
 
     if result:
@@ -1682,10 +1607,9 @@ Do NOT be generic — reference the specific role and company."""
 
     result, error = await _call_ai_service(
         system_prompt, user_prompt,
-        # Moved off llama-3.1-8b with the letter and the rewriter: this is
-        # analysis a user reads and acts on, not a throughput task. It also
-        # drops the last dependency on a second provider.
-        provider="anthropic", model=AI_MODEL_PROSE,
+        # Analysis a user reads and acts on, not a throughput task — worth a
+        # stronger model than the cheap one this used to run on.
+        model=AI_MODEL_PROSE,
     )
 
     if result:
@@ -1754,10 +1678,9 @@ Be brutally honest. Give specific keyword suggestions. Start with the score on t
 
     result, error = await _call_ai_service(
         system_prompt, user_prompt,
-        # Moved off llama-3.1-8b with the letter and the rewriter: this is
-        # analysis a user reads and acts on, not a throughput task. It also
-        # drops the last dependency on a second provider.
-        provider="anthropic", model=AI_MODEL_PROSE,
+        # Analysis a user reads and acts on, not a throughput task — worth a
+        # stronger model than the cheap one this used to run on.
+        model=AI_MODEL_PROSE,
     )
 
     score = None

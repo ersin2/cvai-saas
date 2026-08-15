@@ -30,24 +30,15 @@ services:
       - key: ALLOWED_HOSTS
         value: "*"
       # Anthropic — Django calls the API directly (generator/ai_client.py).
-      # This is what makes generation work; without it Django falls back to the
-      # ai-worker HTTP hop, which does not work on plans without private
-      # networking (see AI_SERVICE_URL below).
+      # Required: there is no other path to a provider. A FastAPI worker used
+      # to sit in between, but this plan has no private networking, so its
+      # internal address did not resolve and its public URL was rate-limited
+      # by the platform edge. The worker has been removed.
       - key: ANTHROPIC_API_KEY
         sync: false
       - key: ANTHROPIC_MODEL
         value: "claude-sonnet-5"
 
-      # Only used when ANTHROPIC_API_KEY is absent here, i.e. the worker hop.
-      #
-      # Note for anyone re-enabling that path: on a plan without private
-      # networking neither value works. The private address does not resolve,
-      # and the worker's public *.onrender.com URL sends each call out of the
-      # datacenter and back through the platform edge, which rate-limits it
-      # with a 429 the worker never sees. That is why Django calls Anthropic
-      # directly instead.
-      - key: AI_SERVICE_URL
-        value: "http://ai-worker:10000"
       - key: REDIS_URL
         fromService:
           name: mysite-redis
@@ -64,31 +55,9 @@ services:
         sync: false
       - key: STRIPE_PRICE_ID_ELITE
         sync: false
-      # AI Service Token Authentication
-      - key: AI_SERVICE_TOKEN
-        sync: false
       # Sentry (set manually in Render dashboard)
       - key: SENTRY_DSN
         sync: false
       # Custom domain fallback for CSRF_TRUSTED_ORIGINS (optional)
       - key: APP_URL
-        sync: false
-
-  # ── FastAPI AI worker ─────────────────────────────────────────────────────
-  - type: pserv
-    name: ai-worker
-    plan: free
-    runtime: python
-    rootDir: ai_service
-    buildCommand: "pip install -r requirements-ai.txt"
-    # Private services always bind on port 10000 — do NOT use $PORT
-    startCommand: "uvicorn main:app --host 0.0.0.0 --port 10000"
-    envVars:
-      - key: AI_SERVICE_TOKEN
-        sync: false
-      - key: GROQ_API_KEY
-        sync: false
-      - key: ANTHROPIC_API_KEY
-        sync: false
-      - key: SENTRY_DSN
         sync: false

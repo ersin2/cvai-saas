@@ -124,15 +124,23 @@
             security measures including HTTPS, hashed passwords, and CSRF protection. We limit access to personal data
             to authorized personnel only.</p>
 
+        {% comment %}
+        This names the provider your data is actually sent to. It said Groq,
+        which stopped being true when every endpoint moved to Anthropic — a
+        privacy policy naming the wrong recipient of users' resumes is a
+        disclosure problem, not a stale comment. If the provider changes again,
+        this section and the sub-processor list below must change with it.
+        {% endcomment %}
         <h2>4. AI Processing</h2>
-        <p>Your resume and job description text are sent to our AI provider (Groq) for processing. This data is used
-            solely to generate your resume and is not stored by the AI provider for training purposes.</p>
+        <p>Your resume and job description text are sent to our AI provider, Anthropic, for processing. This data is
+            used solely to generate the output you requested. Anthropic does not train its models on data submitted
+            through its API.</p>
 
         <h2>5. Data Sharing</h2>
         <p>We do not sell your personal data. We share data only with:</p>
         <ul>
             <li><strong>Stripe:</strong> For payment processing</li>
-            <li><strong>Groq:</strong> For AI text generation</li>
+            <li><strong>Anthropic:</strong> For AI text generation</li>
             <li><strong>Hosting provider:</strong> For infrastructure and deployment</li>
         </ul>
 
