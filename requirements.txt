@@ -46,3 +46,6 @@ boto3>=1.43.33
 Pillow>=10.0.0
 
 
+
+# Anthropic SDK — Django calls the API directly (see generator/ai_client.py)
+anthropic>=0.40.0

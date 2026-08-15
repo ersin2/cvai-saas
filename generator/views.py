@@ -22,6 +22,7 @@ from pdfminer.layout import LAParams
 from users.models import Profile
 from .models import Generation, JobApplication, AIResult
 from .pdf_engine import build_pdf, TEMPLATES
+from .ai_client import call_anthropic, AIClientError
 
 logger = logging.getLogger(__name__)
 
@@ -622,6 +623,37 @@ async def _call_ai_service(
     current Claude models reject sampling parameters with a 400.
     """
     ai_url = getattr(settings, "AI_SERVICE_URL", "http://127.0.0.1:8001").rstrip("/")
+    # ── Direct path ──────────────────────────────────────────────────────────
+    # When Django can see an Anthropic key it calls the API itself instead of
+    # hopping through the FastAPI worker.
+    #
+    # The hop is not viable on the current hosting: the plan has no private
+    # networking, so the worker's internal address does not resolve, and its
+    # public URL routes each call out of the datacenter and back through the
+    # platform edge, which rate-limits it with a 429 the worker never sees.
+    # Since every endpoint now uses Anthropic, the worker was a detour between
+    # Django and an API Django can call directly.
+    #
+    # The worker still works and is still used when no key is present here, so
+    # local development and the Groq path are unchanged.
+    anthropic_key = getattr(settings, "ANTHROPIC_API_KEY", "")
+    if provider == "anthropic" and anthropic_key:
+        try:
+            text = await call_anthropic(
+                system_prompt, user_prompt,
+                api_key=anthropic_key,
+                model=model or getattr(settings, "ANTHROPIC_MODEL", "claude-sonnet-5"),
+                max_tokens=max_tokens,
+                json_schema=json_schema,
+                effort=effort,
+            )
+            return text, None
+        except AIClientError as exc:
+            return None, str(exc)
+        except Exception as exc:
+            logger.exception("Direct Anthropic call failed: %s", exc)
+            return None, "Something went wrong with AI generation."
+
     headers = {}
     token = getattr(settings, "AI_SERVICE_TOKEN", "")
     if token:

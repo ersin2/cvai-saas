@@ -1419,3 +1419,74 @@ class PaidPlanMeteringTest(TestCase):
 
         _user2, free = _make_user(username="msgfree", plan="free")
         self.assertIn("free", free.quota_message().lower())
+
+
+# ===========================================================================
+# 16. AI TRANSPORT SELECTION
+# ===========================================================================
+
+class AITransportSelectionTest(TestCase):
+    """
+    Django calls Anthropic directly when it can see a key, and only falls back
+    to the FastAPI worker otherwise.
+
+    The hop is not viable on hosting without private networking between
+    services: the worker's internal address does not resolve, and its public
+    URL routes each call out and back through the platform edge, which
+    rate-limits it with a 429 the worker never sees.
+    """
+
+    def _call(self, provider="anthropic"):
+        import asyncio
+        from generator.views import _call_ai_service
+        return asyncio.run(_call_ai_service(
+            "sys", "usr", provider=provider, max_tokens=512,
+        ))
+
+    @override_settings(ANTHROPIC_API_KEY="sk-test", ANTHROPIC_MODEL="claude-sonnet-5")
+    def test_uses_the_direct_path_when_a_key_is_present(self):
+        from unittest.mock import patch
+        seen = {}
+
+        async def fake_direct(system, user, **kw):
+            seen.update(kw)
+            return "direct-result"
+
+        with patch("generator.views.call_anthropic", fake_direct):
+            with patch("generator.views._get_ai_client") as http:
+                result, err = self._call()
+        self.assertEqual(result, "direct-result")
+        self.assertIsNone(err)
+        http.assert_not_called()   # the worker must not be contacted
+        self.assertEqual(seen["api_key"], "sk-test")
+        self.assertEqual(seen["model"], "claude-sonnet-5")
+
+    @override_settings(ANTHROPIC_API_KEY="sk-test")
+    def test_direct_path_errors_surface_as_user_messages(self):
+        from unittest.mock import patch
+        from generator.ai_client import AIClientError
+
+        async def fake_direct(system, user, **kw):
+            raise AIClientError("The AI declined this request.")
+
+        with patch("generator.views.call_anthropic", fake_direct):
+            result, err = self._call()
+        self.assertIsNone(result)
+        self.assertEqual(err, "The AI declined this request.")
+
+    @override_settings(ANTHROPIC_API_KEY="sk-test")
+    def test_groq_still_goes_through_the_worker(self):
+        """Only the Anthropic path is short-circuited."""
+        from unittest.mock import patch
+        with patch("generator.views.call_anthropic") as direct:
+            with patch("generator.views._get_ai_client", side_effect=RuntimeError("worker")):
+                self._call(provider="groq")
+        direct.assert_not_called()
+
+    @override_settings(ANTHROPIC_API_KEY="")
+    def test_falls_back_to_the_worker_without_a_key(self):
+        from unittest.mock import patch
+        with patch("generator.views.call_anthropic") as direct:
+            with patch("generator.views._get_ai_client", side_effect=RuntimeError("worker")):
+                self._call()
+        direct.assert_not_called()

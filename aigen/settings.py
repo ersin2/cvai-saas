@@ -170,6 +170,13 @@ STRIPE_PRICE_ID = STRIPE_PRICE_ID_PRO
 AI_SERVICE_URL = os.environ.get('AI_SERVICE_URL', 'http://127.0.0.1:8001')
 AI_SERVICE_TOKEN = os.environ.get('AI_SERVICE_TOKEN', '')
 
+# When set, Django calls Anthropic directly and skips the worker hop entirely.
+# Required on hosting without private networking between services — see the
+# comment in generator.views._call_ai_service. Leave unset to keep using the
+# worker (local development, or if the worker is reachable).
+ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
+ANTHROPIC_MODEL = os.environ.get('ANTHROPIC_MODEL', 'claude-sonnet-5')
+
 # This must be the worker's PRIVATE address (e.g. http://ai-worker:10000), not
 # its public *.onrender.com URL.
 #
