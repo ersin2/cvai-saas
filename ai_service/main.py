@@ -104,6 +104,15 @@ class GenerateRequest(BaseModel):
                     "task, so the resume parser sends 'low' to keep thinking "
                     "from eating the max_tokens budget.",
     )
+    model: Optional[str] = Field(
+        default=None,
+        max_length=64,
+        description="Anthropic-only model override. Without this the worker "
+                    "reads a single ANTHROPIC_MODEL for every call, so the "
+                    "prose endpoints could not move to a cheaper model without "
+                    "moving resume extraction with them. Falls back to "
+                    "ANTHROPIC_MODEL when unset.",
+    )
 
 
 class GenerateResponse(BaseModel):
@@ -194,6 +203,7 @@ async def _call_anthropic(
     max_tokens: int = 4096,
     json_schema: Optional[dict] = None,
     effort: Optional[str] = None,
+    model: Optional[str] = None,
 ) -> str:
     """
     Async Anthropic / Claude call using the official SDK's AsyncAnthropic client.
@@ -219,7 +229,9 @@ async def _call_anthropic(
     client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
 
     kwargs = {
-        "model": ANTHROPIC_MODEL,
+        # Per-request override so extraction can stay on the reasoning model
+        # while the prose endpoints run on a cheaper one.
+        "model": model or ANTHROPIC_MODEL,
         "max_tokens": max_tokens,
         "system": system_prompt,
         "messages": [{"role": "user", "content": user_prompt}],
@@ -278,8 +290,31 @@ async def _call_anthropic(
 # ---------------------------------------------------------------------------
 @app.get("/health", tags=["ops"])
 async def health() -> dict:
-    """Liveness probe — used by Docker health checks and Render."""
-    return {"status": "ok"}
+    """
+    Liveness probe — used by Docker health checks and Render.
+
+    Also reports which providers are actually usable. A missing
+    ANTHROPIC_API_KEY is otherwise invisible until a user tries to generate a
+    resume and gets a bare 503: the key is set per-service in Render and does
+    not fail the build when absent. `status` stays "ok" so this does not take
+    the service out of rotation — the point is that a misconfigured deploy is
+    greppable rather than silent.
+    """
+    providers = {
+        "groq": bool(GROQ_API_KEY),
+        "anthropic": bool(ANTHROPIC_API_KEY),
+    }
+    missing = [name for name, ready in providers.items() if not ready]
+    if missing:
+        logger.warning(
+            "[/health] provider key(s) not configured: %s — endpoints routed to "
+            "them will fail with 503", ", ".join(missing),
+        )
+    return {
+        "status": "ok",
+        "providers": providers,
+        "models": {"groq": GROQ_MODEL, "anthropic": ANTHROPIC_MODEL},
+    }
 
 
 @app.post("/generate", response_model=GenerateResponse, tags=["generation"])
@@ -324,6 +359,7 @@ async def generate(
                 max_tokens=body.max_tokens,
                 json_schema=body.json_schema,
                 effort=body.effort,
+                model=body.model,
             )
         else:
             text = await _call_groq(

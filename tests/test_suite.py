@@ -1118,3 +1118,131 @@ class AIServiceInternalTokenTest(TestCase):
             self.assertEqual(call_kwargs.get("headers", {}).get("X-Internal-Token"), "secret-test-token")
 
 
+
+
+# ===========================================================================
+# 13. PDF EXTRACTION — COLUMN ORDER
+# ===========================================================================
+
+def _two_column_resume_pdf():
+    """Sidebar (skills/education) on the left, experience on the right."""
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import A4
+    W, H = A4
+    buf = io.BytesIO()
+    c = canvas.Canvas(buf, pagesize=A4)
+
+    y = H - 60
+    c.setFont("Helvetica-Bold", 11); c.drawString(40, y, "SKILLS"); y -= 16
+    c.setFont("Helvetica", 8)
+    for ln in ["Python, Go", "PostgreSQL", "Kubernetes"]:
+        c.drawString(40, y, ln); y -= 12
+    y -= 14
+    c.setFont("Helvetica-Bold", 11); c.drawString(40, y, "EDUCATION"); y -= 16
+    c.setFont("Helvetica", 8)
+    for ln in ["B.Sc. Computer Science", "UC Berkeley", "2014 - 2018"]:
+        c.drawString(40, y, ln); y -= 12
+
+    y = H - 60
+    c.setFont("Helvetica-Bold", 16); c.drawString(230, y, "SARAH CHEN"); y -= 24
+    c.setFont("Helvetica-Bold", 11); c.drawString(230, y, "EXPERIENCE"); y -= 18
+    for title, meta, bullets in [
+        ("Senior Backend Engineer", "Stripe | Jan 2022 - Present",
+         ["Led ledger migration to event sourcing"]),
+        ("Backend Engineer", "Airbnb | Jun 2019 - Dec 2021",
+         ["Built pricing experimentation service"]),
+    ]:
+        c.setFont("Helvetica-Bold", 9); c.drawString(230, y, title); y -= 12
+        c.setFont("Helvetica-Oblique", 8); c.drawString(230, y, meta); y -= 14
+        c.setFont("Helvetica", 8)
+        for b in bullets:
+            c.drawString(238, y, "- " + b); y -= 11
+        y -= 8
+    c.save()
+    buf.seek(0)
+    return buf
+
+
+class _Upload:
+    """Minimal stand-in for a Django UploadedFile."""
+    def __init__(self, buf): self._buf = buf
+    def read(self, *a): return self._buf.getvalue()
+    def seek(self, *a): self._buf.seek(0)
+
+
+class ResumeExtractionTest(TestCase):
+    """
+    Guards the column-order regression. boxes_flow=None sorted text boxes by raw
+    position, so a two-column resume was read ACROSS the columns: the sidebar
+    interleaved into the experience block line by line and the model received
+    "Senior Backend Engineer / Stripe / EDUCATION / - led migration / UC Berkeley".
+    """
+
+    def setUp(self):
+        from generator.views import _extract_resume_text
+        text, err = _extract_resume_text(_Upload(_two_column_resume_pdf()))
+        self.assertIsNone(err)
+        self.lines = [l.strip() for l in text.split('\n') if l.strip()]
+
+    def _index(self, needle, exact=False):
+        # exact=True matters for titles: "Backend Engineer" is a substring of
+        # "Senior Backend Engineer", so a loose match finds the wrong role.
+        for i, l in enumerate(self.lines):
+            if (l == needle) if exact else (needle in l):
+                return i
+        self.fail(f"{needle!r} missing from extracted text: {self.lines}")
+
+    def test_each_job_title_is_followed_by_its_own_employer(self):
+        for title, company in [("Senior Backend Engineer", "Stripe"),
+                               ("Backend Engineer", "Airbnb")]:
+            i = self._index(title, exact=True)
+            self.assertIn(
+                company, self.lines[i + 1],
+                f"'{title}' should be followed by '{company}', got "
+                f"{self.lines[i + 1]!r} — columns are interleaving",
+            )
+
+    def test_sidebar_block_stays_contiguous(self):
+        idx = [self._index(s) for s in ("Python, Go", "PostgreSQL", "Kubernetes")]
+        self.assertEqual(idx[2] - idx[0], 2,
+                         f"skills split apart by other columns: {self.lines}")
+
+    def test_education_does_not_land_inside_experience(self):
+        """The regression that put a graduation year on a job."""
+        edu = self._index("2014 - 2018")
+        exp_start = self._index("Senior Backend Engineer", exact=True)
+        stripe = self._index("Stripe")
+        self.assertFalse(
+            exp_start < edu < stripe,
+            "education dates landed between a job title and its employer",
+        )
+
+
+class ResumeSchemaDescriptionsTest(TestCase):
+    """
+    Structured outputs guarantee the container, never the meaning. Without
+    per-field descriptions the model had no signal that `title` excludes the
+    employer, or that experience `dates` is not a graduation year.
+    """
+
+    def test_every_field_has_a_description(self):
+        from generator.views import RESUME_JSON_SCHEMA
+        missing = []
+
+        def walk(node, path="root"):
+            if node.get("type") == "object":
+                for key, child in node["properties"].items():
+                    if not child.get("description", "").strip():
+                        missing.append(f"{path}.{key}")
+                    walk(child, f"{path}.{key}")
+            elif node.get("type") == "array":
+                walk(node["items"], f"{path}[]")
+
+        walk(RESUME_JSON_SCHEMA)
+        self.assertEqual(missing, [], f"schema fields with no description: {missing}")
+
+    def test_title_and_company_are_described_as_distinct(self):
+        from generator.views import RESUME_JSON_SCHEMA
+        props = RESUME_JSON_SCHEMA["properties"]["experience"]["items"]["properties"]
+        self.assertIn("only", props["title"]["description"].lower())
+        self.assertIn("only", props["company"]["description"].lower())

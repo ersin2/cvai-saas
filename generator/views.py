@@ -260,13 +260,25 @@ def _validate_photo_upload(photo_file):
 # ---------------------------------------------------------------------------
 # RESUME TEXT EXTRACTION
 # ---------------------------------------------------------------------------
-# pdfminer's default layout analysis (boxes_flow=0.5) tries to reconstruct
-# natural reading flow, which interleaves the columns of a two-column resume —
-# "Skills" ends up spliced line-by-line into "Experience" and the model parses
-# garbage. boxes_flow=None disables flow ordering and emits each text box whole,
-# top-to-bottom / left-to-right, which is what a sectioned resume actually wants.
+# boxes_flow controls how pdfminer orders text boxes on the page.
+#
+# This used to be set to None on the theory that it "emits each text box whole,
+# top-to-bottom / left-to-right". It does the opposite: None disables
+# reading-flow reconstruction and sorts boxes by raw position, so on a
+# two-column resume it reads ACROSS both columns at each vertical band. The
+# sidebar and the main column interleave line by line, and the model receives
+# "Senior Engineer / Stripe / EDUCATION / - led migration / UC Berkeley" —
+# which is exactly the garbage the old comment claimed to be preventing.
+#
+# Measured on a two-column fixture (see ResumeExtractionTest), scoring whether
+# each job title stays adjacent to its own employer:
+#     boxes_flow=None   1/2 titles correct, sidebar split apart
+#     boxes_flow=0.5    2/2 titles correct, sidebar contiguous
+# Single-column extraction is byte-identical either way, so the default costs
+# nothing for simple resumes.
 _RESUME_LAPARAMS = LAParams(
-    boxes_flow=None,
+    # 0.5 is pdfminer's default: reconstruct reading flow, keeping columns whole.
+    boxes_flow=0.5,
     line_margin=0.4,   # tighter: keeps bullet lines inside their own block
     char_margin=1.5,
     word_margin=0.1,
@@ -346,11 +358,65 @@ _RESUME_ITEM_SHAPES = {
 _RESUME_BULLET_SECTIONS = ('experience', 'projects')
 
 
+# What each field MEANS. The schema previously carried shape only — every field
+# was a bare {"type": "string"} — which guarantees a conforming object and tells
+# the model nothing about what belongs in it. That is how "Senior Engineer at
+# Stripe" ends up entirely in `title`, how a graduation year lands in an
+# experience `dates`, and how six source bullets get compressed into two.
+#
+# Structured outputs enforce the container; these descriptions are the only
+# thing carrying the semantics.
+_FIELD_DESCRIPTIONS = {
+    # Top-level identity / contact
+    'full_name':   "The candidate's full name exactly as written. Never a job title.",
+    'target_role': "The role the candidate is targeting, e.g. 'Senior Backend Engineer'. "
+                   "Use their current or most recent title if no target is stated.",
+    'email':       "Email address only, no label. Empty string if absent.",
+    'phone':       "Phone number as written. Empty string if absent.",
+    'location':    "City and region/country, e.g. 'Berlin, Germany'. Not a full street address.",
+    'linkedin':    "LinkedIn URL or handle. Empty string if absent.",
+    'github':      "GitHub URL or handle. Empty string if absent. Do not infer one from the name.",
+    'summary':     "2-3 sentence professional summary built ONLY from facts in the source. "
+                   "If the source has no summary, write one from the experience listed — "
+                   "do not invent seniority, metrics or domains that are not present.",
+    # Repeating-section items
+    'title':       "Job title ONLY, e.g. 'Senior Backend Engineer'. Never include the "
+                   "employer, dates or location here — those are separate fields.",
+    'company':     "Employer name ONLY, e.g. 'Stripe'. Never include the job title.",
+    'dates':       "The date range for THIS entry exactly as written, e.g. 'Jan 2022 - Present'. "
+                   "Take it from the line belonging to this entry; do not borrow a date "
+                   "from a neighbouring entry or from the education section.",
+    'tech_stack':  "Technologies used on this project, comma-separated. Empty string if absent.",
+    'name':        "A single skill exactly as named in the source. Do not invent a "
+                   "proficiency level, and do not split or merge skills.",
+    'degree':      "Degree or qualification, e.g. 'B.Sc. Computer Science'.",
+    'school':      "Institution name only.",
+    'bullets':     "Every bullet point for this entry, one array item each, preserving the "
+                   "candidate's own wording and any numbers they cite. Do not summarise, "
+                   "merge or drop bullets, and do not invent metrics.",
+    'languages':   "Spoken languages with proficiency if stated, e.g. 'English (Native)'. "
+                   "Not programming languages — those belong in skills.",
+    # Section-level (arrays)
+    'experience':  "Every role in the source, most recent first. One entry per role.",
+    'projects':    "Personal or professional projects. Empty array if the source has none.",
+    'skills':      "Every skill named in the source, one entry each.",
+    'education':   "Every qualification in the source.",
+}
+
+
+def _described(field, node):
+    """Attach the field's description, if one is defined for that key."""
+    desc = _FIELD_DESCRIPTIONS.get(field)
+    return {**node, 'description': desc} if desc else node
+
+
 def _str_obj(*keys, bullets=False):
     """One object in a repeating section: all-string keys, optional bullets."""
-    props = {k: {'type': 'string'} for k in keys}
+    props = {k: _described(k, {'type': 'string'}) for k in keys}
     if bullets:
-        props['bullets'] = {'type': 'array', 'items': {'type': 'string'}}
+        props['bullets'] = _described(
+            'bullets', {'type': 'array', 'items': {'type': 'string'}}
+        )
     return {
         'type': 'object',
         'properties': props,
@@ -375,13 +441,15 @@ def _build_resume_schema():
     Missing data is an empty string or empty array, per the system prompt;
     there is no "omit the key" option.
     """
-    props = {k: {'type': 'string'} for k in _RESUME_STR_FIELDS}
+    props = {k: _described(k, {'type': 'string'}) for k in _RESUME_STR_FIELDS}
     for name, keys in _RESUME_ITEM_SHAPES.items():
-        props[name] = {
+        props[name] = _described(name, {
             'type': 'array',
             'items': _str_obj(*keys, bullets=name in _RESUME_BULLET_SECTIONS),
-        }
-    props['languages'] = {'type': 'array', 'items': {'type': 'string'}}
+        })
+    props['languages'] = _described(
+        'languages', {'type': 'array', 'items': {'type': 'string'}}
+    )
     return {
         'type': 'object',
         'properties': props,
@@ -391,6 +459,23 @@ def _build_resume_schema():
 
 
 RESUME_JSON_SCHEMA = _build_resume_schema()
+
+
+# ---------------------------------------------------------------------------
+# MODEL SELECTION
+# ---------------------------------------------------------------------------
+# Task difficulty used to be inverted against model capability: schema-
+# constrained JSON extraction (mechanical, temperature 0.1, effort "low") ran on
+# the frontier model, while every task that actually needs writing judgement —
+# the cover letter, the Studio bullet rewriter, ATS analysis — ran on
+# llama-3.1-8b-instant, a throughput-optimised 8B model. That is the main reason
+# generated prose read as generic.
+#
+# Extraction keeps the reasoning model: it has to hold a whole resume in view
+# and assign each fact to the right field. Prose moves to Sonnet, which writes
+# at close to Opus quality for a fraction of the cost on short generations.
+AI_MODEL_EXTRACTION = None            # inherit ANTHROPIC_MODEL (claude-opus-5)
+AI_MODEL_PROSE = "claude-sonnet-5"
 
 
 def _repair_truncated_json(raw):
@@ -516,6 +601,7 @@ async def _call_ai_service(
     provider: str = "groq",
     json_schema: dict | None = None,
     effort: str | None = None,
+    model: str | None = None,
 ):
     """
     Async POST to the FastAPI /generate endpoint.
@@ -553,6 +639,8 @@ async def _call_ai_service(
         payload["json_schema"] = json_schema
     if effort is not None:
         payload["effort"] = effort
+    if model is not None:
+        payload["model"] = model
     try:
         client = _get_ai_client()
         resp = await client.post(f"{ai_url}/generate", json=payload, headers=headers)
@@ -577,6 +665,15 @@ async def _call_ai_service(
         if exc.response.status_code == 404 or body.lstrip()[:9].lower() in ('<!doctype', '<html'):
             return None, (f"{ai_url} is not the AI service — another app is running on "
                           "that port. Stop it and start the AI worker (run_all.bat).")
+        # A 503 from the worker means a provider key is missing, not that the
+        # request was bad — retrying will fail identically until it is set.
+        # Saying "please try again" sent users in a loop and hid a config error
+        # behind what looked like a transient fault.
+        if exc.response.status_code == 503 and 'not configured' in body.lower():
+            logger.error("AI provider key missing on the worker: %s", body[:200])
+            return None, ("The AI service is not fully configured yet. This is a "
+                          "server-side setup issue, not a problem with your input — "
+                          "please contact support.")
         return None, f"AI service error ({exc.response.status_code}). Please try again."
     except Exception as exc:
         logger.exception("AI service unexpected error: %s", exc)
@@ -671,31 +768,58 @@ async def generate_letter(request):
         # ── CRITICAL LANGUAGE LOCK ──────────────────────────────────────────
         # Every sentence of the output MUST be in the requested language.
         # We use tagged section markers so the parser works regardless of language.
+        # NOTE ON THIS PROMPT
+        # MAIN_LETTER used to be specified as "full ATS-optimized resume summary
+        # and experience bullet points" — resume content, in the section that
+        # holds the cover letter. It was a copy-paste from the resume prompt, and
+        # the model wrote what it was asked for.
+        #
+        # The rest of the prompt was pure format: five tags and no instruction on
+        # what makes a letter good, so the model defaulted to the same template
+        # regardless of which job description it was handed. The HOW TO WRITE
+        # block below is what makes two different postings produce two different
+        # letters.
         system_prompt = f"""
-You are an elite career strategist, senior recruiter, ATS expert, and professional
-resume writer with experience at top global companies (FAANG, startups, enterprise).
+You are a career writer. You write cover letters that a hiring manager reads to
+the end, because they are specific about this candidate and this job.
 
-{_language_rule(language)}OUTPUT STRUCTURE — use these EXACT section tags (the tags themselves stay in English,
-but ALL content between tags must be in {language}):
+{_language_rule(language)}HOW TO WRITE THE LETTER
+
+- Open with the specific reason this candidate fits this role. Never open with
+  "I am writing to express my interest in" or "I am excited to apply for".
+- Name at least two concrete requirements from the job description, and answer
+  each with specific evidence from the CV — a project, a number, a system they
+  built. If the CV cannot answer a requirement, leave it out rather than
+  bluffing.
+- Use only facts present in the CV. Do not invent employers, dates, metrics,
+  degrees or seniority. If the CV is thin, write a shorter letter.
+- Prefer plain, direct sentences. No "leverage", "synergy", "passionate about",
+  "proven track record", "fast-paced environment".
+- 250-350 words. Four paragraphs at most.
+
+OUTPUT STRUCTURE — use these EXACT section tags (the tags themselves stay in
+English, but ALL content between tags must be in {language}):
 
 [SECTION: MAIN_LETTER]
-... full ATS-optimized resume summary and experience bullet points in {language} ...
+... the complete cover letter, ready to send, in {language} ...
 [END_SECTION]
 
 [SECTION: VERSION_A]
-... Version A (Corporate/Traditional format) in {language} ...
+... the same letter rewritten in a more formal, corporate register, in {language} ...
 [END_SECTION]
 
 [SECTION: VERSION_B]
-... Version B (Bold/Impact format) in {language} ...
+... the same letter rewritten with a bolder, more direct opening, in {language} ...
 [END_SECTION]
 
 [SECTION: ATS_ANALYSIS]
-... ATS score 0-100 and detailed tips — all in {language} ...
+... ATS score 0-100 for the CV against this job description, then the specific
+    keywords from the posting that are missing from the CV — all in {language} ...
 [END_SECTION]
 
 [SECTION: RISK_ANALYSIS]
-... 3 recruiter red flags and concrete fixes — all in {language} ...
+... 3 things a recruiter would question in this application (gaps, jumps, missing
+    skills) and a concrete fix for each — all in {language} ...
 [END_SECTION]
 
 Do not write anything outside these tags.
@@ -722,8 +846,15 @@ Include the candidate's full name: {full_name}.
 
 Generate the elite career response now.
 """
-        # Async handoff — Django yields its thread here
-        result, error_message = await _call_ai_service(system_prompt, user_prompt)
+        # Async handoff — Django yields its thread here.
+        # This is the flagship generative feature and it ran on
+        # llama-3.1-8b-instant, which is a large part of why letters read as
+        # template-filling regardless of the posting. max_tokens has to cover
+        # five tagged sections plus thinking.
+        result, error_message = await _call_ai_service(
+            system_prompt, user_prompt,
+            provider="anthropic", model=AI_MODEL_PROSE, max_tokens=8192,
+        )
 
         if result:
             # Django 5 async ORM: acreate() is non-blocking
@@ -1063,7 +1194,13 @@ async def rewrite_section(request):
 
     # ── Call AI service ───────────────────────────────────────────────────────
     rewritten, error = await _call_ai_service(
-        system_prompt, user_prompt, temperature=0.55
+        system_prompt, user_prompt,
+        # The Studio's per-field rewriter — the feature demoed on the landing
+        # page. Rewriting a vague bullet into a specific, quantified one is a
+        # writing-judgement task, not a throughput task.
+        # temperature is ignored on the Anthropic path (see _call_ai_service).
+        temperature=0.55,
+        provider="anthropic", model=AI_MODEL_PROSE,
     )
 
     if error or not rewritten:
