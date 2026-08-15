@@ -250,14 +250,45 @@ async def _call_anthropic(
     # The SDK raises its own typed exceptions, not httpx ones, so they have to
     # be caught here where `anthropic` is in scope (it is imported lazily so a
     # Groq-only deploy doesn't need the package).
+    async def _create(**kw):
+        try:
+            return await client.messages.create(**kw)
+        except anthropic.RateLimitError:
+            logger.warning("[anthropic] rate limited")
+            raise _AnthropicRefusal("The AI is rate limited right now. Please try again in a moment.")
+        except anthropic.APIConnectionError as exc:
+            logger.error("[anthropic] connection error: %s", exc)
+            raise _AnthropicRefusal("Could not reach the AI provider. Please try again.")
+
     try:
-        message = await client.messages.create(**kwargs)
-    except anthropic.RateLimitError:
-        logger.warning("[anthropic] rate limited")
-        raise _AnthropicRefusal("The AI is rate limited right now. Please try again in a moment.")
-    except anthropic.APIConnectionError as exc:
-        logger.error("[anthropic] connection error: %s", exc)
-        raise _AnthropicRefusal("Could not reach the AI provider. Please try again.")
+        message = await _create(**kwargs)
+    except anthropic.BadRequestError as exc:
+        # `effort` is model-gated: the Opus/Sonnet reasoning models accept it,
+        # Haiku 4.5 and Sonnet 4.5 reject the request outright with a 400. Since
+        # the model is an env var, pointing ANTHROPIC_MODEL at a cheaper model
+        # would otherwise 400 every single resume parse in production.
+        #
+        # Retrying without it rather than keeping a hardcoded model list, because
+        # that list drifts every time a model ships. effort only tunes reasoning
+        # depth, so dropping it costs nothing but some thinking budget.
+        if "effort" in str(exc).lower() and "output_config" in kwargs:
+            logger.warning(
+                "[anthropic] %s does not support `effort` — retrying without it",
+                kwargs.get("model"),
+            )
+            # Build a fresh dict rather than mutating in place: the original is
+            # still referenced by the failed attempt, and aliasing the two makes
+            # the retry indistinguishable from the first call when debugging.
+            retry_kwargs = dict(kwargs)
+            oc = {k: v for k, v in kwargs["output_config"].items() if k != "effort"}
+            if oc:
+                retry_kwargs["output_config"] = oc
+            else:
+                retry_kwargs.pop("output_config", None)
+            message = await _create(**retry_kwargs)
+        else:
+            logger.error("[anthropic] bad request: %s", str(exc)[:300])
+            raise _AnthropicRefusal("AI provider rejected the request (400).")
     except anthropic.APIStatusError as exc:
         logger.error("[anthropic] API error %s: %s", exc.status_code, str(exc)[:300])
         raise _AnthropicRefusal(f"AI provider error ({exc.status_code}). Please try again.")

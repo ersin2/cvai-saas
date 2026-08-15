@@ -1246,3 +1246,85 @@ class ResumeSchemaDescriptionsTest(TestCase):
         props = RESUME_JSON_SCHEMA["properties"]["experience"]["items"]["properties"]
         self.assertIn("only", props["title"]["description"].lower())
         self.assertIn("only", props["company"]["description"].lower())
+
+
+# ===========================================================================
+# 14. ANTHROPIC `effort` COMPATIBILITY
+# ===========================================================================
+
+class AnthropicEffortFallbackTest(TestCase):
+    """
+    `effort` is model-gated: the Opus/Sonnet reasoning models accept it, Haiku
+    4.5 rejects the whole request with a 400. ANTHROPIC_MODEL is an env var, so
+    pointing it at a cheaper model would otherwise 400 every resume parse in
+    production. The worker retries once without `effort` instead.
+    """
+
+    def _worker(self):
+        import sys, importlib
+        if 'ai_service' not in sys.path:
+            sys.path.insert(0, 'ai_service')
+        import main as worker
+        return importlib.reload(worker)
+
+    def _fake_anthropic(self, reject_effort):
+        import types
+        calls = []
+
+        class _Err(Exception):
+            def __init__(self, msg="", *a, **k):
+                super().__init__(msg)
+                self.status_code = 400
+
+        async def create(**kw):
+            # Record a copy: the retry path must not be observable only as a
+            # mutation of the first call's dict.
+            import copy
+            calls.append(copy.deepcopy(kw))
+            if reject_effort and 'effort' in kw.get('output_config', {}):
+                raise mod.BadRequestError(
+                    "This model does not support the effort parameter."
+                )
+            return types.SimpleNamespace(
+                stop_reason="end_turn", stop_details=None,
+                content=[types.SimpleNamespace(type="text", text='{"ok":true}')],
+            )
+
+        mod = types.ModuleType("anthropic")
+        mod.AsyncAnthropic = lambda api_key=None: types.SimpleNamespace(
+            messages=types.SimpleNamespace(create=create)
+        )
+        for name in ("RateLimitError", "APIConnectionError", "APIStatusError",
+                     "BadRequestError"):
+            setattr(mod, name, type(name, (_Err,), {}))
+        mod.BadRequestError.__bases__ = (_Err,)
+        return mod, calls
+
+    def _run(self, reject_effort):
+        import sys, asyncio
+        from unittest.mock import patch
+        worker = self._worker()
+        worker.ANTHROPIC_API_KEY = "sk-test"
+        mod, calls = self._fake_anthropic(reject_effort)
+        with patch.dict(sys.modules, {"anthropic": mod}):
+            out = asyncio.run(worker._call_anthropic(
+                "sys", "usr", max_tokens=1024,
+                json_schema={"type": "object"}, effort="low",
+            ))
+        return out, calls
+
+    def test_effort_is_sent_when_the_model_accepts_it(self):
+        out, calls = self._run(reject_effort=False)
+        self.assertEqual(out, '{"ok":true}')
+        self.assertEqual(len(calls), 1, "should not retry when the call succeeds")
+        self.assertEqual(calls[0]["output_config"]["effort"], "low")
+
+    def test_retries_without_effort_when_the_model_rejects_it(self):
+        out, calls = self._run(reject_effort=True)
+        self.assertEqual(out, '{"ok":true}', "should still return a result")
+        self.assertEqual(len(calls), 2, "should retry exactly once")
+        self.assertIn("effort", calls[0]["output_config"])
+        self.assertNotIn("effort", calls[1].get("output_config", {}),
+                         "retry must drop effort")
+        # The schema is the point of the call — it must survive the retry.
+        self.assertIn("format", calls[1]["output_config"])

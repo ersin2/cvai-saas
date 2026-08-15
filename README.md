@@ -15,7 +15,7 @@
   A full-cycle SaaS career platform combining interactive A4 PDF resume generation, AI-powered writing assistance, ATS scoring, and job application pipeline tracking.
 </p>
 
-[🌐 **Live Demo Website**](https://mysite-eari.onrender.com) • [📖 **Documentation**](#-architecture--system-design) • [⚡ **Quickstart**](#-quickstart--local-development) • [🧪 **Testing**](#-testing--quality-assurance)
+[🌐 **Live Demo Website**](https://cvai.work) • [📖 **Documentation**](#-architecture--system-design) • [⚡ **Quickstart**](#-quickstart--local-development) • [🧪 **Testing**](#-testing--quality-assurance)
 
 </div>
 
