@@ -224,19 +224,24 @@ h1, h2, .display-title {
   gap: 4px;
 }
 
+/* Nav links sat at --fs-base (0.875rem) in --text-2, which is the same muted
+   grey used for secondary body copy — so the primary navigation read as
+   less important than the page it was sitting above. Up a step in size and
+   weight, and a brighter resting colour. */
 .nav-link-item {
-  color: var(--text-2);
+  position: relative;
+  color: #cbd5e1;
   text-decoration: none;
-  font-size: var(--fs-base);
+  font-size: var(--fs-md);
   font-weight: 600;
-  padding: 6px 14px;
+  padding: 7px 14px;
   border-radius: var(--r-sm);
   transition: color var(--t-fast), background var(--t-fast);
   white-space: nowrap;
 }
 
 .nav-link-item:hover {
-  color: var(--text-1);
+  color: #fff;
   background: var(--surface-3);
 }
 
@@ -244,6 +249,22 @@ h1, h2, .display-title {
   color: var(--brand);
   background: var(--brand-dim);
 }
+
+/* Underline on top of the pill: the tinted pill alone is easy to miss against
+   a dark bar, and "which page am I on" should not need a second look. */
+.nav-link-item.active::after {
+  content: '';
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 1px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--brand);
+}
+
+/* The drawer stacks its links, where a bottom bar reads as a divider. */
+.mobile-drawer .nav-link-item.active::after { display: none; }
 
 /* Generation counter badge */
 .gen-counter {
@@ -282,7 +303,112 @@ h1, h2, .display-title {
   box-shadow: 0 6px 20px rgba(245, 158, 11, 0.45);
 }
 
-/* User badge */
+/* ── Account chip ─────────────────────────────────────────────────────────
+   Replaces a generic person glyph next to a raw username. Initial disc, name,
+   plan badge, and a menu — so the signed-in account reads as an account rather
+   than as one more nav link. */
+.acct {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.acct-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: 5px 12px 5px 5px;
+  color: var(--text-1);
+  font-family: inherit;
+  font-size: var(--fs-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+.acct-trigger:hover { background: var(--surface-3); border-color: var(--border-hover); }
+.acct-trigger:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+.acct-avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--grad-cta, linear-gradient(135deg, #4361ee, #4cc9f0));
+  color: #fff;
+  font-size: var(--fs-sm);
+  font-weight: 800;
+  text-transform: uppercase;
+  flex: none;
+}
+
+.acct-name {
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.acct-plan {
+  font-size: var(--fs-2xs);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
+  text-transform: uppercase;
+}
+.acct-plan-pro   { background: rgba(76,201,240,0.14);  color: var(--brand);  border: 1px solid rgba(76,201,240,0.3); }
+.acct-plan-elite { background: rgba(245,158,11,0.14);  color: #fbbf24;       border: 1px solid rgba(245,158,11,0.35); }
+
+.acct-caret { font-size: var(--fs-2xs); color: var(--text-3); transition: transform var(--t-fast); }
+.acct[data-open="true"] .acct-caret { transform: rotate(180deg); }
+
+.acct-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.5);
+  padding: 6px;
+  z-index: 200;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  transition: opacity var(--t-fast), transform var(--t-fast), visibility var(--t-fast);
+}
+.acct[data-open="true"] .acct-menu { opacity: 1; visibility: visible; transform: none; }
+
+.acct-menu-head {
+  padding: 8px 10px 10px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 6px;
+}
+.acct-menu-head strong { display: block; color: var(--text-1); font-size: var(--fs-base); }
+.acct-menu-head span   { color: var(--text-3); font-size: var(--fs-xs); }
+
+.acct-menu a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: var(--r-sm);
+  color: var(--text-2);
+  text-decoration: none;
+  font-size: var(--fs-base);
+  font-weight: 600;
+}
+.acct-menu a:hover { background: var(--surface-3); color: var(--text-1); }
+.acct-menu a i { width: 15px; text-align: center; color: var(--text-3); }
+.acct-menu a:hover i { color: var(--brand); }
+.acct-menu a.acct-danger:hover { color: var(--danger); }
+.acct-menu a.acct-danger:hover i { color: var(--danger); }
+.acct-menu-sep { height: 1px; background: var(--border); margin: 6px 0; }
+
+/* User badge (legacy — still used by the mobile drawer) */
 .user-badge {
   background: var(--surface-3);
   border: 1px solid var(--border);
@@ -1314,3 +1440,337 @@ textarea:focus-visible,
 }
 .kanban-empty i  { font-size: var(--fs-2xl); color: var(--text-3); }
 .kanban-empty p  { font-size: var(--fs-sm); color: var(--text-3); margin: 0; }
+
+/* ── 20. LUXURY SAAS DESIGN UTILITIES ───────────────────────── */
+.glass-panel {
+  background: rgba(16, 22, 40, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-2);
+  transition: border-color var(--t-base), transform var(--t-base), box-shadow var(--t-base);
+}
+.glass-panel:hover {
+  border-color: var(--border-hover);
+}
+
+.glow-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  background: var(--brand-dim);
+  border: 1px solid rgba(76, 201, 240, 0.3);
+  color: var(--brand);
+  box-shadow: 0 0 16px rgba(76, 201, 240, 0.15);
+}
+
+.shimmer-badge {
+  background: linear-gradient(90deg, rgba(255,255,255,0.05), rgba(76,201,240,0.2), rgba(255,255,255,0.05));
+  background-size: 200% 100%;
+  animation: shimmer-swipe 4s infinite linear;
+}
+@keyframes shimmer-swipe {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   AI RESULT RENDERING  (classes emitted by static/generator/js/result-render.js)
+
+   AI output used to reach the page three different ways, only one of which
+   attempted markdown — and that one had no case for tables, so ATS reports
+   rendered as literal pipes and dashes. One renderer now produces all of it,
+   and these are the styles for what it emits.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.res-body { color: var(--text-2); font-size: var(--fs-base); line-height: 1.65; }
+.res-body > *:first-child { margin-top: 0; }
+.res-body > *:last-child  { margin-bottom: 0; }
+.res-body p { margin: 0 0 12px; }
+
+.res-h {
+  color: var(--text-1);
+  font-size: var(--fs-md);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin: 22px 0 10px;
+}
+.res-body h3.res-h { font-size: var(--fs-lg); }
+
+.res-hr { border: 0; border-top: 1px solid var(--border); margin: 20px 0; }
+
+.res-list { margin: 0 0 14px; padding-left: 20px; }
+.res-list li { margin-bottom: 7px; }
+.res-list li::marker { color: var(--brand); }
+
+.res-quote {
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border-left: 3px solid var(--brand);
+  background: var(--surface-2);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  color: var(--text-2);
+}
+
+.res-code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 1px 6px;
+}
+
+.res-body strong { color: var(--text-1); font-weight: 700; }
+.res-body a { color: var(--brand); }
+
+/* Tables — the case the old renderer was missing entirely. Scrolls inside its
+   own box so a wide table never makes the page scroll sideways. */
+.res-table-wrap {
+  overflow-x: auto;
+  margin: 0 0 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+}
+.res-table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
+.res-table th,
+.res-table td { padding: 9px 13px; text-align: left; vertical-align: top; }
+.res-table thead th {
+  background: var(--surface-2);
+  color: var(--text-1);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.res-table tbody tr + tr td { border-top: 1px solid var(--border); }
+
+/* ── ATS keyword pills ──────────────────────────────────────────────────── */
+.res-keywords {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin: 0 0 18px;
+}
+.res-pill-group {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 14px;
+}
+.res-pill-title {
+  display: flex; align-items: center; gap: 8px;
+  font-size: var(--fs-xs);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 11px;
+}
+.res-pill-title-good { color: var(--success); }
+.res-pill-title-bad  { color: var(--danger); }
+.res-pill-count {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  background: var(--surface-3);
+  color: var(--text-2);
+  border-radius: var(--r-pill);
+  padding: 1px 7px;
+}
+.res-pill-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.res-pill {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  padding: 4px 9px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  line-height: 1.4;
+}
+.res-pill-good {
+  background: rgba(34, 197, 94, 0.10);
+  color: #4ade80;
+  border-color: rgba(34, 197, 94, 0.22);
+}
+.res-pill-bad {
+  background: rgba(239, 68, 68, 0.10);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.22);
+}
+
+/* ── ATS score ring ─────────────────────────────────────────────────────── */
+.res-score {
+  display: flex; align-items: center; gap: 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 14px 18px;
+  margin: 0 0 18px;
+}
+.res-score-ring { position: relative; width: 60px; height: 60px; flex: none; }
+.res-score-ring svg { width: 60px; height: 60px; transform: rotate(-90deg); }
+.res-score-ring circle { fill: none; stroke-width: 5; stroke-linecap: round; }
+.res-score-track { stroke: var(--surface-3); }
+.res-score-fill  { transition: stroke-dashoffset 0.9s ease; }
+.res-score-num {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  font-family: var(--font-mono);
+  font-size: var(--fs-md);
+  font-weight: 800;
+  color: var(--text-1);
+}
+.res-score-meta strong { display: block; color: var(--text-1); font-size: var(--fs-md); }
+.res-score-meta span   { color: var(--text-3); font-size: var(--fs-xs); }
+
+.res-score-good .res-score-fill { stroke: var(--success); }
+.res-score-warn .res-score-fill { stroke: var(--warning); }
+.res-score-bad  .res-score-fill { stroke: var(--danger); }
+
+@media (prefers-reduced-motion: reduce) {
+  .res-score-fill { transition: none; }
+}
+
+/* ── Interview prep: one collapsible card per question ────────────────────
+   Ten questions rendered flat were an unbroken wall with no way to work
+   through them one at a time. */
+.res-qa { display: grid; gap: 10px; }
+.res-qa-item {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.res-qa-item[open] { border-color: rgba(76, 201, 240, 0.3); }
+.res-qa-q {
+  list-style: none;
+  cursor: pointer;
+  padding: 14px 42px 14px 16px;
+  position: relative;
+  color: var(--text-1);
+  font-weight: 700;
+  font-size: var(--fs-base);
+  line-height: 1.45;
+}
+.res-qa-q::-webkit-details-marker { display: none; }
+.res-qa-q:hover { color: var(--brand); }
+.res-qa-q::after {
+  content: '';
+  position: absolute; right: 18px; top: 50%;
+  width: 8px; height: 8px; margin-top: -6px;
+  border-right: 2px solid var(--text-3);
+  border-bottom: 2px solid var(--text-3);
+  transform: rotate(45deg);
+  transition: transform var(--t-fast);
+}
+.res-qa-item[open] .res-qa-q::after { transform: rotate(-135deg); margin-top: -2px; }
+.res-qa-a { padding: 0 16px 14px; border-top: 1px solid var(--border); padding-top: 12px; }
+.res-qa-a > *:last-child { margin-bottom: 0; }
+
+/* ── Follow-up emails: subject and body as separate copyable boxes ──────── */
+.res-mail-set { display: grid; gap: 16px; }
+.res-mail {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 14px;
+}
+.res-mail-title {
+  color: var(--text-1);
+  font-weight: 700;
+  font-size: var(--fs-md);
+  margin-bottom: 12px;
+}
+.res-mail-field + .res-mail-field { margin-top: 12px; }
+.res-mail-label {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: var(--fs-2xs);
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 6px;
+}
+.res-mail-value {
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 11px 13px;
+  color: var(--text-2);
+  font-size: var(--fs-base);
+  line-height: 1.6;
+}
+.res-mail-value > *:last-child { margin-bottom: 0; }
+.res-mail-subject {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--text-1);
+}
+
+.res-copy {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(76, 201, 240, 0.08);
+  border: 1px solid rgba(76, 201, 240, 0.22);
+  border-radius: var(--r-sm);
+  color: var(--brand);
+  font-family: inherit;
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 3px 9px;
+  cursor: pointer;
+  transition: background var(--t-fast);
+}
+.res-copy:hover { background: rgba(76, 201, 240, 0.2); }
+.res-copy.is-copied { color: var(--success); border-color: rgba(34, 197, 94, 0.3); background: rgba(34, 197, 94, 0.1); }
+
+/* ── Stored resume preview (CVAIResult.renderResume) ─────────────────────
+   Shared by the History card and the Dashboard modal, which previously each
+   built this markup themselves. */
+.res-cv { color: var(--text-2); }
+.res-cv-name { font-size: var(--fs-2xl); font-weight: 800; color: #fff; margin: 0 0 2px; }
+.res-cv-role { font-size: var(--fs-md); color: var(--brand); font-weight: 600; margin-bottom: 12px; }
+.res-cv-contact {
+  display: flex; flex-wrap: wrap; gap: 6px 16px;
+  font-size: var(--fs-sm); color: var(--text-2);
+  padding-bottom: 14px; margin-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+.res-cv-h {
+  font-size: var(--fs-sm); font-weight: 800; color: #fff;
+  text-transform: uppercase; letter-spacing: 0.09em;
+  margin: 20px 0 9px;
+}
+.res-cv-p { font-size: var(--fs-base); color: #cbd5e1; line-height: 1.6; margin: 0 0 4px; }
+.res-cv-entry {
+  background: rgba(76, 201, 240, 0.05);
+  border: 1px solid rgba(76, 201, 240, 0.1);
+  border-radius: var(--r-sm);
+  padding: 13px 14px;
+  margin-bottom: 10px;
+}
+.res-cv-entry-head {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  color: var(--text-1);
+}
+.res-cv-dates { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--text-3); white-space: nowrap; }
+.res-cv-sub { font-size: var(--fs-sm); color: var(--text-2); margin-top: 2px; }
+.res-cv-bullets { margin: 8px 0 0; padding-left: 18px; font-size: var(--fs-base); color: #cbd5e1; line-height: 1.5; }
+.res-cv-bullets li { margin-bottom: 4px; }
+.res-cv-skill-cat {
+  font-size: var(--fs-xs); color: var(--text-3);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  margin: 9px 0 4px;
+}
+.res-cv-skill-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.res-cv-skill {
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: 3px 11px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: #e2e8f0;
+}

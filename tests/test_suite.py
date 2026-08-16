@@ -1717,3 +1717,36 @@ class QuotaIsDiagnosedBeforeThrottleTest(TestCase):
                 self.assertEqual(resp.status_code, 200)
                 # These render tools.html with the quota message in tool_error.
                 self.assertContains(resp, 'Upgrade', status_code=200)
+
+
+class TestRunnerSettingsTest(TestCase):
+    """
+    The suite has to be able to reach a view.
+
+    SECURE_SSL_REDIRECT is correct for production and fatal under the test
+    runner: it turns every request the test client makes into a 301 to https
+    before any view runs, so a run with DEBUG=False fails wholesale on status
+    codes — "301 != 401" on the auth guards and so on down the file.
+
+    Nobody saw it locally because a developer .env sets DEBUG=True. CI has no
+    .env, so every CI run failed for a reason unrelated to the code under test,
+    which is worse than having no CI: a permanently red check teaches people to
+    ignore the check.
+    """
+
+    def test_ssl_redirect_is_off_under_the_test_runner(self):
+        from django.conf import settings
+        self.assertFalse(
+            getattr(settings, 'SECURE_SSL_REDIRECT', False),
+            "SECURE_SSL_REDIRECT is on during tests — every request will 301 "
+            "before reaching a view and the suite will fail on status codes.",
+        )
+
+    def test_an_anonymous_json_endpoint_still_answers_401_not_a_redirect(self):
+        """The canary: this is the assertion that broke in CI."""
+        resp = Client().post(reverse('generate_resume'), {'resume': 'x'})
+        self.assertEqual(
+            resp.status_code, 401,
+            f"expected 401, got {resp.status_code} — a 301 here means the "
+            "request was redirected before the view ran.",
+        )

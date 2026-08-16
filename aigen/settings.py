@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 import os
+import sys
 from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
@@ -234,7 +235,19 @@ if _csrf_origins:
 
 
 # ── Production Security (only when DEBUG=False) ─────────────────────────────
-if not DEBUG:
+#
+# Skipped under the test runner. SECURE_SSL_REDIRECT turns every request the
+# Django test client makes into a 301 to https before it reaches a view, so a
+# suite run with DEBUG=False fails wholesale on status codes — "301 != 401" on
+# the auth guards, and so on down the file. Developers hit DEBUG=True from a
+# local .env and never see it; CI has no .env, so every run failed for a reason
+# that had nothing to do with the code under test.
+#
+# The redirect itself is what production needs, and production does not run the
+# test runner — so gating it here costs nothing and keeps CI meaningful.
+TESTING = 'test' in sys.argv
+
+if not DEBUG and not TESTING:
     SECURE_SSL_REDIRECT = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SESSION_COOKIE_SECURE = True

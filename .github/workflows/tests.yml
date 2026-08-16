@@ -51,10 +51,25 @@ jobs:
           DJANGO_SETTINGS_MODULE: aigen.settings
         run: python manage.py makemigrations --check --dry-run
 
+      - name: Collect static files
+        # Same step production runs in build.sh. Without it the job depends on
+        # the staticfiles/ manifest that happens to be committed, so any newly
+        # added asset raises "Missing staticfiles manifest entry" the moment a
+        # test renders the template that references it.
+        env:
+          SECRET_KEY: ci-only-not-a-real-secret
+          DJANGO_SETTINGS_MODULE: aigen.settings
+        run: python manage.py collectstatic --no-input
+
       - name: Run tests
         env:
           SECRET_KEY: ci-only-not-a-real-secret
           DJANGO_SETTINGS_MODULE: aigen.settings
+          # Explicitly false, matching production rather than a developer's
+          # .env. DEBUG changes real behaviour under test — it bypasses the
+          # static manifest, and it is what gates SECURE_SSL_REDIRECT — so a
+          # suite that only ever runs with DEBUG=True is not testing what ships.
+          DEBUG: "False"
           # No provider keys are set on purpose: the suite must not make a
           # billable API call, and any test that would silently start talking to
           # a real provider should fail here rather than in production.
