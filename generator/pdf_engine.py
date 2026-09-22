@@ -251,6 +251,10 @@ def _process_photo(photo_file):
         # below as the general-case bound.
         try:
             img = Image.open(photo_file)
+            w, h = img.size
+            if w * h > 16_000_000 or w > 4096 or h > 4096:
+                logger.warning("_process_photo: image dimensions too large (%dx%d) — skipping", w, h)
+                return None
             img.draft('RGB', (_PHOTO_WORK_PX, _PHOTO_WORK_PX))
             img.load()
             img.thumbnail((_PHOTO_WORK_PX, _PHOTO_WORK_PX), Image.LANCZOS)
@@ -332,56 +336,16 @@ def _parse_skill_groups(skills_str: str):
 
 
 def _esc(text) -> str:
-    """Escape text for a ReportLab Paragraph, which parses its input as XML.
-
-    Not cosmetic. Measured on the raw string:
-
-        'C++ <templates> and Go'  ->  'C++ and Go'    (tag silently swallowed)
-        'R&D'                     ->  'R&D;'          (stray semicolon)
-
-    So a skill named C++/<T> disappears from the PDF without an error, and any
-    category with an ampersand — 'AI & LLM', 'DevOps & Tools', the exact
-    headings real resumes use — renders corrupted.
-    """
+    """Escape text for a ReportLab Paragraph, which parses its input as XML."""
+    if text is None:
+        return ''
     return (
         str(text)
         .replace('&', '&amp;')
         .replace('<', '&lt;')
         .replace('>', '&gt;')
-    )
-
-
-def _render_skill_groups(story, groups, body_style):
-    """Append one paragraph per skill group: '<b>Category:</b> a, b, c'.
-
-    Groups with no category (everything saved before skills were grouped)
-    render as a plain run of skills, exactly as they did before.
-    """
-    for category, entries in groups:
-        names = ',  '.join(_esc(name) for name, _lvl in entries)
-        if category:
-            story.append(Paragraph(f'<b>{_esc(category)}:</b> {names}', body_style))
-        else:
-            story.append(Paragraph(names, body_style))
-
-
-def _esc(text) -> str:
-    """Escape text for a ReportLab Paragraph, which parses its input as XML.
-
-    Not cosmetic. Measured on the raw string:
-
-        'C++ <templates> and Go'  ->  'C++ and Go'    (tag silently swallowed)
-        'R&D'                     ->  'R&D;'          (stray semicolon)
-
-    So a skill named C++/<T> disappears from the PDF without an error, and any
-    category with an ampersand — 'AI & LLM', 'DevOps & Tools', the exact
-    headings real resumes use — renders corrupted.
-    """
-    return (
-        str(text)
-        .replace('&', '&amp;')
-        .replace('<', '&lt;')
-        .replace('>', '&gt;')
+        .replace('"', '&quot;')
+        .replace("'", '&#39;')
     )
 
 
@@ -582,7 +546,8 @@ def _render_edu_certs_lang(story, req, s_h2, s_body, s_sub=None,
         if hr_color:
             blk.append(HRFlowable(width=w, thickness=0.5,
                                   color=hr_color, spaceAfter=5))
-        blk.append(Paragraph(f'<link href="{port}">{port}</link>', s_body))
+        safe_port = _esc(port)
+        blk.append(Paragraph(f'<link href="{safe_port}">{safe_port}</link>', s_body))
         story.append(KeepTogether(blk))
 
 
@@ -804,7 +769,7 @@ def _build_left_sidebar_dark(req, buf, cfg: dict):
     lang = req.POST.get('languages', '').strip()
     if lang:
         story.append(Paragraph("LANGUAGES", s_sb_h))
-        story.append(Paragraph(lang, s_sb_t))
+        story.append(Paragraph(_esc(lang), s_sb_t))
 
     story.append(FrameBreak())
 
@@ -1546,13 +1511,13 @@ def _build_academic_classic(req, buf, cfg: dict):
     if lang:
         story.append(Paragraph("LANGUAGES", s_h2))
         story.append(HR())
-        story.append(Paragraph(lang, s_body))
+        story.append(Paragraph(_esc(lang), s_body))
 
     port = req.POST.get('portfolio_url', '').strip()
     if port:
         story.append(Paragraph("PORTFOLIO / PUBLICATIONS", s_h2))
         story.append(HR())
-        story.append(Paragraph(f'<link href="{port}">{port}</link>', s_body))
+        story.append(Paragraph(f'<link href="{_esc(port)}">{_esc(port)}</link>', s_body))
 
     try:
         doc.build(story)
@@ -1828,6 +1793,35 @@ _LAYOUT_BUILDERS = {
 # PUBLIC API
 # ─────────────────────────────────────────────────────────────────────────────
 
+_ESCAPED_AT_RENDER = frozenset({
+    'experience_text', 'projects_text', 'skills_list', 'education', 'certifications',
+    'languages', 'portfolio_url',
+})
+
+
+class _SafeRequest:
+    """Sanitizing proxy for HttpRequest to protect ReportLab from XML injection."""
+    def __init__(self, real_req):
+        self._real = real_req
+        self.FILES = getattr(real_req, 'FILES', {})
+        self.GET = getattr(real_req, 'GET', {})
+        self.user = getattr(real_req, 'user', None)
+        self.method = getattr(real_req, 'method', 'POST')
+
+        raw_post = getattr(real_req, 'POST', {})
+        sanitized = {}
+        for k, v in raw_post.items():
+            # Fields every builder escapes where it renders them. Escaping them
+            # here as well printed "R&D" as "R&amp;D" in the finished PDF.
+            if k in _ESCAPED_AT_RENDER:
+                sanitized[k] = v
+            elif isinstance(v, str):
+                sanitized[k] = _esc(v)
+            else:
+                sanitized[k] = v
+        self.POST = sanitized
+
+
 def build_pdf(template_slug: str, request) -> io.BytesIO:
     """
     Build and return a BytesIO PDF for the given template slug.
@@ -1838,14 +1832,15 @@ def build_pdf(template_slug: str, request) -> io.BytesIO:
     cfg = get_template_by_slug(template_slug)
     layout_key = cfg.get("layout", "minimal_centered")
     builder = _LAYOUT_BUILDERS.get(layout_key, _build_minimal_centered)
+    safe_req = _SafeRequest(request)
     try:
-        builder(request, buf, cfg)
+        builder(safe_req, buf, cfg)
     except Exception as exc:
         logger.exception("PDF build failed slug=%s layout=%s: %s",
                          template_slug, layout_key, exc)
         buf = io.BytesIO()
         try:
-            _build_minimal_centered(request, buf, TEMPLATES[0])
+            _build_minimal_centered(safe_req, buf, TEMPLATES[0])
         except Exception:
             pass
     buf.seek(0)

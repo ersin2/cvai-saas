@@ -1,9 +1,23 @@
 import datetime
+import os
+import uuid
 
+from django.conf import settings
 from django.db import models
 from django.db.models import F
 from django.contrib.auth.models import User
 from django.utils import timezone
+
+
+def avatar_upload_to(instance, filename):
+    """
+    Store avatars under a random name.
+
+    Media is served from a public bucket, so the original filename became part
+    of a public URL — and people upload files named after themselves.
+    """
+    ext = os.path.splitext(filename)[1].lower()[:10]
+    return f'avatars/{uuid.uuid4().hex}{ext}'
 
 
 class Profile(models.Model):
@@ -18,6 +32,14 @@ class Profile(models.Model):
     generations_count = models.IntegerField(default=3)   # remaining for free-tier
     is_premium = models.BooleanField(default=False)
     stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
+    # The subscription that currently backs `plan`. Without it the webhook
+    # could only match events by customer, so cancelling ANY subscription on
+    # that customer — say, a stale one from before a plan change — downgraded
+    # a user who was still paying for another.
+    stripe_subscription_id = models.CharField(max_length=255, blank=True, default='')
+    # Set by the link in the confirmation email. Accounts that existed before
+    # confirmation was introduced were marked confirmed by the migration.
+    email_verified = models.BooleanField(default=False)
 
     # ── Paid-plan metering ──────────────────────────────────────────────────
     # Free is a lifetime trial and counts DOWN in `generations_count`. Paid
@@ -36,7 +58,7 @@ class Profile(models.Model):
     base_resume = models.TextField(blank=True, help_text="User's core career history")
     default_font = models.CharField(max_length=50, default='Inter', help_text="Preferred Studio Font")
     default_language = models.CharField(max_length=50, default='English', help_text="Preferred Output Language")
-    avatar = models.ImageField(upload_to='avatars/', null=True, blank=True, help_text="Profile Image")
+    avatar = models.ImageField(upload_to=avatar_upload_to, null=True, blank=True, help_text="Profile Image")
 
     # ── generation limits per plan ──────────────────────────────────────────
     # Free  → 3 total, lifetime (the trial; counts down in generations_count)
@@ -115,6 +137,24 @@ class Profile(models.Model):
         ).update(monthly_usage=0, usage_period_start=period)
         self.refresh_from_db(fields=['monthly_usage', 'usage_period_start'])
 
+    def needs_email_verification(self):
+        """
+        True if this account must confirm its email before generating.
+
+        Free plan only: a paying subscriber has already proved more than an
+        email address does. Off entirely unless REQUIRE_EMAIL_VERIFICATION.
+        """
+        return (
+            getattr(settings, 'REQUIRE_EMAIL_VERIFICATION', False)
+            and self.plan not in self._METERED_PLANS
+            and not self.email_verified
+        )
+
+    VERIFY_EMAIL_MESSAGE = (
+        "Confirm your email to start using your free generations — we sent you "
+        "a link. Didn't get it? Resend it from your Profile page."
+    )
+
     def quota_message(self):
         """
         Why the user is blocked, in their own plan's terms.
@@ -177,5 +217,38 @@ class Profile(models.Model):
             return True
         return False
 
+    def refund_generation(self):
+        """
+        Atomically refund one generation if an upstream provider fails.
+        """
+        if self.plan in self._METERED_PLANS:
+            self._roll_period_if_needed()
+            Profile.objects.filter(
+                pk=self.pk,
+                usage_period_start=self._current_period(),
+                monthly_usage__gt=0,
+            ).update(monthly_usage=F('monthly_usage') - 1)
+            self.refresh_from_db(fields=['monthly_usage'])
+        else:
+            Profile.objects.filter(pk=self.pk).update(generations_count=F('generations_count') + 1)
+            self.refresh_from_db(fields=['generations_count'])
+
     def __str__(self):
         return f'{self.user.username} Profile ({self.plan})'
+
+class StripeEvent(models.Model):
+    """
+    A Stripe webhook event that has been applied.
+
+    Written in the same transaction as the change the event makes, so the two
+    commit or roll back together. The cache marker this replaces was set
+    before the change: if applying it then failed, Stripe's retry found the
+    marker, got a 200, and the payment was never applied. It also expired
+    after 24 hours, inside Stripe's three-day retry window.
+    """
+    event_id = models.CharField(max_length=255, unique=True)
+    type = models.CharField(max_length=100)
+    received_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.type} {self.event_id}'

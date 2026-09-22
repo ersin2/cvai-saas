@@ -17,7 +17,7 @@ services:
     runtime: python
     buildCommand: "./build.sh"
     # ASGI worker — migrate first (DB is only reachable at runtime, not during build)
-    startCommand: "python manage.py migrate --no-input && gunicorn aigen.asgi:application -k uvicorn.workers.UvicornWorker --workers 4 --bind 0.0.0.0:$PORT"
+    startCommand: "python manage.py migrate --no-input && gunicorn aigen.asgi:application -k uvicorn.workers.UvicornWorker --workers 2 --bind 0.0.0.0:$PORT"
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -25,10 +25,15 @@ services:
           property: connectionString
       - key: SECRET_KEY
         generateValue: true
+      # Two workers: four copies of Django + ReportLab + pdfminer + Pillow do not
+      # fit in the free plan's 512 MB. Slow work is async or off-thread, so
+      # two workers serve concurrent requests without blocking each other.
       - key: WEB_CONCURRENCY
-        value: 4
+        value: 2
+      # Explicit, never "*": build_absolute_uri() builds the Stripe return URLs
+      # from the Host header. RENDER_EXTERNAL_HOSTNAME is added in settings.
       - key: ALLOWED_HOSTS
-        value: "*"
+        value: "cvai.work,www.cvai.work"
       # Anthropic — Django calls the API directly (generator/ai_client.py).
       # Required: there is no other path to a provider. A FastAPI worker used
       # to sit in between, but this plan has no private networking, so its

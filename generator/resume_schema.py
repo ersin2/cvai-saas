@@ -97,7 +97,7 @@ def _extract_resume_text(pdf_file):
         pdf_file.seek(0)
         stream = io.BytesIO(pdf_file.read())
         pdf_file.seek(0)
-        text = pdf_extract_text(stream, laparams=_RESUME_LAPARAMS) or ''
+        text = pdf_extract_text(stream, laparams=_RESUME_LAPARAMS, maxpages=15) or ''
     except Exception as exc:
         logger.warning("PDF extraction failed: %s", exc)
         return '', 'Failed to parse PDF. Try pasting your resume text instead.'

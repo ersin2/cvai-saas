@@ -179,6 +179,26 @@ class EverySectionReachesThePdfTest(TestCase):
         self.assertNotIn("R&D;", text)
         self.assertIn("Go<T>", text)
 
+    def test_ampersands_are_escaped_exactly_once_in_every_template(self):
+        """
+        The request proxy escaped every field, and several builders escaped
+        languages and the portfolio URL again, so "R&D" printed as "R&amp;D".
+        Builders that did not escape them were, before the proxy, one "<" away
+        from failing the whole render.
+        """
+        data = dict(FULL_RESUME, full_name="R&D Lead <Maria>",
+                    languages="English & German", portfolio_url="https://maria.dev/?a=1&b=2")
+        for template in TEMPLATES:
+            slug = template["slug"]
+            text = _extract(_render(slug, data))
+            # Layouts wrap the name in a narrow sidebar or set it in capitals.
+            flat = " ".join(text.split()).lower()
+            with self.subTest(template=slug):
+                self.assertNotIn("&amp;", text)
+                self.assertIn("r&d lead <maria>", flat)
+                if "English" in text:  # not every layout has a languages block
+                    self.assertIn("English & German", text)
+
     def test_bullets_extract_as_text_not_as_a_cid_placeholder(self):
         """
         U+2022 is outside the standard-14 fonts' encoding, so every bulleted

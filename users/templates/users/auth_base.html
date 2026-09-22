@@ -1,0 +1,75 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+{% comment %}
+  Shell for the small signed-out account pages (password reset, email
+  confirmation). Same card, logo and button as login.html, so these read as
+  part of the same flow.
+{% endcomment %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Account{% endblock %} | CVAI</title>
+    <meta name="robots" content="noindex">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}">
+    <style>
+        body {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 100vh; padding: 20px;
+        }
+        .auth-container { width: 100%; max-width: 460px; animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+        .auth-card {
+            background: rgba(14, 18, 32, 0.92); backdrop-filter: blur(24px);
+            border: 1px solid var(--border); border-radius: var(--r-xl);
+            box-shadow: 0 32px 80px -12px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04);
+            padding: 44px 40px 40px; position: relative; overflow: hidden;
+        }
+        .auth-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, var(--brand-2), var(--brand), var(--brand-2));
+            background-size: 200% 100%; animation: shimmer 3s linear infinite;
+        }
+        .auth-logo {
+            font-family: var(--font-mono); font-size: var(--fs-2xl); font-weight: 700;
+            text-decoration: none; display: flex; align-items: center; justify-content: center;
+            gap: 10px; margin-bottom: 6px;
+        }
+        .auth-title { text-align: center; color: var(--text-1); font-size: var(--fs-xl); font-weight: 800; margin: 18px 0 8px; }
+        .auth-subtitle { text-align: center; color: var(--text-3); font-size: var(--fs-base); margin-bottom: 24px; line-height: 1.6; }
+        .btn-auth {
+            display: block; width: 100%; padding: 15px; border: none; border-radius: var(--r-lg);
+            background: linear-gradient(135deg, #4361ee, var(--brand-2)); color: white;
+            font-weight: 700; font-size: var(--fs-md); cursor: pointer; text-align: center; text-decoration: none;
+            transition: transform var(--t-fast), box-shadow var(--t-fast), opacity var(--t-fast);
+        }
+        .btn-auth:hover { color: white; transform: translateY(-2px); box-shadow: 0 12px 36px rgba(247, 37, 133, 0.35); opacity: 0.94; }
+        .auth-alert {
+            margin-bottom: 16px; padding: 14px 16px; border-radius: var(--r-md); font-size: var(--fs-base);
+            background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #fca5a5;
+        }
+        .auth-alert.ok { background: rgba(34,197,94,0.08); border-color: rgba(34,197,94,0.25); color: #86efac; }
+        ul.errorlist { list-style: none; padding: 0; margin: 6px 0 0; color: #fca5a5; font-size: var(--fs-sm); }
+        .back-link { display: block; text-align: center; margin-top: 18px; }
+        .back-link a { color: var(--text-3); text-decoration: none; font-size: var(--fs-base); }
+        .back-link a:hover { color: var(--brand); }
+        @media (max-width: 480px) { .auth-card { padding: 32px 24px 28px; } }
+    </style>
+</head>
+<body>
+    <main class="auth-container">
+        <div class="auth-card">
+            <a href="{% url 'landing' %}" class="auth-logo">
+                <i class="fas fa-cube" style="-webkit-text-fill-color: var(--brand); font-size: var(--fs-xl);"></i>
+                <span style="color: white;">CV</span><span style="color: var(--brand-2);">AI</span>
+            </a>
+            {% block card %}{% endblock %}
+        </div>
+        <div class="back-link">
+            {% block back_link %}<a href="{% url 'login' %}"><i class="fas fa-arrow-left me-1"></i>Back to sign in</a>{% endblock %}
+        </div>
+    </main>
+</body>
+</html>

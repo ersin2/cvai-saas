@@ -27,11 +27,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Load .env file
 load_dotenv(dotenv_path=BASE_DIR / '.env')
 
+from django.core.exceptions import ImproperlyConfigured
+
 # SECURITY: Load secret key from environment variable
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-local-dev-only-change-me')
 
 # SECURITY: DEBUG off in production
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+
+if not DEBUG and ('test' not in sys.argv) and (not SECRET_KEY or SECRET_KEY == 'django-insecure-local-dev-only-change-me'):
+    raise ImproperlyConfigured("SECRET_KEY must be set in production when DEBUG=False.")
 
 # SECURITY: Restrict allowed hosts
 # Render sets RENDER_EXTERNAL_HOSTNAME automatically (e.g. mysite.onrender.com)
@@ -134,12 +139,8 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# WhiteNoise: compress & cache-bust static files in production (Django 5+)
-STORAGES = {
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
+# STORAGES (WhiteNoise for static, S3 or disk for media) is set at the bottom
+# of this file, next to the S3 settings it depends on.
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -163,8 +164,6 @@ STRIPE_WEBHOOK_SECRET  = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
 STRIPE_PRICE_ID_PRO   = os.environ.get('STRIPE_PRICE_ID_PRO',   '')
 STRIPE_PRICE_ID_ELITE = os.environ.get('STRIPE_PRICE_ID_ELITE', '')
 
-# Legacy alias — kept for any code still referencing STRIPE_PRICE_ID
-STRIPE_PRICE_ID = STRIPE_PRICE_ID_PRO
 
 # ── AI provider ──────────────────────────────────────────────────────────────
 # Django calls Anthropic directly. Without this key no endpoint can generate
@@ -180,6 +179,10 @@ STRIPE_PRICE_ID = STRIPE_PRICE_ID_PRO
 ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
 ANTHROPIC_MODEL = os.environ.get('ANTHROPIC_MODEL', 'claude-sonnet-5')
 
+# Hard stop on total tokens per UTC day across all users (0 = no limit). Every
+# call's usage is counted in the cache either way; see generator/ai_client.py.
+AI_DAILY_TOKEN_BUDGET = int(os.environ.get('AI_DAILY_TOKEN_BUDGET', '0') or 0)
+
 if not ANTHROPIC_API_KEY:
     import warnings
     warnings.warn(
@@ -188,6 +191,34 @@ if not ANTHROPIC_API_KEY:
         "follow-up drafts — will return a configuration error until it is.",
         RuntimeWarning,
     )
+
+
+# ── Email ────────────────────────────────────────────────────────────────────
+# Any SMTP provider (Resend, Postmark, SendGrid, Mailgun, SES...) via these env
+# vars. Without EMAIL_HOST nothing is sent: messages go to the log, the
+# password-reset page says reset is unavailable, and email confirmation is not
+# required — so an unconfigured deploy never locks new users out.
+EMAIL_HOST = os.environ.get('EMAIL_HOST', '')
+EMAIL_CONFIGURED = bool(EMAIL_HOST)
+if EMAIL_CONFIGURED:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+    EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'False') == 'True'
+    EMAIL_TIMEOUT = 10
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'CVAI <no-reply@cvai.work>')
+
+# Free generations only after the account's email is confirmed. Every free
+# account is three paid model calls, so unconfirmed sign-ups were free credit
+# for anyone with a list of throwaway addresses. Defaults to on exactly when
+# email can actually be delivered.
+REQUIRE_EMAIL_VERIFICATION = os.environ.get(
+    'REQUIRE_EMAIL_VERIFICATION', 'True' if EMAIL_CONFIGURED else 'False'
+) == 'True'
 
 
 # ── Cache (Redis in production, LocMem fallback for local dev) ──────────────
@@ -209,8 +240,11 @@ if _REDIS_URL:
             'KEY_PREFIX': 'mysite',
         }
     }
-    # Optional: reuse the same Redis connection for Django sessions
-    SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+    # Sessions are read from Redis and written through to the database.
+    # Cache-only sessions were lost whenever Redis restarted or evicted keys —
+    # the free Redis plan persists nothing — which logged everyone out; and
+    # with IGNORE_EXCEPTIONS a Redis outage silently dropped every new session.
+    SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
     SESSION_CACHE_ALIAS = 'default'
 else:
     # Safe default for local development — no Redis required
@@ -255,7 +289,6 @@ if not DEBUG and not TESTING:
     SECURE_HSTS_SECONDS = 31_536_000       # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-    SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
 
 
@@ -298,7 +331,9 @@ LOGGING = {
 # Set SENTRY_DSN in your environment (Render dashboard / .env).
 # Left empty = Sentry silently disabled — safe for local dev.
 SENTRY_DSN = os.environ.get('SENTRY_DSN', '')
-if SENTRY_DSN and sentry_sdk:
+# Never from the test runner: a DSN in a developer's .env otherwise reports
+# the suite's deliberate failures to the production project.
+if SENTRY_DSN and sentry_sdk and not TESTING:
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         traces_sample_rate=0.1,           # 10% of requests traced (tune for cost)

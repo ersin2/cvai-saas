@@ -259,7 +259,7 @@
                                         <i class="fas fa-crown me-1"></i> Upgrade to Pro
                                     </div>
                                     <h3 style="font-size: var(--fs-xl); font-weight: 800; color: var(--text-1); margin-bottom: 8px;">
-                                        Unlock unlimited AI generations
+                                        Unlock 50 AI generations a month
                                     </h3>
                                     <p style="color: var(--text-2); font-size: var(--fs-md); margin: 0; line-height: 1.6;">
                                         Get 50 generations/month, premium templates, ATS scoring, and priority models — for just $5/mo.
@@ -363,6 +363,32 @@
                                 </div>
                             </form>
                         </div>
+
+                        <!-- DELETE ACCOUNT -->
+                        {% comment %}
+                          The delete_account endpoint existed with no way to reach it
+                          from the app, so the only route to erasure was an email.
+                        {% endcomment %}
+                        <div class="glass-card anim-fade-up mt-4" style="border: 1px solid rgba(239, 68, 68, 0.25); background: rgba(239, 68, 68, 0.03);">
+                            <div class="row align-items-center g-3">
+                                <div class="col-md-8">
+                                    <h3 style="font-size: var(--fs-lg); font-weight: 800; color: #fca5a5; margin-bottom: 6px;">
+                                        <i class="fas fa-triangle-exclamation me-2"></i>Delete account
+                                    </h3>
+                                    <p style="color: var(--text-2); font-size: var(--fs-base); margin: 0; line-height: 1.6;">
+                                        Permanently deletes your account, resumes, letters and tracked jobs.
+                                        {% if user.profile.stripe_customer_id %}Your subscription is cancelled first.{% endif %}
+                                        This cannot be undone.
+                                    </p>
+                                </div>
+                                <div class="col-md-4 text-md-end">
+                                    <button type="button" id="deleteAccountBtn" class="btn w-100"
+                                            style="border: 1px solid rgba(239, 68, 68, 0.5); color: #fca5a5; border-radius: var(--r-sm); padding: 10px; font-weight: 700;">
+                                        <i class="fas fa-trash-alt me-2"></i>Delete my account
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div> <!-- End of Overview Tab -->
 
                     <!-- HELP CENTER TAB -->
@@ -438,4 +464,31 @@
             </div>
         </div>
 
+<script>
+  document.getElementById('deleteAccountBtn').addEventListener('click', async function () {
+    const btn = this;
+    const ok = await confirmDialog(
+      'This permanently deletes your account and everything in it. It cannot be undone.',
+      { confirmText: 'Delete my account', danger: true }
+    );
+    if (!ok) { return; }
+
+    btn.disabled = true;
+    try {
+      const res = await fetch("{% url 'delete_account' %}", {
+        method: 'POST',
+        headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.status === 'success') {
+        window.location.href = "{% url 'landing' %}";
+        return;
+      }
+      showToast(data.error || 'Your account could not be deleted. Please try again.', 'danger');
+    } catch (err) {
+      showToast("We couldn't reach the server. Check your connection and try again.", 'danger');
+    }
+    btn.disabled = false;
+  });
+</script>
 {% endblock content %}

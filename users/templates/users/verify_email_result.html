@@ -1,0 +1,22 @@
+{% extends 'users/auth_base.html' %}
+
+{% block title %}{% if verified %}Email confirmed{% else %}Link expired{% endif %}{% endblock %}
+
+{% block card %}
+{% if verified %}
+<h1 class="auth-title">Email confirmed</h1>
+<div class="auth-alert ok" role="status">
+    <i class="fas fa-circle-check me-2"></i>Thanks — your free generations are unlocked.
+</div>
+<a href="{% url 'home' %}" class="btn-auth">Open the Studio <i class="fas fa-arrow-right ms-2"></i></a>
+{% else %}
+<h1 class="auth-title">This link has expired</h1>
+<div class="auth-alert" role="alert">
+    <i class="fas fa-exclamation-circle me-2"></i>The confirmation link is invalid or out of date.
+    Sign in and use "Resend email" to get a new one.
+</div>
+<a href="{% url 'home' %}" class="btn-auth">Continue</a>
+{% endif %}
+{% endblock %}
+
+{% block back_link %}<a href="{% url 'landing' %}"><i class="fas fa-arrow-left me-1"></i>Back to homepage</a>{% endblock %}

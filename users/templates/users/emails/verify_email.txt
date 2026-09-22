@@ -1,0 +1,10 @@
+{% autoescape off %}Hi {{ user.get_username }},
+
+Confirm your email address to start using your free CVAI generations:
+
+{{ verify_url }}
+
+The link expires in 3 days. If you didn't create a CVAI account, you can ignore this email.
+
+— CVAI
+{% endautoescape %}

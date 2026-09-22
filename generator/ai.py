@@ -17,6 +17,36 @@ from .ai_client import call_anthropic, AIClientError
 logger = logging.getLogger(__name__)
 
 
+VALID_LANGUAGES = {
+    'English', 'Spanish', 'French', 'German', 'Italian',
+    'Portuguese', 'Russian', 'Chinese', 'Japanese', 'Korean',
+    'Dutch', 'Polish', 'Turkish', 'Arabic', 'Ukrainian', 'Hindi',
+}
+
+# The cover-letter form's <select name="tone"> options.
+VALID_TONES = {'Professional', 'Enthusiastic', 'Formal', 'Conversational'}
+
+
+def safe_language(raw):
+    """
+    Map a user-supplied language onto VALID_LANGUAGES, defaulting to English.
+
+    The language is interpolated straight into system prompts, so it is an
+    instruction channel, not just a label: an unchecked 200-character value is
+    a prompt injection that bypasses the <candidate_cv> fencing entirely. It is
+    also stored in Generation.language (max_length=50), where anything longer
+    fails on PostgreSQL after the model call has already been paid for.
+    """
+    lang = raw.strip().title() if isinstance(raw, str) else ''
+    return lang if lang in VALID_LANGUAGES else 'English'
+
+
+def safe_tone(raw):
+    """Same contract as safe_language, for the cover letter's tone."""
+    tone = raw.strip().title() if isinstance(raw, str) else ''
+    return tone if tone in VALID_TONES else 'Professional'
+
+
 def _language_rule(language=None):
     """
     The output-language instruction shared by every AI prompt in this module.
@@ -38,7 +68,7 @@ def _language_rule(language=None):
     )
     if language:
         rule += (
-            f"The user has also selected: {language} — use this as a fallback ONLY "
+            f"The user has also selected: {safe_language(language)} — use this as a fallback ONLY "
             "if you cannot detect the input language.\n"
         )
     return rule + "\n"

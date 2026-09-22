@@ -40,10 +40,11 @@
       <i class="fas fa-cube"></i>CV<span style="-webkit-text-fill-color:var(--brand-2);">AI</span>
     </a>
 
-    {% if user.profile.generations_count is not None and user.profile.plan == 'free' %}
-    <span class="gen-counter desktop-nav">
+    {% if user.is_authenticated %}
+    {# Every plan: Pro and Elite are metered monthly, and used to find out only by hitting the wall. #}
+    <span class="gen-counter desktop-nav" title="AI generations left{% if user.profile.plan != 'free' %} this month{% endif %}">
       <i class="fas fa-bolt" style="font-size: var(--fs-xs);"></i>
-      {{ user.profile.generations_count }} left
+      {{ user.profile.generations_remaining }}{% if user.profile.plan != 'free' %} / {{ user.profile.get_limit }}{% endif %} left
     </span>
     {% endif %}
 
@@ -163,6 +164,16 @@
   </div>
 {% endblock navbar %}
 
+{% if user.is_authenticated and user.profile.needs_email_verification %}
+<div role="status" style="background: rgba(245,158,11,0.08); border-bottom: 1px solid rgba(245,158,11,0.25); color: #fcd34d; padding: 10px 16px; font-size: var(--fs-base); text-align: center;">
+  <i class="fas fa-envelope-open-text me-2" aria-hidden="true"></i>Confirm your email ({{ user.email }}) to unlock your free generations.
+  <form method="post" action="{% url 'resend_verification' %}" style="display: inline;">
+    {% csrf_token %}
+    <button type="submit" style="background: none; border: none; color: var(--brand); font-weight: 700; padding: 0 0 0 6px; cursor: pointer;">Resend email</button>
+  </form>
+</div>
+{% endif %}
+
 <!-- ── Django Messages → Toasts ─────────────────────────────── -->
 {% if messages %}
 <script>
@@ -253,7 +264,11 @@
     });
   }());
 
-  /* ── Global toast system ── */
+  /* ── Global toast system ──
+     Text only: the message goes in with textContent, never innerHTML. Some
+     messages are server error strings, and one used to echo request input.
+     Errors and warnings stay until closed — a quota or payment error that
+     vanished after four seconds was easy to miss entirely. */
   function showToast(message, type) {
     const icons = {
       success: 'check-circle',
@@ -262,20 +277,39 @@
       error:   'times-circle',
       info:    'info-circle',
     };
-    const toast = document.createElement('div');
     const resolvedType = type === 'error' ? 'danger' : (type || 'info');
+    const sticky = resolvedType === 'danger' || resolvedType === 'warning';
+
+    const toast = document.createElement('div');
     toast.className = 'toast-item toast-' + resolvedType;
-    toast.setAttribute('role', 'alert');
-    toast.innerHTML =
-      '<i class="fas fa-' + (icons[resolvedType] || 'info-circle') + '"></i>' +
-      '<span>' + message + '</span>';
+    toast.setAttribute('role', sticky ? 'alert' : 'status');
+
+    const icon = document.createElement('i');
+    icon.className = 'fas fa-' + (icons[resolvedType] || 'info-circle');
+    icon.setAttribute('aria-hidden', 'true');
+    const text = document.createElement('span');
+    text.textContent = message;
+    toast.append(icon, text);
+
+    function dismiss() {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 300);
+    }
+    if (sticky) {
+      const close = document.createElement('button');
+      close.type = 'button';
+      close.className = 'toast-close';
+      close.setAttribute('aria-label', 'Dismiss');
+      close.textContent = '×';
+      close.addEventListener('click', dismiss);
+      toast.append(close);
+    } else {
+      setTimeout(dismiss, 4200);
+    }
+
     document.getElementById('toastContainer').appendChild(toast);
     /* Force reflow before adding .show */
     requestAnimationFrame(() => requestAnimationFrame(() => toast.classList.add('show')));
-    setTimeout(() => {
-      toast.classList.remove('show');
-      setTimeout(() => toast.remove(), 300);
-    }, 4200);
   }
 
   /* ── Global styled confirm — returns a Promise<boolean> ── */

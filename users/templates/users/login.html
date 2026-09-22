@@ -182,9 +182,9 @@
             </div>
 
             <!-- ERROR -->
-            {% if form.errors %}
-            <div class="mb-3 p-3 rounded-3" style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #fca5a5; font-size: var(--fs-base);">
-                <i class="fas fa-exclamation-circle me-2"></i>Invalid credentials. Please try again.
+            {% if throttle_error or form.errors %}
+            <div class="mb-3 p-3 rounded-3" role="alert" style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #fca5a5; font-size: var(--fs-base);">
+                <i class="fas fa-exclamation-circle me-2"></i>{% if throttle_error %}{{ throttle_error }}{% else %}Invalid credentials. Please try again.{% endif %}
             </div>
             {% endif %}
 
@@ -202,7 +202,11 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label">Password</label>
+                    <div class="d-flex justify-content-between align-items-baseline">
+                        <label class="form-label">Password</label>
+                        <a href="{% url 'password_reset' %}" class="text-decoration-none"
+                           style="font-size: var(--fs-sm); color: var(--brand);">Forgot password?</a>
+                    </div>
                     <div class="input-icon-wrap">
                         <i class="fas fa-lock"></i>
                         <input type="password" name="password" id="id_password" class="form-control"

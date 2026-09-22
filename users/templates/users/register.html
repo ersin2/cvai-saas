@@ -251,6 +251,12 @@
                 </div>
             </div>
 
+            {% if throttle_error %}
+            <div class="mb-3 p-3 rounded-3" role="alert" style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #fca5a5;">
+                <i class="fas fa-exclamation-circle me-2"></i>{{ throttle_error }}
+            </div>
+            {% endif %}
+
             <!-- FORM -->
             <form method="post">
                 {% csrf_token %}

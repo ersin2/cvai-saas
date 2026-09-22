@@ -5,7 +5,9 @@
 {% block meta_desc %}Track every job application status, deadlines, and follow-ups in one organized dashboard.{% endblock %}
 
 {% block extra_head %}
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  {# Pinned + SRI. Unversioned, this shipped whatever Chart.js published next. #}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"
+          integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
     {% comment %}
   Pinned. This was sortablejs@latest, which means whatever that project
   publishes next ships straight into production, unreviewed, on the page
@@ -403,8 +405,9 @@
                                     <div>
                                         <div class="company-name">{{ app.company_name }}</div>
                                         <div class="job-title-text">{{ app.job_title }}</div>
-                                        {% if app.job_url %}
-                                        <a href="{{ app.job_url }}" target="_blank" class="url-link">
+                                        {% if app.job_url|slice:":7" == "http://" or app.job_url|slice:":8" == "https://" %}
+                                        {# Scheme checked here too: rows saved before the form validated URLs can hold javascript: links. #}
+                                        <a href="{{ app.job_url }}" target="_blank" rel="noopener noreferrer" class="url-link">
                                             <i class="fas fa-external-link-alt"></i>View Job
                                         </a>
                                         {% endif %}
@@ -482,7 +485,10 @@
                 <div class="kanban-col-header" style="border-top: 3px solid {{ col_color }};">{{ col_label }}</div>
                 <div class="kanban-dropzone" data-status="{{ col_status }}">
                     {% for app in applications %}{% if app.status == col_status %}
-                    <div class="kanban-card" data-id="{{ app.pk }}" onclick="openDrawer('{{ app.company_name|escapejs }}', '{{ app.job_title|escapejs }}', '{{ app.status|escapejs }}', '{{ app.salary_range|escapejs }}', '{{ app.notes|escapejs }}', '{{ app.job_url|escapejs }}', '{{ app.created_at|date:"M d, Y" }}')">
+                    <div class="kanban-card" data-id="{{ app.pk }}" role="button" tabindex="0"
+                         aria-label="Open {{ app.company_name }} — {{ app.job_title }}"
+                         onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); this.click(); }"
+                         onclick="openDrawer('{{ app.company_name|escapejs }}', '{{ app.job_title|escapejs }}', '{{ app.status|escapejs }}', '{{ app.salary_range|escapejs }}', '{{ app.notes|escapejs }}', '{{ app.job_url|escapejs }}', '{{ app.created_at|date:"M d, Y" }}')">
                         <div class="d-flex align-items-center gap-2 mb-2">
                             <div class="company-avatar avatar-sm" aria-hidden="true">{{ app.company_name|first|upper }}</div>
                             <div class="company-name" style="font-size: var(--fs-base);">{{ app.company_name }}</div>
@@ -529,7 +535,7 @@
                 </div>
                 <div class="d-flex justify-content-between">
                     <span class="text-muted"><i class="fas fa-link me-2"></i>Job Link</span>
-                    <a href="#" id="dr-url" target="_blank" class="url-link">View Posting</a>
+                    <a href="#" id="dr-url" target="_blank" rel="noopener noreferrer" class="url-link">View Posting</a>
                 </div>
             </div>
 
@@ -712,7 +718,8 @@
             logoEl.textContent = (company || '?').trim().charAt(0).toUpperCase();
 
             const urlEl = document.getElementById('dr-url');
-            if (url && url !== 'None') { urlEl.href = url; urlEl.style.display = 'inline-block'; } 
+            // http(s) only — older rows may hold a javascript: URL.
+            if (url && /^https?:\/\//i.test(url)) { urlEl.href = url; urlEl.style.display = 'inline-block'; } 
             else { urlEl.style.display = 'none'; }
             
             const notesEl = document.getElementById('dr-notes');

@@ -1,7 +1,5 @@
 from django import template
-from django.utils.safestring import mark_safe
 import re
-import markdown as md
 
 register = template.Library()
 
@@ -79,15 +77,3 @@ def parse_sections(text):
                     sections['risks'] = clean(split_4[1])
 
     return sections
-
-
-@register.filter(name='markdown_to_html')
-def markdown_to_html(text):
-    """
-    Converts raw Markdown from LLM to safe HTML.
-    """
-    if not text:
-        return ''
-    text = text.replace('\\r\\n', '\n').replace('\\n', '\n')
-    html = md.markdown(text, extensions=['extra', 'nl2br'])
-    return mark_safe(html)

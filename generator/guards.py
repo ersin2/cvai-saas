@@ -2,22 +2,28 @@
 Request guards for the generator app.
 
 Everything here runs *before* a view does its work and can stop the request:
-the JSON auth guard, the per-plan rate limiter, the SSRF check applied to
-user-supplied URLs, and the upload validators for resume PDFs and photos.
+the JSON auth guard, the generation quota reservation, the per-plan rate
+limiter, the SSRF check applied to user-supplied URLs, and the upload
+validators for resume PDFs and photos.
 
 Split out of views.py, which had grown to 1,793 lines by mixing HTTP handling
 with these cross-cutting checks. They are imported back into views under the
 same names, so `from generator.views import _check_rate_limit` still resolves.
 """
 
+import inspect
 import ipaddress
 import logging
 import socket
+from contextlib import asynccontextmanager
 from functools import wraps
 from urllib.parse import urlparse
 
+from asgiref.sync import sync_to_async
 from django.core.cache import cache
 from django.http import JsonResponse
+
+from users.models import Profile
 
 logger = logging.getLogger(__name__)
 
@@ -36,33 +42,6 @@ logger = logging.getLogger(__name__)
 # have no HTML representation, so the JSON answer is always the right one.
 # For method checks keep Django's @require_POST — its 405 is already correct.
 # ---------------------------------------------------------------------------
-def _language_rule(language=None):
-    """
-    The output-language instruction shared by every AI prompt in this module.
-
-    Was previously spelled out inline in five places — three byte-identical
-    copies plus two near-variants — so tuning the wording meant editing five
-    prompts and hoping they stayed in sync. Pass `language` when the caller
-    has an explicit user selection (cover letter, section rewrite); omit it for
-    the Tools endpoints, whose forms have no language field and which rely on
-    detection alone.
-    """
-    rule = (
-        "⚠️ ABSOLUTE LANGUAGE RULE ⚠️\n"
-        "You MUST automatically detect the language of the candidate's raw input "
-        "text. YOU MUST GENERATE YOUR ENTIRE RESPONSE IN THAT EXACT SAME LANGUAGE — "
-        "every section header, bullet point, analysis line, question and tip. "
-        "DO NOT write even one word in another language. If you fail to match the "
-        "input language, you fail the task.\n"
-    )
-    if language:
-        rule += (
-            f"The user has also selected: {language} — use this as a fallback ONLY "
-            "if you cannot detect the input language.\n"
-        )
-    return rule + "\n"
-
-
 def json_login_required(view_func):
     """Async login guard that answers 401 JSON instead of redirecting."""
     @wraps(view_func)
@@ -88,6 +67,60 @@ RATE_WINDOW = 60  # seconds
 # user's preview 429s after 3 edits/min. This is a render, not an AI generation.
 PREVIEW_RATE_LIMIT = 60  # renders/min per user
 
+# Fetching a job page and reading an uploaded PDF call no model. They shared
+# the AI bucket, so a free user who pasted a job link, uploaded a resume and
+# clicked Generate had spent 3 of 3 requests and was told to wait a minute.
+UTILITY_RATE_LIMIT = 20  # requests/min per user
+
+
+def hit_rate_limit(key, limit, window=RATE_WINDOW):
+    """
+    Count one hit on `key` and return True once hits exceed `limit` within
+    `window` seconds.
+
+    add() then incr() are both atomic in Redis, so concurrent hits are all
+    counted. The get-then-set this replaces in the sign-up limiter was not:
+    two simultaneous requests read the same count and each wrote count + 1.
+
+    Fails OPEN: if the cache backend is degraded (django-redis is configured
+    with IGNORE_EXCEPTIONS=True and returns None on connection errors), the
+    hit is allowed rather than turning a Redis outage into a site outage.
+    """
+    # First hit in this window — add() returns True when the key was created.
+    if cache.add(key, 1, window):
+        return 1 > limit
+    try:
+        count = cache.incr(key)
+    except ValueError:
+        # Key expired between add() and incr() — treat as a fresh window.
+        cache.set(key, 1, window)
+        return False
+    # Degraded cache backend returned None instead of an int — fail open.
+    if count is None:
+        return False
+    return count > limit
+
+
+def rate_limit_reached(key, limit):
+    """True if `key` has already used up `limit`, without counting a hit."""
+    return (cache.get(key) or 0) >= limit
+
+
+def client_ip(request):
+    """
+    The address of the client that sent the request.
+
+    Production sits behind Cloudflare, which sets CF-Connecting-IP on every
+    request it forwards, overwriting anything the client sent. The leftmost
+    X-Forwarded-For entry, which the sign-up limiter used to trust, is written
+    by the client and can be anything; the rightmost is a Cloudflare edge that
+    thousands of users share. Neither identifies a client.
+    """
+    cf_ip = request.META.get('HTTP_CF_CONNECTING_IP', '').strip()
+    if cf_ip:
+        return cf_ip
+    return request.META.get('REMOTE_ADDR', '')
+
 
 def _check_rate_limit(user, plan: str, *, limit=None, key_prefix='rl'):
     """
@@ -98,36 +131,104 @@ def _check_rate_limit(user, plan: str, *, limit=None, key_prefix='rl'):
     workers), so the limit is global. With the LocMem fallback (local dev) the
     counter is per-process, so multi-worker dev servers see a looser effective
     limit — acceptable for local use.
-
-    Fails OPEN: if the cache backend is degraded (django-redis is configured with
-    IGNORE_EXCEPTIONS=True and returns None on connection errors), we allow the
-    request rather than 500 every generation.
     """
     if limit is None:
         limit = RATE_LIMITS.get(plan, 3)
-    cache_key = f"{key_prefix}:{user.id}"
-
-    # First request in this window — add() returns True when the key was created.
-    if cache.add(cache_key, 1, RATE_WINDOW):
-        return None
-
-    try:
-        count = cache.incr(cache_key)
-    except ValueError:
-        # Key expired between add() and incr() — treat as a fresh window.
-        cache.set(cache_key, 1, RATE_WINDOW)
-        return None
-
-    # Degraded cache backend returned None instead of an int — fail open.
-    if count is None:
-        return None
-
-    if count > limit:
+    if hit_rate_limit(f"{key_prefix}:{user.id}", limit):
         return JsonResponse(
             {'error': 'Too many requests. Please wait a minute and try again.'},
             status=429,
         )
     return None
+
+# ---------------------------------------------------------------------------
+# GENERATION QUOTA — reserve up front, refund unless the view commits
+# ---------------------------------------------------------------------------
+# The quota is taken BEFORE the model is called: checking it and charging it
+# afterwards let parallel requests all pass the check and each get a paid call.
+# That made every AI view a hand-written pair of use_generation() and
+# refund_generation(), with a refund before each of four to seven exits. Two
+# things went wrong with that shape:
+#
+#   * an exit without a refund — generate_resume once returned early on every
+#     request, with the generation spent and nothing generated;
+#   * an exception between the two — a DB error while saving the result left
+#     the generation spent, after the model call had already been paid for.
+#
+# The reservation below refunds on every way out of the block except an
+# explicit commit(), so a view only has to say when it delivered something.
+# ---------------------------------------------------------------------------
+class QuotaExhausted(Exception):
+    """The user has no generation left in the current period."""
+
+
+class _Reservation:
+    __slots__ = ('committed',)
+
+    def __init__(self):
+        self.committed = False
+
+    def commit(self):
+        """The user got a result; keep the generation spent."""
+        self.committed = True
+
+
+@asynccontextmanager
+async def reserved_generation(profile):
+    """
+    Spend one generation for the duration of the block.
+
+    Raises QuotaExhausted if there is none to spend. Refunds on any exit —
+    return, exception, or falling off the end — unless commit() was called.
+    Charge and refund go through the same Profile instance, so both hit the
+    same counter even if the plan changes mid-request.
+    """
+    if profile.needs_email_verification():
+        raise QuotaExhausted(profile.VERIFY_EMAIL_MESSAGE)
+    if not await sync_to_async(profile.use_generation)():
+        raise QuotaExhausted(profile.quota_message())
+    reservation = _Reservation()
+    try:
+        yield reservation
+    finally:
+        if not reservation.committed:
+            await sync_to_async(profile.refund_generation)()
+
+
+def spends_generation(on_exhausted):
+    """
+    Decorator for the AI views: reserve a generation, then apply the throttle.
+
+    Quota before throttle, deliberately. Both gates can reject the same click
+    and they give opposite advice: being out of generations is permanent until
+    you upgrade, being rate-limited clears in a minute. Checked the other way
+    round, a user who had spent their last generation and clicked again was
+    told to wait a minute — advice that never comes true.
+
+    The view is called as view(request, *args, profile=..., reservation=...)
+    and must call reservation.commit() once it has something to show.
+    `on_exhausted(request, profile, message)` builds the out-of-quota response;
+    it may be sync or async, because the Tools views answer with a page.
+    """
+    def decorator(view_func):
+        @wraps(view_func)
+        async def _wrapped(request, *args, **kwargs):
+            profile, _ = await Profile.objects.aget_or_create(user=request.user)
+            try:
+                async with reserved_generation(profile) as reservation:
+                    throttled = await sync_to_async(_check_rate_limit)(request.user, profile.plan)
+                    if throttled:
+                        return throttled
+                    return await view_func(
+                        request, *args, profile=profile, reservation=reservation, **kwargs
+                    )
+            except QuotaExhausted as exc:
+                response = on_exhausted(request, profile, str(exc))
+                if inspect.isawaitable(response):
+                    response = await response
+                return response
+        return _wrapped
+    return decorator
 
 # ---------------------------------------------------------------------------
 # SSRF PROTECTION
@@ -161,8 +262,17 @@ def _url_points_to_public_host(url: str):
         return False, 'Invalid URL.'
 
     try:
+        port = parsed.port or (443 if parsed.scheme == 'https' else 80)
+    except ValueError:  # e.g. 'http://host:99999/' — urlparse raises on access
+        return False, 'Invalid URL.'
+    # Job postings are served on the standard ports. Allowing 8000/8080 only
+    # widened the set of internal services a rebinding attack could reach.
+    if port not in (80, 443):
+        return False, 'Requests to non-standard ports are not allowed.'
+
+    try:
         addrinfo = socket.getaddrinfo(
-            hostname, parsed.port or (443 if parsed.scheme == 'https' else 80)
+            hostname, port
         )
     except socket.gaierror:
         return False, 'Could not resolve hostname.'
@@ -203,11 +313,6 @@ def _validate_pdf_upload(pdf_file):
 # ---------------------------------------------------------------------------
 # PHOTO UPLOAD VALIDATION  (avatar on the photo-bearing resume templates)
 # ---------------------------------------------------------------------------
-# Previously unvalidated: any file of any size reached PIL, and a large enough
-# image exhausted the worker's memory during decode. The worker died mid-render,
-# so the browser saw a failed request rather than an error page — which is what
-# produced the generic "Preview failed / try a smaller photo" toast with no way
-# to tell whether the photo was actually the problem.
 PHOTO_MAX_BYTES = 5 * 1024 * 1024  # 5 MB, matching PDF_MAX_BYTES
 
 # Leading bytes for the formats Pillow handles well here. WebP is RIFF....WEBP,
@@ -240,10 +345,29 @@ def _validate_photo_upload(photo_file):
 
     head = photo_file.read(12)
     photo_file.seek(0)
+    valid_format = False
     for magic, _label in _PHOTO_MAGIC:
         if head.startswith(magic):
-            return True, None
-    if head[:4] == b'RIFF' and head[8:12] == b'WEBP':
-        return True, None
+            valid_format = True
+            break
+    if not valid_format and head[:4] == b'RIFF' and head[8:12] == b'WEBP':
+        valid_format = True
 
-    return False, 'Unsupported photo format. Please use a JPEG, PNG, GIF or WebP image.'
+    if not valid_format:
+        return False, 'Unsupported photo format. Please use a JPEG, PNG, GIF or WebP image.'
+
+    # Guard against decompression bombs by checking image dimensions
+    try:
+        from PIL import Image
+        photo_file.seek(0)
+        with Image.open(photo_file) as im:
+            w, h = im.size
+            if w * h > 16_000_000 or w > 4096 or h > 4096:
+                photo_file.seek(0)
+                return False, 'Image dimensions are too large. Maximum allowed is 4000x4000 pixels.'
+    except Exception:
+        pass
+    finally:
+        photo_file.seek(0)
+
+    return True, None

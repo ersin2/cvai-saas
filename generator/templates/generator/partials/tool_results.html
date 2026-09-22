@@ -1,0 +1,45 @@
+{# Recent Results list: tools.html on load, and the AI tool endpoints after each run. #}
+{% if results %}
+{% for r in results %}
+<div class="tool-result-card" data-type="{{ r.result_type }}" id="trc-{{ r.id }}">
+    <div class="trc-header">
+        <span class="trc-type-badge {% if r.result_type == 'interview' %}trc-interview{% elif r.result_type == 'followup' %}trc-followup{% else %}trc-ats{% endif %}">
+            <i class="fas fa-{% if r.result_type == 'interview' %}comments{% elif r.result_type == 'followup' %}envelope{% else %}chart-bar{% endif %} me-1"></i>{% if r.result_type == 'interview' %}Interview Prep{% elif r.result_type == 'followup' %}Follow-Up{% else %}ATS Score{% endif %}
+        </span>
+        <span class="trc-date">{{ r.created_at|date:"M d" }}</span>
+    </div>
+    <div class="trc-summary">{{ r.input_summary|truncatechars:45 }}</div>
+    {% comment %}
+    Both of these used to print {{ r.result }} straight out,
+    which is why an ATS report showed as literal pipes and
+    asterisks. The raw markdown now rides in on a data
+    attribute and is rendered by CVAIResult on load — the
+    preview as plain text, the body as formatted HTML.
+    {% endcomment %}
+    <div class="trc-preview" data-preview></div>
+    <button class="trc-toggle" onclick="toggleToolResult(this)">
+        <span>View full</span>
+        <i class="fas fa-chevron-down trc-chevron"></i>
+    </button>
+    <div class="trc-body">
+        <div class="trc-full res-body"
+             data-raw="{{ r.result }}"
+             data-kind="{{ r.result_type }}"
+             data-score="{{ r.score|default_if_none:'' }}"></div>
+        <div class="trc-copy-row">
+            <button class="trc-copy-btn" onclick="copyTrcItem(this)">
+                <i class="fas fa-copy"></i> Copy
+            </button>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="empty-state-v2" style="padding: 32px 16px;">
+    <div class="empty-icon-box" style="width: 48px; height: 48px;">
+        <i class="fas fa-inbox" style="color: var(--text-3); font-size: var(--fs-lg);"></i>
+    </div>
+    <div class="empty-title" style="font-size: var(--fs-base);">No results yet</div>
+    <p class="empty-desc" style="font-size: var(--fs-sm);">Run any tool on the left — results land here automatically.</p>
+</div>
+{% endif %}

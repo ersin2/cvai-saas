@@ -2,6 +2,30 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
+from .models import Profile
+
+
+class ProfilePreferencesForm(forms.ModelForm):
+    """
+    The "global defaults" form on the profile page.
+
+    Font and language are limited to what the page's <select>s offer. They
+    used to be saved as posted, so a value over the column's 50 characters
+    failed on PostgreSQL with a 500, and anything else was stored and fed to
+    the Studio as a font name.
+    """
+    FONT_CHOICES = [(f, f) for f in (
+        'Inter', 'Outfit', 'Roboto', 'Montserrat', 'Merriweather', 'JetBrains Mono',
+    )]
+    LANGUAGE_CHOICES = [(l, l) for l in ('English', 'Spanish', 'French', 'German', 'Russian')]
+
+    default_font = forms.ChoiceField(choices=FONT_CHOICES)
+    default_language = forms.ChoiceField(choices=LANGUAGE_CHOICES)
+
+    class Meta:
+        model = Profile
+        fields = ['base_resume', 'default_font', 'default_language']
+
 
 class UserRegisterForm(UserCreationForm):
     """

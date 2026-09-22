@@ -1,51 +1,57 @@
 # Django Web Application — Dependencies
 # pip install -r requirements.txt
+#
+# Direct dependencies are pinned to exact versions: the versions the test suite
+# passes on. They used to be `>=`, so every Render build could pull a new major
+# version — Stripe's SDK in particular changes its API between majors — into
+# production with nothing having run against it. Upgrade deliberately: bump a
+# pin, run the suite, deploy.
+#
+# Transitive dependencies are not pinned here. For a full lock with hashes,
+# generate one on Linux (the deploy platform), e.g.
+#   uv pip compile requirements.txt --generate-hashes -o requirements.lock
 
 # Framework
-django>=5.2
-gunicorn>=22.0.0
-uvicorn[standard]>=0.30.0
+django==6.0.7
+gunicorn==26.0.0
+uvicorn[standard]==0.41.0
 
 # Database
-dj-database-url>=2.1.0
-psycopg2-binary>=2.9.0
+dj-database-url==3.1.2
+psycopg2-binary==2.9.12
 
 # Static files
-whitenoise>=6.7.0
+whitenoise==6.12.0
 
-# Async HTTP client (calls to AI microservice)
-httpx>=0.27.0
+# Async HTTP client (job page fetching; the Anthropic SDK also uses it)
+httpx==0.28.1
 
 # Environment variables
-python-dotenv>=1.0.0
+python-dotenv==1.2.1
 
 # PDF generation
-reportlab>=4.0
-pdfminer.six>=20231228
+reportlab==5.0.0
+pdfminer.six==20260107
 
 # HTML scraping (job URL parser)
-beautifulsoup4>=4.12.0
+beautifulsoup4==4.15.0
 
 # Payments
-stripe>=8.0.0
+stripe==15.3.0
 
 # Error tracking
-sentry-sdk[django]>=2.0.0
+sentry-sdk[django]==2.65.0
 
 # Async support
-asgiref>=3.8.0
-
-markdown>=3.6.0
+asgiref==3.12.1
 
 # Redis cache backend (shared rate-limiter + session store across Gunicorn workers)
-django-redis>=5.4.0
-redis[hiredis]>=5.0.0
+django-redis==7.0.0
+redis[hiredis]==8.0.1
 
-django-storages>=1.14.6
-boto3>=1.43.33
-Pillow>=10.0.0
-
-
+django-storages==1.14.6
+boto3==1.43.48
+Pillow==12.3.0
 
 # Anthropic SDK — Django calls the API directly (see generator/ai_client.py)
-anthropic>=0.40.0
+anthropic==0.83.0

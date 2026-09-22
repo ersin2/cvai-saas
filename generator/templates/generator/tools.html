@@ -6,6 +6,7 @@
 
 {% block extra_head %}
     <script src="{% static 'generator/js/result-render.js' %}" defer></script>
+    <script src="{% static 'generator/js/http-errors.js' %}" defer></script>
 
     <style>
         /* ── TOOL TABS ── */
@@ -430,37 +431,15 @@
                     </div>
                 </div>
 
-                <!-- ── ERROR ── -->
-                {% if tool_error %}
-                <div class="alert bg-danger bg-opacity-25 border-0 text-white mt-4 rounded-4 anim-fade-up"
-                     style="border: 1px solid rgba(239,68,68,0.25) !important; border-left: 3px solid var(--danger) !important;">
-                    <i class="fas fa-exclamation-circle me-2"></i>{{ tool_error }}
-                </div>
-                {% endif %}
-
-                <!-- ── RESULT ── -->
-                {% if tool_result %}
-                <div class="result-box" id="toolResultBox">
-                    {% if ats_score %}
-                    <div class="text-center mb-4">
-                        <div class="ats-score-ring" style="background: conic-gradient(
-                            {% if ats_score >= 80 %}#22c55e{% elif ats_score >= 60 %}#eab308{% else %}#ef4444{% endif %} {{ ats_score }}%,
-                            rgba(255,255,255,0.08) {{ ats_score }}%);">
-                            {{ ats_score }}
-                        </div>
-                        <div class="fw-bold" style="font-size: var(--fs-md);">ATS Compatibility Score</div>
-                    </div>
-                    {% endif %}
+                <!-- ── RESULT ── (filled in by submitToolForm) -->
+                <div class="result-box" id="toolResultBox" style="display: none;">
                     <div class="d-flex justify-content-end mb-3">
                         <button class="btn-ghost" onclick="copyResult()" style="font-size: var(--fs-sm); padding: 8px 16px;">
                             <i class="fas fa-copy"></i>Copy to Clipboard
                         </button>
                     </div>
-                    <div id="toolResultContent" class="res-body"
-                         data-raw-result="{{ tool_result|escape }}"
-                         data-kind="{{ active_tool|default:'' }}"></div>
+                    <div id="toolResultContent" class="res-body" aria-live="polite"></div>
                 </div>
-                {% endif %}
 
                 <!-- ── LOADING ── -->
                 <div class="loading-spinner" id="loadingSpinner" role="status" aria-live="polite">
@@ -476,77 +455,14 @@
                     <h2 class="section-title mb-4">
                         <i class="fas fa-clock" style="color: var(--brand);"></i>Recent Results
                     </h2>
-                    {% if results %}
-                    {% for r in results %}
-                    <div class="tool-result-card" data-type="{{ r.result_type }}" id="trc-{{ r.id }}">
-                        <div class="trc-header">
-                            <span class="trc-type-badge {% if r.result_type == 'interview' %}trc-interview{% elif r.result_type == 'followup' %}trc-followup{% else %}trc-ats{% endif %}">
-                                <i class="fas fa-{% if r.result_type == 'interview' %}comments{% elif r.result_type == 'followup' %}envelope{% else %}chart-bar{% endif %} me-1"></i>{% if r.result_type == 'interview' %}Interview Prep{% elif r.result_type == 'followup' %}Follow-Up{% else %}ATS Score{% endif %}
-                            </span>
-                            <span class="trc-date">{{ r.created_at|date:"M d" }}</span>
-                        </div>
-                        <div class="trc-summary">{{ r.input_summary|truncatechars:45 }}</div>
-                        {% comment %}
-                        Both of these used to print {{ r.result }} straight out,
-                        which is why an ATS report showed as literal pipes and
-                        asterisks. The raw markdown now rides in on a data
-                        attribute and is rendered by CVAIResult on load — the
-                        preview as plain text, the body as formatted HTML.
-                        {% endcomment %}
-                        <div class="trc-preview" data-preview></div>
-                        <button class="trc-toggle" onclick="toggleToolResult(this)">
-                            <span>View full</span>
-                            <i class="fas fa-chevron-down trc-chevron"></i>
-                        </button>
-                        <div class="trc-body">
-                            <div class="trc-full res-body"
-                                 data-raw="{{ r.result }}"
-                                 data-kind="{{ r.result_type }}"
-                                 data-score="{{ r.score|default_if_none:'' }}"></div>
-                            <div class="trc-copy-row">
-                                <button class="trc-copy-btn" onclick="copyTrcItem(this)">
-                                    <i class="fas fa-copy"></i> Copy
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                    {% else %}
-                    <div class="empty-state-v2" style="padding: 32px 16px;">
-                        <div class="empty-icon-box" style="width: 48px; height: 48px;">
-                            <i class="fas fa-inbox" style="color: var(--text-3); font-size: var(--fs-lg);"></i>
-                        </div>
-                        <div class="empty-title" style="font-size: var(--fs-base);">No results yet</div>
-                        <p class="empty-desc" style="font-size: var(--fs-sm);">Run any tool on the left — results land here automatically.</p>
-                    </div>
-                    {% endif %}
+                    {# Also rendered by the tool endpoints, which send it back after each run. #}
+                    <div id="toolResults">{% include 'generator/partials/tool_results.html' %}</div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-    /* Turn a failed request into something a person can act on.
-
-       These endpoints answer failures with JSON {"error": "..."} that the
-       server has already worded — the rate limiter, the quota check, the
-       auth guard. "Server error (429)" threw that away and read as a crash
-       when it meant "you clicked too fast". Read the body first. */
-    async function describeHttpFailure(resp) {
-        let payload = {};
-        try {
-            if ((resp.headers.get('content-type') || '').includes('application/json')) {
-                payload = await resp.json();
-            }
-        } catch (e) { /* no usable body — fall back to the status */ }
-        if (payload && payload.error) return payload.error;
-
-        if (resp.status === 401) return 'Your session expired. Please sign in again.';
-        if (resp.status === 402) return "You've used all your generations — upgrade to keep going.";
-        if (resp.status === 429) return 'Too many requests in a row. Wait about a minute, then try again.';
-        if (resp.status >= 500)  return 'The server hit a problem. Please try again in a moment.';
-        return 'Request failed (' + resp.status + '). Please try again.';
-    }
 
         function showTool(name, el) {
             document.querySelectorAll('.tool-panel').forEach(p => p.classList.remove('active'));
@@ -635,7 +551,7 @@
                 showToast('Cover letter generated — saved to History.', 'success');
             } catch (err) {
                 document.getElementById('loadingSpinner').classList.remove('show');
-                showToast('Connection failed. Is the AI service running?', 'danger');
+                showToast("We couldn't reach the server. Check your connection and try again.", 'danger');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = orig;
@@ -765,36 +681,43 @@
             const formData = new FormData(form);
             formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
+            // JSON, rendered in place. This used to document.write() the whole
+            // page the server sent back, which threw away everything typed into
+            // the other tools and reset scroll, focus and browser history.
             try {
                 const resp = await fetch(TOOL_URLS[toolName], { method: 'POST', body: formData });
-                if (resp.ok || resp.redirected) {
-                    const html = await resp.text();
-                    document.open(); document.write(html); document.close();
-                } else {
+                if (!resp.ok) {
                     showToast(await describeHttpFailure(resp),
                               resp.status === 429 ? 'warning' : 'danger');
-                    btn.disabled = false; btn.innerHTML = origHTML;
-                    document.getElementById('loadingSpinner').classList.remove('show');
+                    return;
                 }
+                const data = await resp.json();
+                showToolResult(data);
+                const list = document.getElementById('toolResults');
+                list.innerHTML = data.recent_html;
+                initResultCards(list);
             } catch(err) {
-                showToast('Connection failed. Is the AI service running?', 'danger');
+                showToast("We couldn't reach the server. Check your connection and try again.", 'danger');
+            } finally {
                 btn.disabled = false; btn.innerHTML = origHTML;
                 document.getElementById('loadingSpinner').classList.remove('show');
             }
         }
-        // Run on load
-        document.addEventListener('DOMContentLoaded', () => {
-            const contentDiv = document.getElementById('toolResultContent');
-            if (contentDiv) {
-                const raw = contentDiv.getAttribute('data-raw-result') || '';
-                CVAIResult.render(contentDiv, raw, {
-                    kind: contentDiv.dataset.kind,
-                });
-            }
 
-            // Recent Results: format the body, and derive the collapsed preview
-            // from the rendered text so it reads as prose rather than markup.
-            document.querySelectorAll('.trc-full').forEach(el => {
+        function showToolResult(data) {
+            const box = document.getElementById('toolResultBox');
+            CVAIResult.render(document.getElementById('toolResultContent'), data.result, {
+                kind: data.kind,
+                score: data.ats_score,
+            });
+            box.style.display = '';
+            box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        /* Recent Results: format the body, and derive the collapsed preview
+           from the rendered text so it reads as prose rather than markup. */
+        function initResultCards(root) {
+            root.querySelectorAll('.trc-full').forEach(el => {
                 const raw  = el.dataset.raw || '';
                 const kind = el.dataset.kind || '';
 
@@ -820,6 +743,9 @@
                     CVAIResult.enhanceFollowup(el);
                 }
             });
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            initResultCards(document.getElementById('toolResults'));
         });
 
     </script>

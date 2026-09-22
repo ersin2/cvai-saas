@@ -25,6 +25,7 @@
   from the copy History exports with.
   {% endcomment %}
   <script src="{% static 'generator/js/result-render.js' %}"></script>
+  <script src="{% static 'generator/js/http-errors.js' %}"></script>
   <!-- Legacy studio_styles.html include removed in Phase 4: its selectors
        (.studio-root, .tpl-executive .cv-*) match nothing in this template. -->
 
@@ -538,7 +539,7 @@
       font-size: var(--fs-base); color: var(--text-1);
       box-shadow: 0 12px 40px rgba(0,0,0,.5);
       transform: translateY(120%); transition: transform .3s cubic-bezier(.34,1.56,.64,1);
-      display: flex; align-items: center; gap: 8px;
+      display: flex; align-items: center; gap: 8px; cursor: pointer;
     }
     .vs-toast.show { transform: translateY(0); }
     .vs-toast.success i { color: #22c55e; }
@@ -1120,7 +1121,7 @@
       {% if user.profile.plan == 'free' %}
         <i class="fas fa-bolt me-1"></i>{{ user.profile.generations_count }}/{{ user.profile.get_limit }} Free
       {% else %}
-        <i class="fas fa-crown me-1"></i>{{ user.profile.plan|upper }}
+        <i class="fas fa-crown me-1"></i>{{ user.profile.plan|upper }} · {{ user.profile.generations_remaining }}/{{ user.profile.get_limit }}
       {% endif %}
     </div>
     <div class="vs-nav-spacer"></div>
@@ -1201,7 +1202,7 @@
                 {% if user.profile.plan == 'free' %}
                   <i class="fas fa-bolt me-1"></i>{{ user.profile.generations_count }} left
                 {% else %}
-                  <i class="fas fa-infinity me-1"></i>{{ user.profile.plan|upper }}
+                  <i class="fas fa-bolt me-1"></i>{{ user.profile.generations_remaining }} left this month
                 {% endif %}
               </span>
               {% endif %}
@@ -1864,8 +1865,8 @@
   </div>
 
   <!-- Toast -->
-  <div class="vs-toast" id="vsToast">
-    <i class="fas fa-circle-check"></i>
+  <div class="vs-toast" id="vsToast" role="status" aria-live="polite" title="Click to dismiss">
+    <i class="fas fa-circle-check" aria-hidden="true"></i>
     <span id="vsToastMsg"></span>
   </div>
 
@@ -1907,26 +1908,9 @@
      fast", and sends them to support instead of waiting sixty seconds.
 
      Read the body first. Fall back to the status only when there is no usable
-     message in it.
+     message in it. describeHttpFailure() lives in
+     static/generator/js/http-errors.js, shared with AI Tools.
   ──────────────────────────────────────────────────────── */
-  async function describeHttpFailure(res) {
-    let payload = {};
-    try {
-      if ((res.headers.get('content-type') || '').includes('application/json')) {
-        payload = await res.json();
-      }
-    } catch (_) {
-      /* Empty or malformed body — the status is all we have. */
-    }
-    if (payload && payload.error) return payload.error;
-
-    if (res.status === 401) return 'Your session expired. Please sign in again.';
-    if (res.status === 402) return "You've used all your generations — upgrade to keep going.";
-    if (res.status === 429) return 'Too many requests in a row. Wait about a minute, then try again.';
-    if (res.status === 413) return 'That file is too large. Try a smaller one.';
-    if (res.status >= 500)  return 'The server hit a problem. Please try again in a moment.';
-    return `Request failed (${res.status}). Please try again.`;
-  }
 
   /* ────────────────────────────────────────────────────────
      ACCORDION TOGGLES
@@ -2314,8 +2298,15 @@
     icon.className = type === 'success' ? 'fas fa-circle-check' : 'fas fa-circle-exclamation';
     toast.className = 'vs-toast ' + type + ' show';
     clearTimeout(_toastTimer);
-    _toastTimer = setTimeout(() => { toast.classList.remove('show'); }, 3500);
+    // Errors get long enough to read — "out of generations" at 3.5s was easy
+    // to miss — and any toast closes on click.
+    _toastTimer = setTimeout(() => { toast.classList.remove('show'); },
+                             type === 'success' ? 3500 : 10000);
   }
+  document.getElementById('vsToast').addEventListener('click', () => {
+    clearTimeout(_toastTimer);
+    document.getElementById('vsToast').classList.remove('show');
+  });
 
   /* ────────────────────────────────────────────────────────
      LISTEN TO ALL FORM CHANGE EVENTS

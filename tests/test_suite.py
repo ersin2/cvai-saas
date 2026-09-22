@@ -1328,7 +1328,7 @@ class AnthropicEffortFallbackTest(TestCase):
             )
 
         mod = types.ModuleType("anthropic")
-        mod.AsyncAnthropic = lambda api_key=None: types.SimpleNamespace(
+        mod.AsyncAnthropic = lambda api_key=None, **_client_opts: types.SimpleNamespace(
             messages=types.SimpleNamespace(create=create)
         )
         for name in ("RateLimitError", "APIConnectionError", "APIStatusError",
@@ -1714,9 +1714,9 @@ class QuotaIsDiagnosedBeforeThrottleTest(TestCase):
                 resp = self.client.post(reverse(name), payload)
 
                 self.assertNotEqual(resp.status_code, 429, f"{name} answered with a 429")
-                self.assertEqual(resp.status_code, 200)
-                # These render tools.html with the quota message in tool_error.
-                self.assertContains(resp, 'Upgrade', status_code=200)
+                # JSON now, like the other AI endpoints: 402 with the quota message.
+                self.assertEqual(resp.status_code, 402)
+                self.assertIn('Upgrade', resp.json()['error'])
 
 
 class TestRunnerSettingsTest(TestCase):
