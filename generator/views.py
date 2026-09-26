@@ -1127,12 +1127,14 @@ Be brutally honest. Give specific keyword suggestions. Start with the score on t
 
 # === APPLICATION TRACKER ===
 # Kanban columns (status, label, top-border color) — presentational data for the board.
+# Colours are design tokens (static/generator/css/tokens.css), not hex, so the
+# board follows the palette.
 KANBAN_COLUMNS = [
-    ('saved',     '📌 Saved',     '#64748b'),
-    ('applied',   '📤 Applied',   '#3b82f6'),
-    ('interview', '🎤 Interview', '#f59e0b'),
-    ('offer',     '🎉 Offer',     '#10b981'),
-    ('rejected',  '❌ Rejected',  '#ef4444'),
+    ('saved',     '📌 Saved',     'var(--rule-strong)'),
+    ('applied',   '📤 Applied',   'var(--info)'),
+    ('interview', '🎤 Interview', 'var(--accent)'),
+    ('offer',     '🎉 Offer',     'var(--ok)'),
+    ('rejected',  '❌ Rejected',  'var(--danger)'),
 ]
 
 

@@ -12,8 +12,8 @@
 
   .hist-card {
     position: relative;
-    background: rgba(0,0,0,0.18);
-    border: 1px solid rgba(255,255,255,0.05);
+    background: var(--paper-raised);
+    border: 1px solid var(--rule);
     border-left: 4px solid var(--brand);
     border-radius: 0 var(--r-lg) var(--r-lg) 0;
     margin-bottom: 10px;
@@ -21,14 +21,14 @@
     overflow: hidden;
   }
   .hist-card:hover {
-    background: rgba(0,0,0,0.26);
-    box-shadow: 0 6px 24px rgba(0,0,0,0.22);
+    background: var(--paper-raised);
+    box-shadow: 0 6px 24px rgba(20, 18, 14, 0.066);
   }
   /* border colour by type */
-  .hist-card[data-type="resume"]     { border-left-color: #4cc9f0; }
-  .hist-card[data-type="cover"]      { border-left-color: #f72585; }
-  .hist-card[data-type="draft"]      { border-left-color: #f59e0b; }
-  .hist-card[data-type="unknown"]    { border-left-color: #64748b; }
+  .hist-card[data-type="resume"]     { border-left-color: var(--accent); }
+  .hist-card[data-type="cover"]      { border-left-color: var(--accent); }
+  .hist-card[data-type="draft"]      { border-left-color: var(--warn); }
+  .hist-card[data-type="unknown"]    { border-left-color: var(--rule); }
 
   /* Header row (always visible) */
   .hist-card-header {
@@ -50,11 +50,11 @@
     font-size: var(--fs-xs); font-weight: 700; padding: 2px 9px;
     border-radius: var(--r-pill); letter-spacing: 0.03em; white-space: nowrap;
   }
-  .hist-badge-type-resume  { background: rgba(76,201,240,.12);  color: #4cc9f0; border: 1px solid rgba(76,201,240,.25); }
-  .hist-badge-type-cover   { background: rgba(247,37,133,.12);  color: #f72585; border: 1px solid rgba(247,37,133,.25); }
-  .hist-badge-type-draft   { background: rgba(245,158,11,.12);  color: #f59e0b; border: 1px solid rgba(245,158,11,.25); }
-  .hist-badge-type-unknown { background: rgba(100,116,139,.12); color: #94a3b8; border: 1px solid rgba(100,116,139,.2); }
-  .hist-badge-tone { background: rgba(247,37,133,.1); color: #f472b6; border: 1px solid rgba(247,37,133,.18); }
+  .hist-badge-type-resume  { background: var(--accent-tint);  color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule)); }
+  .hist-badge-type-cover   { background: var(--accent-tint);  color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule)); }
+  .hist-badge-type-draft   { background: var(--warn-tint);  color: var(--warn); border: 1px solid color-mix(in srgb, var(--warn) 35%, var(--rule)); }
+  .hist-badge-type-unknown { background: var(--paper-raised); color: var(--ink-2); border: 1px solid var(--rule); }
+  .hist-badge-tone { background: var(--accent-tint); color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule)); }
 
   .hist-card-right {
     display: flex; align-items: flex-start; gap: 8px; flex-shrink: 0;
@@ -65,12 +65,12 @@
   }
   .hist-del-btn {
     width: 28px; height: 28px; border-radius: var(--r-sm); border: none;
-    background: rgba(239,68,68,.1); color: #f87171;
+    background: var(--danger-tint); color: var(--danger);
     cursor: pointer; display: flex; align-items: center; justify-content: center;
     font-size: var(--fs-xs); transition: background .2s;
     flex-shrink: 0;
   }
-  .hist-del-btn:hover { background: rgba(239,68,68,.28); }
+  .hist-del-btn:hover { background: var(--danger-tint); }
 
   /* 2-line preview text */
   .hist-preview {
@@ -83,10 +83,10 @@
   /* Expand/collapse footer */
   .hist-expand-row {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 8px 16px; border-top: 1px solid rgba(255,255,255,.04);
+    padding: 8px 16px; border-top: 1px solid var(--rule);
     cursor: pointer;
   }
-  .hist-expand-row:hover { background: rgba(255,255,255,.02); }
+  .hist-expand-row:hover { background: var(--paper-sunk); }
   .hist-expand-label {
     font-size: var(--fs-xs); color: var(--text-3);
     display: flex; align-items: center; gap: 5px;
@@ -117,16 +117,16 @@
   .hist-act-btn:hover {
     color: var(--text-1);
     background: var(--brand-dim);
-    border-color: rgba(76,201,240,.35);
+    border-color: color-mix(in srgb, var(--accent) 35%, var(--rule));
   }
   .hist-act-btn:disabled { opacity: .6; cursor: not-allowed; }
   @media (max-width: 640px) { .hist-act-btn span { display: none; } }
 
   .hist-full-content {
-    color: #cbd5e1;
+    color: var(--ink);
     font-size: var(--fs-base); line-height: 1.75;
     padding: 14px 16px 0;
-    border-top: 1px solid rgba(255,255,255,.05);
+    border-top: 1px solid var(--rule);
   }
 
   /* Copy button */
@@ -137,25 +137,25 @@
   .hist-copy-btn {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 6px 14px; border-radius: var(--r-sm);
-    border: 1px solid rgba(76,201,240,.25);
-    background: rgba(76,201,240,.07);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule));
+    background: var(--accent-tint);
     color: var(--brand); font-size: var(--fs-sm); font-weight: 600;
     cursor: pointer; transition: background var(--t-fast), transform var(--t-fast);
   }
-  .hist-copy-btn:hover { background: rgba(76,201,240,.18); transform: translateY(-1px); }
-  .hist-copy-btn.copied { color: #22c55e; border-color: rgba(34,197,94,.3); background: rgba(34,197,94,.08); }
+  .hist-copy-btn:hover { background: var(--accent-tint); transform: translateY(-1px); }
+  .hist-copy-btn.copied { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 35%, var(--rule)); background: var(--ok-tint); }
 
   /* Clear all button */
   .btn-clear-all {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 7px 16px; border-radius: var(--r-pill);
-    border: 1px solid rgba(239,68,68,.3);
-    background: rgba(239,68,68,.06);
-    color: #f87171; font-size: var(--fs-sm); font-weight: 700;
+    border: 1px solid color-mix(in srgb, var(--danger) 35%, var(--rule));
+    background: var(--danger-tint);
+    color: var(--danger); font-size: var(--fs-sm); font-weight: 500;
     cursor: pointer; transition: background var(--t-fast), transform var(--t-fast);
     white-space: nowrap;
   }
-  .btn-clear-all:hover { background: rgba(239,68,68,.18); transform: translateY(-1px); }
+  .btn-clear-all:hover { background: var(--danger-tint); transform: translateY(-1px); }
 </style>
 {% endblock extra_head %}
 

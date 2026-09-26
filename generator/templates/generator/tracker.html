@@ -26,7 +26,7 @@
         }
 
         .tracker-stat {
-            background: var(--surface-2);
+            background: var(--paper-raised);
             border: 1px solid var(--border);
             border-radius: var(--r-lg);
             padding: 18px 16px;
@@ -40,9 +40,9 @@
         }
 
         .tracker-stat-number {
-            font-size: 2rem;
-            font-weight: 800;
-            font-family: var(--font-mono);
+            font-size: 2.6rem;
+            font-weight: 400;
+            font-family: var(--serif);
             line-height: 1;
             letter-spacing: -0.02em;
         }
@@ -64,7 +64,7 @@
         .view-btn.active { background: var(--brand-dim); color: var(--brand); }
         
         .kanban-board { display: none; gap: 16px; overflow-x: auto; padding-bottom: 20px; scrollbar-width: thin; }
-        .kanban-col { background: rgba(0,0,0,0.2); border-radius: var(--r-lg); border: 1px solid var(--border); width: 300px; flex-shrink: 0; display: flex; flex-direction: column; }
+        .kanban-col { background: var(--paper-sunk); border-radius: var(--r-lg); border: 1px solid var(--border); width: 300px; flex-shrink: 0; display: flex; flex-direction: column; }
         .kanban-col-header { padding: 12px 16px; font-weight: 700; font-size: var(--fs-base); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; text-transform: uppercase; letter-spacing: 0.5px; }
         .kanban-dropzone { flex: 1; padding: 12px; min-height: 300px; display: flex; flex-direction: column; gap: 12px; }
         /* CSS-only empty-column hint — no DOM node, so SortableJS ignores it */
@@ -80,22 +80,22 @@
             opacity: 0.7;
         }
         
-        .kanban-card { background: var(--surface-2); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--r-sm); padding: 16px; cursor: grab; transition: transform 0.2s, box-shadow 0.2s; position: relative; }
+        .kanban-card { background: var(--surface-2); border: 1px solid var(--rule); border-radius: var(--r-sm); padding: 16px; cursor: grab; transition: transform 0.2s, box-shadow 0.2s; position: relative; }
         .kanban-card:active { cursor: grabbing; }
-        .kanban-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.4); border-color: rgba(76,201,240,0.3); }
+        .kanban-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(20, 18, 14, 0.12); border-color: color-mix(in srgb, var(--accent) 35%, var(--rule)); }
         .kanban-card.sortable-ghost { opacity: 0.4; border: 1px dashed var(--text-3); background: transparent; }
         
         /* ── OFFCANVAS DRAWER ── */
-        .app-drawer { position: fixed; top: 0; right: -450px; width: 450px; height: 100vh; background: var(--surface-1); border-left: 1px solid rgba(76,201,240,0.15); z-index: 1050; transition: right var(--t-slide); box-shadow: var(--shadow-3); display: flex; flex-direction: column; }
+        .app-drawer { position: fixed; top: 0; right: -450px; width: 450px; height: 100vh; background: var(--surface-1); border-left: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule)); z-index: 1050; transition: right var(--t-slide); box-shadow: var(--shadow-3); display: flex; flex-direction: column; }
         .app-drawer.open { right: 0; }
-        .app-drawer-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1040; display: none; backdrop-filter: blur(2px); }
+        .app-drawer-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(20, 18, 14, 0.4); z-index: 1040; display: none; backdrop-filter: blur(2px); }
         .app-drawer-overlay.open { display: block; }
         
         .drawer-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .drawer-body { padding: 24px; overflow-y: auto; flex: 1; }
-        .drawer-title { font-weight: 800; font-size: var(--fs-xl); margin: 0; }
+        .drawer-title { font-weight: 400; font-size: 1.7rem; margin: 0; font-family: var(--serif); letter-spacing: -0.02em; }
         .drawer-close { background: none; border: none; color: var(--text-3); font-size: var(--fs-xl); cursor: pointer; transition: color 0.2s; }
-        .drawer-close:hover { color: #fff; }
+        .drawer-close:hover { color: var(--ink); }
         
         /* ── CHARTS ── */
         .charts-container { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 28px; max-width: 520px; }
@@ -109,13 +109,14 @@
         .tracker-stat { cursor: pointer; position: relative; }
         .tracker-stat:active { transform: scale(0.95); }
         .tracker-stat.active-filter {
-            border-color: rgba(255,255,255,0.4);
-            box-shadow: 0 0 20px rgba(255,255,255,0.1);
-            background: rgba(255,255,255,0.02);
+            border-color: var(--rule-strong);
+            box-shadow: none;
+            background: var(--paper-sunk);
         }
 
         
-        .custom-dd-menu .dropdown-item:hover { background-color: var(--brand); color: white; }
+        .custom-dd-menu .dropdown-item { color: var(--ink); }
+        .custom-dd-menu .dropdown-item:hover { background-color: var(--paper-sunk); color: var(--ink); }
 
         /* ── STAT PROGRESS ── */
         .stat-progress {
@@ -146,7 +147,7 @@
 
         .app-table td {
             padding: 18px 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid var(--rule);
             vertical-align: middle;
         }
 
@@ -155,7 +156,7 @@
         }
 
         .app-table tbody tr:hover {
-            background: rgba(255, 255, 255, 0.03);
+            background: var(--paper-sunk);
             transform: scale(1.002);
         }
 
@@ -189,22 +190,12 @@
 
         /* ── STATUS SELECT ── */
         .status-select-wrap { position: relative; }
-        .status-select-wrap::after {
-            content: '▼';
-            font-size: var(--fs-2xs);
-            color: inherit;
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            pointer-events: none;
-        }
         .status-select-wrap .form-select {
             width: auto !important;
             appearance: none;
             -webkit-appearance: none;
             background-color: var(--surface-2);
-            color: #fff;
+            color: var(--ink);
             border: 1px solid var(--border);
             border-radius: var(--r-pill) !important;
             padding: 6px 30px 6px 14px !important;
@@ -217,11 +208,11 @@
             min-width: 125px;
         }
         
-        .status-select[data-current="saved"] { background: rgba(100, 116, 139, 0.15); border-color: #64748b; color: #cbd5e1; }
-        .status-select[data-current="applied"] { background: rgba(59, 130, 246, 0.15); border-color: #3b82f6; color: #93c5fd; box-shadow: 0 0 12px rgba(59, 130, 246, 0.2); }
-        .status-select[data-current="interview"] { background: rgba(245, 158, 11, 0.15); border-color: #f59e0b; color: #fcd34d; box-shadow: 0 0 12px rgba(245, 158, 11, 0.2); }
-        .status-select[data-current="offer"] { background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #6ee7b7; box-shadow: 0 0 12px rgba(16, 185, 129, 0.2); }
-        .status-select[data-current="rejected"] { background: rgba(239, 68, 68, 0.15); border-color: #ef4444; color: #fca5a5; }
+        .status-select[data-current="saved"] { background: var(--paper-raised); border-color: var(--rule); color: var(--ink); }
+        .status-select[data-current="applied"] { background: var(--info-tint); border-color: var(--info); color: var(--info); box-shadow: none; }
+        .status-select[data-current="interview"] { background: var(--warn-tint); border-color: var(--warn); color: var(--warn); box-shadow: none; }
+        .status-select[data-current="offer"] { background: var(--ok-tint); border-color: var(--ok); color: var(--ok); box-shadow: none; }
+        .status-select[data-current="rejected"] { background: var(--danger-tint); border-color: var(--danger); color: var(--danger); }
 
         /* ── ACTION BUTTON ── */
         .action-btn {
@@ -241,8 +232,8 @@
         }
 
         .action-btn.delete:hover {
-            background: rgba(239, 68, 68, 0.15);
-            border-color: rgba(239, 68, 68, 0.35);
+            background: var(--danger-tint);
+            border-color: color-mix(in srgb, var(--danger) 35%, var(--rule));
             color: var(--danger);
         }
 
@@ -253,10 +244,10 @@
             gap: 8px;
             background: var(--grad-cta);
             border: none;
-            color: white;
+            color: var(--paper);
             padding: 11px 24px;
             border-radius: var(--r-lg);
-            font-weight: 700;
+            font-weight: 500;
             transition: transform var(--t-fast), box-shadow var(--t-fast);
             font-size: var(--fs-md);
             cursor: pointer;
@@ -265,8 +256,8 @@
 
         .btn-add:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 28px rgba(67, 97, 238, 0.4);
-            color: white;
+            box-shadow: none;
+            color: var(--ink);
         }
 
         /* ── RESPONSIVE ── */
@@ -335,24 +326,24 @@
                 <div class="stat-progress mt-3"><div class="stat-progress-bar bg-secondary" style="width: 100%;"></div></div>
             </div>
             <div class="tracker-stat" onclick="filterTracker('applied')" data-filter-card="applied">
-                <div class="tracker-stat-number" style="color: #3b82f6;">{{ stats.applied }}</div>
+                <div class="tracker-stat-number" style="color: var(--info);">{{ stats.applied }}</div>
                 <div class="tracker-stat-label">Applied</div>
-                <div class="stat-progress mt-3"><div class="stat-progress-bar" style="background-color: #3b82f6; width: {% if stats.total > 0 %}{% widthratio stats.applied stats.total 100 %}{% else %}0{% endif %}%;"></div></div>
+                <div class="stat-progress mt-3"><div class="stat-progress-bar" style="background-color: var(--info); width: {% if stats.total > 0 %}{% widthratio stats.applied stats.total 100 %}{% else %}0{% endif %}%;"></div></div>
             </div>
             <div class="tracker-stat" onclick="filterTracker('interview')" data-filter-card="interview">
-                <div class="tracker-stat-number" style="color: #f59e0b;">{{ stats.interviews }}</div>
+                <div class="tracker-stat-number" style="color: var(--warn);">{{ stats.interviews }}</div>
                 <div class="tracker-stat-label">Interviews</div>
-                <div class="stat-progress mt-3"><div class="stat-progress-bar" style="background-color: #f59e0b; width: {% if stats.total > 0 %}{% widthratio stats.interviews stats.total 100 %}{% else %}0{% endif %}%;"></div></div>
+                <div class="stat-progress mt-3"><div class="stat-progress-bar" style="background-color: var(--warn); width: {% if stats.total > 0 %}{% widthratio stats.interviews stats.total 100 %}{% else %}0{% endif %}%;"></div></div>
             </div>
             <div class="tracker-stat" onclick="filterTracker('offer')" data-filter-card="offer">
-                <div class="tracker-stat-number" style="color: #10b981;">{{ stats.offers }}</div>
+                <div class="tracker-stat-number" style="color: var(--ok);">{{ stats.offers }}</div>
                 <div class="tracker-stat-label">Offers</div>
-                <div class="stat-progress mt-3"><div class="stat-progress-bar" style="background-color: #10b981; width: {% if stats.total > 0 %}{% widthratio stats.offers stats.total 100 %}{% else %}0{% endif %}%;"></div></div>
+                <div class="stat-progress mt-3"><div class="stat-progress-bar" style="background-color: var(--ok); width: {% if stats.total > 0 %}{% widthratio stats.offers stats.total 100 %}{% else %}0{% endif %}%;"></div></div>
             </div>
             <div class="tracker-stat" onclick="filterTracker('rejected')" data-filter-card="rejected">
-                <div class="tracker-stat-number" style="color: #ef4444;">{{ stats.rejected }}</div>
+                <div class="tracker-stat-number" style="color: var(--danger);">{{ stats.rejected }}</div>
                 <div class="tracker-stat-label">Rejected</div>
-                <div class="stat-progress mt-3"><div class="stat-progress-bar" style="background-color: #ef4444; width: {% if stats.total > 0 %}{% widthratio stats.rejected stats.total 100 %}{% else %}0{% endif %}%;"></div></div>
+                <div class="stat-progress mt-3"><div class="stat-progress-bar" style="background-color: var(--danger); width: {% if stats.total > 0 %}{% widthratio stats.rejected stats.total 100 %}{% else %}0{% endif %}%;"></div></div>
             </div>
         </div>
 
@@ -419,7 +410,7 @@
                                     {% csrf_token %}
                                     <input type="hidden" name="status" value="{{ app.status }}" class="status-input" data-current="{{ app.status }}">
                                     <div class="dropdown">
-                                        <button class="form-select form-select-sm text-start" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="background-color: rgba(0,0,0,0.2); color: white; border: 1px solid var(--border);">
+                                        <button class="form-select form-select-sm text-start" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="background-color: var(--paper-raised); color: var(--ink); border: 1px solid var(--border);">
                                             {% if app.status == 'saved' %}📌 Saved
                                             {% elif app.status == 'applied' %}📤 Applied
                                             {% elif app.status == 'interview' %}🎤 Interview
@@ -427,7 +418,7 @@
                                             {% elif app.status == 'rejected' %}❌ Rejected
                                             {% endif %}
                                         </button>
-                                        <ul class="dropdown-menu dropdown-menu-dark custom-dd-menu" style="background-color: #1e293b; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                                        <ul class="dropdown-menu custom-dd-menu" style="background-color: var(--paper-raised); border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(20, 18, 14, 0.14);">
                                             <li><a class="dropdown-item dd-status-item" href="#" data-val="saved">📌 Saved</a></li>
                                             <li><a class="dropdown-item dd-status-item" href="#" data-val="applied">📤 Applied</a></li>
                                             <li><a class="dropdown-item dd-status-item" href="#" data-val="interview">🎤 Interview</a></li>
@@ -519,12 +510,12 @@
                 <div id="dr-logo" class="company-avatar avatar-lg" aria-hidden="true"></div>
                 <div>
                     <div style="font-size: var(--fs-lg); color: var(--brand);" id="dr-job">Job Title</div>
-                    <div class="badge mt-2" id="dr-status" style="font-family: var(--font-mono); font-size: var(--fs-sm);">Status</div>
+                    <div class="badge mt-2" id="dr-status" style="font-family: var(--font-mono); font-size: var(--fs-sm); color: var(--ink); background: var(--paper-sunk); border: 1px solid var(--rule);">Status</div>
                 </div>
             </div>
             
             <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: var(--fs-sm); letter-spacing: 1px;">Details</h6>
-            <div class="glass-card p-3 mb-4" style="background: rgba(0,0,0,0.2);">
+            <div class="glass-card p-3 mb-4" style="background: var(--paper-sunk);">
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted"><i class="fas fa-money-bill-wave me-2"></i>Salary</span>
                     <span class="fw-bold" id="dr-salary"></span>
@@ -540,7 +531,7 @@
             </div>
 
             <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: var(--fs-sm); letter-spacing: 1px;">Notes & Timeline</h6>
-            <div class="glass-card p-3" style="background: rgba(0,0,0,0.2); min-height: 150px;">
+            <div class="glass-card p-3" style="background: var(--paper-sunk); min-height: 150px;">
                 <p id="dr-notes" style="white-space: pre-wrap; font-size: var(--fs-md); color: var(--text-2);"></p>
                 <div id="dr-no-notes" style="display:none; text-align:center; padding: 20px; color: var(--text-3); font-size: var(--fs-base);">
                     <i class="fas fa-pencil-alt mb-2" style="font-size: var(--fs-2xl); opacity: 0.5;"></i><br>No notes added.
@@ -579,11 +570,11 @@
                             <div class="col-md-6">
                                 <label class="form-label">Status</label>
                                 <select name="status" class="form-select status-select">
-                                    <option value="saved" style="background: #1e293b; color: white;">📌 Saved</option>
-                                    <option value="applied" style="background: #1e293b; color: white;">📤 Applied</option>
-                                    <option value="interview" style="background: #1e293b; color: white;">🎤 Interview</option>
-                                    <option value="offer" style="background: #1e293b; color: white;">🎉 Offer</option>
-                                    <option value="rejected" style="background: #1e293b; color: white;">❌ Rejected</option>
+                                    <option value="saved" style="background: var(--paper-raised); color: var(--ink);">📌 Saved</option>
+                                    <option value="applied" style="background: var(--paper-raised); color: var(--ink);">📤 Applied</option>
+                                    <option value="interview" style="background: var(--paper-raised); color: var(--ink);">🎤 Interview</option>
+                                    <option value="offer" style="background: var(--paper-raised); color: var(--ink);">🎉 Offer</option>
+                                    <option value="rejected" style="background: var(--paper-raised); color: var(--ink);">❌ Rejected</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
@@ -745,13 +736,15 @@
         document.addEventListener("DOMContentLoaded", function() {
             const ctxFunnel = document.getElementById('funnelChart');
             if (ctxFunnel && typeof Chart !== 'undefined') {
+                // Colours come from the design tokens, so the chart can't drift from the CSS.
+                const tok = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
                 new Chart(ctxFunnel, {
                     type: 'doughnut',
                     data: {
                         labels: ['Applied', 'Interviews', 'Offers'],
                         datasets: [{
                             data: [{{ stats.applied|default:0 }}, {{ stats.interviews|default:0 }}, {{ stats.offers|default:0 }}],
-                            backgroundColor: ['#3b82f6', '#f59e0b', '#10b981'],
+                            backgroundColor: [tok('--info'), tok('--accent'), tok('--ok')],
                             borderWidth: 0,
                             hoverOffset: 4
                         }]
@@ -762,14 +755,14 @@
                         plugins: {
                             legend: {
                                 position: 'right',
-                                labels: { color: '#94a3b8', font: { family: "'Outfit', sans-serif", size: 11, weight: '600' }, usePointStyle: true, pointStyleWidth: 9, padding: 12 }
+                                labels: { color: tok('--ink-2'), font: { family: tok('--sans'), size: 12, weight: '500' }, usePointStyle: true, pointStyleWidth: 9, padding: 12 }
                             },
                             tooltip: {
-                                backgroundColor: 'rgba(13, 19, 34, 0.96)',
-                                borderColor: 'rgba(255,255,255,0.08)',
+                                backgroundColor: tok('--ink'),
+                                borderColor: tok('--ink'),
                                 borderWidth: 1,
-                                titleColor: '#f1f5f9',
-                                bodyColor: '#94a3b8',
+                                titleColor: tok('--paper'),
+                                bodyColor: tok('--paper'),
                                 padding: 10,
                                 cornerRadius: 8,
                             }

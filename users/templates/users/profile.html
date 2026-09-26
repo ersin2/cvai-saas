@@ -9,19 +9,19 @@
 
         /* Vertical Tabs Styling */
         .nav-pills.flex-column .nav-link {
-            color: #94a3b8 !important;
+            color: var(--ink-2) !important;
             transition: all 0.2s ease;
             background: transparent;
         }
         .nav-pills.flex-column .nav-link:hover:not(.active) {
-            background: rgba(255,255,255,0.04) !important;
-            color: #f1f5f9 !important;
+            background: var(--paper-sunk) !important;
+            color: var(--ink) !important;
         }
         .nav-pills.flex-column .nav-link.active {
-            background: rgba(76,201,240,0.1) !important;
+            background: var(--accent-tint) !important;
             color: var(--brand) !important;
-            border: 1px solid rgba(76,201,240,0.25);
-            box-shadow: inset 0 1px 0 rgba(76,201,240,0.1);
+            border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule));
+            box-shadow: none;
         }
         
         /* Accordion Overrides */
@@ -53,13 +53,13 @@
             text-transform: uppercase;
         }
 
-        .plan-pill.free   { background: var(--brand-dim); color: var(--brand); border: 1px solid rgba(76,201,240,0.25); }
-        .plan-pill.pro    { background: rgba(245,158,11,0.1); color: var(--gold); border: 1px solid rgba(245,158,11,0.3); }
-        .plan-pill.elite  { background: rgba(124,58,237,0.1); color: #a855f7; border: 1px solid rgba(124,58,237,0.3); }
+        .plan-pill.free   { background: var(--brand-dim); color: var(--brand); border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule)); }
+        .plan-pill.pro    { background: var(--warn-tint); color: var(--gold); border: 1px solid color-mix(in srgb, var(--warn) 35%, var(--rule)); }
+        .plan-pill.elite  { background: var(--accent-tint); color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule)); }
 
         /* ── PROGRESS BAR ── */
         .gen-progress-wrap {
-            background: rgba(255,255,255,0.06);
+            background: var(--paper-sunk);
             border-radius: var(--r-pill);
             height: 8px;
             overflow: hidden;
@@ -68,7 +68,7 @@
 
         .gen-progress-bar {
             height: 100%;
-            background: linear-gradient(90deg, var(--brand), var(--indigo));
+            background: var(--accent);
             border-radius: var(--r-pill);
             transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
         }
@@ -79,25 +79,25 @@
             align-items: center;
             gap: 8px;
             background: transparent;
-            border: 1px solid rgba(239,68,68,0.3);
+            border: 1px solid color-mix(in srgb, var(--danger) 35%, var(--rule));
             color: var(--danger);
             padding: 9px 20px;
             border-radius: var(--r-sm);
-            font-weight: 600;
+            font-weight: 500;
             font-size: var(--fs-base);
             cursor: pointer;
             transition: background var(--t-fast), border-color var(--t-fast);
         }
 
         .btn-logout:hover {
-            background: rgba(239,68,68,0.12);
+            background: var(--danger-tint);
             border-color: var(--danger);
         }
 
         /* ── UPGRADE BANNER ── */
         .upgrade-banner {
-            background: rgba(245, 158, 11, 0.05);
-            border: 1px solid rgba(245, 158, 11, 0.2);
+            background: var(--warn-tint);
+            border: 1px solid color-mix(in srgb, var(--warn) 35%, var(--rule));
             border-radius: var(--r-xl);
             padding: 28px 32px;
             position: relative;
@@ -108,19 +108,19 @@
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0; height: 2px;
-            background: linear-gradient(90deg, var(--gold), #fbbf24);
+            background: var(--accent);
         }
 
         .btn-go-pro {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+            background: var(--ink);
             border: none;
-            color: #0a0a0a;
+            color: var(--paper);
             padding: 12px 28px;
             border-radius: var(--r-lg);
-            font-weight: 800;
+            font-weight: 500;
             font-size: var(--fs-md);
             cursor: pointer;
             transition: transform var(--t-fast), box-shadow var(--t-fast);
@@ -130,7 +130,7 @@
 
         .btn-go-pro:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 28px rgba(245, 158, 11, 0.45);
+            box-shadow: none;
         }
 
         /* ── FILE INPUT OVERRIDE ── */
@@ -203,7 +203,7 @@
                         <div class="profile-grid">
                             <!-- Generations -->
                             <div class="glass-card card-hoverable anim-fade-up anim-delay-1" style="position: relative; overflow: hidden;">
-                                <div style="position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--brand), #4361ee); opacity: 0.7;"></div>
+                                <div style="position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--accent); opacity: 0.7;"></div>
                                 <div class="d-flex align-items-center gap-3 mb-4">
                                     <div style="width: 46px; height: 46px; border-radius: var(--r-sm); background: var(--brand-dim); display: flex; align-items: center; justify-content: center; color: var(--brand); font-size: var(--fs-lg);">
                                         <i class="fas fa-bolt"></i>
@@ -219,7 +219,7 @@
                                   hits their cap should have been able to see it coming
                                   rather than meeting it as an error mid-application.
                                 {% endcomment %}
-                                <div style="font-size: 3rem; font-weight: 800; font-family: var(--font-mono); color: var(--brand); line-height: 1; letter-spacing: -0.02em;">
+                                <div style="font-size: 3.4rem; font-weight: 400; font-family: var(--serif); color: var(--ink); line-height: 1; letter-spacing: -0.02em;">
                                     {{ user.profile.generations_remaining }}
                                 </div>
                                 {% if user.profile.is_premium %}
@@ -234,16 +234,16 @@
 
                             <!-- Account Status -->
                             <div class="glass-card card-hoverable anim-fade-up anim-delay-2" style="position: relative; overflow: hidden;">
-                                <div style="position: absolute; top: 0; left: 0; right: 0; height: 2px; background: {% if user.profile.is_premium %}linear-gradient(90deg, var(--gold), #fbbf24){% else %}linear-gradient(90deg, var(--brand-2), #ff6b6b){% endif %}; opacity: 0.7;"></div>
+                                
                                 <div class="d-flex align-items-center gap-3 mb-4">
-                                    <div style="width: 46px; height: 46px; border-radius: var(--r-sm); background: {% if user.profile.is_premium %}rgba(245,158,11,0.1){% else %}rgba(255,255,255,0.05){% endif %}; display: flex; align-items: center; justify-content: center; color: {% if user.profile.is_premium %}var(--gold){% else %}var(--text-2){% endif %}; font-size: var(--fs-lg);">
+                                    <div style="width: 46px; height: 46px; border-radius: var(--r-sm); background: var(--paper-sunk); display: flex; align-items: center; justify-content: center; color: {% if user.profile.is_premium %}var(--accent){% else %}var(--ink-2){% endif %}; font-size: var(--fs-lg);">
                                         <i class="fas {% if user.profile.is_premium %}fa-crown{% else %}fa-user{% endif %}"></i>
                                     </div>
                                     <div>
                                         <div style="font-size: var(--fs-sm); color: var(--text-3); text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Account Status</div>
                                     </div>
                                 </div>
-                                <div style="font-size: 2.5rem; font-weight: 800; font-family: var(--font-mono); color: {% if user.profile.is_premium %}var(--gold){% else %}var(--text-1){% endif %}; line-height: 1; letter-spacing: -0.02em;">
+                                <div style="font-size: 2.8rem; font-weight: 400; font-family: var(--serif); color: {% if user.profile.is_premium %}var(--gold){% else %}var(--text-1){% endif %}; line-height: 1; letter-spacing: -0.02em;">
                                     {% if user.profile.is_premium %}{{ user.profile.plan|upper }}{% else %}FREE{% endif %}
                                 </div>
                                 <div style="color: var(--text-3); font-size: var(--fs-sm); margin-top: 6px;">@{{ user.username }}</div>
@@ -258,7 +258,7 @@
                                     <div style="font-size: var(--fs-sm); color: var(--gold); font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">
                                         <i class="fas fa-crown me-1"></i> Upgrade to Pro
                                     </div>
-                                    <h3 style="font-size: var(--fs-xl); font-weight: 800; color: var(--text-1); margin-bottom: 8px;">
+                                    <h3 style="font-size: var(--fs-xl); font-weight: 400; color: var(--text-1); margin-bottom: 8px;">
                                         Unlock 50 AI generations a month
                                     </h3>
                                     <p style="color: var(--text-2); font-size: var(--fs-md); margin: 0; line-height: 1.6;">
@@ -278,13 +278,13 @@
                         {% endif %}
                         <!-- BILLING PORTAL -->
                         {% if user.profile.is_premium %}
-                        <div class="upgrade-banner anim-fade-up anim-delay-3 mt-4" style="background: rgba(124, 58, 237, 0.05); border-color: rgba(124, 58, 237, 0.2);">
+                        <div class="upgrade-banner anim-fade-up anim-delay-3 mt-4" style="background: var(--accent-tint); border-color: color-mix(in srgb, var(--accent) 35%, var(--rule));">
                             <div class="row align-items-center g-4">
                                 <div class="col-md-8">
-                                    <div style="font-size: var(--fs-sm); color: #a855f7; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">
+                                    <div style="font-size: var(--fs-sm); color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">
                                         <i class="fas fa-file-invoice-dollar me-1"></i> Subscription Management
                                     </div>
-                                    <h3 style="font-size: var(--fs-lg); font-weight: 800; color: var(--text-1); margin-bottom: 8px;">
+                                    <h3 style="font-size: var(--fs-lg); font-weight: 400; color: var(--text-1); margin-bottom: 8px;">
                                         Manage your billing & plan
                                     </h3>
                                     <p style="color: var(--text-2); font-size: var(--fs-md); margin: 0; line-height: 1.6;">
@@ -294,7 +294,7 @@
                                 <div class="col-md-4 text-md-end">
                                     <form action="{% url 'stripe_customer_portal' %}" method="post" style="margin:0;">
                                         {% csrf_token %}
-                                        <button type="submit" class="btn-primary-grad w-100 justify-content-center" style="background: linear-gradient(135deg, #7c3aed, #a855f7);">
+                                        <button type="submit" class="btn-primary-grad w-100 justify-content-center" style="background: var(--ink);">
                                             <i class="fas fa-external-link-alt"></i>Manage Billing
                                         </button>
                                     </form>
@@ -306,11 +306,11 @@
                         <!-- GLOBAL DEFAULTS (Merged into Overview) -->
                         <div class="glass-card anim-fade-up mt-4">
                             <div class="d-flex align-items-center gap-3 mb-4">
-                                <div style="width: 46px; height: 46px; border-radius: var(--r-sm); background: rgba(76,201,240,0.1); display: flex; align-items: center; justify-content: center; color: var(--brand); font-size: var(--fs-lg);">
+                                <div style="width: 46px; height: 46px; border-radius: var(--r-sm); background: var(--accent-tint); display: flex; align-items: center; justify-content: center; color: var(--brand); font-size: var(--fs-lg);">
                                     <i class="fas fa-sliders-h"></i>
                                 </div>
                                 <div>
-                                    <h3 style="font-size: var(--fs-lg); font-weight: 800; color: #e2e8f0; margin: 0;">Studio Settings</h3>
+                                    <h3 style="font-size: var(--fs-lg); font-weight: 400; color: var(--ink); margin: 0;">Studio Settings</h3>
                                     <p style="color: var(--text-2); font-size: var(--fs-base); margin: 0;">Save your preferences so the Generator automatically pre-fills them.</p>
                                 </div>
                             </div>
@@ -320,14 +320,14 @@
                                 <div class="row g-4">
                                     <!-- Left Column: Base Resume -->
                                     <div class="col-lg-12">
-                                        <label class="form-label" style="font-weight: 600; color: #cbd5e1;"><i class="fas fa-file-alt me-2" style="color:var(--brand);"></i>Base Career History</label>
-                                        <textarea name="base_resume" class="form-control" rows="8" placeholder="Paste your entire resume here. We will load this automatically into the Generator so you don't have to." style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); color: #f1f5f9; border-radius: var(--r-md); padding: 16px; font-size: var(--fs-md); resize: none;">{{ user.profile.base_resume }}</textarea>
+                                        <label class="form-label" style="font-weight: 600; color: var(--ink);"><i class="fas fa-file-alt me-2" style="color:var(--brand);"></i>Base Career History</label>
+                                        <textarea name="base_resume" class="form-control" rows="8" placeholder="Paste your entire resume here. We will load this automatically into the Generator so you don't have to." style="background: var(--paper-raised); border: 1px solid var(--border); color: var(--ink); border-radius: var(--r-md); padding: 16px; font-size: var(--fs-md); resize: none;">{{ user.profile.base_resume }}</textarea>
                                     </div>
                                     
                                     <!-- Fonts & Lang -->
                                     <div class="col-lg-6">
-                                        <label class="form-label" style="font-weight: 600; color: #cbd5e1;"><i class="fas fa-font me-2" style="color:var(--brand-2);"></i>Default Font</label>
-                                        <select name="default_font" class="form-select" style="background-color: var(--surface-1); color: white; border: 1px solid var(--border); border-radius: var(--r-sm);">
+                                        <label class="form-label" style="font-weight: 600; color: var(--ink);"><i class="fas fa-font me-2" style="color:var(--brand-2);"></i>Default Font</label>
+                                        <select name="default_font" class="form-select" style="background-color: var(--surface-1); color: var(--ink); border: 1px solid var(--border); border-radius: var(--r-sm);">
                                             <option value="Inter" {% if user.profile.default_font == 'Inter' %}selected{% endif %}>Inter (Modern Sans)</option>
                                             <option value="Outfit" {% if user.profile.default_font == 'Outfit' %}selected{% endif %}>Outfit (Clean Sans)</option>
                                             <option value="Roboto" {% if user.profile.default_font == 'Roboto' %}selected{% endif %}>Roboto (Classic Sans)</option>
@@ -337,8 +337,8 @@
                                         </select>
                                     </div>
                                     <div class="col-lg-6">
-                                        <label class="form-label" style="font-weight: 600; color: #cbd5e1;"><i class="fas fa-globe me-2" style="color:#22c55e;"></i>Default Language</label>
-                                        <select name="default_language" class="form-select" style="background-color: var(--surface-1); color: white; border: 1px solid var(--border); border-radius: var(--r-sm);">
+                                        <label class="form-label" style="font-weight: 600; color: var(--ink);"><i class="fas fa-globe me-2" style="color:var(--ok);"></i>Default Language</label>
+                                        <select name="default_language" class="form-select" style="background-color: var(--surface-1); color: var(--ink); border: 1px solid var(--border); border-radius: var(--r-sm);">
                                             <option value="English" {% if user.profile.default_language == 'English' %}selected{% endif %}>English</option>
                                             <option value="Spanish" {% if user.profile.default_language == 'Spanish' %}selected{% endif %}>Spanish</option>
                                             <option value="French" {% if user.profile.default_language == 'French' %}selected{% endif %}>French</option>
@@ -347,12 +347,12 @@
                                         </select>
                                     </div>
                                     <div class="col-lg-12">
-                                        <label class="form-label" style="font-weight: 600; color: #cbd5e1;"><i class="fas fa-image me-2" style="color:#a855f7;"></i>Profile Avatar</label>
+                                        <label class="form-label" style="font-weight: 600; color: var(--ink);"><i class="fas fa-image me-2" style="color:var(--accent);"></i>Profile Avatar</label>
                                         <div class="d-flex align-items-center gap-3">
     {% if user.profile.avatar %}
-    <img src="{{ user.profile.avatar.url }}" alt="Avatar" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(168, 85, 247, 0.4);">
+    <img src="{{ user.profile.avatar.url }}" alt="Avatar" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid color-mix(in srgb, var(--accent) 35%, var(--rule));">
     {% endif %}
-    <input type="file" name="avatar" accept="image/*" class="form-control" style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); color: #f1f5f9; border-radius: var(--r-sm);">
+    <input type="file" name="avatar" accept="image/*" class="form-control" style="background: var(--paper-raised); border: 1px solid var(--border); color: var(--ink); border-radius: var(--r-sm);">
 </div>
                                     </div>
                                     <div class="col-lg-12">
@@ -369,10 +369,10 @@
                           The delete_account endpoint existed with no way to reach it
                           from the app, so the only route to erasure was an email.
                         {% endcomment %}
-                        <div class="glass-card anim-fade-up mt-4" style="border: 1px solid rgba(239, 68, 68, 0.25); background: rgba(239, 68, 68, 0.03);">
+                        <div class="glass-card anim-fade-up mt-4" style="border: 1px solid color-mix(in srgb, var(--danger) 35%, var(--rule)); background: var(--danger-tint);">
                             <div class="row align-items-center g-3">
                                 <div class="col-md-8">
-                                    <h3 style="font-size: var(--fs-lg); font-weight: 800; color: #fca5a5; margin-bottom: 6px;">
+                                    <h3 style="font-size: var(--fs-lg); font-weight: 400; color: var(--danger); margin-bottom: 6px;">
                                         <i class="fas fa-triangle-exclamation me-2"></i>Delete account
                                     </h3>
                                     <p style="color: var(--text-2); font-size: var(--fs-base); margin: 0; line-height: 1.6;">
@@ -383,7 +383,7 @@
                                 </div>
                                 <div class="col-md-4 text-md-end">
                                     <button type="button" id="deleteAccountBtn" class="btn w-100"
-                                            style="border: 1px solid rgba(239, 68, 68, 0.5); color: #fca5a5; border-radius: var(--r-sm); padding: 10px; font-weight: 700;">
+                                            style="border: 1px solid color-mix(in srgb, var(--danger) 35%, var(--rule)); color: var(--danger); border-radius: var(--r-sm); padding: 10px; font-weight: 700;">
                                         <i class="fas fa-trash-alt me-2"></i>Delete my account
                                     </button>
                                 </div>
@@ -395,19 +395,19 @@
                     <div class="tab-pane fade" id="help" role="tabpanel">
                         
                         <!-- Contact Card -->
-                        <div class="glass-card anim-fade-up mb-4" style="background: rgba(76, 201, 240, 0.03); border: 1px solid rgba(76, 201, 240, 0.15);">
+                        <div class="glass-card anim-fade-up mb-4" style="background: var(--accent-tint); border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule));">
                             <div class="d-flex align-items-center gap-3 mb-4">
-                                <div style="width: 50px; height: 50px; border-radius: var(--r-md); background: linear-gradient(135deg, var(--brand), #4361ee); display: flex; align-items: center; justify-content: center; color: white; font-size: var(--fs-xl); box-shadow: 0 8px 20px rgba(76,201,240,0.3);">
+                                <div style="width: 50px; height: 50px; border-radius: var(--r-md); background: var(--ink); display: flex; align-items: center; justify-content: center; color: var(--paper); font-size: var(--fs-xl); box-shadow: none;">
                                     <i class="fas fa-headset"></i>
                                 </div>
                                 <div>
-                                    <h3 style="font-size: var(--fs-xl); font-weight: 800; color: #e2e8f0; margin: 0;">How can we help?</h3>
+                                    <h3 style="font-size: var(--fs-xl); font-weight: 400; color: var(--ink); margin: 0;">How can we help?</h3>
                                     <p style="color: var(--text-2); font-size: var(--fs-md); margin: 0;">Our support team is ready to assist you.</p>
                                 </div>
                             </div>
-                            <div class="p-4" style="background: rgba(15, 23, 42, 0.5); border-radius: var(--r-lg); border: 1px solid rgba(255,255,255,0.05); text-align: center;">
+                            <div class="p-4" style="background: var(--paper-raised); border-radius: var(--r-lg); border: 1px solid var(--rule); text-align: center;">
                                 <i class="fas fa-envelope-open-text mb-3" style="font-size: 2rem; color: var(--brand);"></i>
-                                <h4 style="font-size: var(--fs-lg); color: #fff; font-weight: 700; margin-bottom: 8px;">Direct Email Support</h4>
+                                <h4 style="font-size: var(--fs-lg); color: var(--ink); font-weight: 700; margin-bottom: 8px;">Direct Email Support</h4>
                                 <p style="color: var(--text-3); font-size: var(--fs-base); margin-bottom: 20px;">Email us directly and we'll get back to you within 24 hours.</p>
                                 <a href="mailto:uraiymoversin@gmail.com" class="btn-primary-grad" style="display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-md); padding: 10px 24px;">
                                     <i class="fas fa-paper-plane"></i> uraiymoversin@gmail.com
@@ -416,43 +416,43 @@
                         </div>
 
                         <!-- FAQ -->
-                        <h4 style="font-size: var(--fs-lg); font-weight: 800; color: #cbd5e1; margin-bottom: 16px; padding-left: 4px;">Frequently Asked Questions</h4>
+                        <h4 style="font-size: var(--fs-lg); font-weight: 800; color: var(--ink); margin-bottom: 16px; padding-left: 4px;">Frequently Asked Questions</h4>
                         
                         <div class="accordion custom-accordion anim-fade-up anim-delay-1" id="faqAccordion">
-                            <div class="accordion-item mb-3" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--r-md); overflow: hidden;">
+                            <div class="accordion-item mb-3" style="background: var(--paper-raised); border: 1px solid var(--rule); border-radius: var(--r-md); overflow: hidden;">
                                 <h2 class="accordion-header">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1" style="background: transparent; color: #f1f5f9; font-weight: 600; box-shadow: none;">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1" style="background: transparent; color: var(--ink); font-weight: 600; box-shadow: none;">
                                         How does the ATS Score Checker work?
                                     </button>
                                 </h2>
                                 <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                                    <div class="accordion-body" style="color: var(--text-2); font-size: var(--fs-base); line-height: 1.6; border-top: 1px solid rgba(255,255,255,0.05);">
+                                    <div class="accordion-body" style="color: var(--text-2); font-size: var(--fs-base); line-height: 1.6; border-top: 1px solid var(--rule);">
                                         The ATS Score Checker analyzes your raw resume against a target job description using our AI models. It looks for keyword density, missing critical skills, and format readability to estimate how well it will pass an Applicant Tracking System.
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="accordion-item mb-3" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--r-md); overflow: hidden;">
+                            <div class="accordion-item mb-3" style="background: var(--paper-raised); border: 1px solid var(--rule); border-radius: var(--r-md); overflow: hidden;">
                                 <h2 class="accordion-header">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2" style="background: transparent; color: #f1f5f9; font-weight: 600; box-shadow: none;">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2" style="background: transparent; color: var(--ink); font-weight: 600; box-shadow: none;">
                                         How do I upgrade to Pro or Elite?
                                     </button>
                                 </h2>
                                 <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                                    <div class="accordion-body" style="color: var(--text-2); font-size: var(--fs-base); line-height: 1.6; border-top: 1px solid rgba(255,255,255,0.05);">
+                                    <div class="accordion-body" style="color: var(--text-2); font-size: var(--fs-base); line-height: 1.6; border-top: 1px solid var(--rule);">
                                         You can upgrade at any time by clicking the "Get Pro Access" button on the Overview tab or by visiting the <a href="{% url 'pricing' %}" style="color: var(--brand);">Pricing Page</a>. All payments are securely processed via Stripe.
                                     </div>
                                 </div>
                             </div>
                             
-                            <div class="accordion-item mb-3" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--r-md); overflow: hidden;">
+                            <div class="accordion-item mb-3" style="background: var(--paper-raised); border: 1px solid var(--rule); border-radius: var(--r-md); overflow: hidden;">
                                 <h2 class="accordion-header">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3" style="background: transparent; color: #f1f5f9; font-weight: 600; box-shadow: none;">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3" style="background: transparent; color: var(--ink); font-weight: 600; box-shadow: none;">
                                         Can I save multiple resumes?
                                     </button>
                                 </h2>
                                 <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                                    <div class="accordion-body" style="color: var(--text-2); font-size: var(--fs-base); line-height: 1.6; border-top: 1px solid rgba(255,255,255,0.05);">
+                                    <div class="accordion-body" style="color: var(--text-2); font-size: var(--fs-base); line-height: 1.6; border-top: 1px solid var(--rule);">
                                         Currently, the Global Defaults allow you to save one master "Base Career History". We recommend pasting all your relevant work history here, and the Studio AI will automatically tailor it to extract the most relevant points for each specific job.
                                     </div>
                                 </div>
