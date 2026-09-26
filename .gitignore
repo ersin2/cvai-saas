@@ -29,3 +29,5 @@ staticfiles/
 
 # Test Artifacts
 test_out.pdf
+# Icon source for build_icons.py (npm install --no-save lucide-static)
+node_modules/
