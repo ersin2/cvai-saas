@@ -1,0 +1,58 @@
+/* ================================================================
+   CVAI — shared design tokens: the "paper" system.
+
+   One palette for the whole product. The landing page defined it first;
+   this file is now the single copy, loaded by the landing page and by
+   every app page (before cvai-global.css).
+
+   The concept, from the landing page: a resume has two readers. Paper is
+   for the human; the dark "machine" surface appears only where the page
+   shows what software reads.
+
+   Contrast values are measured against --paper.
+   ================================================================ */
+:root {
+  /* Paper */
+  --paper:        #FAF8F3;
+  --paper-sunk:   #F2EDE2;
+  --paper-raised: #FFFFFF;
+
+  /* Ink */
+  --ink:    #14120E;   /* 16.9:1  headings, body */
+  --ink-2:  #4F4A40;   /* 8.0:1   secondary prose */
+  --ink-3:  #6B6456;   /* 5.4:1   captions, labels */
+
+  /* Rules — print hairlines, not borders */
+  --rule:        #E4DDCE;
+  --rule-strong: #CBC2AE;
+
+  /* One accent */
+  --accent:       #A83A0C;   /* 6.0:1 — safe for body text */
+  --accent-tint:  #FBEEE6;
+  --accent-soft:  #B87B55;   /* 3.3:1 — large text / ornament only */
+
+  /* The machine surface */
+  --machine:      #16140F;
+  --machine-2:    #221F18;
+  --machine-text: #EFE9DB;
+  --machine-dim:  #9A9384;
+  --machine-key:  #E09A62;
+  --machine-str:  #A9BE9C;
+
+  /* Status — darkened so each clears 4.5:1 as text on paper and on its tint */
+  --ok:          #2F6B3C;   /* 6.0:1 */
+  --ok-tint:     #E7F0E6;
+  --warn:        #8A5A00;   /* 5.6:1 */
+  --warn-tint:   #F7EDD6;
+  --danger:      #A1281B;   /* 7.0:1 */
+  --danger-tint: #F8E4E0;
+  --info:        #2C5B8A;   /* 6.7:1 */
+  --info-tint:   #E5EDF5;
+
+  /* Type */
+  --serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --sans:  'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --mono:  'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}

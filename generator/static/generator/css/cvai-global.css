@@ -1,43 +1,47 @@
 /* ================================================================
-   CVAI — Global Design System
-   Single source of truth for all design tokens and shared components
+   CVAI — Global Design System (app)
+
+   The palette, type families and status colours come from tokens.css,
+   which the landing page loads too — one system for the whole product.
+   Load order on every page: tokens.css, then this file.
+
+   The names below are the app's original tokens, kept so nothing that
+   references them breaks; each now points at the paper system. Prefer
+   the paper names (--ink, --paper, --rule, --accent) in new code.
    ================================================================ */
 
-/* ── 1. DESIGN TOKENS (canonical set — Phase 1) ───────────────── */
+/* ── 1. DESIGN TOKENS ─────────────────────────────────────────── */
 :root {
-  /* Brand */
-  --brand:     #4cc9f0;   /* cyan — links, active states, focus */
-  --brand-2:   #f72585;   /* pink — gradient end only */
-  --indigo:    #4361ee;   /* gradient start only */
-  --gold:      #f59e0b;   /* upgrade accent */
-  --grad-cta:  linear-gradient(135deg, var(--indigo), var(--brand-2));
-  --grad-gold: linear-gradient(135deg, #f59e0b, #fbbf24);
+  /* Brand — one accent. The cyan/pink/indigo trio is gone; a CTA is ink. */
+  --brand:     var(--accent);
+  --brand-2:   var(--accent);
+  --indigo:    var(--ink);
+  --gold:      var(--accent);
+  --grad-cta:  var(--ink);
+  --grad-gold: var(--ink);
 
-  /* Surfaces — one background, stepped surfaces */
-  --bg:           #080c14;
-  --surface-1:    #0d1322;               /* panels, cards, modals */
-  --surface-2:    rgba(255, 255, 255, 0.04); /* inputs, raised elements */
-  --surface-3:    rgba(255, 255, 255, 0.07); /* hover */
-  --border:       rgba(255, 255, 255, 0.08);
-  --border-hover: rgba(255, 255, 255, 0.16);
+  /* Surfaces */
+  --bg:           var(--paper);
+  --surface-1:    var(--paper-raised);   /* panels, cards, modals */
+  --surface-2:    var(--paper-raised);   /* inputs, raised elements */
+  --surface-3:    var(--paper-sunk);     /* hover */
+  --border:       var(--rule);
+  --border-hover: var(--rule-strong);
 
-  /* Text — all AA on --bg */
-  --text-1:   #f1f5f9;
-  --text-2:   #94a3b8;
-  /* WCAG-AA: #7c8a9e on #080c14 ≈ 4.6:1 — minimum for readable copy */
-  --text-3:   #7c8a9e;
-  --text-dim: #475569;    /* decorative only, never body copy */
+  /* Text */
+  --text-1:   var(--ink);
+  --text-2:   var(--ink-2);
+  --text-3:   var(--ink-3);
+  --text-dim: var(--ink-3);
 
   /* Status */
-  --success: #22c55e;
-  --warning: #eab308;
-  --danger:  #ef4444;
-  --info:    var(--brand);
+  --success: var(--ok);
+  --warning: var(--warn);
 
-  /* Type — 2 families + mono, 10-step scale */
-  --font-display: 'Syne', 'Outfit', sans-serif;
-  --font-body:    'Outfit', sans-serif;
-  --font-mono:    'JetBrains Mono', monospace;
+  /* Type — serif display, sans body, mono labels (as on the landing page) */
+  --font-display: var(--serif);
+  --font-body:    var(--sans);
+  --font-mono:    var(--mono);
   /* Steps are sized to the real distribution measured across the templates
      (52 distinct ad-hoc sizes), so adopting the scale moves any given piece
      of text by at most ~8% — no badge or pill reflows. */
@@ -50,7 +54,7 @@
   --fs-xl:   1.35rem;   /* subsection headings */
   --fs-2xl:  1.6rem;    /* panel headings */
   --fs-3xl:  clamp(1.75rem, 3.5vw, 2.75rem);  /* section titles */
-  --fs-hero: clamp(2.4rem, 6vw, 4.5rem);      /* landing hero only */
+  --fs-hero: clamp(2.4rem, 6vw, 4.5rem);
   --lh-tight: 1.1;
   --lh-base:  1.55;
   --lh-loose: 1.7;
@@ -65,15 +69,15 @@
   --content-max:    1200px;   /* standard app + marketing sections */
   --content-wide:   1320px;   /* data-dense screens: dashboard */
 
-  /* Radius — 5 values, nothing else */
-  --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 24px; --r-pill: 999px;
+  /* Radius — tighter, print-like corners (the landing uses 4/8/14) */
+  --r-sm: 6px; --r-md: 8px; --r-lg: 12px; --r-xl: 14px; --r-pill: 999px;
 
-  /* Elevation — 1px borders + soft shadows; glow reserved for primary CTA */
-  --shadow-1:  0 2px 8px rgba(0, 0, 0, 0.35);
-  --shadow-2:  0 8px 28px -4px rgba(0, 0, 0, 0.45);
-  --shadow-3:  0 24px 64px -12px rgba(0, 0, 0, 0.55);
-  --glow-cta:  0 8px 32px rgba(67, 97, 238, 0.35);
-  --shadow-glow: 0 0 40px rgba(76, 201, 240, 0.15);
+  /* Elevation — paper does not glow: hairlines first, shadows barely there */
+  --shadow-1:  0 1px 2px rgba(20, 18, 14, 0.04);
+  --shadow-2:  0 1px 2px rgba(20, 18, 14, 0.04), 0 8px 24px -12px rgba(20, 18, 14, 0.12);
+  --shadow-3:  0 1px 2px rgba(20, 18, 14, 0.05), 0 24px 48px -20px rgba(20, 18, 14, 0.2);
+  --glow-cta:  none;
+  --shadow-glow: none;
 
   /* Motion */
   --t-fast:  150ms ease-out;                    /* hover, color, borders */
@@ -81,10 +85,10 @@
   --t-slide: 300ms cubic-bezier(0.22, 1, 0.36, 1); /* drawers, panels */
 
   /* Brand tints */
-  --brand-dim:   rgba(76, 201, 240, 0.12);
-  --brand-glow:  rgba(76, 201, 240, 0.25);
-  --brand-2-dim: rgba(247, 37, 133, 0.12);
-  --brand-3:     #7209b7;   /* deep purple — landing accents only */
+  --brand-dim:   var(--accent-tint);
+  --brand-glow:  var(--accent-tint);
+  --brand-2-dim: var(--accent-tint);
+  --brand-3:     var(--accent);
 }
 
 /* ── 2. RESET & BASE ─────────────────────────────────────────── */
@@ -98,66 +102,70 @@ body {
   color: var(--text-1);
   min-height: 100vh;
   overflow-x: hidden;
-  background-image:
-    radial-gradient(ellipse at 10% 15%, rgba(76, 201, 240, 0.10) 0%, transparent 45%),
-    radial-gradient(ellipse at 90% 85%, rgba(247, 37, 133, 0.10) 0%, transparent 45%),
-    radial-gradient(ellipse at 50% 50%, rgba(124, 58, 237, 0.04) 0%, transparent 70%);
+  line-height: var(--lh-base);
+  font-feature-settings: 'kern' 1, 'liga' 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Custom Scrollbar (WebKit) — dark theme ───────────────────────── */
-::-webkit-scrollbar              { width: 8px; height: 8px; }
-::-webkit-scrollbar-track        { background: #1e1e2e; border-radius: 4px; }
-::-webkit-scrollbar-thumb        { background: var(--brand); border-radius: 4px;
-                                   border: 2px solid #1e1e2e; }
-::-webkit-scrollbar-thumb:hover  { background: #3ba0c6; }
-::-webkit-scrollbar-corner       { background: #1e1e2e; }
+/* Headings are set in the serif at regular weight, as on the landing page.
+   Bold serif would read as a different face. */
+h1, h2, h3, .page-title, .display-title {
+  font-family: var(--serif);
+  font-weight: 400;
+  color: var(--ink);
+}
 
-/* Table containers get the same treatment */
-.table-responsive::-webkit-scrollbar              { width: 6px; height: 6px; }
-.table-responsive::-webkit-scrollbar-track        { background: #12121f; border-radius: 4px; }
-.table-responsive::-webkit-scrollbar-thumb        { background: var(--brand); border-radius: 4px;
-                                                    border: 1px solid #12121f; }
-.table-responsive::-webkit-scrollbar-thumb:hover  { background: #3ba0c6; }
+a { color: var(--accent); }
+a:hover { color: var(--ink); }
 
-/* Firefox */
-* { scrollbar-width: thin; scrollbar-color: var(--brand) #1e1e2e; }
+/* ── Scrollbar — a quiet rule on paper ──────────────────────── */
+::-webkit-scrollbar              { width: 10px; height: 10px; }
+::-webkit-scrollbar-track        { background: transparent; }
+::-webkit-scrollbar-thumb        { background: var(--rule-strong); border-radius: 999px;
+                                   border: 3px solid var(--paper); }
+::-webkit-scrollbar-thumb:hover  { background: var(--ink-3); }
+::-webkit-scrollbar-corner       { background: transparent; }
+* { scrollbar-width: thin; scrollbar-color: var(--rule-strong) transparent; }
 
 /* Selection */
-::selection { background: rgba(76, 201, 240, 0.25); color: #fff; }
+::selection { background: var(--accent-tint); color: var(--ink); }
 
 /* ── 3. TYPOGRAPHY ───────────────────────────────────────────── */
+/* Page titles are set like the landing page's section heads: serif, regular
+   weight, tight tracking. The Font Awesome glyph that used to lead each title
+   is hidden — the landing page never puts an icon in front of a heading. */
 .page-title {
-  font-size: clamp(1.5rem, 3vw, 2rem);
-  font-weight: 800;
-  color: var(--text-1);
-  letter-spacing: var(--track-tight);
-  line-height: var(--lh-tight);
-  margin-bottom: 6px;
+  font-family: var(--serif);
+  font-size: clamp(2.1rem, 4vw, 3rem);
+  font-weight: 400;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+  margin-bottom: 10px;
 }
 
-.page-title i {
-  color: var(--brand);
-}
+.page-title i { display: none; }
 
 .page-subtitle {
   font-size: var(--fs-md);
-  color: var(--text-3);
+  color: var(--ink-2);
   font-weight: 400;
   line-height: var(--lh-base);
   margin-bottom: 0;
+  max-width: 60ch;
 }
 
-/* Headings at --fs-xl and above get the tighter tracking/leading that keeps
-   large type from looking loose. Applied here once rather than per screen. */
 h1, h2, .display-title {
   letter-spacing: var(--track-tight);
   line-height: var(--lh-tight);
 }
 
 .section-title {
+  font-family: var(--sans);
   font-size: var(--fs-md);
-  font-weight: 700;
-  color: var(--text-1);
+  font-weight: 600;
+  color: var(--ink);
   margin-bottom: 0;
   display: flex;
   align-items: center;
@@ -165,13 +173,28 @@ h1, h2, .display-title {
 }
 
 .section-title i {
-  font-size: 0.9em;
+  font-size: 0.85em;
+  color: var(--ink-3);
 }
+
+/* The landing page's eyebrow: a mono uppercase label behind a short rule. */
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.eyebrow::before { content: ''; width: 22px; height: 1px; background: var(--rule-strong); flex: none; }
 
 /* Page Header block */
 .page-header {
-  padding: var(--sp-6) 0 var(--sp-5);
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  padding: var(--sp-7) 0 var(--sp-5);
+  border-bottom: 1px solid var(--rule);
   margin-bottom: var(--sp-6);
 }
 
@@ -181,110 +204,106 @@ h1, h2, .display-title {
    badges, inputs), whose values are optically tuned to their text —
    snapping those to a 4px grid distorts them for no visual gain. */
 
-/* ── 4. NAVBAR ───────────────────────────────────────────────── */
+/* ── 4. NAVBAR — the landing page's masthead ─────────────────── */
 .navbar-custom {
-  padding: 0 24px;
-  height: 62px;
+  padding: 0 clamp(16px, 4vw, 40px);
+  height: 64px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  gap: 16px;
+  border-bottom: 1px solid var(--rule);
   position: sticky;
   top: 0;
   z-index: 200;
-  background: rgba(8, 12, 20, 0.85);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: saturate(1.4) blur(12px);
+  -webkit-backdrop-filter: saturate(1.4) blur(12px);
 }
 
+/* "CV" in ink, "AI" in italic accent — the landing page's wordmark. */
 .logo-text {
-  font-family: var(--font-mono);
-  font-weight: 700;
-  font-size: var(--fs-xl);
-  background: linear-gradient(90deg, #ffffff, var(--brand));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 1.6rem;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--ink);
   text-decoration: none;
   display: flex;
-  align-items: center;
-  gap: 9px;
+  align-items: baseline;
   flex-shrink: 0;
 }
-
-.logo-text i {
-  -webkit-text-fill-color: var(--brand);
-  font-size: var(--fs-lg);
-}
+.logo-text:hover { color: var(--ink); }
+.logo-text i,
+.logo-text em { font-style: italic; color: var(--accent); }
 
 /* Nav links */
 .nav-group {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
 }
 
-/* Nav links sat at --fs-base (0.875rem) in --text-2, which is the same muted
-   grey used for secondary body copy — so the primary navigation read as
-   less important than the page it was sitting above. Up a step in size and
-   weight, and a brighter resting colour. */
 .nav-link-item {
   position: relative;
-  color: #cbd5e1;
+  color: var(--ink-2);
   text-decoration: none;
   font-size: var(--fs-md);
-  font-weight: 600;
-  padding: 7px 14px;
+  font-weight: 500;
+  padding: 8px 12px;
   border-radius: var(--r-sm);
   transition: color var(--t-fast), background var(--t-fast);
   white-space: nowrap;
 }
+.nav-link-item i { color: var(--ink-3); }
 
 .nav-link-item:hover {
-  color: #fff;
-  background: var(--surface-3);
+  color: var(--ink);
+  background: var(--paper-sunk);
 }
 
 .nav-link-item.active {
-  color: var(--brand);
-  background: var(--brand-dim);
+  color: var(--ink);
+  background: transparent;
 }
 
-/* Underline on top of the pill: the tinted pill alone is easy to miss against
-   a dark bar, and "which page am I on" should not need a second look. */
+/* The current page is underlined in the accent, like a marked-up proof. */
 .nav-link-item.active::after {
   content: '';
   position: absolute;
-  left: 14px;
-  right: 14px;
-  bottom: 1px;
-  height: 2px;
-  border-radius: 2px;
-  background: var(--brand);
+  left: 12px;
+  right: 12px;
+  bottom: 2px;
+  height: 1.5px;
+  background: var(--accent);
 }
 
 /* The drawer stacks its links, where a bottom bar reads as a divider. */
 .mobile-drawer .nav-link-item.active::after { display: none; }
+.mobile-drawer .nav-link-item.active { background: var(--paper-sunk); }
 
 /* Generation counter badge */
 .gen-counter {
-  background: var(--brand-dim);
-  border: 1px solid rgba(76, 201, 240, 0.25);
-  color: var(--brand);
+  background: transparent;
+  border: 1px solid var(--rule-strong);
+  color: var(--ink-2);
   padding: 5px 12px;
   border-radius: var(--r-pill);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-xs);
   font-weight: 700;
   font-family: var(--font-mono);
+  letter-spacing: 0.02em;
   white-space: nowrap;
 }
+.gen-counter i { color: var(--accent); }
 
 /* Upgrade button */
 .btn-upgrade {
-  background: linear-gradient(135deg, #f59e0b, #fbbf24);
+  background: var(--ink);
   border: none;
-  color: #0a0a0a;
-  font-weight: 800;
+  color: var(--paper);
+  font-weight: 500;
   padding: 7px 16px;
   border-radius: var(--r-sm);
   font-size: var(--fs-sm);
@@ -299,8 +318,8 @@ h1, h2, .display-title {
 
 .btn-upgrade:hover {
   transform: translateY(-1px);
-  color: #0a0a0a;
-  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.45);
+  color: var(--paper);
+  box-shadow: none;
 }
 
 /* ── Account chip ─────────────────────────────────────────────────────────
@@ -335,8 +354,8 @@ h1, h2, .display-title {
   width: 28px; height: 28px;
   border-radius: 50%;
   display: grid; place-items: center;
-  background: var(--grad-cta, linear-gradient(135deg, #4361ee, #4cc9f0));
-  color: #fff;
+  background: var(--ink);
+  color: var(--paper);
   font-size: var(--fs-sm);
   font-weight: 800;
   text-transform: uppercase;
@@ -358,8 +377,8 @@ h1, h2, .display-title {
   border-radius: var(--r-pill);
   text-transform: uppercase;
 }
-.acct-plan-pro   { background: rgba(76,201,240,0.14);  color: var(--brand);  border: 1px solid rgba(76,201,240,0.3); }
-.acct-plan-elite { background: rgba(245,158,11,0.14);  color: #fbbf24;       border: 1px solid rgba(245,158,11,0.35); }
+.acct-plan-pro   { background: var(--accent-tint);  color: var(--brand);  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule)); }
+.acct-plan-elite { background: var(--warn-tint);  color: var(--warn);       border: 1px solid color-mix(in srgb, var(--warn) 35%, var(--rule)); }
 
 .acct-caret { font-size: var(--fs-2xs); color: var(--text-3); transition: transform var(--t-fast); }
 .acct[data-open="true"] .acct-caret { transform: rotate(180deg); }
@@ -372,7 +391,7 @@ h1, h2, .display-title {
   background: var(--surface-1);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
-  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 18px 46px rgba(20, 18, 14, 0.14);
   padding: 6px;
   z-index: 200;
   opacity: 0;
@@ -456,7 +475,7 @@ h1, h2, .display-title {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(20, 18, 14, 0.4);
   backdrop-filter: blur(4px);
   z-index: 997;
 }
@@ -471,7 +490,7 @@ h1, h2, .display-title {
   right: -300px;
   width: 280px;
   height: 100vh;
-  background: rgba(10, 14, 24, 0.99);
+  background: var(--paper-raised);
   backdrop-filter: blur(30px);
   z-index: 998;
   transition: right 0.32s cubic-bezier(0.22, 1, 0.36, 1);
@@ -511,7 +530,7 @@ h1, h2, .display-title {
 }
 
 .drawer-close-btn:hover {
-  background: rgba(239, 68, 68, 0.15);
+  background: var(--danger-tint);
   color: var(--danger);
 }
 
@@ -546,7 +565,7 @@ h1, h2, .display-title {
 
 .drawer-plan-badge {
   background: var(--brand-dim);
-  border: 1px solid rgba(76, 201, 240, 0.2);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule));
   color: var(--brand);
   padding: 10px 16px;
   border-radius: var(--r-sm);
@@ -557,27 +576,17 @@ h1, h2, .display-title {
   font-family: var(--font-mono);
 }
 
-/* ── 7. GLASS CARDS ─────────────────────────────────────────── */
+/* ── 7. CARDS ───────────────────────────────────────────────── */
+/* Still called .glass-card so no template changes; it is a sheet of paper
+   now — white on the paper background, a hairline edge, no blur, no glow. */
 .glass-card {
-  background: var(--surface-1);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--border);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
   border-radius: var(--r-xl);
-  box-shadow: var(--shadow-3);
+  box-shadow: var(--shadow-1);
   padding: var(--sp-6);
   position: relative;
   overflow: hidden;
-}
-
-.glass-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(76,201,240,0.4), rgba(247,37,133,0.3), transparent);
 }
 
 /* Card variants */
@@ -592,70 +601,71 @@ h1, h2, .display-title {
 }
 
 .card-hoverable:hover {
-  transform: translateY(-3px);
-  border-color: var(--border-hover);
-  box-shadow: var(--shadow-3), var(--shadow-glow);
+  transform: translateY(-2px);
+  border-color: var(--rule-strong);
+  box-shadow: var(--shadow-2);
 }
 
-/* ── 8. BUTTONS ─────────────────────────────────────────────── */
-/* Primary gradient button */
+/* ── 8. BUTTONS — the landing page's .lp-btn ─────────────────── */
+/* Primary: ink, turning accent on hover. */
 .btn-primary-grad {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  background: linear-gradient(135deg, #4361ee, var(--brand-2));
-  border: none;
-  color: #fff;
-  font-weight: 700;
+  gap: 9px;
+  background: var(--ink);
+  border: 1px solid transparent;
+  color: var(--paper);
+  font-family: var(--sans);
+  font-weight: 500;
   font-size: var(--fs-md);
-  padding: 13px 28px;
-  border-radius: var(--r-lg);
+  padding: 12px 22px;
+  border-radius: var(--r-md);
   text-decoration: none;
   cursor: pointer;
-  transition: transform var(--t-fast), box-shadow var(--t-fast), opacity var(--t-fast);
-  letter-spacing: 0.3px;
+  white-space: nowrap;
+  transition: background-color .2s var(--ease), transform .2s var(--ease);
 }
 
 .btn-primary-grad:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 32px rgba(67, 97, 238, 0.45);
-  color: #fff;
-  opacity: 0.92;
+  background: var(--accent);
+  color: var(--paper);
+  transform: translateY(-1px);
 }
 
 .btn-primary-grad:active {
   transform: translateY(0);
 }
 
-/* Ghost / outline button */
+/* Ghost: a ruled outline that firms up to ink on hover. */
 .btn-ghost {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  color: var(--text-2);
-  font-weight: 600;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid var(--rule-strong);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-weight: 500;
   font-size: var(--fs-base);
-  padding: 10px 20px;
-  border-radius: var(--r-sm);
+  padding: 10px 18px;
+  border-radius: var(--r-md);
   text-decoration: none;
   cursor: pointer;
   transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast);
 }
 
 .btn-ghost:hover {
-  background: var(--surface-3);
-  border-color: var(--border-hover);
-  color: var(--text-1);
+  background: var(--paper-raised);
+  border-color: var(--ink);
+  color: var(--ink);
 }
 
 /* Danger/delete button */
 .btn-danger-sm {
-  background: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--danger) 35%, var(--rule));
   color: var(--danger);
   border-radius: var(--r-sm);
   padding: 5px 10px;
@@ -666,40 +676,41 @@ h1, h2, .display-title {
 }
 
 .btn-danger-sm:hover {
-  background: rgba(239, 68, 68, 0.18);
+  background: var(--danger-tint);
   border-color: var(--danger);
 }
 
 /* ── 9. FORM CONTROLS ───────────────────────────────────────── */
 .form-control,
 .form-select {
-  background: rgba(0, 0, 0, 0.25) !important;
-  border: 1px solid rgba(255, 255, 255, 0.09) !important;
-  color: var(--text-1) !important;
-  padding: 13px 16px;
-  border-radius: var(--r-sm);
+  background-color: var(--paper-raised) !important;
+  border: 1px solid var(--rule-strong) !important;
+  color: var(--ink) !important;
+  font-family: var(--sans);
+  padding: 12px 14px;
+  border-radius: var(--r-md);
   font-size: var(--fs-md);
   transition: border-color var(--t-fast), box-shadow var(--t-fast);
 }
 
 .form-control::placeholder {
-  color: var(--text-3) !important;
+  color: var(--ink-3) !important;
+  opacity: 1;
 }
 
 .form-control:focus,
 .form-select:focus {
-  border-color: rgba(76, 201, 240, 0.5) !important;
-  box-shadow: 0 0 0 3px rgba(76, 201, 240, 0.10) !important;
-  background: rgba(0, 0, 0, 0.35) !important;
+  border-color: var(--ink) !important;
+  box-shadow: 0 0 0 3px var(--accent-tint) !important;
+  background-color: var(--paper-raised) !important;
   outline: none;
 }
 
 .form-label {
-  color: rgba(255, 255, 255, 0.72);
-  font-weight: 600;
+  color: var(--ink);
+  font-weight: 500;
   font-size: var(--fs-base);
   margin-bottom: 7px;
-  letter-spacing: 0.01em;
 }
 
 /* Input with icon */
@@ -709,21 +720,21 @@ h1, h2, .display-title {
 
 .input-icon-wrap i {
   position: absolute;
-  left: 16px;
+  left: 15px;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--text-3);
+  color: var(--ink-3);
   font-size: var(--fs-md);
   pointer-events: none;
   transition: color var(--t-fast);
 }
 
 .input-icon-wrap .form-control {
-  padding-left: 44px;
+  padding-left: 42px;
 }
 
 .input-icon-wrap:focus-within i {
-  color: var(--brand);
+  color: var(--ink);
 }
 
 /* ── 10. STATUS BADGES ──────────────────────────────────────── */
@@ -742,31 +753,31 @@ h1, h2, .display-title {
 .badge-primary {
   background: var(--brand-dim);
   color: var(--brand);
-  border: 1px solid rgba(76, 201, 240, 0.2);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule));
 }
 
 .badge-secondary {
   background: var(--brand-2-dim);
   color: var(--brand-2);
-  border: 1px solid rgba(247, 37, 133, 0.2);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule));
 }
 
 .badge-success {
-  background: rgba(34, 197, 94, 0.1);
+  background: var(--ok-tint);
   color: var(--success);
-  border: 1px solid rgba(34, 197, 94, 0.2);
+  border: 1px solid color-mix(in srgb, var(--ok) 35%, var(--rule));
 }
 
 .badge-warning {
-  background: rgba(234, 179, 8, 0.1);
+  background: var(--warn-tint);
   color: var(--warning);
-  border: 1px solid rgba(234, 179, 8, 0.2);
+  border: 1px solid color-mix(in srgb, var(--warn) 35%, var(--rule));
 }
 
 .badge-danger {
-  background: rgba(239, 68, 68, 0.1);
+  background: var(--danger-tint);
   color: var(--danger);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  border: 1px solid color-mix(in srgb, var(--danger) 35%, var(--rule));
 }
 
 /* ── 10b. COMPANY AVATAR (local initials — no external image calls) ─── */
@@ -779,7 +790,7 @@ h1, h2, .display-title {
   justify-content: center;
   background: var(--brand-dim);
   color: var(--brand);
-  border: 1px solid rgba(76, 201, 240, 0.2);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule));
   font-family: var(--font-mono);
   font-weight: 800;
   font-size: var(--fs-md);
@@ -793,9 +804,12 @@ h1, h2, .display-title {
 .company-avatar.avatar-lg { width: 50px; height: 50px; font-size: var(--fs-lg); border-radius: var(--r-md); }
 
 /* ── 11. STAT CARDS ─────────────────────────────────────────── */
+/* Figures are set like the landing page's proof numbers: large serif, ink.
+   The per-card neon accents (--card-accent, --card-icon-*, --card-value-color,
+   still set inline by the dashboard) are deliberately ignored — one accent. */
 .stat-card-v2 {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
   border-radius: var(--r-xl);
   padding: var(--sp-5);
   position: relative;
@@ -803,47 +817,30 @@ h1, h2, .display-title {
   transition: transform var(--t-base), border-color var(--t-base);
 }
 
-.stat-card-v2::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  border-radius: var(--r-xl) var(--r-xl) 0 0;
-  background: var(--card-accent, var(--brand));
-  opacity: 0.6;
-  transition: opacity var(--t-base);
-}
-
 .stat-card-v2:hover {
-  transform: translateY(-3px);
-  border-color: var(--border-hover);
-}
-
-.stat-card-v2:hover::after {
-  opacity: 1;
+  transform: translateY(-2px);
+  border-color: var(--rule-strong);
 }
 
 .stat-icon-box {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--r-sm);
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--fs-lg);
-  margin-bottom: 16px;
-  background: var(--card-icon-bg, var(--brand-dim));
-  color: var(--card-icon-color, var(--brand));
+  font-size: var(--fs-md);
+  margin-bottom: 18px;
+  background: var(--paper-sunk);
+  color: var(--ink-2);
 }
 
 .stat-value-v2 {
-  font-size: 2.2rem;
-  font-weight: 800;
-  font-family: var(--font-mono);
+  font-family: var(--serif);
+  font-size: 2.75rem;
+  font-weight: 400;
   line-height: 1;
-  color: var(--card-value-color, var(--brand));
+  color: var(--ink);
   letter-spacing: -0.02em;
 }
 
@@ -859,7 +856,7 @@ h1, h2, .display-title {
 .activity-item-v2 {
   padding: 13px 16px;
   border-radius: var(--r-sm);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--rule);
   margin-bottom: 6px;
   transition: background var(--t-fast), border-color var(--t-fast);
   cursor: pointer;
@@ -887,7 +884,7 @@ h1, h2, .display-title {
 .quick-action-v2:hover {
   border-color: var(--brand);
   background: var(--brand-dim);
-  color: #fff;
+  color: var(--ink);
   transform: translateX(4px);
 }
 
@@ -911,9 +908,9 @@ h1, h2, .display-title {
   position: fixed;
   inset: 0;
   z-index: 100000;
-  background: rgba(8, 12, 20, 0.7);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background: rgba(20, 18, 14, 0.4);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
   align-items: center;
   justify-content: center;
   padding: 20px;
@@ -939,7 +936,7 @@ h1, h2, .display-title {
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  background: rgba(239, 68, 68, 0.12);
+  background: var(--danger-tint);
   color: var(--danger);
   display: flex;
   align-items: center;
@@ -963,9 +960,7 @@ h1, h2, .display-title {
 
 .confirm-actions button { min-width: 112px; }
 
-#confirmOk.confirm-danger {
-  background: linear-gradient(135deg, #ef4444, #f87171) !important;
-}
+#confirmOk.confirm-danger { background: var(--danger) !important; border-color: var(--danger) !important; color: var(--paper) !important; }
 
 /* ── 16. LOADING OVERLAY ─────────────────────────────────────── */
 .loading-overlay {
@@ -973,7 +968,7 @@ h1, h2, .display-title {
   position: fixed;
   inset: 0;
   z-index: 99999;
-  background: rgba(8, 12, 20, 0.78);
+  background: var(--paper-raised);
   backdrop-filter: blur(18px) saturate(180%);
   align-items: center;
   justify-content: center;
@@ -1038,8 +1033,8 @@ h1, h2, .display-title {
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(76, 201, 240, 0.4); }
-  50%      { box-shadow: 0 0 0 10px rgba(76, 201, 240, 0); }
+  0%, 100% { box-shadow: none; }
+  50%      { box-shadow: none; }
 }
 
 /* Animation utilities */
@@ -1055,14 +1050,14 @@ h1, h2, .display-title {
 
 /* ── 19. UTILITY CLASSES ─────────────────────────────────────── */
 .text-gradient {
-  background: linear-gradient(135deg, var(--brand), var(--brand-2));
+  background: var(--ink);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .text-gradient-gold {
-  background: linear-gradient(135deg, #f59e0b, #fbbf24);
+  background: var(--ink);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -1070,7 +1065,7 @@ h1, h2, .display-title {
 
 .divider {
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--border), transparent);
+  background: var(--paper-raised);
   margin: 20px 0;
 }
 
@@ -1146,12 +1141,12 @@ h1, h2, .display-title {
 
 .theme-preset-pill:hover {
   transform: scale(1.1);
-  box-shadow: 0 0 10px rgba(255,255,255,0.2);
+  box-shadow: none;
 }
 
 .theme-preset-pill.active {
-  border-color: #fff;
-  box-shadow: 0 0 12px rgba(255,255,255,0.4);
+  border-color: var(--rule-strong);
+  box-shadow: none;
 }
 
 .theme-preset-pill .split-bg {
@@ -1168,8 +1163,8 @@ h1, h2, .display-title {
   bottom: -25px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(0,0,0,0.8);
-  color: white;
+  background: var(--ink);
+  color: var(--paper);
   padding: 2px 6px;
   border-radius: 4px;
   font-size: var(--fs-2xs);
@@ -1197,13 +1192,13 @@ h1, h2, .display-title {
   width: 100%;
   height: 6px;
   cursor: pointer;
-  background: rgba(255,255,255,0.1);
+  background: var(--rule);
   border-radius: 3px;
-  border: 1px solid rgba(0,0,0,0.3);
+  border: 1px solid var(--rule);
 }
 
 .vs-range::-webkit-slider-thumb {
-  border: 2px solid #fff;
+  border: 2px solid var(--rule-strong);
   height: 16px;
   width: 16px;
   border-radius: 50%;
@@ -1211,17 +1206,17 @@ h1, h2, .display-title {
   cursor: pointer;
   -webkit-appearance: none;
   margin-top: -6px;
-  box-shadow: 0 0 8px rgba(76,201,240,0.5);
+  box-shadow: none;
   transition: transform 0.1s, box-shadow 0.1s;
 }
 
 .vs-range:hover::-webkit-slider-thumb {
   transform: scale(1.15);
-  box-shadow: 0 0 12px rgba(76,201,240,0.8);
+  box-shadow: none;
 }
 
 .vs-range:focus::-webkit-slider-runnable-track {
-  background: rgba(255,255,255,0.15);
+  background: var(--rule);
 }
 
 /* ── Custom JS Font Dropdown ────────────────────── */
@@ -1231,8 +1226,8 @@ h1, h2, .display-title {
 }
 .font-dropdown-toggle {
   width: 100%;
-  background: rgba(0,0,0,.3);
-  border: 1px solid rgba(255,255,255,.15);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule-strong);
   border-radius: var(--r-sm);
   color: var(--text-1);
   font-size: var(--fs-sm);
@@ -1246,7 +1241,7 @@ h1, h2, .display-title {
 }
 .font-dropdown-toggle:hover, .font-dropdown-toggle:focus {
   border-color: var(--accent);
-  background: rgba(0,0,0,.4);
+  background: var(--paper-raised);
   outline: none;
 }
 .font-dropdown-menu {
@@ -1255,10 +1250,10 @@ h1, h2, .display-title {
   left: 0;
   width: 100%;
   background: var(--surface-1);
-  border: 1px solid rgba(76,201,240,.3);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule));
   border-radius: var(--r-sm);
   margin-top: 4px;
-  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+  box-shadow: 0 8px 32px rgba(20, 18, 14, 0.14);
   z-index: 100;
   display: none;
   overflow: hidden;
@@ -1275,7 +1270,7 @@ h1, h2, .display-title {
   transition: background var(--t-fast);
 }
 .font-dropdown-option:hover {
-  background: rgba(76,201,240,.15);
+  background: var(--accent-tint);
 }
 @keyframes fadeInDown {
   from { opacity: 0; transform: translateY(-4px); }
@@ -1286,11 +1281,11 @@ h1, h2, .display-title {
 .vs-left-nav {
   position: sticky;
   top: 0;
-  background: rgba(13,17,32,.95);
+  background: var(--paper-raised);
   backdrop-filter: blur(8px);
   z-index: 50;
   padding: 8px 20px;
-  border-bottom: 1px solid rgba(76,201,240,0.10);
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule));
   display: flex;
   gap: 12px;
   overflow-x: auto;
@@ -1310,8 +1305,8 @@ h1, h2, .display-title {
   transition: all var(--t-fast);
 }
 .vs-left-nav a:hover, .vs-left-nav a.active {
-  color: #4cc9f0;
-  background: rgba(76,201,240,.1);
+  color: var(--accent);
+  background: var(--accent-tint);
 }
 
 .table-responsive {
@@ -1363,11 +1358,13 @@ textarea:focus-visible,
   padding: 12px 18px;
   border-radius: var(--r-sm);
   font-size: var(--fs-base);
-  font-weight: 600;
-  color: #fff;
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+  font-weight: 500;
+  color: var(--ink);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-left-width: 3px;
+  box-shadow: var(--shadow-3);
+  
   opacity: 0;
   transform: translateY(12px) scale(0.96);
   transition: opacity 0.25s ease, transform 0.25s ease;
@@ -1395,10 +1392,14 @@ textarea:focus-visible,
   transform: translateY(0) scale(1);
 }
 
-.toast-item.toast-success { background: rgba(22, 163, 74, 0.92); }
-.toast-item.toast-danger  { background: rgba(220, 38, 38, 0.92); }
-.toast-item.toast-warning { background: rgba(202, 138, 4, 0.92); }
-.toast-item.toast-info    { background: rgba(14, 116, 144, 0.92); }
+.toast-item.toast-success { border-left-color: var(--ok); }
+.toast-item.toast-success i { color: var(--ok); }
+.toast-item.toast-danger  { border-left-color: var(--danger); }
+.toast-item.toast-danger i { color: var(--danger); }
+.toast-item.toast-warning { border-left-color: var(--warn); }
+.toast-item.toast-warning i { color: var(--warn); }
+.toast-item.toast-info    { border-left-color: var(--ink-3); }
+.toast-item.toast-info i { color: var(--ink-3); }
 
 .toast-item i { font-size: var(--fs-md); flex-shrink: 0; }
 
@@ -1417,8 +1418,8 @@ textarea:focus-visible,
   width: 64px;
   height: 64px;
   border-radius: var(--r-lg);
-  background: var(--brand-dim);
-  border: 1px solid rgba(76,201,240,0.18);
+  background: var(--paper-sunk);
+  border: 1px solid var(--rule);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1426,12 +1427,7 @@ textarea:focus-visible,
   margin-bottom: 20px;
 }
 
-.empty-title {
-  font-size: var(--fs-md);
-  font-weight: 700;
-  color: var(--text-1);
-  margin-bottom: 8px;
-}
+.empty-title { font-family: var(--serif); font-size: 1.5rem; font-weight: 400; color: var(--ink); margin-bottom: 8px; letter-spacing: -0.01em; }
 
 .empty-desc {
   font-size: var(--fs-base);
@@ -1457,7 +1453,7 @@ textarea:focus-visible,
 
 /* ── 20. LUXURY SAAS DESIGN UTILITIES ───────────────────────── */
 .glass-panel {
-  background: rgba(16, 22, 40, 0.75);
+  background: var(--paper-raised);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border);
@@ -1478,13 +1474,13 @@ textarea:focus-visible,
   font-size: var(--fs-xs);
   font-weight: 700;
   background: var(--brand-dim);
-  border: 1px solid rgba(76, 201, 240, 0.3);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule));
   color: var(--brand);
-  box-shadow: 0 0 16px rgba(76, 201, 240, 0.15);
+  box-shadow: none;
 }
 
 .shimmer-badge {
-  background: linear-gradient(90deg, rgba(255,255,255,0.05), rgba(76,201,240,0.2), rgba(255,255,255,0.05));
+  background: var(--accent);
   background-size: 200% 100%;
   animation: shimmer-swipe 4s infinite linear;
 }
@@ -1604,14 +1600,14 @@ textarea:focus-visible,
   line-height: 1.4;
 }
 .res-pill-good {
-  background: rgba(34, 197, 94, 0.10);
-  color: #4ade80;
-  border-color: rgba(34, 197, 94, 0.22);
+  background: var(--ok-tint);
+  color: var(--ok);
+  border-color: color-mix(in srgb, var(--ok) 35%, var(--rule));
 }
 .res-pill-bad {
-  background: rgba(239, 68, 68, 0.10);
-  color: #f87171;
-  border-color: rgba(239, 68, 68, 0.22);
+  background: var(--danger-tint);
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--rule));
 }
 
 /* ── ATS score ring ─────────────────────────────────────────────────────── */
@@ -1628,14 +1624,7 @@ textarea:focus-visible,
 .res-score-ring circle { fill: none; stroke-width: 5; stroke-linecap: round; }
 .res-score-track { stroke: var(--surface-3); }
 .res-score-fill  { transition: stroke-dashoffset 0.9s ease; }
-.res-score-num {
-  position: absolute; inset: 0;
-  display: grid; place-items: center;
-  font-family: var(--font-mono);
-  font-size: var(--fs-md);
-  font-weight: 800;
-  color: var(--text-1);
-}
+.res-score-num { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--serif); font-size: 1.35rem; font-weight: 400; color: var(--ink); }
 .res-score-meta strong { display: block; color: var(--text-1); font-size: var(--fs-md); }
 .res-score-meta span   { color: var(--text-3); font-size: var(--fs-xs); }
 
@@ -1657,7 +1646,7 @@ textarea:focus-visible,
   border-radius: var(--r-md);
   overflow: hidden;
 }
-.res-qa-item[open] { border-color: rgba(76, 201, 240, 0.3); }
+.res-qa-item[open] { border-color: color-mix(in srgb, var(--accent) 35%, var(--rule)); }
 .res-qa-q {
   list-style: none;
   cursor: pointer;
@@ -1708,7 +1697,7 @@ textarea:focus-visible,
   margin-bottom: 6px;
 }
 .res-mail-value {
-  background: rgba(0, 0, 0, 0.28);
+  background: var(--paper-sunk);
   border: 1px solid var(--border);
   border-radius: var(--r-sm);
   padding: 11px 13px;
@@ -1725,8 +1714,8 @@ textarea:focus-visible,
 
 .res-copy {
   display: inline-flex; align-items: center; gap: 5px;
-  background: rgba(76, 201, 240, 0.08);
-  border: 1px solid rgba(76, 201, 240, 0.22);
+  background: var(--accent-tint);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule));
   border-radius: var(--r-sm);
   color: var(--brand);
   font-family: inherit;
@@ -1737,14 +1726,14 @@ textarea:focus-visible,
   cursor: pointer;
   transition: background var(--t-fast);
 }
-.res-copy:hover { background: rgba(76, 201, 240, 0.2); }
-.res-copy.is-copied { color: var(--success); border-color: rgba(34, 197, 94, 0.3); background: rgba(34, 197, 94, 0.1); }
+.res-copy:hover { background: var(--accent-tint); }
+.res-copy.is-copied { color: var(--success); border-color: color-mix(in srgb, var(--ok) 35%, var(--rule)); background: var(--ok-tint); }
 
 /* ── Stored resume preview (CVAIResult.renderResume) ─────────────────────
    Shared by the History card and the Dashboard modal, which previously each
    built this markup themselves. */
 .res-cv { color: var(--text-2); }
-.res-cv-name { font-size: var(--fs-2xl); font-weight: 800; color: #fff; margin: 0 0 2px; }
+.res-cv-name { font-size: var(--fs-2xl); font-weight: 800; color: var(--ink); margin: 0 0 2px; }
 .res-cv-role { font-size: var(--fs-md); color: var(--brand); font-weight: 600; margin-bottom: 12px; }
 .res-cv-contact {
   display: flex; flex-wrap: wrap; gap: 6px 16px;
@@ -1753,14 +1742,14 @@ textarea:focus-visible,
   border-bottom: 1px solid var(--border);
 }
 .res-cv-h {
-  font-size: var(--fs-sm); font-weight: 800; color: #fff;
+  font-size: var(--fs-sm); font-weight: 800; color: var(--ink);
   text-transform: uppercase; letter-spacing: 0.09em;
   margin: 20px 0 9px;
 }
-.res-cv-p { font-size: var(--fs-base); color: #cbd5e1; line-height: 1.6; margin: 0 0 4px; }
+.res-cv-p { font-size: var(--fs-base); color: var(--ink); line-height: 1.6; margin: 0 0 4px; }
 .res-cv-entry {
-  background: rgba(76, 201, 240, 0.05);
-  border: 1px solid rgba(76, 201, 240, 0.1);
+  background: var(--accent-tint);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule));
   border-radius: var(--r-sm);
   padding: 13px 14px;
   margin-bottom: 10px;
@@ -1771,7 +1760,7 @@ textarea:focus-visible,
 }
 .res-cv-dates { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--text-3); white-space: nowrap; }
 .res-cv-sub { font-size: var(--fs-sm); color: var(--text-2); margin-top: 2px; }
-.res-cv-bullets { margin: 8px 0 0; padding-left: 18px; font-size: var(--fs-base); color: #cbd5e1; line-height: 1.5; }
+.res-cv-bullets { margin: 8px 0 0; padding-left: 18px; font-size: var(--fs-base); color: var(--ink); line-height: 1.5; }
 .res-cv-bullets li { margin-bottom: 4px; }
 .res-cv-skill-cat {
   font-size: var(--fs-xs); color: var(--text-3);
@@ -1786,5 +1775,26 @@ textarea:focus-visible,
   padding: 3px 11px;
   font-size: var(--fs-sm);
   font-weight: 600;
-  color: #e2e8f0;
+  color: var(--ink);
 }
+
+/* ── Bootstrap utilities that assumed a dark page ──────────────── */
+/* The templates still carry a few of these from the dark theme. Rather than
+   let white text land on paper, they resolve to the ink scale. */
+.text-white     { color: var(--ink) !important; }
+.text-white-50,
+.text-muted     { color: var(--ink-3) !important; }
+.bg-dark        { background-color: var(--ink) !important; color: var(--paper) !important; }
+.btn-close      { filter: none; }
+
+/* ── The machine surface (landing page: "what the parser sees") ── */
+.machine-panel {
+  background: var(--machine);
+  color: var(--machine-text);
+  font-family: var(--mono);
+  border-radius: var(--r-lg);
+  padding: var(--sp-5);
+}
+.machine-panel .machine-key { color: var(--machine-key); }
+.machine-panel .machine-str { color: var(--machine-str); }
+.machine-panel .machine-dim { color: var(--machine-dim); }
