@@ -15,21 +15,16 @@
     <meta name="twitter:card" content="summary_large_image">
 
     {% comment %}
-    This page is deliberately self-contained: it does not load cvai-global.css.
+    This page defined the paper design system, and the whole app now uses it.
+    Its palette and type families live in static/generator/css/tokens.css,
+    shared with every app page; editing a colour there changes both.
 
-    That file is the *application's* design system and it is dark by design —
-    tokens (--bg, --text-1, --brand) and components (.mobile-drawer,
-    .hamburger-btn, .nav-link-item) all assume a dark surface. This landing page
-    is light, so importing it would mean overriding nearly every token and then
-    re-overriding four components, leaving the page permanently one global tweak
-    away from breaking. Everything here is local and prefixed `lp-`, so no class
-    can collide with the app's stylesheet in either direction.
-
-    Two consequences worth knowing before editing:
-      * changing cvai-global.css cannot affect this page, and vice versa;
-      * icons are an inline SVG sprite rather than Font Awesome, so the page has
-        no render-blocking CDN dependency.
+    The page still does not load cvai-global.css: its components are local and
+    prefixed `lp-`, so no class can collide with the app's stylesheet in either
+    direction. Icons are an inline SVG sprite rather than Font Awesome, so the
+    page has no render-blocking CDN dependency.
     {% endcomment %}
+    <link rel="stylesheet" href="{% static 'generator/css/tokens.css' %}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -46,43 +41,7 @@
            the parser sees. Those are the only two surfaces on the page.
            ═══════════════════════════════════════════════════════════════════ */
         :root {
-            /* Paper */
-            --paper:        #FAF8F3;
-            --paper-sunk:   #F2EDE2;
-            --paper-raised: #FFFFFF;
-
-            /* Ink — measured against --paper */
-            --ink:    #14120E;   /* 16.9:1  headings, body */
-            --ink-2:  #4F4A40;   /* 8.0:1   secondary prose */
-            --ink-3:  #6B6456;   /* 5.4:1   captions, labels */
-
-            /* Rules — print hairlines, not borders */
-            --rule:        #E4DDCE;
-            --rule-strong: #CBC2AE;
-
-            /* One accent. Warm, not cyan — cyan/violet is the palette this
-               page exists to get away from. */
-            --accent:       #A83A0C;   /* 6.0:1 on paper — safe for body text */
-            --accent-tint:  #FBEEE6;
-            /* The step numerals. A paler tint reads better, but these are
-               content (step 1, 2, 3), not ornament, so this is held at the
-               3:1 large-text minimum rather than the 1.5:1 a tint would give. */
-            --accent-soft:  #B87B55;   /* 3.3:1 on paper */
-
-            /* The machine surface */
-            --machine:      #16140F;
-            --machine-2:    #221F18;
-            --machine-text: #EFE9DB;
-            --machine-dim:  #9A9384;
-            --machine-key:  #E09A62;
-            --machine-str:  #A9BE9C;
-
-            --ok: #2F6B3C;
-
-            /* Type */
-            --serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
-            --sans:  'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            --mono:  'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+            /* Palette and type families: tokens.css (shared with the app). */
 
             --fs-display: clamp(2.9rem, 7.4vw, 5.75rem);
             --fs-h2:      clamp(2.05rem, 4.4vw, 3.4rem);
@@ -103,7 +62,7 @@
             --r:    8px;
             --r-lg: 14px;
 
-            --ease: cubic-bezier(0.22, 1, 0.36, 1);
+            /* --ease also comes from tokens.css */
         }
 
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
