@@ -16,8 +16,9 @@
   <!-- Google Fonts -->
   <!-- Inter is loaded at a single weight only: it is no longer the studio UI
        font, but the resume font-picker renders a live sample of it. -->
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   <!-- Global Design System -->
+  <link rel="stylesheet" href="{% static 'generator/css/tokens.css' %}">
   <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}?v=4">
   {% comment %}
   Auto-Fill and the History prefill both map extracted resumes onto the form,
@@ -34,15 +35,17 @@
        VISUAL RESUME STUDIO — SPLIT-SCREEN LAYOUT
        ═══════════════════════════════════════════════════════════ */
     :root {
-      /* Phase 1: aliases to the global token set (cvai-global.css) */
-      --studio-bg:       var(--bg);
-      --panel-bg:        var(--surface-1);
-      --panel-border:    rgba(76,201,240,0.10);
-      --input-bg:        var(--surface-2);
-      --input-border:    var(--border);
-      --input-focus:     rgba(76,201,240,0.30);
-      --accent:          var(--brand);
-      --accent2:         var(--brand-2);
+      /* Studio-local names for the shared paper tokens (tokens.css). --accent
+         itself is not redefined here: it is the shared token, and pointing it
+         at --brand (which points back at --accent) made a cycle that voided
+         both. */
+      --studio-bg:       var(--paper);
+      --panel-bg:        var(--paper-raised);
+      --panel-border:    var(--rule);
+      --input-bg:        var(--paper-raised);
+      --input-border:    var(--rule-strong);
+      --input-focus:     var(--accent-tint);
+      --accent2:         var(--accent);
       --radius:          var(--r-md);
     }
 
@@ -60,15 +63,15 @@
     .vs-nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
       height: var(--vs-nav-h);
-      background: rgba(7,10,20,0.9);
-      border-bottom: 1px solid var(--panel-border);
-      backdrop-filter: blur(20px) saturate(180%);
-      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      background: color-mix(in srgb, var(--paper) 92%, transparent);
+      border-bottom: 1px solid var(--rule);
+      backdrop-filter: saturate(1.4) blur(12px);
+      -webkit-backdrop-filter: saturate(1.4) blur(12px);
       display: flex; align-items: center; padding: 0 24px; gap: 14px;
     }
-    .vs-nav-logo { font-size: var(--fs-lg); font-weight: 800; color: #fff;
-                   text-decoration: none; letter-spacing: -0.5px; }
-    .vs-nav-logo span { color: var(--accent); }
+    .vs-nav-logo { font-family: var(--serif); font-size: 1.6rem; font-weight: 400; color: var(--ink);
+                   text-decoration: none; letter-spacing: -0.02em; line-height: 1; }
+    .vs-nav-logo em { font-style: italic; color: var(--accent); }
     .vs-nav-spacer { flex: 1; }
 
     /* Deliberately untouched: the profile link uses this class, and it is to
@@ -84,16 +87,12 @@
        text. Now a segmented control — bigger, brighter, with real hit areas. */
     .vs-nav-group {
       display: flex; align-items: center; gap: 2px;
-      background: rgba(255,255,255,0.035);
-      border: 1px solid var(--panel-border);
-      border-radius: 12px;
-      padding: 3px;
-      box-shadow: inset 0 1px 3px rgba(0,0,0,0.35);
     }
     .vs-tab {
-      font-size: var(--fs-base);
+      position: relative;
+      font-size: var(--fs-md);
       font-weight: 500;
-      color: #cbd5e1;
+      color: var(--ink-2);
       text-decoration: none;
       padding: 6px 14px;
       border-radius: 8px;
@@ -101,14 +100,13 @@
       white-space: nowrap;
       transition: color var(--t-fast), background var(--t-fast), border-color var(--t-fast);
     }
-    .vs-tab:hover { color: #fff; background: rgba(255,255,255,0.07); }
+    .vs-tab:hover { color: var(--ink); background: var(--paper-sunk); }
     .vs-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-    .vs-tab.is-active {
-      background: rgba(255,255,255,0.09);
-      border-color: rgba(255,255,255,0.12);
-      color: #fff;
-      font-weight: 600;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    .vs-tab.is-active { color: var(--ink); }
+    /* Underlined in the accent, as in the app masthead. */
+    .vs-tab.is-active::after {
+      content: ''; position: absolute; left: 14px; right: 14px; bottom: 1px;
+      height: 1.5px; background: var(--accent);
     }
 
     /* The segmented group is wider than the bare links it replaced, and it
@@ -121,28 +119,27 @@
       .vs-nav-group { display: none; }
     }
     .vs-nav-badge {
-      font-size: var(--fs-xs); font-weight: 700; padding: 3px 10px;
-      border-radius: var(--r-pill); border: 1px solid rgba(76,201,240,0.25);
-      color: var(--accent); background: rgba(76,201,240,0.07);
+      font-family: var(--mono); font-size: var(--fs-xs); font-weight: 700; padding: 4px 11px;
+      border-radius: var(--r-pill); border: 1px solid var(--rule-strong);
+      color: var(--ink-2); background: transparent; letter-spacing: 0.02em;
     }
     .vs-nav-btn-dl {
       display: inline-flex; align-items: center; gap: 8px;
-      font-size: var(--fs-base); font-weight: 600; padding: 8px 16px;
-      background: var(--grad-cta);
+      font-size: var(--fs-base); font-weight: 500; padding: 9px 16px;
+      background: var(--ink);
       /* Square-ish rather than a full pill: it now sits beside the tab group,
          and two different radii next to each other read as two unrelated
          controls. */
-      border: none; border-radius: 10px; color: #fff; cursor: pointer;
-      box-shadow: 0 4px 14px rgba(67,97,238,0.28);
+      border: none; border-radius: 10px; color: var(--paper); cursor: pointer;
+      box-shadow: none;
       transition: filter var(--t-fast), transform var(--t-fast), box-shadow var(--t-fast);
       white-space: nowrap;
     }
     .vs-nav-btn-dl:hover:not(:disabled) {
-      filter: brightness(1.12);
+      background: var(--accent);
       transform: translateY(-1px);
-      box-shadow: 0 6px 18px rgba(67,97,238,0.4);
     }
-    .vs-nav-btn-dl:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+    .vs-nav-btn-dl:focus-visible { outline: 2px solid var(--rule-strong); outline-offset: 2px; }
     .vs-nav-btn-dl:disabled { opacity: .55; cursor: not-allowed; box-shadow: none; }
 
     /* ── Studio Root — two-column split below nav ──────────── */
@@ -171,7 +168,7 @@
       z-index: 10;
     }
     .vs-resizer:hover, .vs-resizer.dragging {
-      background: rgba(76,201,240,0.35);
+      background: var(--accent-tint);
     }
     /* Widened grab area — spans the full height now that the collapse
        button no longer shares this strip. */
@@ -190,18 +187,17 @@
       border-bottom: 1px solid var(--panel-border);
       flex-shrink: 0;
     }
-    .vs-left-header h2 { font-size: var(--fs-base); font-weight: 700;
-                          color: var(--text-1); margin-bottom: 2px; }
+    .vs-left-header h2 { font-family: var(--serif); font-size: 1.45rem; font-weight: 400; color: var(--ink); margin-bottom: 2px; letter-spacing: -0.01em; }
     .vs-left-header p  { font-size: var(--fs-xs); color: var(--text-3); }
     .vs-left-scroll { flex: 1; overflow-y: auto; padding: 0;
                       scrollbar-width: thin;
-                      scrollbar-color: rgba(76,201,240,0.2) transparent; }
+                      scrollbar-color: color-mix(in srgb, var(--accent) 35%, var(--rule)) transparent; }
 
     /* ── Sticky section jump nav ─────────────────────────── */
     .vs-left-nav {
       display: flex; align-items: center; gap: 2px;
       padding: 8px 12px 8px;
-      background: rgba(7,10,20,0.6);
+      background: var(--paper-raised);
       border-bottom: 1px solid var(--panel-border);
       overflow-x: auto; scrollbar-width: none;
       position: sticky; top: 0; z-index: 5;
@@ -224,13 +220,13 @@
     }
     .vs-left-nav a:hover {
       color: var(--accent);
-      background: rgba(76,201,240,.07);
-      border-color: rgba(76,201,240,.2);
+      background: var(--accent-tint);
+      border-color: color-mix(in srgb, var(--accent) 35%, var(--rule));
     }
     .vs-left-nav a.active {
       color: var(--accent);
-      background: rgba(76,201,240,.12);
-      border-color: rgba(76,201,240,.3);
+      background: var(--accent-tint);
+      border-color: color-mix(in srgb, var(--accent) 35%, var(--rule));
     }
 
     /* ── Form sections / accordion ──────────────────────────── */
@@ -244,12 +240,12 @@
       letter-spacing: .1px;
     }
     .vs-section-toggle:hover {
-      background: rgba(76,201,240,.04);
-      border-left-color: rgba(76,201,240,.35);
+      background: var(--accent-tint);
+      border-left-color: color-mix(in srgb, var(--accent) 35%, var(--rule));
     }
     .vs-section-toggle.open {
       border-left-color: var(--accent);
-      background: rgba(76,201,240,.03);
+      background: var(--accent-tint);
     }
     .vs-section-toggle:hover .toggle-icon { color: var(--accent); }
     .vs-section-toggle i.toggle-icon { margin-left: auto; color: var(--text-3);
@@ -265,19 +261,19 @@
                 margin-bottom: 4px; display: block; }
     .vs-input, .vs-textarea, .vs-select {
       width: 100%; background: var(--input-bg);
-      border: 1px solid rgba(255,255,255,0.12); border-radius: var(--r-sm);
+      border: 1px solid var(--rule); border-radius: var(--r-sm);
       color: var(--text-1); font-size: var(--fs-base); padding: 8px 12px;
       outline: none; transition: border-color var(--t-fast), box-shadow var(--t-fast), background var(--t-fast);
       font-family: inherit;
     }
     /* Hover affordance: editable areas visibly invite the cursor */
     .vs-input:hover:not(:focus), .vs-textarea:hover:not(:focus), .vs-select:hover:not(:focus) {
-      border-color: rgba(76,201,240,0.3);
-      background: rgba(76,201,240,0.04);
+      border-color: color-mix(in srgb, var(--accent) 35%, var(--rule));
+      background: var(--accent-tint);
     }
     .vs-input:focus, .vs-textarea:focus, .vs-select:focus {
       border-color: var(--accent); box-shadow: 0 0 0 3px var(--input-focus);
-      background: rgba(76,201,240,0.05);
+      background: var(--accent-tint);
     }
     .vs-textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
     .vs-select { cursor: pointer; }
@@ -286,25 +282,21 @@
 
     /* ── Photo upload zone ────────────────────────────────── */
     .photo-zone {
-      border: 2px dashed rgba(76,201,240,0.25); border-radius: var(--radius);
+      border: 1px dashed var(--rule-strong); border-radius: var(--radius);
       padding: 18px 16px; text-align: center; cursor: pointer;
-      background: linear-gradient(135deg, rgba(76,201,240,0.03) 0%, rgba(247,37,133,0.03) 100%);
+      background: var(--paper-raised);
       transition: border-color .25s, background .25s, box-shadow .25s; position: relative;
     }
-    .photo-zone:hover, .photo-zone.drag-over {
-      border-color: var(--accent);
-      background: linear-gradient(135deg, rgba(76,201,240,0.08) 0%, rgba(247,37,133,0.06) 100%);
-      box-shadow: 0 0 20px rgba(76,201,240,0.08) inset;
-    }
+    .photo-zone:hover, .photo-zone.drag-over { border-color: var(--ink); background: var(--paper-sunk); }
     .photo-zone input[type="file"] {
       position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%;
     }
-    .photo-zone-icon { font-size: var(--fs-2xl); color: var(--accent); opacity: 0.6; margin-bottom: 6px; }
+    .photo-zone-icon { font-size: var(--fs-2xl); color: var(--accent); opacity: 1; margin-bottom: 6px; }
     .photo-zone-label { font-size: var(--fs-sm); color: var(--text-3); }
     .photo-preview {
       width: 68px; height: 68px; border-radius: 50%;
       object-fit: cover; border: 2px solid var(--accent);
-      box-shadow: 0 0 14px rgba(76,201,240,0.35);
+      box-shadow: none;
       display: none; margin: 0 auto 8px;
     }
 
@@ -314,7 +306,7 @@
                      align-items: center; margin-bottom: 6px; }
     .slider-name { font-size: var(--fs-sm); color: var(--text-3); }
     .slider-val  { font-size: var(--fs-xs); font-weight: 700; color: var(--accent);
-                   font-family: 'JetBrains Mono', monospace; }
+                   font-family: var(--mono); }
     input[type="range"].vs-range {
       -webkit-appearance: none; width: 100%; height: 4px;
       background: var(--input-border); border-radius: var(--r-pill); outline: none; cursor: pointer;
@@ -322,7 +314,7 @@
     input[type="range"].vs-range::-webkit-slider-thumb {
       -webkit-appearance: none; width: 16px; height: 16px;
       border-radius: 50%; background: var(--accent);
-      box-shadow: 0 0 8px rgba(76,201,240,.5); cursor: pointer;
+      box-shadow: none; cursor: pointer;
       transition: transform .15s;
     }
     input[type="range"].vs-range::-webkit-slider-thumb:active { transform: scale(1.2); }
@@ -348,21 +340,21 @@
       box-shadow: var(--shadow-1);
     }
     .tpl-card:hover {
-      border-color: rgba(76,201,240,.45);
+      border-color: color-mix(in srgb, var(--accent) 35%, var(--rule));
       transform: translateY(-3px);
       box-shadow: var(--shadow-2);
     }
     .tpl-card.active {
       border-color: var(--accent);
-      box-shadow: 0 0 0 2px rgba(76,201,240,.35), var(--shadow-2);
+      box-shadow: none;
     }
     .tpl-card.active .tpl-name { color: var(--accent); }
-    .tpl-card.active .tpl-info { background: rgba(76,201,240,.06); }
+    .tpl-card.active .tpl-info { background: var(--accent-tint); }
     /* 4:3 — matches the generated crop exactly, so nothing is cut off. The
        thumbnails are the top band of a real PDF render, which is the part that
        stays legible at card size. */
     .tpl-card .tpl-thumb {
-      width: 100%; aspect-ratio: 4 / 3; background: #f8fafc;
+      width: 100%; aspect-ratio: 4 / 3; background: var(--paper-raised);
       position: relative; overflow: hidden;
     }
     .tpl-card .tpl-thumb img {
@@ -373,13 +365,13 @@
     /* Hairline over the artwork so a white resume doesn't bleed into the panel */
     .tpl-card .tpl-thumb::after {
       content: ''; position: absolute; inset: 0; pointer-events: none;
-      box-shadow: inset 0 0 0 1px rgba(0,0,0,.12);
+      box-shadow: inset 0 0 0 1px rgba(20, 18, 14, 0.036);
     }
 
     .tpl-card .tpl-info {
       padding: 9px 11px 10px;
       border-top: 1px solid var(--input-border);
-      background: rgba(255,255,255,.02);
+      background: var(--paper-sunk);
     }
     .tpl-card .tpl-name {
       font-size: var(--fs-xs); font-weight: 700; color: var(--text-1);
@@ -396,21 +388,21 @@
        download_pdf already refuses these and silently falls back to
        template 1; showing it here means the user is never surprised. */
     .tpl-card.locked .tpl-thumb img { filter: grayscale(.85) brightness(.55); }
-    .tpl-card.locked:hover { border-color: rgba(245,158,11,.5); }
+    .tpl-card.locked:hover { border-color: color-mix(in srgb, var(--warn) 35%, var(--rule)); }
     .tpl-card .tpl-lock {
       position: absolute; top: 6px; right: 6px;
       width: 22px; height: 22px; border-radius: 50%;
-      background: var(--gold); color: #1a1200;
+      background: var(--gold); color: var(--paper);
       display: flex; align-items: center; justify-content: center;
       font-size: var(--fs-2xs);
-      box-shadow: 0 2px 10px rgba(0,0,0,.45);
+      box-shadow: 0 2px 10px rgba(20, 18, 14, 0.135);
     }
     .tpl-card .tpl-check {
       position: absolute; top: 6px; right: 6px;
       width: 22px; height: 22px; border-radius: 50%;
       background: var(--accent); display: none;
-      align-items: center; justify-content: center; font-size: var(--fs-2xs); color: #000;
-      box-shadow: 0 2px 10px rgba(76,201,240,.5);
+      align-items: center; justify-content: center; font-size: var(--fs-2xs); color: var(--paper);
+      box-shadow: none;
     }
     .tpl-card.active .tpl-check { display: flex; }
     .cat-badge {
@@ -418,17 +410,17 @@
       border-radius: var(--r-pill); margin-bottom: 8px; margin-top: 4px; text-transform: uppercase;
       letter-spacing: .5px;
     }
-    .cat-classic    { background: rgba(76,201,240,.12);   color: #4cc9f0; }
-    .cat-minimalist { background: rgba(255,255,255,.08);   color: #cbd5e0; }
-    .cat-tech       { background: rgba(57,211,83,.10);     color: #39d353; }
-    .cat-creative   { background: rgba(255,107,107,.10);   color: #ff6b6b; }
-    .cat-executive  { background: rgba(212,168,83,.10);    color: #d4a853; }
+    .cat-classic    { background: var(--accent-tint);   color: var(--accent); }
+    .cat-minimalist { background: var(--paper-sunk);   color: var(--ink); }
+    .cat-tech       { background: var(--ok-tint);     color: var(--ok); }
+    .cat-creative   { background: var(--danger-tint);   color: var(--danger); }
+    .cat-executive  { background: var(--warn-tint);    color: var(--warn); }
 
     /* ── AI Fill button ──────────────────────────────────── */
     .btn-ai-fill {
       width: 100%; padding: 10px; border-radius: var(--r-sm); border: none;
       background: var(--grad-cta);
-      color: #fff; font-weight: 700; font-size: var(--fs-base); cursor: pointer;
+      color: var(--paper); font-weight: 500; font-size: var(--fs-base); cursor: pointer;
       transition: opacity .2s, transform .15s; margin-top: 6px;
     }
     .btn-ai-fill:hover { opacity: .88; transform: translateY(-1px); }
@@ -437,7 +429,7 @@
        Darker than the editor panel: form = workbench,
        preview = artboard. */
     .vs-right {
-      flex: 1; background: #05080f; display: flex;
+      flex: 1; background: var(--paper-raised); display: flex;
       flex-direction: column; overflow: hidden;
       position: relative;
       /* Floor: as a flex item with overflow:hidden its automatic minimum
@@ -447,7 +439,7 @@
     }
     .vs-preview-bar {
       height: 52px; flex-shrink: 0;
-      background: rgba(13,17,32,.95);
+      background: var(--paper-raised);
       border-bottom: 1px solid var(--panel-border);
       display: flex; align-items: center; padding: 0 16px; gap: 10px;
       backdrop-filter: blur(16px);
@@ -457,7 +449,7 @@
                          letter-spacing: 1px; display: flex; align-items: center; gap: 6px; }
     .vs-preview-spinner {
       width: 16px; height: 16px; border-radius: 50%;
-      border: 2px solid rgba(76,201,240,.2);
+      border: 2px solid color-mix(in srgb, var(--accent) 35%, var(--rule));
       border-top-color: var(--accent);
       animation: spin .7s linear infinite; display: none;
     }
@@ -468,7 +460,7 @@
     /* Zoom & View Controls */
     .preview-ctrl-group {
       display: flex; align-items: center; gap: 4px;
-      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+      background: var(--paper-sunk); border: 1px solid var(--rule);
       border-radius: var(--r-pill); padding: 2px 6px;
     }
     .btn-preview-ctrl {
@@ -477,7 +469,7 @@
       display: flex; align-items: center; justify-content: center;
       font-size: var(--fs-xs); transition: all var(--t-fast);
     }
-    .btn-preview-ctrl:hover { background: rgba(255,255,255,0.1); color: var(--text-1); }
+    .btn-preview-ctrl:hover { background: var(--rule); color: var(--text-1); }
     .preview-zoom-val {
       font-family: var(--font-mono); font-size: var(--fs-2xs); font-weight: 700;
       color: var(--text-2); min-width: 38px; text-align: center; cursor: pointer;
@@ -485,14 +477,14 @@
     .badge-a4-tag {
       font-size: var(--fs-2xs); font-weight: 800; text-transform: uppercase;
       padding: 3px 8px; border-radius: var(--r-pill);
-      background: rgba(76,201,240,0.1); color: var(--brand); border: 1px solid rgba(76,201,240,0.25);
+      background: var(--accent-tint); color: var(--brand); border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule));
     }
 
     /* PDF preview — two stacked iframes we crossfade between (no white flash) */
-    .vs-preview-stage { position: relative; flex: 1; min-height: 0; background: #0a0e18; overflow: hidden; }
+    .vs-preview-stage { position: relative; flex: 1; min-height: 0; background: var(--paper-raised); overflow: hidden; }
     .vs-preview-stage iframe {
       position: absolute; inset: 0; width: 100%; height: 100%;
-      border: none; background: #0a0e18;
+      border: none; background: var(--paper-raised);
       opacity: 0; transform-origin: top center;
       transition: opacity var(--t-base), transform 0.2s ease-out;
     }
@@ -508,42 +500,42 @@
     /* ── Loading overlay ─────────────────────────────────── */
     .vs-loading-overlay {
       display: none; position: fixed; inset: 0; z-index: 99999;
-      background: rgba(7,10,20,0.75); backdrop-filter: blur(16px);
+      background: var(--paper-raised); backdrop-filter: blur(16px);
       align-items: center; justify-content: center;
     }
     .vs-loading-overlay.show { display: flex; }
     .vs-loading-card {
-      background: rgba(13,17,32,.96); border: 1px solid rgba(76,201,240,.2);
+      background: var(--paper-raised); border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule));
       border-radius: var(--r-xl); padding: 44px 52px; text-align: center;
       width: min(440px,90vw);
-      box-shadow: 0 40px 80px rgba(0,0,0,.6);
+      box-shadow: 0 40px 80px rgba(20, 18, 14, 0.14);
       animation: fadeUp .35s ease both;
     }
     @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
     .vs-spinner-rings { position: relative; width: 72px; height: 72px; margin: 0 auto 24px; }
     .ring-o { position: absolute; inset: 0; border-radius: 50%;
-               border: 3px solid rgba(76,201,240,.12); border-top-color: var(--accent);
+               border: 3px solid color-mix(in srgb, var(--accent) 35%, var(--rule)); border-top-color: var(--accent);
                animation: spin 1s linear infinite; }
     .ring-i { position: absolute; inset: 12px; border-radius: 50%;
-               border: 2px solid rgba(247,37,133,.12); border-top-color: var(--accent2);
+               border: 2px solid color-mix(in srgb, var(--accent) 35%, var(--rule)); border-top-color: var(--accent2);
                animation: spin .65s linear infinite reverse; }
-    .vs-loading-title { font-weight: 700; color: var(--text-1);
-                         margin-bottom: 6px; font-size: var(--fs-md); }
+    .vs-loading-title { font-weight: 400; color: var(--text-1);
+                         margin-bottom: 6px; font-size: 1.7rem; font-family: var(--serif); letter-spacing: -0.02em; }
     .vs-loading-sub   { color: var(--text-3); font-size: var(--fs-sm); }
 
     /* ── Toast ───────────────────────────────────────────── */
     .vs-toast {
       position: fixed; bottom: 24px; right: 24px; z-index: 9999;
-      background: rgba(13,17,32,.96); border: 1px solid rgba(76,201,240,.2);
+      background: var(--paper-raised); border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule));
       border-radius: var(--radius); padding: 12px 20px;
       font-size: var(--fs-base); color: var(--text-1);
-      box-shadow: 0 12px 40px rgba(0,0,0,.5);
+      box-shadow: 0 12px 40px rgba(20, 18, 14, 0.14);
       transform: translateY(120%); transition: transform .3s cubic-bezier(.34,1.56,.64,1);
       display: flex; align-items: center; gap: 8px; cursor: pointer;
     }
     .vs-toast.show { transform: translateY(0); }
-    .vs-toast.success i { color: #22c55e; }
-    .vs-toast.danger  i { color: #f72585; }
+    .vs-toast.success i { color: var(--ok); }
+    .vs-toast.danger  i { color: var(--accent); }
 
     /* ── Preview empty state ───────────────────────────────── */
     .vs-preview-empty {
@@ -557,29 +549,28 @@
     .vs-preview-empty.hidden { opacity: 0; }
     .preview-empty-icon {
       width: 72px; height: 72px; border-radius: 20px;
-      background: linear-gradient(135deg, rgba(76,201,240,0.12), rgba(247,37,133,0.12));
-      border: 1px solid rgba(76,201,240,0.15);
+      background: var(--paper-raised);
+      border: 1px solid var(--rule);
       display: flex; align-items: center; justify-content: center;
-      font-size: var(--fs-2xl); color: rgba(76,201,240,0.55);
+      font-size: var(--fs-2xl); color: var(--accent);
       animation: emptyPulse 3s ease-in-out infinite;
     }
     @keyframes emptyPulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(76,201,240,0); }
-      50% { box-shadow: 0 0 0 10px rgba(76,201,240,0.06); }
+      0%, 100% { box-shadow: none; }
+      50% { box-shadow: none; }
     }
     .preview-empty-title {
-      font-size: var(--fs-base); font-weight: 700;
-      color: rgba(255,255,255,0.45); letter-spacing: -.2px;
-    }
+      font-size: 1.6rem; font-weight: 400;
+      color: var(--ink); letter-spacing: -.2px; font-family: var(--serif); letter-spacing: -0.02em; }
     .preview-empty-hint {
-      font-size: var(--fs-sm); color: rgba(255,255,255,0.22);
+      font-size: var(--fs-sm); color: var(--ink);
       max-width: 280px; text-align: center; line-height: 1.5;
     }
     /* Loading dots */
     .preview-empty-dots { display: flex; gap: 6px; margin-top: 4px; }
     .preview-empty-dots span {
       width: 6px; height: 6px; border-radius: 50%;
-      background: rgba(76,201,240,0.3);
+      background: var(--accent-tint);
       animation: dotBounce 1.4s ease-in-out infinite;
     }
     .preview-empty-dots span:nth-child(2) { animation-delay: .2s; }
@@ -595,21 +586,21 @@
       padding: 2px 9px; border-radius: var(--r-pill); vertical-align: middle;
       letter-spacing: .02em; opacity: 0; transition: opacity .2s ease;
     }
-    .autosave-ind.saving { opacity: 1; color: var(--text-3); background: rgba(255,255,255,.06); }
-    .autosave-ind.saved  { opacity: 1; color: #22c55e; background: rgba(34,197,94,.12); }
-    .autosave-ind.error  { opacity: 1; color: #f87171; background: rgba(248,113,113,.12); }
+    .autosave-ind.saving { opacity: 1; color: var(--text-3); background: var(--paper-sunk); }
+    .autosave-ind.saved  { opacity: 1; color: var(--ok); background: var(--ok-tint); }
+    .autosave-ind.error  { opacity: 1; color: var(--danger); background: var(--danger-tint); }
 
     /* ── Confirm dialog ── */
     .vs-confirm-overlay {
       display: none; position: fixed; inset: 0; z-index: 100000;
-      background: rgba(7,10,20,.7); backdrop-filter: blur(6px);
+      background: var(--paper-raised); backdrop-filter: blur(6px);
       align-items: center; justify-content: center; padding: 20px;
     }
     .vs-confirm-overlay.show { display: flex; }
     .vs-confirm-box {
-      background: rgba(13,17,32,.98); border: 1px solid rgba(76,201,240,.2);
+      background: var(--paper-raised); border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule));
       border-radius: var(--r-lg); padding: 26px; max-width: 380px; width: 100%;
-      text-align: center; box-shadow: 0 30px 70px rgba(0,0,0,.6);
+      text-align: center; box-shadow: 0 30px 70px rgba(20, 18, 14, 0.14);
     }
     .vs-confirm-msg { color: var(--text-1); font-size: var(--fs-md); line-height: 1.5; margin-bottom: 22px; }
     .vs-confirm-actions { display: flex; gap: 10px; justify-content: center; }
@@ -617,10 +608,10 @@
       min-width: 112px; padding: 10px 18px; border-radius: var(--r-md);
       font-weight: 700; font-size: var(--fs-base); cursor: pointer; border: none;
     }
-    .vs-btn-ghost { background: rgba(255,255,255,.06); color: var(--text-2); }
-    .vs-btn-ghost:hover { background: rgba(255,255,255,.1); }
-    .vs-btn-danger { background: linear-gradient(135deg,#ef4444,#f72585); color: #fff; }
-    .vs-btn-danger:hover { filter: brightness(1.08); }
+    .vs-btn-ghost { background: var(--paper-sunk); color: var(--text-2); }
+    .vs-btn-ghost:hover { background: var(--rule); }
+    .vs-btn-danger { background: transparent; color: var(--danger); border: 1px solid color-mix(in srgb, var(--danger) 45%, var(--rule)); }
+    .vs-btn-danger:hover { background: var(--danger-tint); border-color: var(--danger); }
 
     /* ── Phase 3 polish: accessible keyboard focus ── */
     button:focus-visible,
@@ -669,10 +660,8 @@
     /* ── AI Magic Box ───────────────────────────────────────── */
     .ai-magic-box {
       margin: 0;
-      background: linear-gradient(135deg,
-        rgba(67,97,238,.12) 0%,
-        rgba(247,37,133,.08) 100%);
-      border-bottom: 1px solid rgba(76,201,240,.15);
+      background: var(--paper-sunk);
+      border-bottom: 1px solid var(--rule);
       padding: 14px 20px 16px;
     }
     .ai-magic-header {
@@ -681,30 +670,30 @@
     }
     .ai-magic-header .ai-icon {
       width: 28px; height: 28px; border-radius: var(--r-sm); flex-shrink: 0;
-      background: linear-gradient(135deg,#4361ee,#f72585);
+      background: var(--ink);
       display: flex; align-items: center; justify-content: center;
-      font-size: var(--fs-base); color: #fff;
+      font-size: var(--fs-base); color: var(--paper);
     }
     .ai-magic-header h3 {
-      font-size: var(--fs-base); font-weight: 800; color: var(--text-1);
-      margin: 0; letter-spacing: -.2px;
+      font-family: var(--serif); font-size: 1.25rem; font-weight: 400; color: var(--ink);
+      margin: 0; letter-spacing: -0.01em;
     }
     .ai-magic-header p {
       font-size: var(--fs-xs); color: var(--text-3); margin: 0;
     }
     .ai-magic-textarea {
       width: 100%; min-height: 90px; max-height: 200px;
-      background: rgba(0,0,0,.25);
-      border: 1px solid rgba(76,201,240,.15);
+      background: var(--paper-raised);
+      border: 1px solid var(--rule-strong);
       border-radius: var(--r-sm);
-      color: var(--text-1); font-size: var(--fs-base);
+      color: var(--ink); font-size: var(--fs-base);
       padding: 9px 12px; line-height: 1.55;
       resize: vertical; font-family: inherit; outline: none;
       transition: border-color .2s, box-shadow .2s;
     }
     .ai-magic-textarea:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(76,201,240,.18);
+      border-color: var(--ink);
+      box-shadow: 0 0 0 3px var(--accent-tint);
     }
     .ai-magic-textarea::placeholder { color: var(--text-3); }
     /* PDF upload row inside the AI Magic Box */
@@ -722,8 +711,8 @@
     .ai-pdf-custom-upload {
       display: flex; align-items: center; gap: 10px;
       width: 100%;
-      background: rgba(0,0,0,.3);
-      border: 1px dashed rgba(248,113,113,.4);
+      background: var(--paper-raised);
+      border: 1px dashed var(--rule-strong);
       border-radius: var(--r-sm);
       color: var(--text-2);
       font-size: var(--fs-sm);
@@ -732,12 +721,12 @@
       transition: all .2s ease;
     }
     .ai-pdf-custom-upload:hover {
-      background: rgba(248,113,113,.08);
-      border-color: rgba(248,113,113,.8);
-      color: #fff;
+      background: var(--paper-raised);
+      border-color: var(--ink);
+      color: var(--ink);
     }
     .ai-pdf-custom-upload i {
-      color: #f87171;
+      color: var(--accent);
       font-size: var(--fs-lg);
     }
     .ai-magic-row {
@@ -750,8 +739,8 @@
     .ai-magic-lang {
       appearance: none;
       -webkit-appearance: none;
-      background: rgba(0,0,0,.3);
-      border: 1px solid rgba(255,255,255,.15);
+      background: var(--paper-raised);
+      border: 1px solid var(--rule-strong);
       border-radius: var(--r-sm);
       color: var(--text-1);
       font-size: var(--fs-sm);
@@ -761,11 +750,11 @@
     }
     .ai-magic-lang:focus, .ai-magic-lang:hover {
       border-color: var(--accent);
-      background: rgba(0,0,0,.4);
+      background: var(--paper-raised);
     }
     .ai-magic-lang option {
-      background: #0d1120;
-      color: #fff;
+      background: var(--paper-raised);
+      color: var(--ink);
     }
     .ai-lang-arrow {
       position: absolute;
@@ -779,27 +768,20 @@
     .btn-ai-magic {
       flex: 1; padding: 9px 14px;
       border: none; border-radius: var(--r-sm);
-      background: var(--grad-cta);
-      color: #fff; font-weight: 800; font-size: var(--fs-base);
+      background: var(--ink);
+      color: var(--paper); font-weight: 500; font-size: var(--fs-base);
       cursor: pointer; display: flex; align-items: center;
       justify-content: center; gap: 7px;
       transition: opacity .2s, transform .15s;
       position: relative; overflow: hidden;
     }
-    .btn-ai-magic::before {
-      content: '';
-      position: absolute; inset: 0;
-      background: linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);
-      transform: translateX(-100%);
-      transition: transform .4s;
-    }
-    .btn-ai-magic:hover::before { transform: translateX(100%); }
-    .btn-ai-magic:hover { opacity: .9; transform: translateY(-1px); }
+    /* No shimmer: the landing's buttons simply turn accent on hover. */
+    .btn-ai-magic:hover { background: var(--accent); transform: translateY(-1px); }
     .btn-ai-magic:disabled { opacity: .55; cursor: not-allowed; transform: none; }
     .btn-ai-magic .ai-spinner {
       width: 14px; height: 14px; border-radius: 50%;
-      border: 2px solid rgba(255,255,255,.3);
-      border-top-color: #fff;
+      border: 2px solid color-mix(in srgb, var(--paper) 35%, transparent);
+      border-top-color: var(--paper);
       animation: spin .65s linear infinite;
       display: none;
     }
@@ -807,7 +789,7 @@
     .btn-ai-magic.loading .ai-btn-text { opacity: .7; }
     /* Shimmer on AI-populated fields */
     @keyframes ai-flash {
-      0%   { background: rgba(76,201,240,.18); }
+      0%   { background: var(--accent-tint); }
       100% { background: var(--input-bg); }
     }
     .ai-populated {
@@ -817,8 +799,8 @@
     .ai-gens-pill {
       font-size: var(--fs-2xs); font-weight: 700;
       padding: 2px 8px; border-radius: var(--r-pill);
-      border: 1px solid rgba(76,201,240,.25);
-      color: var(--accent); background: rgba(76,201,240,.07);
+      border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule));
+      color: var(--accent); background: var(--accent-tint);
       white-space: nowrap; flex-shrink: 0;
     }
 
@@ -836,10 +818,10 @@
       gap: 5px;
       padding: 4px 10px;
       font-size: var(--fs-xs);
-      font-weight: 700;
+      font-weight: 500;
       color: var(--accent);
-      background: rgba(13,17,32,.82);
-      border: 1px solid rgba(76,201,240,.22);
+      background: var(--paper-raised);
+      border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule));
       border-radius: var(--r-pill);
       cursor: pointer;
       /* glassmorphism */
@@ -852,11 +834,10 @@
       line-height: 1;
     }
     .btn-rewrite-ai:hover {
-      background: rgba(76,201,240,.12);
-      border-color: rgba(76,201,240,.5);
-      box-shadow: 0 0 12px rgba(76,201,240,.25),
-                  0 0  4px rgba(76,201,240,.15);
-      color: #fff;
+      background: var(--accent-tint);
+      border-color: color-mix(in srgb, var(--accent) 35%, var(--rule));
+      box-shadow: none;
+      color: var(--ink);
       transform: translateY(-1px);
     }
     .btn-rewrite-ai:active {
@@ -874,7 +855,7 @@
       width: 10px;
       height: 10px;
       border-radius: 50%;
-      border: 1.5px solid rgba(76,201,240,.3);
+      border: 1.5px solid color-mix(in srgb, var(--accent) 35%, var(--rule));
       border-top-color: var(--accent);
       animation: spin .6s linear infinite;
       flex-shrink: 0;
@@ -901,11 +882,11 @@
       transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
     }
     .btn-reset-form:hover {
-      background: rgba(244,63,94,.10);
-      border-color: rgba(244,63,94,.28);
-      color: #fb7185;
+      background: var(--danger-tint);
+      border-color: color-mix(in srgb, var(--danger) 35%, var(--rule));
+      color: var(--danger);
     }
-    .btn-reset-form:focus-visible { outline: 2px solid #fb7185; outline-offset: 2px; }
+    .btn-reset-form:focus-visible { outline: 2px solid var(--danger); outline-offset: 2px; }
 
     /* ── Theme Customization panel ───────────────────────────── */
     .theme-grid {
@@ -925,7 +906,7 @@
     }
     .color-row input[type="color"] {
       width: 36px; height: 36px; border-radius: var(--r-sm);
-      border: 2px solid rgba(255,255,255,.12);
+      border: 2px solid var(--rule);
       background: transparent; cursor: pointer; padding: 2px;
       flex-shrink: 0;
     }
@@ -936,7 +917,7 @@
     }
     .font-select {
       width: 100%; background: var(--input-bg);
-      border: 1px solid rgba(255,255,255,.10);
+      border: 1px solid var(--rule);
       border-radius: var(--r-sm);
       color: var(--text-1); font-size: var(--fs-base);
       padding: 8px 10px; outline: none; cursor: pointer;
@@ -953,16 +934,16 @@
     }
     .skill-preset-tab {
       padding: 4px 12px; border-radius: var(--r-pill);
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.04);
+      border: 1px solid var(--rule);
+      background: var(--paper-sunk);
       color: var(--text-3); font-size: var(--fs-xs); font-weight: 700;
       cursor: pointer; transition: all .2s; white-space: nowrap;
       letter-spacing: .3px;
     }
-    .skill-preset-tab:hover { border-color: var(--accent); color: var(--accent); background: rgba(76,201,240,.06); }
+    .skill-preset-tab:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-tint); }
     .skill-preset-tab.active {
       border-color: var(--accent); color: var(--accent);
-      background: rgba(76,201,240,.12);
+      background: var(--accent-tint);
     }
     /* Preset pills grid */
     .skill-preset-pills {
@@ -970,20 +951,20 @@
       max-height: 90px; overflow-y: auto;
       padding: 2px 0;
       scrollbar-width: thin;
-      scrollbar-color: rgba(76,201,240,.2) transparent;
+      scrollbar-color: color-mix(in srgb, var(--accent) 35%, var(--rule)) transparent;
     }
     .skill-preset-pills.active { display: flex; }
     .skill-preset-pill {
       padding: 3px 10px; border-radius: var(--r-pill);
-      border: 1px dashed rgba(255,255,255,.14);
-      background: rgba(255,255,255,.03);
+      border: 1px dashed var(--rule-strong);
+      background: var(--paper-sunk);
       color: var(--text-2); font-size: var(--fs-xs); font-weight: 600;
       cursor: pointer; transition: all .18s;
     }
     .skill-preset-pill:hover {
-      background: rgba(76,201,240,.14);
-      border-color: rgba(76,201,240,.4);
-      color: #fff;
+      background: var(--accent-tint);
+      border-color: color-mix(in srgb, var(--accent) 35%, var(--rule));
+      color: var(--ink);
       transform: translateY(-1px);
     }
     .skill-preset-pill.added {
@@ -997,12 +978,12 @@
       flex-shrink: 0; padding: 8px 14px;
       border: 1px solid var(--accent);
       border-radius: var(--r-sm);
-      background: rgba(76,201,240,.08);
-      color: var(--accent); font-weight: 800; font-size: var(--fs-base);
+      background: var(--accent-tint);
+      color: var(--accent); font-weight: 500; font-size: var(--fs-base);
       cursor: pointer; white-space: nowrap;
       transition: background .2s, transform .15s;
     }
-    .btn-add-skill:hover { background: rgba(76,201,240,.2); transform: translateY(-1px); }
+    .btn-add-skill:hover { background: var(--accent-tint); transform: translateY(-1px); }
 
     /* Bulk import toggle */
     .skill-bulk-toggle {
@@ -1019,7 +1000,7 @@
     .skill-bulk-area {
       width: 100%; min-height: 56px;
       background: var(--input-bg);
-      border: 1px dashed rgba(76,201,240,.3);
+      border: 1px dashed color-mix(in srgb, var(--accent) 35%, var(--rule));
       border-radius: var(--r-sm);
       color: var(--text-1); font-size: var(--fs-base);
       padding: 8px 12px; resize: vertical;
@@ -1029,13 +1010,13 @@
     .skill-bulk-area:focus { border-color: var(--accent); border-style: solid; }
     .btn-bulk-add {
       align-self: flex-end; padding: 6px 14px;
-      border: 1px solid rgba(76,201,240,.3);
+      border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule));
       border-radius: var(--r-sm);
-      background: rgba(76,201,240,.07);
-      color: var(--accent); font-size: var(--fs-sm); font-weight: 700;
+      background: var(--accent-tint);
+      color: var(--accent); font-size: var(--fs-sm); font-weight: 500;
       cursor: pointer; transition: background .2s;
     }
-    .btn-bulk-add:hover { background: rgba(76,201,240,.18); }
+    .btn-bulk-add:hover { background: var(--accent-tint); }
 
     /* Proficiency slider — larger */
     .skill-level-wrap { display: flex; flex-direction: column; gap: 6px; }
@@ -1047,30 +1028,24 @@
     .skill-level-badge {
       font-size: var(--fs-2xs); font-weight: 800; padding: 2px 8px;
       border-radius: var(--r-pill); letter-spacing: .5px;
-      background: rgba(76,201,240,.12); color: var(--accent);
-      border: 1px solid rgba(76,201,240,.25);
+      background: var(--accent-tint); color: var(--accent);
+      border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule));
       transition: background .3s, color .3s;
     }
-    .skill-level-badge.lvl-junior { background: rgba(248,113,113,.12); color:#f87171; border-color:rgba(248,113,113,.25); }
-    .skill-level-badge.lvl-middle { background: rgba(251,191,36,.12);  color:#fbbf24; border-color:rgba(251,191,36,.25); }
-    .skill-level-badge.lvl-senior { background: rgba(34,197,94,.12);   color:#22c55e; border-color:rgba(34,197,94,.25); }
-    .skill-level-badge.lvl-expert { background: rgba(139,92,246,.12);  color:#8b5cf6; border-color:rgba(139,92,246,.25); }
+    .skill-level-badge.lvl-junior { background: var(--danger-tint); color:var(--danger); border-color:color-mix(in srgb, var(--danger) 35%, var(--rule)); }
+    .skill-level-badge.lvl-middle { background: var(--warn-tint);  color:var(--warn); border-color:color-mix(in srgb, var(--warn) 35%, var(--rule)); }
+    .skill-level-badge.lvl-senior { background: var(--ok-tint);   color:var(--ok); border-color:color-mix(in srgb, var(--ok) 35%, var(--rule)); }
+    .skill-level-badge.lvl-expert { background: var(--accent-tint);  color:var(--accent); border-color:color-mix(in srgb, var(--accent) 35%, var(--rule)); }
     .skill-range {
       -webkit-appearance: none; appearance: none;
       width: 100%; height: 8px; border-radius: var(--r-pill);
-      background: linear-gradient(
-        to right,
-        var(--accent) 0%,
-        var(--accent) var(--pct, 50%),
-        rgba(255,255,255,.1) var(--pct, 50%),
-        rgba(255,255,255,.1) 100%
-      );
+      background: var(--paper-raised);
       outline: none; cursor: pointer;
     }
     .skill-range::-webkit-slider-thumb {
       -webkit-appearance: none; width: 20px; height: 20px;
       border-radius: 50%; background: var(--accent);
-      box-shadow: 0 0 8px rgba(76,201,240,.6);
+      box-shadow: none;
       cursor: pointer; transition: transform .15s;
     }
     .skill-range::-webkit-slider-thumb:hover { transform: scale(1.15); }
@@ -1085,24 +1060,24 @@
       font-size: var(--fs-sm); font-weight: 600; color: var(--text-1);
       animation: chipIn .2s ease;
       /* default = tech/cyan */
-      background: rgba(76,201,240,.1); border: 1px solid rgba(76,201,240,.25);
+      background: var(--accent-tint); border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule));
     }
-    .skill-chip[data-cat="design"]  { background: rgba(139,92,246,.12); border-color: rgba(139,92,246,.3); }
-    .skill-chip[data-cat="soft"]    { background: rgba(34,197,94,.1);   border-color: rgba(34,197,94,.28); }
-    .skill-chip[data-cat="lang"]    { background: rgba(251,191,36,.1);  border-color: rgba(251,191,36,.28); }
+    .skill-chip[data-cat="design"]  { background: var(--accent-tint); border-color: color-mix(in srgb, var(--accent) 35%, var(--rule)); }
+    .skill-chip[data-cat="soft"]    { background: var(--ok-tint);   border-color: color-mix(in srgb, var(--ok) 35%, var(--rule)); }
+    .skill-chip[data-cat="lang"]    { background: var(--warn-tint);  border-color: color-mix(in srgb, var(--warn) 35%, var(--rule)); }
     .skill-chip .chip-level { font-size: var(--fs-2xs); color: var(--accent); font-weight: 800; }
-    .skill-chip[data-cat="design"] .chip-level { color: #a78bfa; }
-    .skill-chip[data-cat="soft"]   .chip-level { color: #4ade80; }
-    .skill-chip[data-cat="lang"]   .chip-level { color: #fbbf24; }
+    .skill-chip[data-cat="design"] .chip-level { color: var(--accent); }
+    .skill-chip[data-cat="soft"]   .chip-level { color: var(--ok); }
+    .skill-chip[data-cat="lang"]   .chip-level { color: var(--warn); }
     .skill-chip .chip-del {
       width: 14px; height: 14px; border-radius: 50%;
-      background: rgba(248,113,113,.15);
+      background: var(--danger-tint);
       border: none; cursor: pointer; display: flex;
       align-items: center; justify-content: center;
-      font-size: var(--fs-2xs); color: #f87171;
+      font-size: var(--fs-2xs); color: var(--danger);
       transition: background .2s; padding: 0; line-height: 1;
     }
-    .skill-chip .chip-del:hover { background: rgba(248,113,113,.4); }
+    .skill-chip .chip-del:hover { background: var(--danger-tint); }
     .skill-empty-hint { font-size: var(--fs-xs); color: var(--text-3); font-style: italic; align-self: center; }
   </style>
 </head>
@@ -1114,7 +1089,7 @@
        ══════════════════════════════════════════════════════ -->
   {% if prefill_resume %}{{ prefill_resume|json_script:"prefillResume" }}{% endif %}
   <nav class="vs-nav" id="mainNav">
-    <a href="{% url 'home' %}" class="vs-nav-logo">CV<span>AI</span></a>
+    <a href="{% url 'home' %}" class="vs-nav-logo" aria-label="CVAI — Studio">CV<em>AI</em></a>
 
     {% if user.is_authenticated %}
     <div class="vs-nav-badge">
@@ -1192,7 +1167,7 @@
                ══════════════════════════════════════════════════ -->
           <div class="ai-magic-box">
             <div class="ai-magic-header">
-              <div class="ai-icon"><i class="fas fa-sparkles"></i></div>
+              <div class="ai-icon"><i class="fas fa-wand-magic-sparkles"></i></div>
               <div>
                 <h3>AI Auto-Fill</h3>
                 <p>Paste your old resume or LinkedIn — AI fills every field instantly</p>
@@ -1211,7 +1186,7 @@
             <!-- PDF Upload row -->
             <div class="ai-pdf-upload-row">
               <div class="ai-pdf-label">
-                <i class="fas fa-file-pdf" style="color:#f87171;"></i>
+                <i class="fas fa-file-pdf" style="color:var(--danger);"></i>
                 Upload old PDF resume
                 <span class="ai-pdf-hint">(optional — used instead of or with pasted text)</span>
               </div>
@@ -1318,7 +1293,7 @@
           <!-- ── §2  PERSONAL INFO ────────────────────────── -->
           <div class="vs-section">
             <button type="button" class="vs-section-toggle open" data-target="sec-personal">
-              <i class="fas fa-id-card" style="color:#a78bfa;"></i>
+              <i class="fas fa-id-card" style="color:var(--accent);"></i>
               Personal Info
               <i class="fas fa-chevron-down toggle-icon"></i>
             </button>
@@ -1423,7 +1398,7 @@
           <!-- ── §3  EXPERIENCE ──────────────────────────── -->
           <div class="vs-section">
             <button type="button" class="vs-section-toggle" data-target="sec-exp">
-              <i class="fas fa-briefcase" style="color:#f59e0b;"></i>
+              <i class="fas fa-briefcase" style="color:var(--warn);"></i>
               Work Experience
               <i class="fas fa-chevron-down toggle-icon"></i>
             </button>
@@ -1456,7 +1431,7 @@
           <!-- ── §3b  PROJECTS ───────────────────────────────── -->
           <div class="vs-section">
             <button type="button" class="vs-section-toggle" data-target="sec-projects">
-              <i class="fas fa-code-branch" style="color:#f59e0b;"></i>
+              <i class="fas fa-code-branch" style="color:var(--warn);"></i>
               Projects
               <i class="fas fa-chevron-down toggle-icon"></i>
             </button>
@@ -1477,7 +1452,7 @@
           <!-- ── §4  EDUCATION ───────────────────────────── -->
           <div class="vs-section">
             <button type="button" class="vs-section-toggle" data-target="sec-edu">
-              <i class="fas fa-graduation-cap" style="color:#22c55e;"></i>
+              <i class="fas fa-graduation-cap" style="color:var(--ok);"></i>
               Education
               <i class="fas fa-chevron-down toggle-icon"></i>
             </button>
@@ -1494,7 +1469,7 @@
           <!-- ── §5  SKILLS ──────────────────────────────── -->
           <div class="vs-section">
             <button type="button" class="vs-section-toggle" data-target="sec-skills">
-              <i class="fas fa-chart-bar" style="color:#818cf8;"></i>
+              <i class="fas fa-chart-bar" style="color:var(--accent);"></i>
               Skills
               <i class="fas fa-chevron-down toggle-icon"></i>
             </button>
@@ -1612,7 +1587,7 @@
           <!-- ── §6  CERTIFICATIONS ─────────────────────── -->
           <div class="vs-section">
             <button type="button" class="vs-section-toggle" data-target="sec-certs">
-              <i class="fas fa-certificate" style="color:#f97316;"></i>
+              <i class="fas fa-certificate" style="color:var(--warn);"></i>
               Certifications / Courses
               <i class="fas fa-chevron-down toggle-icon"></i>
             </button>
@@ -1629,7 +1604,7 @@
           <!-- ── §7  LANGUAGES ──────────────────────────── -->
           <div class="vs-section">
             <button type="button" class="vs-section-toggle" data-target="sec-lang">
-              <i class="fas fa-globe" style="color:#4ecdc4;"></i>
+              <i class="fas fa-globe" style="color:var(--accent);"></i>
               Languages
               <i class="fas fa-chevron-down toggle-icon"></i>
             </button>
@@ -1699,7 +1674,7 @@
           <!-- ── §9  THEME CUSTOMIZATION ───────────────── -->
           <div class="vs-section">
             <button type="button" class="vs-section-toggle" data-target="sec-theme">
-              <i class="fas fa-palette" style="color:#e879f9;"></i>
+              <i class="fas fa-palette" style="color:var(--accent);"></i>
               Theme Customization
               <span style="font-size: var(--fs-2xs);font-weight:400;color:var(--text-3);margin-left:4px;">override template colors</span>
               <i class="fas fa-chevron-down toggle-icon"></i>
@@ -1711,19 +1686,19 @@
                 <label style="font-size: var(--fs-sm);font-weight:600;color:var(--text-2);margin-bottom:8px;display:block;">One-Click Presets</label>
                 <div class="theme-presets-row">
                   <div class="theme-preset-pill" title="Midnight Neon" onclick="applyThemePreset('#4cc9f0', '#060810', '#f72585', this)">
-                    <div class="split-bg" style="background: linear-gradient(135deg, #4cc9f0 50%, #060810 50%);"></div>
+                    <div class="split-bg" style="background: var(--ink);"></div>
                   </div>
                   <div class="theme-preset-pill" title="Executive Slate" onclick="applyThemePreset('#2c3e50', '#ffffff', '#95a5a6', this)">
-                    <div class="split-bg" style="background: linear-gradient(135deg, #2c3e50 50%, #ffffff 50%);"></div>
+                    <div class="split-bg" style="background: var(--paper-raised);"></div>
                   </div>
                   <div class="theme-preset-pill" title="Hacker Green" onclick="applyThemePreset('#00ff41', '#0d0d0d', '#008f11', this)">
-                    <div class="split-bg" style="background: linear-gradient(135deg, #00ff41 50%, #0d0d0d 50%);"></div>
+                    <div class="split-bg" style="background: var(--ink);"></div>
                   </div>
                   <div class="theme-preset-pill" title="Crimson Minimal" onclick="applyThemePreset('#e63946', '#f1faee', '#a8dadc', this)">
-                    <div class="split-bg" style="background: linear-gradient(135deg, #e63946 50%, #f1faee 50%);"></div>
+                    <div class="split-bg" style="background: var(--ink);"></div>
                   </div>
                   <div class="theme-preset-pill" title="Royal Gold" onclick="applyThemePreset('#d4af37', '#1a1a2e', '#c0c0c0', this)">
-                    <div class="split-bg" style="background: linear-gradient(135deg, #d4af37 50%, #1a1a2e 50%);"></div>
+                    <div class="split-bg" style="background: var(--ink);"></div>
                   </div>
                 </div>
               </div>
@@ -1776,9 +1751,9 @@
                       <div class="font-dropdown-option" onclick="selectFont('Helvetica', 'Helvetica (Modern Sans-Serif)')" style="font-family: Helvetica, sans-serif;">Helvetica (Modern Sans-Serif)</div>
                       <div class="font-dropdown-option" onclick="selectFont('Times-Roman', 'Times (Classic Serif)')" style="font-family: 'Times New Roman', serif;">Times (Classic Serif)</div>
                       <div class="font-dropdown-option" onclick="selectFont('Courier', 'Courier (Tech/Monospace)')" style="font-family: Courier, monospace;">Courier (Tech/Monospace)</div>
-                      <div class="font-dropdown-option" onclick="selectFont('Inter', 'Inter (Clean Sans)')" style="font-family: 'Inter', sans-serif;">Inter (Clean Sans)</div>
-                      <div class="font-dropdown-option" onclick="selectFont('Outfit', 'Outfit (Geometric)')" style="font-family: 'Outfit', sans-serif;">Outfit (Geometric)</div>
-                      <div class="font-dropdown-option" onclick="selectFont('JetBrains Mono', 'JetBrains Mono (Tech)')" style="font-family: 'JetBrains Mono', monospace;">JetBrains Mono (Tech)</div>
+                      <div class="font-dropdown-option" onclick="selectFont('Inter', 'Inter (Clean Sans)')" style="font-family: var(--sans);">Inter (Clean Sans)</div>
+                      <div class="font-dropdown-option" onclick="selectFont('Outfit', 'Outfit (Geometric)')" style="font-family: var(--sans);">Outfit (Geometric)</div>
+                      <div class="font-dropdown-option" onclick="selectFont('JetBrains Mono', 'JetBrains Mono (Tech)')" style="font-family: var(--mono);">JetBrains Mono (Tech)</div>
                       <div class="font-dropdown-option" onclick="selectFont('Merriweather', 'Merriweather (Elegant)')" style="font-family: 'Merriweather', serif;">Merriweather (Elegant)</div>
                     </div>
                   </div>
