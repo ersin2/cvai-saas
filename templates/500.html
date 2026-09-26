@@ -9,21 +9,22 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
         rel="stylesheet">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23080c14'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='monospace' font-weight='700' font-size='18' fill='%234cc9f0'>CV</text></svg>">
+    <link rel="stylesheet" href="{% static 'generator/css/tokens.css' %}">
     <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}">
     <style>
         body {
             background-color: var(--bg);
-            font-family: 'Outfit', sans-serif;
-            color: #e2e8f0;
+            font-family: var(--sans);
+            color: var(--ink);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             background-image:
-                radial-gradient(circle at 50% 50%, rgba(247, 37, 133, 0.08) 0%, transparent 50%);
+                none;
         }
 
         .error-container {
@@ -33,23 +34,21 @@
         }
 
         .error-code {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 8rem;
-            font-weight: 800;
+            
+            font-size: clamp(6rem, 18vw, 10rem);
+            font-weight: 400;
             line-height: 1;
-            background: linear-gradient(135deg, #f72585, #ff6b6b);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 16px;
-        }
+            
+            
+            
+            
+            margin-bottom: 16px; font-family: var(--serif); letter-spacing: -0.02em; }
 
         .error-title {
-            font-size: var(--fs-2xl);
-            font-weight: 700;
-            color: white;
-            margin-bottom: 12px;
-        }
+            font-size: 2.2rem;
+            font-weight: 400;
+            color: var(--ink);
+            margin-bottom: 12px; font-family: var(--serif); letter-spacing: -0.02em; }
 
         .error-desc {
             color: var(--text-2);
@@ -59,12 +58,12 @@
         }
 
         .btn-home {
-            background: linear-gradient(135deg, #f72585, #4361ee);
+            background: var(--ink);
             border: none;
-            color: white;
+            color: var(--paper);
             padding: 14px 36px;
             border-radius: var(--r-md);
-            font-weight: 700;
+            font-weight: 500;
             font-size: var(--fs-md);
             text-decoration: none;
             display: inline-flex;
@@ -75,13 +74,13 @@
 
         .btn-home:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(247, 37, 133, 0.3);
-            color: white;
+            box-shadow: none;
+            color: var(--paper); background: var(--accent);
         }
 
         .error-icon {
             font-size: 3rem;
-            color: rgba(247, 37, 133, 0.2);
+            color: var(--accent);
             margin-bottom: 20px;
         }
 

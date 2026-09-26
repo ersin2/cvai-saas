@@ -11,15 +11,16 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
         rel="stylesheet">
     <!-- Global Design System (canonical tokens; local :root removed) -->
+    <link rel="stylesheet" href="{% static 'generator/css/tokens.css' %}">
     <link rel="stylesheet" href="{% static 'generator/css/cvai-global.css' %}?v=4">
     <style>
         body {
             background-color: var(--bg);
-            font-family: 'Outfit', sans-serif;
-            color: #e2e8f0;
+            font-family: var(--sans);
+            color: var(--ink);
             min-height: 100vh;
         }
 
@@ -30,26 +31,32 @@
         }
 
         .logo {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: var(--fs-xl);
-            font-weight: 700;
+            font-family: var(--serif);
+            font-size: 1.6rem;
+            font-weight: 400;
+            letter-spacing: -0.02em;
+            color: var(--ink);
             text-decoration: none;
             display: inline-block;
-            margin-bottom: 40px;
+            margin-bottom: 48px;
         }
 
         .logo-cv {
-            color: white;
+            color: var(--ink);
         }
 
         .logo-ai {
-            color: var(--brand-2);
+            font-style: italic;
+            color: var(--accent);
         }
 
         h1 {
-            font-size: 2rem;
-            font-weight: 800;
-            margin-bottom: 8px;
+            font-family: var(--serif);
+            font-size: clamp(2.4rem, 5vw, 3.2rem);
+            font-weight: 400;
+            letter-spacing: -0.02em;
+            line-height: 1.05;
+            margin-bottom: 10px;
         }
 
         .subtitle {
@@ -59,15 +66,17 @@
         }
 
         h2 {
-            font-size: var(--fs-lg);
-            font-weight: 700;
-            color: var(--brand);
-            margin: 32px 0 12px;
+            font-family: var(--serif);
+            font-size: 1.6rem;
+            font-weight: 400;
+            color: var(--ink);
+            letter-spacing: -0.01em;
+            margin: 40px 0 12px;
         }
 
         p,
         li {
-            color: #94a3b8;
+            color: var(--ink-2);
             line-height: 1.8;
             font-size: var(--fs-md);
         }
@@ -97,8 +106,7 @@
 
 <body>
     <div class="legal-container">
-        <a href="{% url 'landing' %}" class="logo"><i class="fas fa-cube text-info me-2"></i><span
-                class="logo-cv">CV</span><span class="logo-ai">AI</span></a>
+        <a href="{% url 'landing' %}" class="logo"><span class="logo-cv">CV</span><em class="logo-ai">AI</em></a>
 
         <h1>Terms of Service</h1>
         <p class="subtitle">Last updated: February 2026</p>
