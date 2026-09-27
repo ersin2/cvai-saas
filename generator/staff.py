@@ -42,8 +42,10 @@ def ai_usage(request):
 
     today_rows = [r for r in rows if r.date == today]
     budget = getattr(settings, 'AI_DAILY_TOKEN_BUDGET', 0)
-    # The budget is enforced from the cache counter, so show that number.
-    today_tokens = cache.get(_tokens_key()) or sum(r.input_tokens + r.output_tokens for r in today_rows)
+    today_tokens = sum(r.input_tokens + r.output_tokens for r in today_rows)
+    # The budget is enforced from the cache counter, so the budget card shows
+    # that number; it only differs from the rows if the cache was flushed.
+    budget_tokens = cache.get(_tokens_key()) or today_tokens
 
     by_model = (AIUsageDay.objects.filter(date__gte=since).values('model')
                 .annotate(calls=Sum('calls'), input_tokens=Sum('input_tokens'),
@@ -71,7 +73,8 @@ def ai_usage(request):
         'today_cost': spend(today_rows),
         'period_cost': spend(rows),
         'budget': budget,
-        'budget_pct': round(100 * today_tokens / budget) if budget else None,
+        'budget_tokens': budget_tokens,
+        'budget_pct': round(100 * budget_tokens / budget) if budget else None,
         'unpriced': sorted(unpriced),
         'top_accounts': [{'username': u, 'plan': p or 'free', 'results': n} for (u, p), n in top_accounts],
         'month_start': month_start,

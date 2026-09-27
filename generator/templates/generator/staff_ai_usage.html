@@ -46,7 +46,7 @@
       <div class="eyebrow">Daily budget</div>
       {% if budget %}
         <div class="fig">{{ budget_pct }}%</div>
-        <div class="sub">{{ today_tokens|intcomma }} of {{ budget|intcomma }} tokens</div>
+        <div class="sub">{{ budget_tokens|intcomma }} of {{ budget|intcomma }} tokens</div>
         <div class="usage-bar{% if budget_pct >= 100 %} over{% endif %}"><span style="width: {% if budget_pct > 100 %}100{% else %}{{ budget_pct }}{% endif %}%;"></span></div>
       {% else %}
         <div class="fig">Off</div>

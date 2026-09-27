@@ -1,0 +1,11 @@
+{
+  "name": "cvai-e2e",
+  "private": true,
+  "description": "Browser checks for CVAI (see README.md)",
+  "scripts": {
+    "test": "node run.js"
+  },
+  "dependencies": {
+    "puppeteer-core": "23.11.1"
+  }
+}
