@@ -157,20 +157,41 @@ def _check_rate_limit(user, plan: str, *, limit=None, key_prefix='rl'):
 #
 # The reservation below refunds on every way out of the block except an
 # explicit commit(), so a view only has to say when it delivered something.
+#
+# A streamed response leaves the block before anything is delivered: the view
+# returns at once and the text is written afterwards. Such a view calls
+# hand_off(), and the stream settles the reservation itself when it ends —
+# commit() once the result is saved, settle() in its `finally` — so a failed
+# or abandoned stream is refunded exactly like a failed view.
 # ---------------------------------------------------------------------------
 class QuotaExhausted(Exception):
     """The user has no generation left in the current period."""
 
 
 class _Reservation:
-    __slots__ = ('committed',)
+    __slots__ = ('committed', 'handed_off', '_profile', '_settled')
 
-    def __init__(self):
+    def __init__(self, profile):
         self.committed = False
+        self.handed_off = False
+        self._profile = profile
+        self._settled = False
 
     def commit(self):
         """The user got a result; keep the generation spent."""
         self.committed = True
+
+    def hand_off(self):
+        """A stream now owns this reservation and will call settle() when it ends."""
+        self.handed_off = True
+
+    async def settle(self):
+        """Refund unless committed. Safe to call more than once."""
+        if self._settled:
+            return
+        self._settled = True
+        if not self.committed:
+            await sync_to_async(self._profile.refund_generation)()
 
 
 @asynccontextmanager
@@ -179,20 +200,21 @@ async def reserved_generation(profile):
     Spend one generation for the duration of the block.
 
     Raises QuotaExhausted if there is none to spend. Refunds on any exit —
-    return, exception, or falling off the end — unless commit() was called.
-    Charge and refund go through the same Profile instance, so both hit the
-    same counter even if the plan changes mid-request.
+    return, exception, or falling off the end — unless commit() was called,
+    or hand_off() passed the decision to a stream. Charge and refund go
+    through the same Profile instance, so both hit the same counter even if
+    the plan changes mid-request.
     """
     if profile.needs_email_verification():
         raise QuotaExhausted(profile.VERIFY_EMAIL_MESSAGE)
     if not await sync_to_async(profile.use_generation)():
         raise QuotaExhausted(profile.quota_message())
-    reservation = _Reservation()
+    reservation = _Reservation(profile)
     try:
         yield reservation
     finally:
-        if not reservation.committed:
-            await sync_to_async(profile.refund_generation)()
+        if not reservation.handed_off:
+            await reservation.settle()
 
 
 def spends_generation(on_exhausted):

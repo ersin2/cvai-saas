@@ -4,13 +4,14 @@ import httpx
 import json
 import logging
 import re
+import time
 from urllib.parse import urljoin
 
 from asgiref.sync import sync_to_async          # wrap sync ORM/render calls for use in async views
 from django.db.models import Count, Q           # aggregate dashboard stats in one query
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import render_to_string
-from django.http import FileResponse, JsonResponse
+from django.http import FileResponse, JsonResponse, StreamingHttpResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.contrib import messages
@@ -25,7 +26,8 @@ from .pdf_engine import build_pdf, build_cover_letter_pdf, TEMPLATES
 # schema and its recovery logic, and the AI transport — none of which are views.
 # Only names this module actually calls are imported here; anything else lives
 # in, and is imported from, the module that owns it.
-from .ai import _call_ai_service, _language_rule, safe_language, safe_tone, AI_MODEL_PROSE
+from .ai import _call_ai_service, _stream_ai_service, _language_rule, safe_language, safe_tone, AI_MODEL_PROSE
+from .ai_client import AIClientError
 from .guards import (
     json_login_required,
     spends_generation,
@@ -120,6 +122,87 @@ def home(request):
 
     return render(request, 'generator/home.html', context)
 
+
+
+# === DELIVERING PROSE: STREAMED OR AS ONE JSON ANSWER ===
+# The cover letter and the three Tools write prose that takes 10–40 seconds.
+# A browser that asks for text/event-stream reads it as it is written; any
+# other client (scripts, tests, an old cached page) gets the whole result as
+# JSON, exactly as before.
+#
+# Stream events, each `data:` a JSON object:
+#   delta  {"text": "..."}   the next fragment
+#   done   {...}             what the JSON answer would have been
+#   error  {"error": "..."}  generation failed; discard the fragments
+# Quota and throttle are checked before either path (spends_generation), so a
+# 402 or 429 is always a plain JSON response, never a stream.
+KEEPALIVE_SECONDS = 10
+
+
+def _wants_stream(request):
+    return 'text/event-stream' in request.headers.get('Accept', '')
+
+
+def _sse(event, payload):
+    return f"event: {event}\ndata: {json.dumps(payload)}\n\n"
+
+
+def _event_stream(reservation, *, system_prompt, user_prompt, max_tokens, save):
+    """
+    Stream one generation. The stream owns the reservation: it commits once
+    save() has stored the result, and refunds in `finally` on anything else —
+    a provider error, a failed save, or the browser going away mid-answer.
+    """
+    async def events():
+        try:
+            yield ': open\n\n'   # headers and first byte out now, not after the model starts
+            parts, last_sent = [], time.monotonic()
+            async for text in _stream_ai_service(system_prompt, user_prompt,
+                                                 model=AI_MODEL_PROSE, max_tokens=max_tokens):
+                if text:
+                    parts.append(text)
+                    yield _sse('delta', {'text': text})
+                    last_sent = time.monotonic()
+                elif time.monotonic() - last_sent > KEEPALIVE_SECONDS:
+                    # The model is thinking; keep proxies from closing an idle line.
+                    yield ': keep-alive\n\n'
+                    last_sent = time.monotonic()
+            payload = await save(''.join(parts))
+            reservation.commit()
+            yield _sse('done', payload)
+        except AIClientError as exc:
+            yield _sse('error', {'error': str(exc)})
+        except Exception:
+            logger.exception('Streamed generation failed')
+            yield _sse('error', {'error': 'Something went wrong with AI generation.'})
+        finally:
+            await reservation.settle()
+
+    response = StreamingHttpResponse(events(), content_type='text/event-stream')
+    response['Cache-Control'] = 'no-cache'
+    response['X-Accel-Buffering'] = 'no'   # tells proxies not to hold the stream back
+    reservation.hand_off()
+    return response
+
+
+async def _generate_prose(request, reservation, *, system_prompt, user_prompt, save,
+                          on_error, max_tokens=4096):
+    """
+    Run one prose generation and deliver it streamed or as JSON.
+
+    save(result) stores the result and returns the answer payload.
+    on_error(message) builds the JSON answer for a failed generation.
+    """
+    if _wants_stream(request):
+        return _event_stream(reservation, system_prompt=system_prompt, user_prompt=user_prompt,
+                             max_tokens=max_tokens, save=save)
+    result, error = await _call_ai_service(system_prompt, user_prompt,
+                                           model=AI_MODEL_PROSE, max_tokens=max_tokens)
+    if not result:
+        return on_error(error)
+    payload = await save(result)
+    reservation.commit()
+    return JsonResponse(payload)
 
 
 # === AI COVER LETTER GENERATION ===
@@ -224,13 +307,7 @@ Include the candidate's full name: {full_name}.
 
 Generate the elite career response now.
 """
-    result, error_message = await _call_ai_service(
-        system_prompt, user_prompt,
-        model=AI_MODEL_PROSE, max_tokens=8192,
-    )
-
-    if result:
-        # Django 5 async ORM: acreate() is non-blocking
+    async def save(result):
         await Generation.objects.acreate(
             user=request.user,
             resume_text=resume_text,
@@ -241,12 +318,13 @@ Generate the elite career response now.
             language=language,
             result=result,
         )
-        reservation.commit()
+        return {'result': result, 'error': None}
 
-    return JsonResponse({
-        'result': result,
-        'error': error_message,
-    })
+    return await _generate_prose(
+        request, reservation, system_prompt=system_prompt, user_prompt=user_prompt,
+        max_tokens=8192, save=save,
+        on_error=lambda error: JsonResponse({'result': None, 'error': error}),
+    )
 
 
 # === AI RESUME GENERATION (Structured JSON for Visual Studio) ===
@@ -948,26 +1026,28 @@ def _recent_results_html(request):
     }, request=request)
 
 
-async def _tool_response(request, *, kind, result, error, score=None):
+def _tool_failed(error):
+    return JsonResponse(
+        {'error': error or 'AI returned an empty response. Please try again.'},
+        status=503,
+    )
+
+
+async def _tool_payload(request, *, kind, result, score=None):
     """
-    JSON for the three Tools endpoints.
+    The answer for the three Tools endpoints.
 
     They used to answer with the whole tools.html page, which the browser
     swapped in with document.write() — wiping whatever was typed into the
     other tools. The refreshed Recent Results list rides along, rendered from
     the same partial the page itself uses.
     """
-    if not result:
-        return JsonResponse(
-            {'error': error or 'AI returned an empty response. Please try again.'},
-            status=503,
-        )
-    return JsonResponse({
+    return {
         'result': result,
         'kind': kind,
         'ats_score': score,
         'recent_html': await sync_to_async(_recent_results_html)(request),
-    })
+    }
 
 
 def _tools_quota_json(request, profile, msg):
@@ -1012,21 +1092,17 @@ Be specific to the role and company. No generic questions."""
 
     user_prompt = f"Resume:\n{resume}\n\nJob Description:\n{job_desc}\n\nCompany: {company}"
 
-    result, error = await _call_ai_service(
-        system_prompt, user_prompt,
-        model=AI_MODEL_PROSE,
-    )
-
-    if result:
+    async def save(result):
         await AIResult.objects.acreate(
             user=request.user,
             result_type='interview',
             input_summary=f"{company} — Interview Prep",
             result=result,
         )
-        reservation.commit()
+        return await _tool_payload(request, kind='interview', result=result)
 
-    return await _tool_response(request, kind='interview', result=result, error=error)
+    return await _generate_prose(request, reservation, system_prompt=system_prompt,
+                                 user_prompt=user_prompt, save=save, on_error=_tool_failed)
 
 
 # === FOLLOW-UP EMAIL GENERATOR ===
@@ -1055,21 +1131,17 @@ Do NOT be generic — reference the specific role and company."""
 
     user_prompt = f"Company: {company}\nJob Title: {job_title}\nAdditional Context: {context}"
 
-    result, error = await _call_ai_service(
-        system_prompt, user_prompt,
-        model=AI_MODEL_PROSE,
-    )
-
-    if result:
+    async def save(result):
         await AIResult.objects.acreate(
             user=request.user,
             result_type='followup',
             input_summary=f"{company} — Follow-Up Emails",
             result=result,
         )
-        reservation.commit()
+        return await _tool_payload(request, kind='followup', result=result)
 
-    return await _tool_response(request, kind='followup', result=result, error=error)
+    return await _generate_prose(request, reservation, system_prompt=system_prompt,
+                                 user_prompt=user_prompt, save=save, on_error=_tool_failed)
 
 
 # === ATS SCORE CHECKER ===
@@ -1102,17 +1174,9 @@ Be brutally honest. Give specific keyword suggestions. Start with the score on t
 
     user_prompt = f"Resume:\n{resume}\n\nJob Description:\n{job_desc}"
 
-    result, error = await _call_ai_service(
-        system_prompt, user_prompt,
-        model=AI_MODEL_PROSE,
-    )
-
-    score = None
-    if result:
+    async def save(result):
         score_match = re.search(r'(\d{1,3})\s*/\s*100', result)
-        if score_match:
-            score = int(score_match.group(1))
-
+        score = int(score_match.group(1)) if score_match else None
         await AIResult.objects.acreate(
             user=request.user,
             result_type='ats',
@@ -1120,9 +1184,10 @@ Be brutally honest. Give specific keyword suggestions. Start with the score on t
             result=result,
             score=score,
         )
-        reservation.commit()
+        return await _tool_payload(request, kind='ats', result=result, score=score)
 
-    return await _tool_response(request, kind='ats', result=result, error=error, score=score)
+    return await _generate_prose(request, reservation, system_prompt=system_prompt,
+                                 user_prompt=user_prompt, save=save, on_error=_tool_failed)
 
 
 # === APPLICATION TRACKER ===

@@ -30,6 +30,10 @@ support it. Covered by AnthropicEffortFallbackTest.
 
 It also owns what the app does when the provider is slow, down, or too
 expensive: a bounded timeout, a circuit breaker, and a daily token count.
+
+stream_anthropic() is the streamed twin of call_anthropic() for prose, so the
+user reads a letter as it is written. It shares the client, the breaker, the
+error messages and the accounting.
 """
 
 import asyncio
@@ -178,6 +182,45 @@ async def _check_availability():
         )
 
 
+async def _transport_error(anthropic, exc):
+    """AIClientError for a rate limit or a connection failure, counted by the breaker."""
+    await _record_provider_failure()
+    if isinstance(exc, anthropic.RateLimitError):
+        logger.warning("[anthropic] rate limited")
+        return AIClientError("The AI is busy right now. Please try again in a moment.")
+    timeout_error = getattr(anthropic, "APITimeoutError", None)
+    if isinstance(exc, httpx.TimeoutException) or (timeout_error is not None and isinstance(exc, timeout_error)):
+        logger.error("[anthropic] timed out after %ss", _TIMEOUT.read)
+        return AIClientError("The AI took too long to respond. Please try again.")
+    logger.error("[anthropic] connection error: %s", exc)
+    return AIClientError("Could not reach the AI provider. Please try again.")
+
+
+async def _status_error(exc):
+    """AIClientError for an HTTP error status; 5xx count towards the breaker."""
+    status = getattr(exc, "status_code", None) or 0
+    logger.error("[anthropic] API error %s: %s", status, str(exc)[:300])
+    if status >= 500:
+        await _record_provider_failure()
+    if status == 529:
+        return AIClientError(
+            "The AI provider is overloaded right now. Please try again in a minute."
+        )
+    return AIClientError(f"AI provider error ({status}). Please try again.")
+
+
+def _check_stop_reason(message, max_tokens):
+    # Safety classifiers decline with HTTP 200 and an empty or partial body, so
+    # this has to be checked before touching content — indexing it would raise.
+    if getattr(message, "stop_reason", None) == "refusal":
+        category = getattr(getattr(message, "stop_details", None), "category", None)
+        logger.warning("[anthropic] declined by safety classifiers (category=%s)", category)
+        raise AIClientError("The AI declined this request. Please rephrase and try again.")
+
+    if getattr(message, "stop_reason", None) == "max_tokens":
+        logger.warning("[anthropic] hit max_tokens (%s) — output truncated", max_tokens)
+
+
 async def call_anthropic(
     system_prompt: str,
     user_prompt: str,
@@ -223,24 +266,11 @@ async def call_anthropic(
     if output_config:
         kwargs["output_config"] = output_config
 
-    timeout_error = getattr(anthropic, "APITimeoutError", None)
-
     async def _create(**kw):
         try:
             return await client.messages.create(**kw)
-        except anthropic.RateLimitError:
-            logger.warning("[anthropic] rate limited")
-            await _record_provider_failure()
-            raise AIClientError(
-                "The AI is busy right now. Please try again in a moment."
-            )
-        except anthropic.APIConnectionError as exc:
-            await _record_provider_failure()
-            if timeout_error is not None and isinstance(exc, timeout_error):
-                logger.error("[anthropic] timed out after %ss", _TIMEOUT.read)
-                raise AIClientError("The AI took too long to respond. Please try again.")
-            logger.error("[anthropic] connection error: %s", exc)
-            raise AIClientError("Could not reach the AI provider. Please try again.")
+        except (anthropic.RateLimitError, anthropic.APIConnectionError) as exc:
+            raise await _transport_error(anthropic, exc) from exc
 
     try:
         message = await _create(**kwargs)
@@ -264,26 +294,10 @@ async def call_anthropic(
             logger.error("[anthropic] bad request: %s", str(exc)[:300])
             raise AIClientError("The AI provider rejected the request.")
     except anthropic.APIStatusError as exc:
-        logger.error("[anthropic] API error %s: %s", exc.status_code, str(exc)[:300])
-        if exc.status_code >= 500:
-            await _record_provider_failure()
-        if exc.status_code == 529:
-            raise AIClientError(
-                "The AI provider is overloaded right now. Please try again in a minute."
-            )
-        raise AIClientError(f"AI provider error ({exc.status_code}). Please try again.")
+        raise await _status_error(exc) from exc
 
     await _account_usage(model, message)
-
-    # Safety classifiers decline with HTTP 200 and an empty or partial body, so
-    # this has to be checked before touching content — indexing it would raise.
-    if getattr(message, "stop_reason", None) == "refusal":
-        category = getattr(getattr(message, "stop_details", None), "category", None)
-        logger.warning("[anthropic] declined by safety classifiers (category=%s)", category)
-        raise AIClientError("The AI declined this request. Please rephrase and try again.")
-
-    if getattr(message, "stop_reason", None) == "max_tokens":
-        logger.warning("[anthropic] hit max_tokens (%s) — output truncated", max_tokens)
+    _check_stop_reason(message, max_tokens)
 
     # content is a list of blocks. Thinking is on by default, so content[0] is a
     # ThinkingBlock rather than the answer — find the text block.
@@ -296,3 +310,57 @@ async def call_anthropic(
         [getattr(b, "type", "?") for b in message.content],
     )
     raise AIClientError("The AI returned an empty response. Please try again.")
+
+
+async def stream_anthropic(
+    system_prompt: str,
+    user_prompt: str,
+    *,
+    api_key: str,
+    model: str,
+    max_tokens: int = 4096,
+):
+    """
+    Stream a prose response: an async generator of text fragments.
+
+    It also yields '' whenever the model is working without writing text yet
+    (thinking), so the caller can keep an idle connection alive. Raises
+    AIClientError with a user-safe message on any failure — including after
+    some text has been yielded, which the caller must then discard: a refusal
+    can arrive at the end of a partial answer.
+    """
+    try:
+        import anthropic
+    except ImportError:
+        raise AIClientError("The AI client library is not installed on the server.")
+
+    await _check_availability()
+    client = _client_for(anthropic, api_key)
+    kwargs = {
+        "model": model,
+        "max_tokens": max_tokens,
+        "system": system_prompt,
+        "messages": [{"role": "user", "content": user_prompt}],
+    }
+
+    wrote = False
+    try:
+        async with client.messages.stream(**kwargs) as stream:
+            async for event in stream:
+                if event.type == "text":
+                    if event.text:
+                        wrote = True
+                        yield event.text
+                else:
+                    yield ""
+            message = await stream.get_final_message()
+    except (anthropic.RateLimitError, anthropic.APIConnectionError, httpx.HTTPError) as exc:
+        raise await _transport_error(anthropic, exc) from exc
+    except anthropic.APIStatusError as exc:
+        raise await _status_error(exc) from exc
+
+    await _account_usage(model, message)
+    _check_stop_reason(message, max_tokens)
+    if not wrote:
+        logger.error("[anthropic] stream ended without text")
+        raise AIClientError("The AI returned an empty response. Please try again.")

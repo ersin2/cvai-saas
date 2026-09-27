@@ -12,7 +12,7 @@ import logging
 
 from django.conf import settings
 
-from .ai_client import call_anthropic, AIClientError
+from .ai_client import call_anthropic, stream_anthropic, AIClientError
 
 logger = logging.getLogger(__name__)
 
@@ -94,6 +94,13 @@ AI_MODEL_PROSE = "claude-sonnet-5"
 # Django calls Anthropic directly. There is no worker service and no HTTP hop;
 # see the docstring below for why the hop was removed.
 # ---------------------------------------------------------------------------
+# A configuration problem, not a transient one. Saying "try again" here sent
+# users into a retry loop against a server that could never answer, which is
+# how the last outage stayed invisible for so long.
+NOT_CONFIGURED = ("The AI service is not configured on this server. This is "
+                  "not something retrying will fix — please contact support.")
+
+
 async def _call_ai_service(
     system_prompt: str,
     user_prompt: str,
@@ -137,12 +144,8 @@ async def _call_ai_service(
     """
     anthropic_key = getattr(settings, "ANTHROPIC_API_KEY", "")
     if not anthropic_key:
-        # A configuration problem, not a transient one. Saying "try again"
-        # here sent users into a retry loop against a server that could never
-        # answer, which is how the last outage stayed invisible for so long.
         logger.error("ANTHROPIC_API_KEY is not set — no AI generation is possible.")
-        return None, ("The AI service is not configured on this server. This is "
-                      "not something retrying will fix — please contact support.")
+        return None, NOT_CONFIGURED
 
     try:
         text = await call_anthropic(
@@ -160,3 +163,31 @@ async def _call_ai_service(
     except Exception as exc:
         logger.exception("Anthropic call failed: %s", exc)
         return None, "Something went wrong with AI generation."
+
+
+async def _stream_ai_service(system_prompt: str, user_prompt: str, *,
+                             max_tokens: int = 4096, model: str | None = None):
+    """
+    The streamed counterpart of _call_ai_service(), for prose.
+
+    An async generator of text fragments ('' while the model thinks). Raises
+    AIClientError with a message fit for the user; unexpected failures are
+    logged and turned into one.
+    """
+    anthropic_key = getattr(settings, "ANTHROPIC_API_KEY", "")
+    if not anthropic_key:
+        logger.error("ANTHROPIC_API_KEY is not set — no AI generation is possible.")
+        raise AIClientError(NOT_CONFIGURED)
+    try:
+        async for text in stream_anthropic(
+            system_prompt, user_prompt,
+            api_key=anthropic_key,
+            model=model or getattr(settings, "ANTHROPIC_MODEL", "claude-sonnet-5"),
+            max_tokens=max_tokens,
+        ):
+            yield text
+    except AIClientError:
+        raise
+    except Exception as exc:
+        logger.exception("Anthropic stream failed: %s", exc)
+        raise AIClientError("Something went wrong with AI generation.") from exc

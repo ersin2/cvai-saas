@@ -7,6 +7,7 @@
 {% block extra_head %}
     <script src="{% static 'generator/js/result-render.js' %}" defer></script>
     <script src="{% static 'generator/js/http-errors.js' %}" defer></script>
+    <script src="{% static 'generator/js/ai-stream.js' %}" defer></script>
 
     <style>
         /* ── TOOL TABS ── */
@@ -81,6 +82,22 @@
         }
 
         /* ── RESULT BOX ── */
+        /* While an answer streams in: a caret after the last line written. */
+        .is-streaming > :last-child::after {
+            content: '';
+            display: inline-block;
+            width: .5em;
+            height: 1.05em;
+            margin-left: 2px;
+            vertical-align: text-bottom;
+            background: var(--accent);
+            animation: stream-caret 1s steps(2, start) infinite;
+        }
+        @keyframes stream-caret { to { visibility: hidden; } }
+        @media (prefers-reduced-motion: reduce) {
+            .is-streaming > :last-child::after { animation: none; }
+        }
+
         .result-box {
             background: var(--paper-raised);
             border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule));
@@ -517,48 +534,69 @@
             ats:       '{% url "ats_score" %}'
         };
 
-        // ── COVER LETTER (client-rendered — endpoint returns tagged JSON) ──
+        // ── COVER LETTER (client-rendered from the tagged sections) ──
+        // The answer streams in (static/generator/js/ai-stream.js): the tabs
+        // appear as each section starts, and the open one fills as it is
+        // written. The finished text is rendered again in full on `done`.
         const COVER_URL = '{% url "generate_letter" %}';
         let _coverSections = [];  // [{key, label, html}]
+        let _coverActive = 0;
 
         async function submitCoverLetter(event) {
             event.preventDefault();
             const form = event.target;
             const btn  = form.querySelector('button[type=submit]');
             const orig = btn.innerHTML;
+            const spinner = document.getElementById('loadingSpinner');
+            const content = document.getElementById('coverSectionContent');
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Writing your cover letter...';
-            document.getElementById('loadingSpinner').classList.add('show');
+            spinner.classList.add('show');
             document.getElementById('coverResult').style.display = 'none';
+            _coverActive = 0;
 
             const fd = new FormData(form);
             fd.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
-            try {
-                const resp = await fetch(COVER_URL, { method: 'POST', body: fd });
-                document.getElementById('loadingSpinner').classList.remove('show');
-
-                if (!resp.ok) {
-                    showToast(await describeHttpFailure(resp),
-                              resp.status === 429 ? 'warning' : 'danger');
-                    return;
+            const paint = CVAIStream.eachFrame(text => {
+                if (renderCoverSections(text, { partial: true })) {
+                    spinner.classList.remove('show');
+                    content.classList.add('is-streaming');
+                    content.setAttribute('aria-busy', 'true');
                 }
-                const data = await resp.json();
-                if (data.error)   { showToast(data.error, 'danger'); return; }
-                if (!data.result) { showToast('AI returned an empty response. Please try again.', 'danger'); return; }
-
-                renderCoverSections(data.result);
-                showToast('Cover letter generated — saved to History.', 'success');
+            });
+            try {
+                await CVAIStream.post(COVER_URL, fd, {
+                    onHttpError: async resp => showToast(await describeHttpFailure(resp),
+                                                         resp.status === 429 ? 'warning' : 'danger'),
+                    onDelta: paint,
+                    onDone: data => {
+                        paint.cancel();
+                        renderCoverSections(data.result);
+                        showToast('Cover letter generated — saved to History.', 'success');
+                    },
+                    onError: message => {
+                        paint.cancel();
+                        document.getElementById('coverResult').style.display = 'none';
+                        showToast(message, 'danger');
+                    },
+                });
             } catch (err) {
-                document.getElementById('loadingSpinner').classList.remove('show');
+                paint.cancel();
                 showToast("We couldn't reach the server. Check your connection and try again.", 'danger');
             } finally {
+                spinner.classList.remove('show');
+                content.classList.remove('is-streaming');
+                content.removeAttribute('aria-busy');
                 btn.disabled = false;
                 btn.innerHTML = orig;
             }
         }
 
-        function renderCoverSections(raw) {
+        /* Returns whether there was anything to show. With `partial`, the
+           text is still being written: a section without its closing tag
+           runs to the end, and a tag cut off halfway is not shown. */
+        function renderCoverSections(raw, { partial = false } = {}) {
             const LABELS = {
                 MAIN_LETTER:   'Cover Letter',
                 VERSION_A:     'Version A',
@@ -566,29 +604,41 @@
                 ATS_ANALYSIS:  'ATS Score',
                 RISK_ANALYSIS: 'Red Flags',
             };
-            const re = /\[SECTION:\s*([A-Z_]+)\]([\s\S]*?)\[END_SECTION\]/g;
-            _coverSections = [];
+            const TAIL = /\[[A-Z_:\s]*$/;   // "[SECTI" or "[END_SEC" still arriving
+            const re = partial
+                ? /\[SECTION:\s*([A-Z_]+)\]([\s\S]*?)(?:\[END_SECTION\]|$)/g
+                : /\[SECTION:\s*([A-Z_]+)\]([\s\S]*?)\[END_SECTION\]/g;
+            const sections = [];
             let m;
             while ((m = re.exec(raw)) !== null) {
                 const key = m[1].toUpperCase();
-                _coverSections.push({ key, label: LABELS[key] || key, html: CVAIResult.renderMarkdown(m[2].trim()) });
+                const body = partial ? m[2].replace(TAIL, '') : m[2];
+                sections.push({ key, label: LABELS[key] || key, html: CVAIResult.renderMarkdown(body.trim()) });
+                if (m[0].length === 0) re.lastIndex++;
             }
             // Fallback: model didn't emit tags → show everything in one pane.
-            if (_coverSections.length === 0) {
-                _coverSections.push({ key: 'RAW', label: 'Cover Letter', html: CVAIResult.renderMarkdown(raw) });
+            if (sections.length === 0) {
+                if (partial) return false;
+                sections.push({ key: 'RAW', label: 'Cover Letter', html: CVAIResult.renderMarkdown(raw) });
             }
+            _coverSections = sections;
+            if (_coverActive >= sections.length) _coverActive = 0;
 
-            document.getElementById('coverSectionTabs').innerHTML = _coverSections.map((s, i) =>
-                `<button type="button" class="tool-tab ${i === 0 ? 'active' : ''}" onclick="showCoverSection(${i}, this)">${s.label}</button>`
+            document.getElementById('coverSectionTabs').innerHTML = sections.map((s, i) =>
+                `<button type="button" class="tool-tab ${i === _coverActive ? 'active' : ''}" onclick="showCoverSection(${i}, this)">${s.label}</button>`
             ).join('');
-            document.getElementById('coverSectionContent').innerHTML = _coverSections[0].html;
+            document.getElementById('coverSectionContent').innerHTML = sections[_coverActive].html;
 
             const box = document.getElementById('coverResult');
-            box.style.display = 'block';
-            box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            if (box.style.display !== 'block') {
+                box.style.display = 'block';
+                box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+            return true;
         }
 
         function showCoverSection(idx, el) {
+            _coverActive = idx;
             document.querySelectorAll('#coverSectionTabs .tool-tab').forEach(t => t.classList.remove('active'));
             el.classList.add('active');
             document.getElementById('coverSectionContent').innerHTML = _coverSections[idx].html;
@@ -674,44 +724,69 @@
             const form = event.target;
             const btn = form.querySelector('button[type=submit]');
             const origHTML = btn.innerHTML;
+            const spinner = document.getElementById('loadingSpinner');
+            const box = document.getElementById('toolResultBox');
+            const content = document.getElementById('toolResultContent');
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Generating...';
-            document.getElementById('loadingSpinner').classList.add('show');
+            spinner.classList.add('show');
 
             const formData = new FormData(form);
             formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
-            // JSON, rendered in place. This used to document.write() the whole
-            // page the server sent back, which threw away everything typed into
-            // the other tools and reset scroll, focus and browser history.
-            try {
-                const resp = await fetch(TOOL_URLS[toolName], { method: 'POST', body: formData });
-                if (!resp.ok) {
-                    showToast(await describeHttpFailure(resp),
-                              resp.status === 429 ? 'warning' : 'danger');
-                    return;
+            // Rendered in place as it is written. This used to document.write()
+            // the whole page the server sent back, which threw away everything
+            // typed into the other tools and reset scroll, focus and history.
+            let started = false;
+            const paint = CVAIStream.eachFrame(text => {
+                if (!started) {
+                    started = true;
+                    spinner.classList.remove('show');
+                    content.classList.add('is-streaming');
+                    content.setAttribute('aria-busy', 'true');
+                    box.style.display = '';
+                    box.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
-                const data = await resp.json();
-                showToolResult(data);
-                const list = document.getElementById('toolResults');
-                list.innerHTML = data.recent_html;
-                initResultCards(list);
+                content.innerHTML = CVAIResult.renderMarkdown(text);
+            });
+            try {
+                await CVAIStream.post(TOOL_URLS[toolName], formData, {
+                    onHttpError: async resp => showToast(await describeHttpFailure(resp),
+                                                         resp.status === 429 ? 'warning' : 'danger'),
+                    onDelta: paint,
+                    onDone: data => {
+                        paint.cancel();
+                        content.classList.remove('is-streaming');
+                        showToolResult(data, { scroll: !started });
+                        const list = document.getElementById('toolResults');
+                        list.innerHTML = data.recent_html;
+                        initResultCards(list);
+                    },
+                    onError: message => {
+                        paint.cancel();
+                        if (started) { box.style.display = 'none'; content.innerHTML = ''; }
+                        showToast(message, 'danger');
+                    },
+                });
             } catch(err) {
+                paint.cancel();
                 showToast("We couldn't reach the server. Check your connection and try again.", 'danger');
             } finally {
                 btn.disabled = false; btn.innerHTML = origHTML;
-                document.getElementById('loadingSpinner').classList.remove('show');
+                spinner.classList.remove('show');
+                content.classList.remove('is-streaming');
+                content.removeAttribute('aria-busy');
             }
         }
 
-        function showToolResult(data) {
+        function showToolResult(data, { scroll = true } = {}) {
             const box = document.getElementById('toolResultBox');
             CVAIResult.render(document.getElementById('toolResultContent'), data.result, {
                 kind: data.kind,
                 score: data.ats_score,
             });
             box.style.display = '';
-            box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (scroll) box.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         /* Recent Results: format the body, and derive the collapsed preview
