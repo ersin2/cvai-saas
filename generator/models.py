@@ -83,3 +83,27 @@ class AIResult(models.Model):
 
     def __str__(self):
         return f'{self.result_type} — {self.user.username} ({self.created_at:%Y-%m-%d})'
+
+
+class AIUsageDay(models.Model):
+    """
+    Tokens spent per day and model, for the staff cost page.
+
+    The cache counter that enforces AI_DAILY_TOKEN_BUDGET lives two days; this
+    is the lasting record. Written with F() updates so concurrent calls add up
+    instead of overwriting each other.
+    """
+    date = models.DateField()
+    model = models.CharField(max_length=100)
+    calls = models.PositiveIntegerField(default=0)
+    input_tokens = models.BigIntegerField(default=0)
+    output_tokens = models.BigIntegerField(default=0)
+
+    class Meta:
+        ordering = ['-date', 'model']
+        constraints = [
+            models.UniqueConstraint(fields=['date', 'model'], name='ai_usage_day_model_uniq'),
+        ]
+
+    def __str__(self):
+        return f'{self.date} {self.model}: {self.calls} calls'

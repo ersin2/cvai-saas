@@ -110,6 +110,9 @@
           {% else %}
             <a href="{% url 'stripe_customer_portal' %}" role="menuitem"><i class="fas fa-credit-card"></i>Billing</a>
           {% endif %}
+          {% if user.is_staff %}
+            <a href="{% url 'staff_ai_usage' %}" role="menuitem"><i class="fas fa-chart-line"></i>AI usage &amp; cost</a>
+          {% endif %}
           <div class="acct-menu-sep"></div>
           <a href="{% url 'logout' %}" class="acct-danger" role="menuitem"><i class="fas fa-sign-out-alt"></i>Log out</a>
         </div>

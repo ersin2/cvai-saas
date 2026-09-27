@@ -126,6 +126,44 @@ def _add_tokens(n):
             cache.set(key, n, 2 * 86400)
 
 
+def _record_usage(model, input_tokens, output_tokens):
+    """
+    Count one call's tokens: the cache counter (daily budget) and the lasting
+    per-day record (staff cost page). Never raises — losing a usage row must
+    not lose the user's generation.
+    """
+    try:
+        _add_tokens(input_tokens + output_tokens)
+        from django.db import IntegrityError, transaction
+        from django.db.models import F
+        from .models import AIUsageDay
+        day = timezone.now().date()
+        bump = dict(calls=F('calls') + 1,
+                    input_tokens=F('input_tokens') + input_tokens,
+                    output_tokens=F('output_tokens') + output_tokens)
+        if not AIUsageDay.objects.filter(date=day, model=model).update(**bump):
+            try:
+                with transaction.atomic():
+                    AIUsageDay.objects.create(date=day, model=model, calls=1,
+                                              input_tokens=input_tokens, output_tokens=output_tokens)
+            except IntegrityError:
+                # Another request created today's row first.
+                AIUsageDay.objects.filter(date=day, model=model).update(**bump)
+    except Exception:
+        logger.exception("[anthropic] could not record token usage")
+
+
+async def _account_usage(model, message):
+    usage = getattr(message, "usage", None)
+    if usage is None:
+        return
+    inp = getattr(usage, "input_tokens", 0) or 0
+    out = getattr(usage, "output_tokens", 0) or 0
+    logger.info("[anthropic] %s: %s input / %s output tokens", model, inp, out)
+    if inp or out:
+        await sync_to_async(_record_usage)(model, inp, out)
+
+
 async def _check_availability():
     """Raise AIClientError if the breaker is open or today's budget is spent."""
     if await cache.aget(_BREAKER_OPEN_KEY):
@@ -235,15 +273,7 @@ async def call_anthropic(
             )
         raise AIClientError(f"AI provider error ({exc.status_code}). Please try again.")
 
-    usage = getattr(message, "usage", None)
-    if usage is not None:
-        used = (getattr(usage, "input_tokens", 0) or 0) + (getattr(usage, "output_tokens", 0) or 0)
-        logger.info(
-            "[anthropic] %s: %s input / %s output tokens",
-            model, getattr(usage, "input_tokens", "?"), getattr(usage, "output_tokens", "?"),
-        )
-        if used:
-            await sync_to_async(_add_tokens)(used)
+    await _account_usage(model, message)
 
     # Safety classifiers decline with HTTP 200 and an empty or partial body, so
     # this has to be checked before touching content — indexing it would raise.

@@ -1,0 +1,124 @@
+{% extends 'generator/base_app.html' %}
+{% load humanize %}
+
+{% block title %}AI usage &amp; cost | CVAI staff{% endblock %}
+
+{% block extra_head %}
+<meta name="robots" content="noindex">
+<style>
+  .usage-wrap { max-width: var(--content-max); margin: 0 auto; padding: 0 20px 64px; }
+  .usage-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .usage-stat { background: var(--paper-raised); border: 1px solid var(--rule); border-radius: var(--r-xl); padding: 20px; }
+  .usage-stat .eyebrow { margin-bottom: 10px; }
+  .usage-stat .fig { font-family: var(--serif); font-size: 2.4rem; line-height: 1; color: var(--ink); letter-spacing: -0.02em; }
+  .usage-stat .sub { color: var(--ink-3); font-size: var(--fs-sm); margin-top: 6px; }
+  .usage-bar { height: 4px; background: var(--paper-sunk); border-radius: 2px; margin-top: 12px; overflow: hidden; }
+  .usage-bar > span { display: block; height: 100%; background: var(--accent); }
+  .usage-bar.over > span { background: var(--danger); }
+  .usage-section { margin-bottom: 32px; }
+  .usage-section h2 { font-size: 1.6rem; margin-bottom: 14px; }
+  .usage-table { width: 100%; border-collapse: collapse; background: var(--paper-raised); border: 1px solid var(--rule); border-radius: var(--r-lg); overflow: hidden; }
+  .usage-table th { font-family: var(--mono); font-size: 0.6875rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--rule); font-weight: 700; }
+  .usage-table td { padding: 11px 16px; border-bottom: 1px solid var(--rule); color: var(--ink-2); font-size: var(--fs-base); }
+  .usage-table tr:last-child td { border-bottom: none; }
+  .usage-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .usage-table td.model { font-family: var(--mono); font-size: var(--fs-sm); color: var(--ink); }
+  .usage-note { color: var(--ink-3); font-size: var(--fs-sm); margin-top: 10px; }
+  .usage-empty { background: var(--paper-raised); border: 1px dashed var(--rule-strong); border-radius: var(--r-lg); padding: 28px; text-align: center; color: var(--ink-3); }
+  @media (max-width: 640px) { .usage-table .hide-sm { display: none; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="usage-wrap">
+  <div class="page-header">
+    <h1 class="page-title">AI usage &amp; cost</h1>
+    <p class="page-subtitle">Tokens and estimated spend for the last {{ days }} days. Estimates use list prices; your Anthropic invoice is the real figure.</p>
+  </div>
+
+  <div class="usage-stats">
+    <div class="usage-stat">
+      <div class="eyebrow">Today</div>
+      <div class="fig">${{ today_cost|floatformat:2 }}</div>
+      <div class="sub">{{ today_calls|intcomma }} calls · {{ today_tokens|intcomma }} tokens</div>
+    </div>
+    <div class="usage-stat">
+      <div class="eyebrow">Daily budget</div>
+      {% if budget %}
+        <div class="fig">{{ budget_pct }}%</div>
+        <div class="sub">{{ today_tokens|intcomma }} of {{ budget|intcomma }} tokens</div>
+        <div class="usage-bar{% if budget_pct >= 100 %} over{% endif %}"><span style="width: {% if budget_pct > 100 %}100{% else %}{{ budget_pct }}{% endif %}%;"></span></div>
+      {% else %}
+        <div class="fig">Off</div>
+        <div class="sub">Set AI_DAILY_TOKEN_BUDGET to cap daily spend.</div>
+      {% endif %}
+    </div>
+    <div class="usage-stat">
+      <div class="eyebrow">Last {{ days }} days</div>
+      <div class="fig">${{ period_cost|floatformat:2 }}</div>
+      <div class="sub">Estimated</div>
+    </div>
+  </div>
+
+  <section class="usage-section">
+    <h2>By model</h2>
+    {% if by_model %}
+    <table class="usage-table">
+      <thead><tr><th>Model</th><th class="num">Calls</th><th class="num hide-sm">Input tokens</th><th class="num hide-sm">Output tokens</th><th class="num">Est. cost</th></tr></thead>
+      <tbody>
+        {% for m in by_model %}
+        <tr>
+          <td class="model">{{ m.model }}</td>
+          <td class="num">{{ m.calls|intcomma }}</td>
+          <td class="num hide-sm">{{ m.input_tokens|intcomma }}</td>
+          <td class="num hide-sm">{{ m.output_tokens|intcomma }}</td>
+          <td class="num">{% if m.cost is not None %}${{ m.cost|floatformat:2 }}{% else %}—{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if unpriced %}<p class="usage-note">No price on file for {{ unpriced|join:", " }} — add it to AI_PRICES_PER_MTOK in settings.</p>{% endif %}
+    {% else %}
+    <div class="usage-empty">No AI calls recorded yet.</div>
+    {% endif %}
+  </section>
+
+  <section class="usage-section">
+    <h2>By day</h2>
+    {% if rows %}
+    <table class="usage-table">
+      <thead><tr><th>Date</th><th>Model</th><th class="num">Calls</th><th class="num hide-sm">Tokens</th><th class="num">Est. cost</th></tr></thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td>{{ r.date|date:"M j" }}</td>
+          <td class="model">{{ r.model }}</td>
+          <td class="num">{{ r.calls|intcomma }}</td>
+          <td class="num hide-sm">{{ r.input_tokens|add:r.output_tokens|intcomma }}</td>
+          <td class="num">{% if r.cost is not None %}${{ r.cost|floatformat:2 }}{% else %}—{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="usage-empty">No AI calls in the last {{ days }} days.</div>
+    {% endif %}
+  </section>
+
+  <section class="usage-section">
+    <h2>Heaviest accounts this month</h2>
+    {% if top_accounts %}
+    <table class="usage-table">
+      <thead><tr><th>Account</th><th>Plan</th><th class="num">AI results since {{ month_start|date:"M j" }}</th></tr></thead>
+      <tbody>
+        {% for a in top_accounts %}
+        <tr><td>{{ a.username }}</td><td>{{ a.plan|title }}</td><td class="num">{{ a.results|intcomma }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="usage-empty">No AI results this month yet.</div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

@@ -16,6 +16,8 @@ services:
     plan: free
     runtime: python
     buildCommand: "./build.sh"
+    # Render restarts an instance that stops answering this (aigen/middleware.py).
+    healthCheckPath: /healthz
     # ASGI worker — migrate first (DB is only reachable at runtime, not during build)
     startCommand: "python manage.py migrate --no-input && gunicorn aigen.asgi:application -k uvicorn.workers.UvicornWorker --workers 2 --bind 0.0.0.0:$PORT"
     envVars:

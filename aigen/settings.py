@@ -56,12 +56,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     'generator',
     'users',
     'storages',
 ]
 
 MIDDLEWARE = [
+    # First on purpose: Render's health probe is plain HTTP with an internal
+    # Host header, which the next two would redirect or reject.
+    'aigen.middleware.HealthCheckMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -182,6 +186,15 @@ ANTHROPIC_MODEL = os.environ.get('ANTHROPIC_MODEL', 'claude-sonnet-5')
 # Hard stop on total tokens per UTC day across all users (0 = no limit). Every
 # call's usage is counted in the cache either way; see generator/ai_client.py.
 AI_DAILY_TOKEN_BUDGET = int(os.environ.get('AI_DAILY_TOKEN_BUDGET', '0') or 0)
+
+# USD per million tokens, (input, output), for the staff cost page. Anthropic
+# first-party list prices as of 2026-06; thinking tokens bill as output. Only an
+# estimate — the Anthropic console invoice is the real figure.
+AI_PRICES_PER_MTOK = {
+    'claude-sonnet-5':  (2.00, 10.00),
+    'claude-opus-5':    (5.00, 25.00),
+    'claude-haiku-4-5': (1.00, 5.00),
+}
 
 if not ANTHROPIC_API_KEY:
     import warnings

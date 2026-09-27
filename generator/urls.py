@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views
+from . import staff, views
 
 urlpatterns = [
     path('', views.landing, name='landing'),
@@ -23,4 +23,7 @@ urlpatterns = [
     path('tracker/', views.tracker, name='tracker'),
     path('tracker/<int:pk>/update/', views.tracker_update, name='tracker_update'),
     path('tracker/<int:pk>/delete/', views.tracker_delete, name='tracker_delete'),
+
+    # Staff only
+    path('staff/ai-usage/', staff.ai_usage, name='staff_ai_usage'),
 ]
