@@ -1,0 +1,76 @@
+# Nightly encrypted backup of the production database. See BACKUPS.md.
+#
+# Why this exists: production runs on a Render Postgres declared `plan: free`
+# in render.yaml. Free Render databases expire 30 days after creation and are
+# deleted 14 days later, with no backups of their own. This is the only copy
+# of user data that lives anywhere else.
+#
+# The repository is public, so the dump is encrypted on the runner and only
+# the ciphertext is uploaded, to a private bucket. It is never a build
+# artifact: artifacts of a public repo can be downloaded by anyone.
+#
+# Until the secrets below exist, the job reports a notice and succeeds.
+
+name: backup
+
+on:
+  schedule:
+    - cron: '17 3 * * *'   # 03:17 UTC daily
+  workflow_dispatch:
+
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PROD_DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+      BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+      BACKUP_S3_ENDPOINT: ${{ secrets.BACKUP_S3_ENDPOINT }}
+      BACKUP_S3_REGION: ${{ secrets.BACKUP_S3_REGION }}
+      BACKUP_S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_S3_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_S3_SECRET_ACCESS_KEY }}
+
+    steps:
+      - name: Check configuration
+        id: config
+        run: |
+          missing=""
+          for name in PROD_DATABASE_URL BACKUP_PASSPHRASE BACKUP_S3_ENDPOINT BACKUP_S3_BUCKET AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY; do
+            [ -z "${!name}" ] && missing="$missing $name"
+          done
+          if [ -n "$missing" ]; then
+            echo "::notice title=Backup skipped::Repository secrets not set:$missing. See BACKUPS.md."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.config.outputs.ready == 'true'
+
+      - uses: actions/setup-python@v5
+        if: steps.config.outputs.ready == 'true'
+        with:
+          python-version: '3.12'
+
+      - name: Install tools
+        if: steps.config.outputs.ready == 'true'
+        run: |
+          pip install psycopg2-binary==2.9.12 boto3==1.43.48
+          # pg_dump refuses a server newer than itself, so install the client
+          # for every current major from the PostgreSQL apt repository;
+          # backup_db.py picks the one matching the server.
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y --no-install-recommends postgresql-client-16 postgresql-client-17 postgresql-client-18
+
+      - name: Dump, encrypt and upload
+        if: steps.config.outputs.ready == 'true'
+        run: python backup/backup_db.py
